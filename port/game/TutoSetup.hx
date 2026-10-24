@@ -4,7 +4,8 @@ import SaveData.SaveInfo;
 /**
  * Partida nueva de aventura y preparacion del tutorial (anadido del port; el original empezaba en el espacio, sin tutorial):
  * - newGame: la partida empieza en el espacio, en el sistema 0, con el inventario vacio (SaveData.create en aventura). Con tutorial, el planeta 0 del
- *   sistema es Terres Rouges pequeno; sin el, el sistema es el aleatorio de ExpOffline y la ESCorp envia las cargas.
+ *   sistema es Terres Rouges pequeno; sin el, el sistema es el aleatorio de ExpOffline y la ESCorp envia las cargas y los
+ *   creditos (con el, llegan al acabar: hasta entonces no hay creditos).
  * - la nave del tutorial tiene dos agujeros en el techo, encima de las losas del sintetizador (HOLES). Se quitan con shipEdits
  *   y no en el plano: la zona del sintetizador se mide en el plano y llegaria hasta el agujero (se taparia desde dentro).
  * - seedPlanet: al primer aterrizaje se ponen cerca de la nave los citronox viejos, el etherium y la bauxita del tutorial.
@@ -25,19 +26,21 @@ class TutoSetup {
 		var info = SaveData.create(name, p.seed, p.biome, p.size);
 		info.tutorial = tutorial;
 		info.uni = { seed : seed, planetId : PLANET, pos : [1, 0], start : { seed : p.seed, biome : p.biome, size : p.size }, planets : [], space : true };
+		info.credits = 0;
 		if( tutorial ) {
 			info.tuto = { step : 0 };
 			info.shipEdits = holeEdits();
 		} else
-			grant(info.inv);
+			grant(info);
 		return info;
 	}
 
-	/** el envio de la ESCorp */
-	public static function grant( inv : Protocol.InventoryInfos ) {
-		var i = new Inv(inv);
+	/** el envio de la ESCorp: las cargas y los creditos de salida */
+	public static function grant( info : SaveInfo ) {
+		var i = new Inv(info.inv);
 		i.addCharge(CBlue, GIFT);
 		i.addCharge(CYellow, GIFT);
+		info.credits = (info.credits == null ? 0 : info.credits) + Market.START_CREDITS;
 	}
 
 	/** la partida como si se hubiera empezado sin tutorial: se vuelve al espacio, junto al planeta del tutorial */
@@ -45,7 +48,8 @@ class TutoSetup {
 		var uni = info.uni;
 		info.tuto = null;
 		info.inv = Inv.empty();
-		grant(info.inv);
+		info.credits = 0;
+		grant(info);
 		info.shipData = null;
 		info.shipEdits = [];
 		info.edits = [];

@@ -942,23 +942,25 @@ class GalaxyApp extends hxd.App {
 	function buildComputer() : Screen {
 		// visitar la nave nodriza solo se ofrece al editarla (editar_nodriza.bat); jugando se llega acoplandose al robot en el mapa
 		var mother = GameView.editMother;
-		var h = mother ? 560 : 498;
+		var h = mother ? 622 : 560;
 		var s = panelFor(640, h, Lang.t("computer.title"));
 		var x = (W - 540) * 0.5;
 		var y = (H - h) * 0.5 + 135;
 		var takeoff = new Button(s, Lang.t("computer.takeoff"));
 		var edit = new Button(s, Lang.t("computer.edit"));
 		var trade = new Button(s, Lang.t("computer.trade"));
+		var contracts = new Button(s, Lang.t("computer.contracts"));
 		var close = new Button(s, Lang.t("computer.close"));
 		s.add(takeoff, x, y);
 		s.add(edit, x, y + 62);
 		s.add(trade, x, y + 124);
+		s.add(contracts, x, y + 186);
 		if( mother ) {
 			var visit = new Button(s, Lang.t("computer.mothership"));
-			s.add(visit, x, y + 186);
+			s.add(visit, x, y + 248);
 			visit.onActivate = startMothership;
 		}
-		s.add(close, x, y + (mother ? 262 : 200));
+		s.add(close, x, y + (mother ? 324 : 262));
 		var soon = function() {
 			resume();
 			showToast(Lang.t("computer.soon"));
@@ -979,6 +981,7 @@ class GalaxyApp extends hxd.App {
 		}
 		edit.onActivate = startHangar;
 		trade.onActivate = openShop;
+		contracts.onActivate = openContracts;
 		close.onActivate = function() resume();
 		s.onBack = function() resume();
 		return s;
@@ -1022,6 +1025,7 @@ class GalaxyApp extends hxd.App {
 	function leaveGame() {
 		closePalette();
 		closeShop();
+		closeContracts();
 		closeChest();
 		game.dispose();
 		if( invBar != null ) {
@@ -1647,6 +1651,29 @@ class GalaxyApp extends hxd.App {
 		}
 	}
 
+	/** contratos de la ESCorp (ContractPanel, anadido del port), desde el ordenador de a bordo */
+	public var contracts : ContractPanel;
+
+	public function openContracts() {
+		if( game == null || contracts != null ) return;
+		if( current != null ) resume();
+		contracts = new ContractPanel(s2d, atlas, game.info, game.inv);
+		contracts.onClose = closeContracts;
+		paletteOpen = true;
+		captureMouse(false);
+	}
+
+	public function closeContracts() {
+		if( contracts == null ) return;
+		contracts.remove();
+		contracts = null;
+		paletteOpen = false;
+		if( game != null && state == Playing ) {
+			captureMouse(true);
+			game.releaseAction();
+		}
+	}
+
 	function closePalette() {
 		if( palette != null ) {
 			palette.remove();
@@ -2080,6 +2107,8 @@ class GalaxyApp extends hxd.App {
 				game.stopSounds();
 				if( shop != null ) {
 					shop.update(dt, pad);
+				} else if( contracts != null ) {
+					contracts.update(dt, pad);
 				} else if( palette != null ) {
 					palette.update(dt, pad);
 				} else if( K.isPressed(K.ESCAPE) || K.isPressed(K.I) ) closePalette();
@@ -2604,7 +2633,7 @@ class GalaxyApp extends hxd.App {
 	    el casco y el HUD se ocultan un momento) y mira si queda magenta en algun punto de los cuatro bordes de la ventana. Se
 	    usa un color y no el alfa porque el mapa de estrellas suma sus capas (blend Add): su alfa es 1 aunque deje ver el fondo. */
 	public function devCover( ?name : String ) : String {
-		var top : h2d.Object = shop != null ? shop : chest != null ? chest : palette != null ? palette : explorer != null ? explorer : current != null ? ui : null;
+		var top : h2d.Object = shop != null ? shop : contracts != null ? contracts : chest != null ? chest : palette != null ? palette : explorer != null ? explorer : current != null ? ui : null;
 		if( top == null ) return "nada abierto";
 		var hidden = [];
 		for( o in s2d )

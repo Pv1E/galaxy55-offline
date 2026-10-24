@@ -2,7 +2,7 @@ import Common;
 
 /**
  * Textos del tutorial (Tutorial) en español, inglés y francés, aparte de Lang para no alargarlo.
- * %bauxite%, %cit%, %eth%, %rock%, %alu% y %hull% son nombres de bloques en el idioma elegido; %gift% las cargas de la ESCorp.
+ * %bauxite%, %cit%, %eth%, %rock%, %alu% y %hull% son nombres de bloques en el idioma elegido; %gift% las cargas de la ESCorp y %credits% sus creditos.
  */
 class TutoText {
 
@@ -74,9 +74,9 @@ class TutoText {
 			"The ship is airtight! Leave the hangar through the big exit or the ship's teleporter.",
 			"Le vaisseau est étanche ! Sors du hangar par la grande sortie ou par le téléporteur du vaisseau."],
 		"done" => [
-			"¡Bien hecho! La ESCorp te envía %gift% cargas azules y %gift% cargas amarillas. Ya puedes salir del sistema y explorar otros planetas, vender tus recursos al robot comerciante y, pronto, hacer misiones de recolección desde el ordenador de a bordo.",
-			"Well done! ESCorp sends you %gift% blue charges and %gift% yellow charges. You can now leave the system and explore other planets, sell your resources to the merchant robot, and soon take on harvesting missions from the on-board computer.",
-			"Bravo ! L'ESCorp t'envoie %gift% charges bleues et %gift% charges jaunes. Tu peux maintenant quitter le système et explorer d'autres planètes, vendre tes ressources au robot marchand, et bientôt faire des missions de récolte depuis l'ordinateur de bord."],
+			"¡Bien hecho! La ESCorp te envía %gift% cargas azules, %gift% cargas amarillas y %credits% créditos. Ya puedes salir del sistema y explorar otros planetas, vender tus recursos al robot comerciante y cumplir los contratos de la ESCorp desde el ordenador de a bordo.",
+			"Well done! ESCorp sends you %gift% blue charges, %gift% yellow charges and %credits% credits. You can now leave the system and explore other planets, sell your resources to the merchant robot and fulfil ESCorp contracts from the on-board computer.",
+			"Bravo ! L'ESCorp t'envoie %gift% charges bleues, %gift% charges jaunes et %credits% crédits. Tu peux maintenant quitter le système et explorer d'autres planètes, vendre tes ressources au robot marchand et remplir les contrats de l'ESCorp depuis l'ordinateur de bord."],
 		"nobreak" => [
 			"No rompas nada en el hangar: solo tapa los agujeros.",
 			"Don't break anything in the hangar: just fill the holes.",
@@ -96,9 +96,9 @@ class TutoText {
 			"Your inventory, your ship and the planet will be reset.",
 			"Ton inventaire, ton vaisseau et la planète seront réinitialisés."],
 		"skipped" => [
-			"Tutorial saltado: la ESCorp te envía %gift% cargas azules y %gift% amarillas.",
-			"Tutorial skipped: ESCorp sends you %gift% blue and %gift% yellow charges.",
-			"Tutoriel passé : l'ESCorp t'envoie %gift% charges bleues et %gift% jaunes."],
+			"Tutorial saltado: la ESCorp te envía %gift% cargas azules, %gift% amarillas y %credits% créditos.",
+			"Tutorial skipped: ESCorp sends you %gift% blue and %gift% yellow charges and %credits% credits.",
+			"Tutoriel passé : l'ESCorp t'envoie %gift% charges bleues, %gift% jaunes et %credits% crédits."],
 	];
 
 	static var NAMES = [
@@ -111,7 +111,7 @@ class TutoText {
 		var a = T.get(key);
 		var s = a == null ? key : a[Lang.cur];
 		for( k => b in NAMES ) if( s.indexOf(k) >= 0 ) s = s.split(k).join(Block.get(b).getName());
-		s = s.split("%gift%").join("" + TutoSetup.GIFT);
+		s = s.split("%gift%").join("" + TutoSetup.GIFT).split("%credits%").join("" + Market.START_CREDITS);
 		return max >= 0 ? s + " (" + n + "/" + max + ")" : s;
 	}
 }
