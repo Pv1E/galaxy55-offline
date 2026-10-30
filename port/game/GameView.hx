@@ -1372,7 +1372,8 @@ class GameView {
 		// con el temblor de la camara: el original apunta desde ella (Render.pick)
 		var ex = px, ey = py, ez = pz + viewZ + Math.sin(walkBobbing) * 0.05 + shakeZ;
 		var curve = hangar != null ? 0. : World.curve(world.size);
-		var lx = 0, ly = 0, lz = 0, have = false;
+		var lx = Math.floor(ex), ly = Math.floor(ey), lz = Math.floor(ez), have = false;
+		var cx = lx, cy = ly, cz = lz; // celda en la que esta el rayo
 		var t = 0.;
 		var ox = ex, oy = ey, oz = ez; // punto anterior del rayo
 		while( t < 7.0 ) {
@@ -1382,10 +1383,19 @@ class GameView {
 			var px0 = ox, py0 = oy, pz0 = oz;
 			ox = x; oy = y; oz = z;
 			var ix = Math.floor(x), iy = Math.floor(y), iz = Math.floor(z);
+			// se pone en la celda por la que el rayo llega a la del bloque tocado (su cara del lado del jugador, Render.pick), no en
+			// la del bloque: en los modelos y los bloques con caja el rayo cruza parte de su celda antes de tocarlos
+			if( ix != cx || iy != cy || iz != cz ) {
+				lx = cx; ly = cy; lz = cz;
+				cx = ix; cy = iy; cz = iz;
+			}
 			// (no se salta la misma celda: los bloques parciales solo cuentan si el rayo pasa por su caja)
 			// el agua que no se apunta (mar, cascada que cae, agua puesta) no para el rayo: se pone bajo el agua; la fuente de
 			// cascada y la arena movediza si lo paran: se pone contra ellas (Render.pick del original)
 			var b = world.block(ix, iy, iz);
+			// con un bloque en la mano tampoco lo paran las hierbas ni las estalactitas: se pisan al poner (Block.canOverride), como
+			// en el original, donde BFDetail les quita PCanPick (aqui se apuntan para romperlas, PortRules)
+			if( b != null && hand != null && b.canOverride() ) b = null;
 			var bx = b != null ? pickBox(b) : null;
 			var model = b != null && b.size == null && bx != null && Atlas.pixels != null;
 			if( b != null && blocking(b) && (model ? modelHit(b, px0 - ix, py0 - iy, pz0 - iz, x - ix, y - iy, z - iz)
@@ -1407,11 +1417,12 @@ class GameView {
 						return null; // con un bloque en la mano solo se puede poner dentro de esas zonas
 				} else if( iz >= World.HEIGHT - 1 )
 					return null;
+				// con un bloque en la mano no se apunta si donde iria hay algo que no se pisa (Render.pick: "it might be a block which
+				// we can't pick"), p. ej. un modelo por cuyo hueco ha pasado el rayo
+				var old = hand != null ? world.block(lx, ly, lz) : null;
+				if( old != null && !old.canOverride() ) return null;
 				return { x : wrapI(ix), y : wrapI(iy), z : iz, b : b, tx : wrapI(lx), ty : wrapI(ly), tz : lz, hx : x, hy : y, hz : z, power : 0. };
 			}
-			lx = ix;
-			ly = iy;
-			lz = iz;
 			have = true;
 		}
 		return null;
@@ -1623,9 +1634,9 @@ class GameView {
 		}
 		if( inShip ) ok = true; // select.ignoreMagnets del original
 		var here = world.block(x, y, z);
-		// celda ocupada (p. ej. por lo que se acaba de poner): no se gasta nada. Solo se pisa el liquido que no se apunta
-		// (Block.canOverride del original): ni la fuente de cascada ni la arena movediza
-		if( here != null && !(here.hasProp(PLiquid) && !here.hasProp(PCanPick)) ) return;
+		// celda ocupada (p. ej. por lo que se acaba de poner): no se gasta nada. Solo se pisa lo que permite Block.canOverride del
+		// original: hierbas, estalactitas y el liquido que no se apunta (ni la fuente de cascada ni la arena movediza)
+		if( here != null && !here.canOverride() ) return;
 		if( !ok || actionPause > 0 ) return;
 		actionPause = creative ? 6 : 15;
 		if( !creative && !inv.useCurrentBlock() ) return;

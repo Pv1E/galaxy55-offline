@@ -864,7 +864,7 @@ class Dev {
 			inline function r( v : Float ) return Math.round(v * 1000) / 1000;
 			Sys.println("aterrizaje: suelo " + (g.standingBlock == null ? "-" : "" + g.standingBlock.k) + " gravedad " + r(g.gravity) + " aturdido " + r(@:privateAccess g.stun)
 				+ " casco " + r(g.bobY) + " temblor " + r(g.shake) + " fundido " + r(g.fadeAlpha()) + " vida " + r(g.life) + " creativo " + g.creative);
-		case "select": Sys.println("select: " + (g.select == null ? "ninguno" : g.select.b.k + " @" + g.select.x + "," + g.select.y + "," + g.select.z + " poder=" + g.select.power));
+		case "select": Sys.println("select: " + (g.select == null ? "ninguno" : g.select.b.k + " @" + g.select.x + "," + g.select.y + "," + g.select.z + " poner=" + g.select.tx + "," + g.select.ty + "," + g.select.tz + " poder=" + g.select.power));
 		case "sky":
 			// giro de las estrellas (Sky.follow): a donde apuntan los ejes x y z del cubo de estrellas
 			var m = @:privateAccess w.sky.starRot;
