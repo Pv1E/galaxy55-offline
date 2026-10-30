@@ -1539,7 +1539,9 @@ class World {
 			var cut = h3d.mat.Material.create(atlas);
 			cut.shadows = false;
 			cut.mainPass.enableLights = false;
-			cut.mainPass.culling = None;
+			// cara trasera oculta como las otras pasadas de BTAlpha (y el original): si no, desde dentro de la nave se veia el marco
+			// de la cara de fuera de una ventana, en el mismo plano que la cara de un neon pegado por fuera, y se pisaban segun el angulo
+			cut.mainPass.culling = Back;
 			cut.mainPass.addShader(new h3d.shader.VertexColor());
 			cut.mainPass.addShader(sky.fog);
 			cut.textureShader.killAlpha = true;
