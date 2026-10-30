@@ -1,0 +1,45 @@
+{
+	"_doc": [
+		"Contratos de la ESCorp (anadido del port, port/game/Contracts.hx). Se edita sin recompilar: el juego lo lee al arrancar.",
+		"base: contratos de base, sale siempre uno; en el original son los bloques de Data.BASIC_BLOCKS (src/G55/com/Common.hx).",
+		"orders: encargos; salen count - 1, sin repetir bloque.",
+		"block: nombre del bloque (BlockKind, p. ej. BSoil). n: cantidad pedida. yellow / blue: cargas que cuesta conseguir cada bloque.",
+		"reward (opcional): recompensa fija en creditos. Sin ella: n x (lo que el robot paga como mucho, Market) x rewardFactor",
+		"  + n x (yellow x yellowBonus + blue x blueBonus).",
+		"period: segundos de hora real UTC que dura un tablero. Solo los jugadores con el mismo archivo ven el mismo tablero."
+	],
+	"period": 1800,
+	"count": 3,
+	"rewardFactor": 1.5,
+	"yellowBonus": 2,
+	"blueBonus": 5,
+	"base": [
+		{ "block": "BSoil", "n": 64 },
+		{ "block": "BWood", "n": 48 },
+		{ "block": "BAluminium", "n": 8, "blue": 1 },
+		{ "block": "BWinterSoil", "n": 64 },
+		{ "block": "BMarsSoil", "n": 64 }
+	],
+	"orders": [
+		{ "block": "BMoonSoil", "n": 64 },
+		{ "block": "BAcidSoil", "n": 64 },
+		{ "block": "BMoonSand", "n": 48 },
+		{ "block": "BAutumnStraw", "n": 32 },
+		{ "block": "BWinterWood", "n": 48 },
+		{ "block": "BAcidWood", "n": 48 },
+		{ "block": "BGreenLeaves", "n": 48 },
+		{ "block": "BCactus", "n": 24 },
+		{ "block": "BChampiLight", "n": 12 },
+		{ "block": "BAcidTreeSap", "n": 12 },
+		{ "block": "BMinIron", "n": 12, "blue": 1 },
+		{ "block": "BRockWall", "n": 12, "yellow": 2 },
+		{ "block": "BWinterWall", "n": 12, "yellow": 2 },
+		{ "block": "BMarsWall", "n": 12, "yellow": 2 },
+		{ "block": "BAcidWall", "n": 12, "yellow": 2 },
+		{ "block": "BHardRockWall", "n": 12, "blue": 2 },
+		{ "block": "BWoodPlank", "n": 32 },
+		{ "block": "BGlass", "n": 16 },
+		{ "block": "BIron", "n": 8, "blue": 1 },
+		{ "block": "BLamp", "n": 6 }
+	]
+}

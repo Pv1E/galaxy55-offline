@@ -1,0 +1,19 @@
+# contracts.json editado sin recompilar (contracts load): con contrats_prueba.json salen 4 contratos (base BSoil x10 +999,
+# y BShipHull x4 +50, BGlass x3 +54, BIron x2 +85 en algun orden, sin el BSoil repetido); BNoExiste y BWood x0 se avisan
+# por stderr y se saltan. El panel crece para las 4 lineas. Luego se vuelve al contracts.json de verdad.
+wait 3
+contracts slot 1000000
+contracts load port/dev/contrats_prueba.json
+ship
+wait 10
+print contracts
+contracts fill 0
+deliver 0
+contracts
+wait 5
+shot contrats_json
+cover contrats_json
+contracts close
+contracts load src/G55/fla/client/gfx/contracts.json
+print contracts
+quit

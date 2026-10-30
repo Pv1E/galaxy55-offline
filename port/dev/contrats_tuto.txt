@@ -1,0 +1,41 @@
+# contratos durante el tutorial: el boton del ordenador de a bordo sale desactivado (boton=false) y el panel no se abre
+# (panel=false); al pasar el tutorial, el aviso de la ESCorp sigue en pantalla a los 4 s (captura contrats_tuto_aviso) y
+# despues el boton vuelve a funcionar (boton=true). -Timeout 300
+wait 3
+tuto new 4242
+waitfor map
+expplanet 0
+waitfor window
+expbutton
+waitfor planet
+wait 30
+ship
+wait 10
+computer
+wait 5
+shot contrats_tuto_menu
+print contracts
+close
+wait 3
+contracts
+wait 3
+print contracts
+tuto skip
+waitfor map
+wait 240
+shot contrats_tuto_aviso
+expplanet 0
+waitfor window
+expbutton
+waitfor planet
+wait 30
+ship
+wait 10
+computer
+wait 5
+print contracts
+close
+contracts
+wait 3
+print contracts
+quit

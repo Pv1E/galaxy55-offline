@@ -1,0 +1,19 @@
+{
+	"_doc": "port/dev/contrats_json.txt: 4 contratos, un bloque que no existe y una cantidad 0 (se saltan con aviso), recompensas fijas, BSoil repetido en base y orders",
+	"period": 1800,
+	"count": 4,
+	"rewardFactor": 1.5,
+	"yellowBonus": 2,
+	"blueBonus": 5,
+	"base": [
+		{ "block": "BSoil", "n": 10, "reward": 999 }
+	],
+	"orders": [
+		{ "block": "BNoExiste", "n": 5 },
+		{ "block": "BWood", "n": 0 },
+		{ "block": "BShipHull", "n": 4, "reward": 50 },
+		{ "block": "BGlass", "n": 3 },
+		{ "block": "BIron", "n": 2, "blue": 1 },
+		{ "block": "BSoil", "n": 5 }
+	]
+}
