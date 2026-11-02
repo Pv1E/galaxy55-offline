@@ -33,6 +33,8 @@ class GameView {
 	    (llega a unos 0.18 del ojo a 70 grados) */
 	static inline var HEAD_POINTS = 8;
 	static inline var HEAD_RADIUS = 0.2;
+	/** hueco minimo entre la camara y el bloque de encima: algo mas que su plano cercano (zNear = 0.1) */
+	static inline var CAMERA_GAP = 0.12;
 
 	public var world(default, null) : World;
 	public var info(default, null) : SaveInfo;
@@ -1819,6 +1821,14 @@ class GameView {
 		var wv = world.wave;
 		if( wv != null && (onWater() || inWater()) )
 			ez -= Math.sin(px * wv.width + wv.time) * Math.cos(py * wv.width + wv.time) * wv.amp;
+		// cambio del port: la camara no entra en el bloque de encima. Las olas (+-0.15) y el balanceo (+-0.05) la suben por encima de
+		// los ojos y la cabeza solo guarda 0.13 hasta el techo: con la cabeza contra un bloque (al subir por una cascada con el jetpack
+		// hasta su fuente, p. ej.) el plano cercano (0.1) lo cortaba y se veia a traves, como en el original
+		var lowered = 0.;
+		while( lowered < 0.3 && headCollide(ez + CAMERA_GAP) ) {
+			ez -= 0.01;
+			lowered += 0.01;
+		}
 		// con los ojos en el agua el campo de vision se cierra al momento (Game.hx: hero.inWater(true), fov * 0.8)
 		c.fovY = inWater(null, true) ? Settings.fov * 0.8 : Settings.fov;
 		c.zNear = 0.1;
