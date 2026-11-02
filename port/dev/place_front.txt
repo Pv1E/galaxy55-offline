@@ -1,0 +1,109 @@
+# con un bloque en la mano, al apuntar a un bloque que no es entero (modelo o caja) se pone delante, en la celda por la que llega
+# el rayo, y el bloque apuntado sigue ahi. Las hierbas y estalactitas se pisan (Block.canOverride). Plataforma: suelo z=56, ojos
+# en z=58.5, bloque probado en 67,64,57 (delante: 66,64,57). Se da un solo bloque cada vez: al ponerlo la casilla 10 queda libre
+wait 3
+planet
+wait 30
+filla 58 58 72 70 57 66 none
+filla 58 58 72 70 56 56 BRock
+tp 64.5 64.5 57.01 0 0
+wait 5
+# 1) columna lunar (modelo MBigColumn): la madera queda en 66, la columna sigue en 67
+set 67 64 57 BMoonLightColumn
+give BWood 1
+slot 10
+lookat 67.5 64.5 57.5
+wait 5
+print select
+key place
+wait 10
+unkey
+print block 66 64 57
+print block 67 64 57
+# 2) planta de curacion (modelo MCrossSquare, se recoge): igual
+set 66 64 57 none
+set 67 64 57 BHealPlant
+give BWood 1
+slot 10
+lookat 67.5 64.5 57.3
+wait 5
+print select
+key place
+wait 10
+unkey
+print block 66 64 57
+print block 67 64 57
+# 3) planta de carga amarilla (modelo MCross, suelta cargas): igual
+set 66 64 57 none
+set 67 64 57 BYellowPlant
+give BWood 1
+slot 10
+lookat 67.5 64.5 57.3
+wait 5
+print select
+key place
+wait 10
+unkey
+print block 66 64 57
+print block 67 64 57
+# 4) cristal amarillo (caja BFSize, suelta cargas): igual
+set 66 64 57 none
+set 67 64 57 BYellowCrystalLight
+give BWood 1
+slot 10
+lookat 67.5 64.5 57.25
+wait 5
+print select
+key place
+wait 10
+unkey
+print block 66 64 57
+print block 67 64 57
+# 5) hierba de Marte (BFDetail): con la mano vacia se apunta a ella (se rompe, PortRules); con madera el rayo la atraviesa y la
+# madera la pisa (67)
+set 66 64 57 none
+set 67 64 57 BMarsHerb1
+slot 0
+lookat 67.5 64.5 57.1
+wait 5
+print select
+give BWood 1
+slot 10
+wait 5
+print select
+key place
+wait 10
+unkey
+print block 66 64 57
+print block 67 64 57
+# 6) placa de madera (caja de media altura) en el suelo, apuntada por arriba: la madera queda encima (66,64,57)
+set 67 64 57 none
+set 66 64 56 BWoodPlate
+give BWood 1
+slot 10
+lookat 66.6 64.5 56.6
+wait 5
+print select
+key place
+wait 10
+unkey
+print block 66 64 56
+print block 66 64 57
+# 7) el rayo pasa por el hueco de una flor (MCross, borde de su celda) y toca la roca de detras: con madera no se apunta (la
+# celda de delante de la roca es la de la flor), con la mano vacia si (la roca)
+filla 58 58 72 70 57 66 none
+filla 58 58 72 70 56 56 BRock
+set 65 64 57 BPinkFlower
+set 66 64 57 BRock
+tp 60.5 64.9 57.01 0 0
+give BWood 1
+slot 10
+lookat 66.5 64.9 57.6
+wait 5
+print select
+slot 0
+wait 5
+print select
+print block 65 64 57
+print inv
+quit
