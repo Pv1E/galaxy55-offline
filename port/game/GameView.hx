@@ -1417,6 +1417,12 @@ class GameView {
 				// la capa 0 (roca madre) se apunta como en el original (Render.doPick: solo z < 0 queda fuera): se pone encima,
 				// pero no se rompe (power -1)
 				if( !have || iz < 0 ) return null;
+				// cambio del port: con un bloque en la mano, la hierba alta apuntada se pisa (PortRules.placeOver): se pone en su celda
+				if( hand != null && PortRules.placeOver(b) ) {
+					lx = ix;
+					ly = iy;
+					lz = iz;
+				}
 				// hangar: solo dentro de la zona construible (EditShip.checkSelect); para poner basta con que el sitio lo este
 				if( hangar != null && !Hangar.inZone(ix, iy, iz) && (hand == null || !Hangar.inZone(lx, ly, lz)) ) return null;
 				// nave nodriza: no se rompe ni se construye; como en tu nave (ShipLogic.checkSelect), solo se apunta a lo que se activa
@@ -1433,7 +1439,7 @@ class GameView {
 				// con un bloque en la mano no se apunta si donde iria hay algo que no se pisa (Render.pick: "it might be a block which
 				// we can't pick"), p. ej. un modelo por cuyo hueco ha pasado el rayo
 				var old = hand != null ? world.block(lx, ly, lz) : null;
-				if( old != null && !old.canOverride() ) return null;
+				if( old != null && !overridable(old) ) return null;
 				return { x : wrapI(ix), y : wrapI(iy), z : iz, b : b, tx : wrapI(lx), ty : wrapI(ly), tz : lz, hx : x, hy : y, hz : z, power : 0. };
 			}
 			have = true;
@@ -1617,6 +1623,38 @@ class GameView {
 		}
 	}
 
+	/** se pisa al poner: Block.canOverride del original (hierbas, estalactitas, liquido que no se apunta) y la hierba alta (PortRules) */
+	static inline function overridable( b : Block ) : Bool {
+		return b.canOverride() || PortRules.placeOver(b);
+	}
+
+	/**
+	 * Lo que place exige a la celda elegida: sitio libre (o que se pisa) y algo que sujete el bloque (anclas e imanes); en la nave,
+	 * una zona de sintetizador. La sombra del bloque (Fx) usa lo mismo: no se ve donde el clic no pondria nada.
+	 */
+	public function canPlace( s : Select, hand : Block ) : Bool {
+		var x = s.tx, y = s.ty, z = s.tz;
+		// en la nave solo se coloca dentro de las zonas de sintetizador (el casco se edita en el hangar) y alli no hace falta apoyo
+		var inShip = z >= World.SHIP_Z;
+		if( inShip && !ship.inCraft(x, y, z) ) return false;
+		// fuera del rango del planeta World.setBlock no pone nada: tampoco se gasta el bloque
+		if( !inShip && (z < 1 || z >= World.HEIGHT - 1) ) return false;
+		// celda ocupada (p. ej. por lo que se acaba de poner): no se gasta nada
+		var here = world.block(x, y, z);
+		if( here != null && !overridable(here) ) return false;
+		if( inShip ) return true; // select.ignoreMagnets del original
+		var tmp : Block;
+		if( hand.canPut(Up) && (tmp = world.block(x, y, z + 1)) != null && tmp.hasMagnet(Down) ) return true;
+		if( hand.canPut(Down) && (tmp = world.block(x, y, z - 1)) != null && tmp.hasMagnet(Up) ) return true;
+		if( hand.canPut(LeftRight) ) {
+			if( (tmp = world.block(x + 1, y, z)) != null && tmp.hasMagnet(LeftRight) ) return true;
+			if( (tmp = world.block(x - 1, y, z)) != null && tmp.hasMagnet(LeftRight) ) return true;
+			if( (tmp = world.block(x, y - 1, z)) != null && tmp.hasMagnet(LeftRight) ) return true;
+			if( (tmp = world.block(x, y + 1, z)) != null && tmp.hasMagnet(LeftRight) ) return true;
+		}
+		return false;
+	}
+
 	/** Game.checkAction con un bloque en la mano: se coloca si algo lo sujeta (anclas e imanes). */
 	function place( hand : Block ) {
 		var s = select;
@@ -1631,28 +1669,10 @@ class GameView {
 			return;
 		}
 		var put = hand.getFlip(yaw);
-		// en la nave solo se coloca dentro de las zonas de sintetizador (el casco se edita en el hangar) y alli no hace falta apoyo
-		var inShip = s.tz >= World.SHIP_Z;
-		if( inShip && !ship.inCraft(s.tx, s.ty, s.tz) ) return;
+		if( !canPlace(s, hand) || actionPause > 0 ) return;
 		var x = s.tx, y = s.ty, z = s.tz;
-		var ok = false;
-		var tmp : Block;
-		if( !ok && hand.canPut(Up) && (tmp = world.block(x, y, z + 1)) != null && tmp.hasMagnet(Down) ) ok = true;
-		if( !ok && hand.canPut(Down) && (tmp = world.block(x, y, z - 1)) != null && tmp.hasMagnet(Up) ) ok = true;
-		if( !ok && hand.canPut(LeftRight) ) {
-			if( (tmp = world.block(x + 1, y, z)) != null && tmp.hasMagnet(LeftRight) ) ok = true;
-			else if( (tmp = world.block(x - 1, y, z)) != null && tmp.hasMagnet(LeftRight) ) ok = true;
-			else if( (tmp = world.block(x, y - 1, z)) != null && tmp.hasMagnet(LeftRight) ) ok = true;
-			else if( (tmp = world.block(x, y + 1, z)) != null && tmp.hasMagnet(LeftRight) ) ok = true;
-		}
-		if( inShip ) ok = true; // select.ignoreMagnets del original
+		var inShip = z >= World.SHIP_Z;
 		var here = world.block(x, y, z);
-		// celda ocupada (p. ej. por lo que se acaba de poner): no se gasta nada. Solo se pisa lo que permite Block.canOverride del
-		// original: hierbas, estalactitas y el liquido que no se apunta (ni la fuente de cascada ni la arena movediza)
-		if( here != null && !here.canOverride() ) return;
-		if( !ok || actionPause > 0 ) return;
-		// fuera del rango del planeta World.setBlock no pone nada: tampoco se gasta el bloque
-		if( !inShip && (z < 1 || z >= World.HEIGHT - 1) ) return;
 		actionPause = creative ? 6 : 15;
 		if( !creative && !inv.useCurrentBlock() ) return;
 		// bien puesto: se quita el aviso que hubiera y no se avisa de nada hasta soltar el boton
@@ -1661,6 +1681,11 @@ class GameView {
 		// si era el ultimo bloque, hay que soltar el boton antes de seguir (evita excavar sin querer)
 		if( inv.getCurrentBlock() == null ) actionWait = true;
 		if( Dev.trace ) Sys.println("place en " + x + "," + y + "," + z + " sobre " + s.b.k + "@" + s.x + "," + s.y + "," + s.z + " antes=" + world.block(x, y, z));
+		// la hierba alta pisada (PortRules.placeOver) se rompe antes y suelta lo suyo; las hierbas de Block.canOverride desaparecen
+		if( here != null && !here.canOverride() ) {
+			breakBlock(x, y, z, here);
+			here = null;
+		}
 		// el agua puesta por el jugador se extiende como la cascada (si no, inundaria como el mar)
 		if( put.type == BTWater && !inShip && hangar == null ) world.setWater(x, y, z, put, WorldProcess.PLACED);
 		else world.setBlock(x, y, z, put);
