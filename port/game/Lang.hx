@@ -31,6 +31,13 @@ class Lang {
 		// anadido del port: pilotar la nave sobre el planeta
 		"computer.pilot" => ["Pilotar la nave (sobre el planeta)", "Pilot the ship (over the planet)", "Piloter le vaisseau (survol)"],
 		"computer.trade" => ["Comerciar (ESCorp)", "Trade (ESCorp)", "Commercer (ESCorp)"],
+		"computer.contracts" => ["Contratos (ESCorp)", "Contracts (ESCorp)", "Contrats (ESCorp)"],
+		"contracts.title" => ["Contratos de la ESCorp", "ESCorp contracts", "Contrats ESCorp"],
+		// %t% = mm:ss hasta el siguiente tablero
+		"contracts.renew" => ["Nuevos contratos dentro de %t%", "New contracts in %t%", "Nouveaux contrats dans %t%"],
+		"contracts.reward" => ["Recompensa: %n% créditos", "Reward: %n% credits", "Récompense : %n% crédits"],
+		"contracts.deliver" => ["Entregar", "Deliver", "Livrer"],
+		"contracts.done" => ["Entregado", "Delivered", "Livré"],
 		"shop.title" => ["Robot comerciante", "Merchant robot", "Robot marchand"],
 		"shop.yours" => ["Lo que llevas (clic: vender)", "Your items (click: sell)", "Ton inventaire (clic : vendre)"],
 		"shop.robot" => ["Lo que vende el robot (clic: comprar)", "Robot's stock (click: buy)", "Stock du robot (clic : acheter)"],

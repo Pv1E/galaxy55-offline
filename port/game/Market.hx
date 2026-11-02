@@ -40,7 +40,8 @@ typedef Ware = {
  */
 class Market {
 
-	public static inline var START_CREDITS = 500;
+	/** creditos de salida: en aventura los envia la ESCorp al acabar el tutorial (TutoSetup.grant, Tutorial.finish) */
+	public static inline var START_CREDITS = 200;
 	static inline var REF = 20.;
 	static inline var HALF_LIFE = 600.;
 	static inline var MAX_BUY = 2.;

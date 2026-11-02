@@ -1,0 +1,65 @@
+# contratos de la ESCorp: el mismo tablero en un mismo periodo (y otro en el siguiente), entregar (rechazado sin los bloques
+# o ya entregado), "Entregado" hasta el cambio de periodo, se guarda con la partida, boton del ordenador de a bordo, y los
+# creditos de salida (0 durante el tutorial, 200 al acabarlo). Unos 4 minutos: -Timeout 300
+wait 3
+contracts slot 1000000
+print contracts
+contracts slot 1000000
+print contracts
+contracts slot 1000001
+print contracts
+contracts slot 1000000
+ship
+wait 10
+print credits
+deliver 0
+contracts fill 0
+print contracts
+deliver 0
+deliver 0
+print inv
+contracts fill 2
+contracts
+wait 5
+print contracts
+shot contrats
+# teclado: abajo elige la linea 0, 1 y 2; Intro entrega la 2
+tap down
+wait 2
+tap down
+wait 2
+tap down
+wait 2
+tap enter
+wait 3
+print contracts
+shot contrats_teclado
+cover contrats
+contracts close
+activatel 64 63 3
+wait 5
+print menu
+shot contrats_menu
+close
+wait 3
+reload
+waitfor ready
+wait 10
+print contracts
+contracts slot 1000001
+print contracts
+contracts slot -1
+print contracts
+tuto new 4242
+waitfor map
+expplanet 0
+waitfor window
+expbutton
+waitfor planet
+wait 30
+print credits
+tuto step 12
+wait 10
+print credits
+print tuto
+quit

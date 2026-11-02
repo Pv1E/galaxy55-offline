@@ -945,13 +945,17 @@ class GalaxyApp extends hxd.App {
 		// anadido del port: pilotar la nave sobre el planeta (solo en los planetas jugables, fuera del tutorial)
 		var pilotOk = game != null && game.canPilot();
 		var dy = pilotOk ? 62 : 0;
-		var h = (mother ? 560 : 498) + dy;
+		var h = (mother ? 622 : 560) + dy;
 		var s = panelFor(640, h, Lang.t("computer.title"));
 		var x = (W - 540) * 0.5;
 		var y = (H - h) * 0.5 + 135;
 		var takeoff = new Button(s, Lang.t("computer.takeoff"));
 		var edit = new Button(s, Lang.t("computer.edit"));
 		var trade = new Button(s, Lang.t("computer.trade"));
+		var contracts = new Button(s, Lang.t("computer.contracts"));
+		// en el tutorial los contratos se ven pero no se pueden abrir (se vuelve a mirar en openComputer: el menu se guarda)
+		contracts.enabled = !Tutorial.active(game.info);
+		computerContracts = contracts;
 		var close = new Button(s, Lang.t("computer.close"));
 		s.add(takeoff, x, y);
 		if( pilotOk ) {
@@ -964,12 +968,13 @@ class GalaxyApp extends hxd.App {
 		}
 		s.add(edit, x, y + 62 + dy);
 		s.add(trade, x, y + 124 + dy);
+		s.add(contracts, x, y + 186 + dy);
 		if( mother ) {
 			var visit = new Button(s, Lang.t("computer.mothership"));
-			s.add(visit, x, y + 186 + dy);
+			s.add(visit, x, y + 248 + dy);
 			visit.onActivate = startMothership;
 		}
-		s.add(close, x, y + (mother ? 262 : 200) + dy);
+		s.add(close, x, y + (mother ? 324 : 262) + dy);
 		var soon = function() {
 			resume();
 			showToast(Lang.t("computer.soon"));
@@ -990,6 +995,7 @@ class GalaxyApp extends hxd.App {
 		}
 		edit.onActivate = startHangar;
 		trade.onActivate = openShop;
+		contracts.onActivate = openContracts;
 		close.onActivate = function() resume();
 		s.onBack = function() resume();
 		return s;
@@ -1033,6 +1039,7 @@ class GalaxyApp extends hxd.App {
 	function leaveGame() {
 		closePalette();
 		closeShop();
+		closeContracts();
 		closeChest();
 		game.dispose();
 		if( invBar != null ) {
@@ -1181,7 +1188,7 @@ class GalaxyApp extends hxd.App {
 		s2d.under(explorer);
 		space = new Space(uni);
 		space.tutorial = Tutorial.active(spaceInfo);
-		space.onRefuse = showToast;
+		space.onRefuse = function(msg) showToast(msg);
 		explorer.onTravel = space.travel;
 		explorer.canLand = space.canLand;
 		explorer.canLeave = space.canLeave;
@@ -1207,7 +1214,8 @@ class GalaxyApp extends hxd.App {
 			takeoffSave = 1.0;
 		}
 		if( mapToast != null ) {
-			showToast(mapToast);
+			// el aviso de la ESCorp al pasar el tutorial es largo: se deja mas tiempo para leerlo
+			showToast(mapToast, 7);
 			mapToast = null;
 		}
 	}
@@ -1318,7 +1326,11 @@ class GalaxyApp extends hxd.App {
 		captureMouse(false);
 		hud.visible = false; msgText.visible = false;
 		show("computer");
+		computerContracts.enabled = !Tutorial.active(game.info);
 	}
+
+	/** boton de los contratos del ordenador de a bordo (desactivado durante el tutorial) */
+	var computerContracts : Button;
 
 	/** Esc en el mapa de estrellas: el mapa se para y se abre este menu */
 	function openMapPause() {
@@ -1659,6 +1671,29 @@ class GalaxyApp extends hxd.App {
 		}
 	}
 
+	/** contratos de la ESCorp (ContractPanel, anadido del port), desde el ordenador de a bordo */
+	public var contracts : ContractPanel;
+
+	public function openContracts() {
+		if( game == null || contracts != null || Tutorial.active(game.info) ) return;
+		if( current != null ) resume();
+		contracts = new ContractPanel(s2d, atlas, game.info, game.inv);
+		contracts.onClose = closeContracts;
+		paletteOpen = true;
+		captureMouse(false);
+	}
+
+	public function closeContracts() {
+		if( contracts == null ) return;
+		contracts.remove();
+		contracts = null;
+		paletteOpen = false;
+		if( game != null && state == Playing ) {
+			captureMouse(true);
+			game.releaseAction();
+		}
+	}
+
 	function closePalette() {
 		if( palette != null ) {
 			palette.remove();
@@ -1925,12 +1960,13 @@ class GalaxyApp extends hxd.App {
 		guide.update(dt, info == null ? null : tutorial.text(info, g), g, tutorial.targets(g), s3d.camera, top);
 	}
 
-	function showToast( msg : String ) {
+	/** aviso abajo de la pantalla durante `time` segundos (el ultimo 0,6 s se desvanece) */
+	function showToast( msg : String, time = 2.2 ) {
 		toast.text = msg;
 		toast.x = (W - toast.textWidth * toast.scaleX) * 0.5;
 		toast.visible = true;
 		toast.alpha = 1;
-		toastTime = 2.2;
+		toastTime = time;
 	}
 
 	/** partidas de ejemplo para las capturas (--demo-saves: las 3 primeras) y para probar la lista (devsaves N); de la cuarta en
@@ -2092,6 +2128,8 @@ class GalaxyApp extends hxd.App {
 				game.stopSounds();
 				if( shop != null ) {
 					shop.update(dt, pad);
+				} else if( contracts != null ) {
+					contracts.update(dt, pad);
 				} else if( palette != null ) {
 					palette.update(dt, pad);
 				} else if( K.isPressed(K.ESCAPE) || K.isPressed(K.I) ) closePalette();
@@ -2620,7 +2658,7 @@ class GalaxyApp extends hxd.App {
 	    el casco y el HUD se ocultan un momento) y mira si queda magenta en algun punto de los cuatro bordes de la ventana. Se
 	    usa un color y no el alfa porque el mapa de estrellas suma sus capas (blend Add): su alfa es 1 aunque deje ver el fondo. */
 	public function devCover( ?name : String ) : String {
-		var top : h2d.Object = shop != null ? shop : chest != null ? chest : palette != null ? palette : explorer != null ? explorer : current != null ? ui : null;
+		var top : h2d.Object = shop != null ? shop : contracts != null ? contracts : chest != null ? chest : palette != null ? palette : explorer != null ? explorer : current != null ? ui : null;
 		if( top == null ) return "nada abierto";
 		var hidden = [];
 		for( o in s2d )

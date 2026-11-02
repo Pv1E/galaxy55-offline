@@ -1,4 +1,4 @@
-# fondos de pantalla completa (menus, tienda, paleta, mapa de estrellas) en ventanas mas anchas y mas altas que 16:9:
+# fondos de pantalla completa (menus, tienda, contratos, paleta, mapa de estrellas) en ventanas mas anchas y mas altas que 16:9:
 # cada "cover" debe decir OK (Theme.fullRect / Theme.coverWindow); SIN TAPAR = queda una banda sin tapar en ese borde.
 # port/out/cover_*.png muestra solo lo que estaba abierto; los shot, la ventana entera. La cantina (cofre) no es modal y no
 # tapa la ventana: solo se captura (el panel se ve entero).
@@ -21,6 +21,11 @@ shop
 wait 5
 cover tienda_ancha
 shot fullwindow_tienda_ancha
+close
+wait 5
+contracts
+wait 5
+cover contratos_ancha
 close
 wait 5
 activate 64 64 120
@@ -55,6 +60,11 @@ shop
 wait 5
 cover tienda_alta
 shot fullwindow_tienda_alta
+close
+wait 5
+contracts
+wait 5
+cover contratos_alta
 close
 wait 5
 activate 64 64 120

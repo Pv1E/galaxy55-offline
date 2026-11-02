@@ -39,6 +39,9 @@ import Common;
  *   mine x y z              excavar ese bloque con el excavador y decir cuanto tarda (y con que potencia)
  *   print inv|pos|zones|drops|loose|chest|msg|shake|fade|block x y z|blockl x y z|around x y z r|select|ship|map [z]|palette|time|power|life|fov|sky|menu
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
+ *   contracts [close]       abrir y cerrar los contratos de la ESCorp; contracts slot N impone el periodo (-1 = la hora real);
+ *                           contracts fill i da los bloques del contrato i; deliver i lo entrega; print contracts;
+ *                           contracts load RUTA lee otro contracts.json
  *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
  *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
  *   shot nombre             captura en port/out/nombre.png ("%b" en el nombre = bioma del planeta)
@@ -509,6 +512,7 @@ class Dev {
 					@:privateAccess {
 						app.closeChest();
 						app.closeShop();
+						app.closeContracts();
 						app.closePalette();
 						if( app.explorer != null ) app.devLandHome(); // del mapa se sale aterrizando
 						if( app.current != null ) app.resume();
@@ -586,6 +590,24 @@ class Dev {
 				case "chestclick": if( app.chest != null ) app.chest.click(Std.parseInt(a[1]), Std.parseInt(a[2]));
 				case "chestfocus": if( app.chest != null ) app.chest.devFocus(Std.parseInt(a[1]), Std.parseInt(a[2]));
 				case "shopclose": if( app.shop != null ) @:privateAccess app.closeShop();
+				case "contracts":
+					switch( a[1] ) {
+					case null: app.openContracts();
+					case "close": app.closeContracts();
+					case "slot":
+						var s = Std.parseInt(a[2]);
+						Contracts.devSlot = s < 0 ? null : s;
+					case "fill":
+						var c = Contracts.board(Contracts.slot())[Std.parseInt(a[2])];
+						g.inv.addBlocks(c.block, c.n);
+					case "load": @:privateAccess Contracts.config = Contracts.load(a[2]);
+					default:
+					}
+				case "deliver":
+					// deliver i: entrega el contrato i (con el panel abierto, como su boton)
+					var i = Std.parseInt(a[1]);
+					var ok = app.contracts != null ? app.contracts.deliver(i) : Contracts.deliver(g.info, g.inv, i);
+					Sys.println("deliver " + i + " -> " + (ok ? "entregado" : "rechazado") + " creditos=" + g.info.credits);
 				case "shopnav": if( app.shop != null ) app.shop.devNav(Std.parseInt(a[1]), Std.parseInt(a[2]), a[3] == "a");
 				case "buy", "sell":
 					// buy CLAVE n / sell CLAVE n (clave de Market: b<bloque> o c<carga>; o el nombre del bloque, p.ej. BWood)
@@ -747,6 +769,14 @@ class Dev {
 			Sys.println("luz " + s + " huecos a oscuras " + dark);
 		case "credits":
 			Sys.println("creditos: " + g.info.credits);
+		case "contracts":
+			// periodo, tablero (bloque, cantidad, recompensa, lo que llevas, entregado), tiempo hasta el siguiente y creditos
+			var board = Contracts.board(Contracts.slot());
+			Sys.println("contratos: periodo " + Contracts.slot() + " | " + [for( i in 0...board.length ) {
+				var c = board[i];
+				i + " " + c.block.k + " x" + c.n + " +" + c.reward + " llevas " + Contracts.have(g.inv, c.block) + (Contracts.isDone(g.info, i) ? " ENTREGADO" : "");
+			}].join(" | ") + " | quedan " + Std.int(Contracts.remaining()) + " s creditos=" + g.info.credits + " panel=" + (app.contracts != null)
+				+ " boton=" + (@:privateAccess app.computerContracts == null ? "-" : "" + @:privateAccess app.computerContracts.enabled));
 		case "menu":
 			// botones del menu abierto (etiqueta y y), de arriba abajo
 			Sys.println("menu: " + (@:privateAccess app.current == null ? "cerrado" : [for( wd in @:privateAccess app.current.widgets ) @:privateAccess wd.label.text + "@" + Std.int(wd.y)].join(" | ")));

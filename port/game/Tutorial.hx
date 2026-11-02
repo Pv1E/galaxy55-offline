@@ -12,7 +12,7 @@ typedef TutoTarget = { x : Int, y : Int, z : Int };
  * BAUXITE  minar 2 bauxitas                        RETURN   volver a la nave por el rayo
  * ALU      bauxita -> aluminio en el sintetizador  PLATES   aluminio -> blindaje
  * COMPUTER ordenador de a bordo, Modificar la nave HANGAR   tapar los agujeros (solo ahi y solo blindaje)
- * LEAVE    salir del hangar con la nave estanca    DONE     la ESCorp envia cargas y se acaba
+ * LEAVE    salir del hangar con la nave estanca    DONE     la ESCorp envia cargas y creditos y se acaba
  * Mientras dura no se despega (GalaxyApp.buildComputer). El paso se guarda en SaveInfo.tuto.
  */
 class Tutorial {
@@ -81,6 +81,7 @@ class Tutorial {
 	function finish( g : GameView ) {
 		g.inv.addCharge(CBlue, TutoSetup.GIFT);
 		g.inv.addCharge(CYellow, TutoSetup.GIFT);
+		g.info.credits = (g.info.credits == null ? 0 : g.info.credits) + Market.START_CREDITS;
 		g.info.tuto = null;
 		doneTime = DONE_TIME;
 		if( onDone != null ) onDone();
