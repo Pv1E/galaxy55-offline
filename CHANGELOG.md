@@ -11,6 +11,16 @@
   endereza y aterriza sola. El haz de luz marca dónde quedará: a toda velocidad se desvanece y vuelve al ir
   despacio, al pararse y al aterrizar. Solo en los planetas jugables: no en la nave nodriza, el hangar ni
   durante el tutorial. El sitio se guarda por planeta, también a mitad del vuelo; las partidas anteriores no cambian.
+- De **Cornor923** (¡gracias!, PR 60-63):
+  - **Contratos de la ESCorp** (añadido del port; en el original los hacía el servidor y se perdieron): botón "Contratos
+    (ESCorp)" del ordenador de a bordo con 3 contratos para entregar bloques a cambio de créditos (uno de base de los bloques
+    triviales del original y dos encargos). El tablero es el mismo para todos y cambia cada 30 minutos de hora real; lo
+    entregado se guarda con la partida. Se configura en `contracts.json` sin recompilar. Desactivado durante el tutorial. Los
+    créditos de salida bajan de 500 a 200 y la ESCorp los envía al acabar el tutorial (0 mientras dura).
+  - La lava hace explotar la bomba antigua (cambio del port: el original la rompía y la soltaba, como sigue haciendo el agua).
+  - Con un bloque en la mano se pone delante de plantas, modelos y bloques parciales (antes no se podía), y las hierbas y
+    estalactitas se pisan al poner, como en el original.
+  - Desde dentro de la nave, el marco de una ventana ya no se pisa con un neón pegado por fuera (cara trasera oculta, como el original).
 
 ## v0.5 — pre-release
 - Arreglos de Cornor923 (¡gracias!), integrados desde sus PR 17-30 (cambio del port): sin gasto de oxígeno bajo el agua en

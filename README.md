@@ -39,7 +39,7 @@ It was shut down and its server no longer exists. This project ports it to a **n
 
 Start menu, saved games, planets identical to the original ones (verified by hash against Flash), digging and placing blocks, jetpack,
 creative mode (our addition), the ship with its teleporter, doors, synthesizer with the original recipes and the on-board computer
-(from which you can also pilot the ship over the planet, our addition),
+(from which you can also pilot the ship over the planet and take ESCorp contracts, our additions),
 the **hangar** to rebuild your ship, **sound**, **flowing water** (the original's), and the **star map** (sector, solar systems,
 scanning, landing, GPS arrows) with the **merchant robot**: follow it, dock and trade in its ship.
 
@@ -115,7 +115,7 @@ El objetivo es ser fiel al original; lo que añadimos está marcado como tal.
 
 Menú de inicio, partidas guardadas, planetas idénticos a los del original (verificado por hash contra Flash),
 excavar y colocar, jetpack, modo creativo (añadido nuestro), la nave con teletransportador, puertas, sintetizador con las
-recetas del original y ordenador de a bordo (desde el que también se pilota la nave sobre el planeta, añadido nuestro), el **hangar** para rehacer tu nave, el **sonido**, el **agua que fluye** (la del
+recetas del original y ordenador de a bordo (desde el que también se pilota la nave sobre el planeta y se cumplen contratos de la ESCorp, añadidos nuestros), el **hangar** para rehacer tu nave, el **sonido**, el **agua que fluye** (la del
 original) y el **mapa de estrellas** (sector, sistemas solares, escaneo, aterrizaje, flechas GPS) con el **robot comerciante**:
 lo sigues, te acoplas y comercias en su nave. También la vida y el oxígeno (caídas, lava, ahogarse) y las olas del agua del
 original. Falta dar más profundidad al viaje espacial (combustible y otras ideas en [`IDEAS.md`](IDEAS.md)) y una opción de
@@ -181,7 +181,7 @@ L'objectif est de rester fidèle à l'original ; ce que nous ajoutons est signal
 
 Menu de démarrage, parties sauvegardées, planètes identiques à celles de l'original (vérifié par empreinte face à la version Flash),
 creuser et poser des blocs, jetpack, mode créatif (notre ajout), le vaisseau avec son téléporteur, les portes, le synthétiseur avec
-les recettes d'origine et l'ordinateur de bord (d'où l'on pilote aussi le vaisseau au-dessus de la planète, notre ajout), le **hangar** pour refaire ton vaisseau, le **son**, l'**eau qui s'écoule** (celle
+les recettes d'origine et l'ordinateur de bord (d'où l'on pilote aussi le vaisseau au-dessus de la planète et remplit des contrats ESCorp, nos ajouts), le **hangar** pour refaire ton vaisseau, le **son**, l'**eau qui s'écoule** (celle
 de l'original) et la **carte stellaire** (secteur, systèmes solaires, scan, atterrissage, flèches GPS) avec le **robot marchand** :
 tu le suis, tu t'amarres et tu fais du commerce dans son vaisseau. Aussi la vie et l'oxygène (chutes, lave, noyade) et les
 vagues de l'eau de l'original. Il reste à donner plus de profondeur au voyage spatial (carburant et autres idées dans

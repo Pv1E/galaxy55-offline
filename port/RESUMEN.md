@@ -57,6 +57,17 @@ etiqueta `flash-version` y la rama `flash`, con sus SWF y archivos de compilaci�
   `gotoShip`. Órdenes nuevas: `pilotkeys`, `pilotland`.
   Tercera vuelta (Pvie: el haz molesta en vuelo, pero hace falta para saber dónde aterriza): el haz se desvanece con la velocidad
   (`GameView.pilotBeam`, `Ship.setBeamFade`: entero hasta 3 bloques/s, nada desde 9, entero al aterrizar).
+- PR 60-63 de Cornor923 (fusionados 2026-11-02):
+  - 60, contratos de la ESCorp (añadido del port): `Contracts.hx` (tablero sorteado con el número del periodo UTC como semilla,
+    1 contrato de base de `Data.BASIC_BLOCKS` + 2 encargos, recompensa 1,5x el mejor precio de venta del robot + cargas),
+    `ContractPanel.hx`, datos en `src/G55/fla/client/gfx/contracts.json` (copiado por `package.ps1`), `SaveInfo.contracts`
+    opcional. Botón del ordenador de a bordo desactivado en el tutorial. `Market.START_CREDITS` 500 -> 200, entregados en
+    `Tutorial.finish`. `showToast` acepta duración (aviso de la ESCorp 7 s). Guiones `contrats`, `contrats_tuto`, `contrats_json`.
+  - 61, la lava hace explotar la bomba antigua (cambio del port): `WorldProcess.flowBreak` -> `GameView.lavaBomb` (a `bombQueue`;
+    en hangar y nodriza se rompe). El agua la sigue soltando como el original. Guion `bomb_liquids`.
+  - 62, poner delante de modelos y bloques parciales (como `Render.pick` del original): `GameView.pick` toma la celda por la que
+    llega el rayo; con bloque en la mano se ignoran los que `Block.canOverride` permite pisar; `place` usa `canOverride`. Guion `place_front`.
+  - 63, pasada opaca de `BTAlpha` (marco del cristal) con `culling = Back` como el original (`World.hx`). Guion `ventana_neon`.
 
 ## Qué falló y cómo se resolvió
 | Problema | Causa | Solución |

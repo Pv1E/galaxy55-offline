@@ -122,6 +122,13 @@ se inclina en las curvas y aterriza sola con suavidad (detalle en RESUMEN). El g
 Segunda prueba de Pvie: el haz molestaba en vuelo. Ahora se desvanece a toda velocidad y vuelve al ir despacio, al pararse y
 al aterrizar (opción elegida por Pvie entre varias).
 
+## PR 60-63 de Cornor923 integrados (2026-11-02)
+Fusionados en local en `port-hashlink`, en orden 60, 61, 62, 63, sin conflictos. Compilan SDL y DX. Pasan sus guiones (datos
+en carpeta temporal): `contrats`, `contrats_tuto`, `contrats_json`, `bomb_liquids`, `place_front`, `ventana_neon` y
+`fullwindow`. Contenido: contratos de la ESCorp (60, añadido del port; créditos de salida 500 -> 200 al acabar el tutorial),
+la lava hace explotar la bomba antigua (61, cambio del port), poner delante de modelos y bloques parciales (62, como el
+original) y cara trasera oculta en el marco del cristal (63, como el original). Detalle en RESUMEN. Sin subir aún a GitHub.
+
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;

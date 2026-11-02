@@ -12,6 +12,16 @@
   et revient en allant doucement, à l'arrêt et à l'atterrissage. Seulement sur les planètes jouables : pas
   dans le vaisseau-mère, le hangar ni pendant le tutoriel. L'endroit est enregistré par planète, même en plein vol ; les
   parties précédentes ne changent pas.
+- De **Cornor923** (merci !, PR 60-63) :
+  - **Contrats ESCorp** (ajout du portage ; dans l'original ils étaient gérés par le serveur et sont perdus) : bouton
+    « Contrats (ESCorp) » de l'ordinateur de bord avec 3 contrats pour livrer des blocs contre des crédits (un contrat de base
+    parmi les blocs triviaux de l'original et deux commandes). Le tableau est le même pour tous et change toutes les 30 minutes
+    réelles ; les livraisons sont enregistrées avec la partie. Réglable dans `contracts.json` sans recompiler. Désactivé pendant
+    le tutoriel. Les crédits de départ passent de 500 à 200, envoyés par l'ESCorp à la fin du tutoriel (0 pendant).
+  - La lave fait exploser la bombe antique (changement du portage : l'original la cassait et la lâchait, comme l'eau le fait toujours).
+  - Avec un bloc en main, il se pose devant les plantes, les modèles et les blocs partiels (impossible avant), et les herbes et
+    stalactites sont écrasées en posant, comme dans l'original.
+  - Depuis l'intérieur du vaisseau, le cadre d'une fenêtre ne se mélange plus avec un néon collé dehors (faces arrière cachées, comme l'original).
 
 ## v0.5 — pre-release
 - Corrections de Cornor923 (merci !), intégrées depuis leurs PR 17-30 (changement du port) : pas de consommation d'oxygène sous

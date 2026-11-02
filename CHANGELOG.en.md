@@ -11,6 +11,16 @@
   straightens up and lands by itself. The light beam shows where it will stay: it fades out at full speed and
   comes back when going slowly, stopping or landing. Only on playable planets: not in the mothership, the hangar or during the tutorial.
   The spot is saved per planet, also mid-flight; earlier saved games do not change.
+- From **Cornor923** (thanks!, PRs 60-63):
+  - **ESCorp contracts** (port addition; in the original they were server-side and are lost): "Contracts (ESCorp)" button on
+    the on-board computer with 3 contracts to deliver blocks for credits (one base contract from the original's trivial
+    blocks and two orders). The board is the same for everyone and changes every 30 real minutes; deliveries are saved with
+    the game. Configured in `contracts.json` without rebuilding. Disabled during the tutorial. Starting credits drop from 500
+    to 200, sent by ESCorp at the end of the tutorial (0 during it).
+  - Lava makes the ancient bomb explode (port change: the original broke and dropped it, as water still does).
+  - With a block in hand, it is placed in front of plants, models and partial blocks (it could not be before), and herbs and
+    stalactites are overwritten when placing, as in the original.
+  - From inside the ship, a window frame no longer z-fights with a neon light right outside it (back faces culled, like the original).
 
 ## v0.5 — pre-release
 - Fixes by Cornor923 (thank you!), merged from their PRs 17-30 (port change): no oxygen use underwater in creative; ice next
