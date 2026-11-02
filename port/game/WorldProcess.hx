@@ -196,8 +196,25 @@ class WorldProcess {
 		cover.remove(c);
 		var b = get(c.x, c.y, c.z);
 		var over = get(c.x, c.y, c.z + 1);
-		if( b != null && b.covered != null && (over == null || over.isTransparent()) )
+		if( b != null && b.covered != null && (over == null || over.isTransparent()) && (!snowCover(b) || snowsOn(c.x, c.y, c.z)) )
 			set(c.x, c.y, c.z, b, b.covered);
+	}
+
+	/** tierra glacial y touffe de sapin: su version cubierta lleva nieve encima */
+	static inline function snowCover( b : Block ) : Bool {
+		return b.k == BWinterSoil || b.k == BWinterLeaves;
+	}
+
+	/**
+	 * Cambio del port: la nieve solo cubre un bloque donde nieva, como la nieve que cae (GalaxyApp, Snow): en los planetas de nieve
+	 * (BIWinterPeaks) y al cielo abierto, sin nada que choque encima. El original cubria en cualquier planeta: unas hojas de pino
+	 * llevadas a un planeta de arena se nevaban.
+	 */
+	function snowsOn( x : Int, y : Int, z : Int ) : Bool {
+		if( world.biomeName != "BIWinterPeaks" ) return false;
+		for( zz in z + 1...World.HEIGHT )
+			if( world.collidePoint(real(x) + 0.5, real(y) + 0.5, zz + 0.5) ) return false;
+		return true;
 	}
 
 	/** lo que tapa la cascada o la lava se rompe con sus drops (la bomba antigua se suelta, como con el agua). Cambio del

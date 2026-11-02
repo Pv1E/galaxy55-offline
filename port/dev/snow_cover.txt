@@ -1,0 +1,40 @@
+# la nieve de encima (touffe de sapin, tierra glacial) solo sale donde nieva: planeta de nieve y cielo abierto (WorldProcess.snowsOn).
+# Lanzar en otoño (por defecto) y con --bgbiome=BIWinterPeaks:
+#   otoño: hojas de pino al aire (62,60) -> BWinterLeaves (sin nieve); tierra roja al aire (62,62) -> BSoilCover (la hierba sigue)
+#   nieve: hojas de pino al aire (62,60) -> BWinterLeavesCover; bajo un techo 3 bloques mas arriba (62,61); escena en z = 118, por encima de los picos -> BWinterLeaves
+wait 3
+set 59 61 118 BRock
+set 60 61 118 BRock
+set 61 61 118 BRock
+set 62 60 118 BRock
+set 62 61 118 BRock
+set 62 62 118 BRock
+set 62 61 122 BRock
+tp 60.5 61.5 119 0 0
+wait 5
+slot 1
+hand BSoil
+lookat 62.5 62.5 119
+wait 2
+key place
+wait 10
+unkey
+wait 20
+hand BWinterLeaves
+lookat 62.5 60.5 119
+wait 2
+key place
+wait 10
+unkey
+wait 20
+lookat 62.5 61.5 119
+wait 2
+key place
+wait 10
+unkey
+wait 20
+wait 400
+print block 62 60 119
+print block 62 61 119
+print block 62 62 119
+quit
