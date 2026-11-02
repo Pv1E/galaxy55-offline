@@ -21,6 +21,9 @@
   - Con un bloque en la mano se pone delante de plantas, modelos y bloques parciales (antes no se podía), y las hierbas y
     estalactitas se pisan al poner, como en el original.
   - Desde dentro de la nave, el marco de una ventana ya no se pisa con un neón pegado por fuera (cara trasera oculta, como el original).
+- Arreglos de fallos encontrados por **Sekhmet**: poner un bloque encima de la capa más alta ya no lo gasta sin ponerlo; con la
+  cabeza dentro de una fuente de cascada o de arena movediza se puede apuntar y excavar lo de delante, como en el original; la
+  arena movediza, el hielo y el cristal ya no se ven huecos junto a una cascada (cambio del port).
 
 ## v0.5 — pre-release
 - Arreglos de Cornor923 (¡gracias!), integrados desde sus PR 17-30 (cambio del port): sin gasto de oxígeno bajo el agua en

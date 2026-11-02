@@ -1384,6 +1384,7 @@ class GameView {
 		var curve = hangar != null ? 0. : World.curve(world.size);
 		var lx = Math.floor(ex), ly = Math.floor(ey), lz = Math.floor(ez), have = false;
 		var cx = lx, cy = ly, cz = lz; // celda en la que esta el rayo
+		var sx = lx, sy = ly, sz = lz; // celda de la camara
 		var t = 0.;
 		var ox = ex, oy = ey, oz = ez; // punto anterior del rayo
 		while( t < 7.0 ) {
@@ -1402,7 +1403,9 @@ class GameView {
 			// (no se salta la misma celda: los bloques parciales solo cuentan si el rayo pasa por su caja)
 			// el agua que no se apunta (mar, cascada que cae, agua puesta) no para el rayo: se pone bajo el agua; la fuente de
 			// cascada y la arena movediza si lo paran: se pone contra ellas (Render.pick del original)
-			var b = world.block(ix, iy, iz);
+			// la celda de la camara no cuenta: el original empieza el rayo en su borde (Render.pick), asi con la cabeza dentro de
+			// una fuente de cascada o de arena movediza se apunta a lo de delante
+			var b = ix == sx && iy == sy && iz == sz ? null : world.block(ix, iy, iz);
 			// con un bloque en la mano tampoco lo paran las hierbas ni las estalactitas: se pisan al poner (Block.canOverride), como
 			// en el original, donde BFDetail les quita PCanPick (aqui se apuntan para romperlas, PortRules)
 			if( b != null && hand != null && b.canOverride() ) b = null;
@@ -1425,8 +1428,8 @@ class GameView {
 						if( b.activable == null && b.toggle == null && !ship.inCraft(ix, iy, iz) ) return null;
 					} else if( !ship.inCraft(lx, ly, lz) )
 						return null; // con un bloque en la mano solo se puede poner dentro de esas zonas
-				} else if( iz >= World.HEIGHT - 1 )
-					return null;
+				} else if( iz >= World.HEIGHT - 1 || (hand != null && lz >= World.HEIGHT - 1) )
+					return null; // con un bloque en la mano cuenta la celda donde iria (Game.update: select.z >= ZSIZE - 1)
 				// con un bloque en la mano no se apunta si donde iria hay algo que no se pisa (Render.pick: "it might be a block which
 				// we can't pick"), p. ej. un modelo por cuyo hueco ha pasado el rayo
 				var old = hand != null ? world.block(lx, ly, lz) : null;
@@ -1648,6 +1651,8 @@ class GameView {
 		// original: hierbas, estalactitas y el liquido que no se apunta (ni la fuente de cascada ni la arena movediza)
 		if( here != null && !here.canOverride() ) return;
 		if( !ok || actionPause > 0 ) return;
+		// fuera del rango del planeta World.setBlock no pone nada: tampoco se gasta el bloque
+		if( !inShip && (z < 1 || z >= World.HEIGHT - 1) ) return;
 		actionPause = creative ? 6 : 15;
 		if( !creative && !inv.useCurrentBlock() ) return;
 		// bien puesto: se quita el aviso que hubiera y no se avisa de nada hasta soltar el boton

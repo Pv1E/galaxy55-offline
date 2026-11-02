@@ -1,0 +1,21 @@
+# cascada junto a arena movediza (informe de Sekhmet, 2026-10-31): la cara de la arena contra la cascada no se dibujaba y se
+# veia a traves. Losa de roca z=46..56; arena movediza en x 64..66 (z=57), fuente de cascada en 61,64,59 (bajo roca) que cae y se extiende por la losa
+wait 3
+planet
+wait 30
+filla 50 50 78 78 57 70 none
+filla 50 50 78 78 46 56 BRock
+filla 64 60 66 68 57 57 BMarsQuickSand
+set 61 64 60 BRock
+setp 61 64 59 BCascadeSource
+wait 300
+print block 63 64 57
+tp 57.5 64.5 57.01 0 0
+lookat 64.5 64.5 57.3
+wait 10
+shot cascada_arena
+tp 64.5 57.5 60.01 0 0
+lookat 63 64.5 57
+wait 10
+shot cascada_arena_arriba
+quit

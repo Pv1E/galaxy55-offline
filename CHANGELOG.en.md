@@ -21,6 +21,9 @@
   - With a block in hand, it is placed in front of plants, models and partial blocks (it could not be before), and herbs and
     stalactites are overwritten when placing, as in the original.
   - From inside the ship, a window frame no longer z-fights with a neon light right outside it (back faces culled, like the original).
+- Fixes for bugs found by **Sekhmet**: placing a block on top of the highest layer no longer uses it up without placing it; with
+  your head inside a cascade source or quicksand you can aim at and dig what is in front, as in the original; quicksand, ice and
+  glass no longer look hollow next to a cascade (port change).
 
 ## v0.5 — pre-release
 - Fixes by Cornor923 (thank you!), merged from their PRs 17-30 (port change): no oxygen use underwater in creative; ice next

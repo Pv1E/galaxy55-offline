@@ -68,6 +68,12 @@ etiqueta `flash-version` y la rama `flash`, con sus SWF y archivos de compilaci�
   - 62, poner delante de modelos y bloques parciales (como `Render.pick` del original): `GameView.pick` toma la celda por la que
     llega el rayo; con bloque en la mano se ignoran los que `Block.canOverride` permite pisar; `place` usa `canOverride`. Guion `place_front`.
   - 63, pasada opaca de `BTAlpha` (marco del cristal) con `culling = Back` como el original (`World.hx`). Guion `ventana_neon`.
+- Fallos de Sekhmet (2026-11-02): `GameView.pick` no apunta con un bloque en la mano si la celda donde iría está en z >= 127
+  (`Game.update` del original: `select.z >= ZSIZE - 1`) y `place` no gasta el bloque fuera de 1..126; la celda de la cámara no
+  cuenta al apuntar (`Render.pick` empieza el rayo en su borde): con la cabeza en una fuente de cascada se apunta lo de delante;
+  `World.openAlphaNear` (cambio del port): las caras de un `BTAlpha` que no es cascada se dibujan contra la cascada, que aquí baja
+  de altura y dejaba ver a través de la arena movediza. Guiones `altura_max`, `fuente_excavar`, `cascada_arena`. La nave que
+  cambia de sitio (ERRORES #15) no se reproduce.
 
 ## Qué falló y cómo se resolvió
 | Problema | Causa | Solución |

@@ -1,0 +1,40 @@
+# poner bloques en lo mas alto (informe de Sekhmet, 2026-11-01): la ultima capa util es z=126 (World.HEIGHT - 2). Encima de un
+# bloque en z=126 no se apunta con un bloque en la mano (como el original: select.z >= ZSIZE - 1) y el bloque no se gasta;
+# al lado de el, en z=126, si se pone. El jugador esta de pie sobre otro bloque de z=126 (pies en z=127)
+wait 3
+planet
+wait 30
+filla 60 60 68 68 120 126 none
+filla 60 60 68 68 119 119 BRock
+set 64 64 120 BRock
+set 64 64 121 BRock
+set 64 64 122 BRock
+set 64 64 123 BRock
+set 64 64 124 BRock
+set 64 64 125 BRock
+set 64 64 126 BRock
+set 62 64 126 BRock
+tp 62.5 64.5 127.01 0 0
+wait 3
+# 1) encima del bloque de z=126: nada que apuntar
+give BWood 3
+slot 10
+lookat 64.5 64.5 126.99
+wait 3
+print select
+print inv
+key place
+wait 10
+unkey
+print block 64 64 127
+print inv
+# 2) contra su lado, en z=126: se pone en 63,64,126
+lookat 63.99 64.5 126.3
+wait 3
+print select
+key place
+wait 10
+unkey
+print block 63 64 126
+print inv
+quit

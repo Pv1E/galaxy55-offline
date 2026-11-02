@@ -128,6 +128,9 @@ en carpeta temporal): `contrats`, `contrats_tuto`, `contrats_json`, `bomb_liquid
 `fullwindow`. Contenido: contratos de la ESCorp (60, añadido del port; créditos de salida 500 -> 200 al acabar el tutorial),
 la lava hace explotar la bomba antigua (61, cambio del port), poner delante de modelos y bloques parciales (62, como el
 original) y cara trasera oculta en el marco del cristal (63, como el original). Detalle en RESUMEN. Sin subir aún a GitHub.
+Después, 3 fallos de Sekhmet arreglados (altura máxima al poner, apuntar con la cabeza en una fuente de cascada, arena
+movediza hueca junto a la cascada) con sus guiones `altura_max`, `fuente_excavar` y `cascada_arena`; pasan también `place_front`,
+`hielo_cascada` y `ventana_neon`. La nave que cambia de sitio (ERRORES #15) no se reproduce: pedir a Sekhmet la partida y la versión.
 
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**

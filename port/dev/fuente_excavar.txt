@@ -1,0 +1,49 @@
+# excavar con fuentes de cascada (informe de Sekhmet, 2026-11-01). Losa de roca z=46..56, ojos en z=58.5
+wait 3
+planet
+wait 30
+filla 54 54 74 74 57 70 none
+filla 54 54 74 74 46 56 BRock
+filla 66 54 66 74 57 60 BRock
+tp 64.5 64.5 57.01 0 0
+wait 10
+# 0) sin fuentes: mirar al muro y al suelo
+lookat 66.5 64.5 58.5
+wait 3
+print select
+lookat 64.5 64.5 56.5
+wait 3
+print select
+# 1) la cabeza dentro de una fuente: mirar al muro (x=66) y al suelo
+set 64 64 58 BCascadeSource
+wait 3
+print block 64 64 58
+lookat 66.5 64.5 58.5
+wait 3
+print select
+lookat 64.5 64.5 56.5
+wait 3
+print select
+# 2) de pie dentro de una fuente (pies y cabeza): mirar abajo
+set 64 64 57 BCascadeSource
+wait 3
+print block 64 64 57
+lookat 64.5 64.5 56.5
+wait 3
+print select
+# 3) apuntar a una fuente de delante y romperla, y mirar si se puede seguir a traves de ella
+set 65 64 58 BCascadeSource
+set 64 64 58 none
+set 64 64 57 none
+wait 3
+lookat 65.5 64.5 58.5
+wait 3
+print select
+mine 65 64 58
+wait 5
+print block 65 64 58
+print block 65 64 57
+lookat 66.5 64.5 58.5
+wait 3
+print select
+quit

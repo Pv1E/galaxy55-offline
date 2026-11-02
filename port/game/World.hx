@@ -312,6 +312,15 @@ class World {
 		return t != BTFull && t != BTAlpha;
 	}
 
+	/**
+	 * openAlpha para las caras de los bloques con alfa que no son cascada (arena movediza, hielo, cristal). Cambio del port: la
+	 * cascada cuenta como abierta, porque aqui baja de altura en cada paso (anadido del port) y por encima de su superficie se
+	 * veia a traves del bloque; en el original era un bloque entero y la cara entre los dos no hacia falta
+	 */
+	inline function openAlphaNear( x : Int, y : Int, z : Int ) : Bool {
+		return openAlpha(x, y, z) || liquidFam(voxel(x, y, z)) == 2;
+	}
+
 	/** Builder.isTransparentNot(p, BTWater) del original: ni bloque lleno ni agua (el aire cuenta como abierto) */
 	inline function waterOpen( x : Int, y : Int, z : Int ) : Bool {
 		var id = voxel(x, y, z);
@@ -1671,12 +1680,12 @@ class World {
 					case BTFull, BTAlpha, BTTransp:
 						var m = b.type == BTFull ? solidBuf : (b.type == BTAlpha ? blendBuf : alphaBuf);
 						var al = b.type == BTAlpha;
-						if( al ? openAlpha(x, y, z + 1) : open(x, y, z + 1) ) addQuadL(m, [fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1], b.tu, su, neg, 0, 0, 1, x, y, z);
-						if( al ? openAlpha(x, y, z - 1) : open(x, y, z - 1) ) addQuadL(m, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz], b.td, sd, neg, 0, 0, -1, x, y, z);
-						if( al ? openAlpha(x - 1, y, z) : open(x - 1, y, z) ) addQuadL(m, [fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1], b.tlr, sx, neg, -1, 0, 0, x, y, z);
-						if( al ? openAlpha(x + 1, y, z) : open(x + 1, y, z) ) addQuadL(m, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1], b.tlr, sx, neg, 1, 0, 0, x, y, z);
-						if( al ? openAlpha(x, y - 1, z) : open(x, y - 1, z) ) addQuadL(m, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1], b.tlr, sy, neg, 0, -1, 0, x, y, z);
-						if( al ? openAlpha(x, y + 1, z) : open(x, y + 1, z) ) addQuadL(m, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1], b.tlr, sy, neg, 0, 1, 0, x, y, z);
+						if( al ? openAlphaNear(x, y, z + 1) : open(x, y, z + 1) ) addQuadL(m, [fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1], b.tu, su, neg, 0, 0, 1, x, y, z);
+						if( al ? openAlphaNear(x, y, z - 1) : open(x, y, z - 1) ) addQuadL(m, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz], b.td, sd, neg, 0, 0, -1, x, y, z);
+						if( al ? openAlphaNear(x - 1, y, z) : open(x - 1, y, z) ) addQuadL(m, [fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1], b.tlr, sx, neg, -1, 0, 0, x, y, z);
+						if( al ? openAlphaNear(x + 1, y, z) : open(x + 1, y, z) ) addQuadL(m, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1], b.tlr, sx, neg, 1, 0, 0, x, y, z);
+						if( al ? openAlphaNear(x, y - 1, z) : open(x, y - 1, z) ) addQuadL(m, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1], b.tlr, sy, neg, 0, -1, 0, x, y, z);
+						if( al ? openAlphaNear(x, y + 1, z) : open(x, y + 1, z) ) addQuadL(m, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1], b.tlr, sy, neg, 0, 1, 0, x, y, z);
 					case BTModel, BTModel2Side, BTSprite:
 						addModel(alphaBuf, b, fx, fy, fz);
 					case BTReduced:

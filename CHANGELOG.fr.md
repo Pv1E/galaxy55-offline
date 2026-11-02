@@ -22,6 +22,9 @@
   - Avec un bloc en main, il se pose devant les plantes, les modèles et les blocs partiels (impossible avant), et les herbes et
     stalactites sont écrasées en posant, comme dans l'original.
   - Depuis l'intérieur du vaisseau, le cadre d'une fenêtre ne se mélange plus avec un néon collé dehors (faces arrière cachées, comme l'original).
+- Corrections de bugs trouvés par **Sekhmet** : poser un bloc au-dessus de la couche la plus haute ne le consomme plus sans le
+  poser ; la tête dans une source de cascade ou dans des sables mouvants, on peut viser et creuser ce qui est devant, comme dans
+  l'original ; les sables mouvants, la glace et le verre ne paraissent plus creux à côté d'une cascade (changement du port).
 
 ## v0.5 — pre-release
 - Corrections de Cornor923 (merci !), intégrées depuis leurs PR 17-30 (changement du port) : pas de consommation d'oxygène sous
