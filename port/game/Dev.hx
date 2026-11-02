@@ -848,7 +848,7 @@ class Dev {
 			Sys.println("potencia " + g.miningPower + " icono " + (ic.visible ? "visible alfa " + Math.round(ic.alpha * 100) / 100 : "no"));
 		case "parts": Sys.println("trozos: " + @:privateAccess g.parts.list.length);
 		case "mips": Sys.println("mipmaps del atlas: " + Math.round(Atlas.mipTime * 1000) + " ms");
-		case "drops": Sys.println("sueltos: " + g.drops.count() + " " + [for( d in @:privateAccess g.drops.list ) d.block.k + " z=" + Math.round(d.z * 100) / 100 + " vida=" + Math.round(d.time * 100) / 100].join("  "));
+		case "drops": Sys.println("sueltos: " + g.drops.count() + " " + [for( d in @:privateAccess g.drops.list ) d.block.k + " z=" + Math.round(d.z * 1000) / 1000 + " vida=" + Math.round(d.time * 100) / 100].join("  "));
 		case "loose":
 			// sueltos con su bloque, cantidad y posicion (en la nave, tambien la local: pilotar la mueve)
 			var w = g.world;

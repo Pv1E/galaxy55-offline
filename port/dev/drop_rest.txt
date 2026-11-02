@@ -1,0 +1,73 @@
+# bloque suelto quieto en el suelo: su altura no debe bailar (antes subia y bajaba cada fotograma, Dummy.updatePos)
+wait 3
+set 60 61 99 BRock
+set 61 61 99 BRock
+tp 63.5 61.5 100 3.14 -0.5
+set 63 61 99 BRock
+drop 60.5 61.5 100.5 BRock
+wait 120
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+print drops
+wait 1
+# sin suelo debajo vuelve a caer
+set 60 61 99 none
+wait 30
+print drops
+quit

@@ -140,8 +140,10 @@ class Drops {
 			else {
 				d.active = true;
 				if( d.vz < 0 ) d.vz *= Math.pow(0.3, dt);
+				// cambio del port: solo se sube si se ha hundido en el suelo (el original subia mientras z - 0.01 chocase: se quedaba
+				// 0.01 por encima, al fotograma siguiente ya no tocaba y volvia a caer, y en el suelo temblaba sin parar)
 				var r = 0;
-				while( r < 20 && (collide(d.x, d.y, d.z - 0.01) || collide(d.x, d.y, d.z + 0.3)) ) {
+				while( r < 20 && (collide(d.x, d.y, d.z) || collide(d.x, d.y, d.z + 0.3)) ) {
 					d.z += 0.01 * dt;
 					r++;
 				}
