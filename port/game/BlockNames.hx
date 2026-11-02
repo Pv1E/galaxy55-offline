@@ -7,7 +7,8 @@ import Common;
  * - ingles: los oficiales de NamesGen.EN que estaban bien y el resto traducido
  * - espanol: NamesGen.ES y los bloques que se anadieron despues
  * Las variantes sin nombre propio (nevadas, giradas, abiertas...) llevan el de su bloque base (ver base()); los bloques
- * internos (hierbas, cascadas...) siguen sin nombre ("-"), como en el original.
+ * internos (cascadas...) siguen sin nombre ("-"), como en el original. Las hierbas de decoracion se recogen (PortRules) y
+ * tienen nombre.
  */
 class BlockNames {
 
@@ -17,6 +18,11 @@ class BlockNames {
 		"BMarsBlueRock" => "Etherium Meteorite", "BMarsCactusFlower" => "Flowering Twister", "BPinkCharge" => "Pink Charge",
 		// monticulo de nieve con una planta de citronox dentro: el nombre de la nieve, para no desvelarla
 		"BWinterHidden" => "Frozen Earth",
+		// hierbas de decoracion: sin nombre en el original (no se recogian); aqui se recogen (PortRules)
+		"BAutumnHerbs1" => "Red Grass", "BAutumnHerbs2" => "Tall Red Grass", "BTreeHerbs" => "Hanging Moss",
+		"BMoonHerbs1" => "Moon Sprout", "BMoonHerbs2" => "Small Moon Sprout", "BWinterHerb1" => "Frosted Grass",
+		"BWinterHerb2" => "Short Frosted Grass", "BWinterHerb3" => "Low Frosted Grass", "BMarsHerb1" => "Low Sand Grass",
+		"BMarsHerb2" => "Short Sand Grass", "BMarsHerb3" => "Sand Grass",
 		"BBedrock" => "Bedrock", "BWater" => "Water", "BSoil" => "Red Earth", "BSoilCover" => "Red Earth", "BRock" => "Rock",
 		"BWood" => "Wood", "BGreenLeaves" => "Green Leaves", "BYellowCrystalLight" => "Old Citronox", "BPinkFlower" => "Wood Rose",
 		"BChampiLight" => "Mushlite", "BAutumnStraw" => "Stellar Straw", "BVines" => "Creeping Vines", "BCactus" => "Cactus",
@@ -69,6 +75,10 @@ class BlockNames {
 		"BMarsBlueRock" => "Meteorito de eterium", "BMarsCactusFlower" => "Cactus salvaje florido", "BPinkCharge" => "Carga rosa",
 		"BWinterHidden" => "Tierra glacial",
 		"BWinterFlowerDeleted" => "-",
+		"BAutumnHerbs1" => "Hierba roja", "BAutumnHerbs2" => "Hierba roja alta", "BTreeHerbs" => "Musgo colgante",
+		"BMoonHerbs1" => "Brote lunar", "BMoonHerbs2" => "Brote lunar pequeño", "BWinterHerb1" => "Hierba escarchada",
+		"BWinterHerb2" => "Hierba escarchada corta", "BWinterHerb3" => "Hierba escarchada rasa", "BMarsHerb1" => "Hierba de arena rasa",
+		"BMarsHerb2" => "Hierba de arena corta", "BMarsHerb3" => "Hierba de arena",
 		"BBonusSmall" => "Cristal de bonus pequeño", "BBonusMedium" => "Cristal de bonus", "BBonusLarge" => "Cristal de bonus grande", "BBonusCharge" => "Carga de bonus",
 		"BDeadRock" => "Roca muerta", "BDeadSoil" => "Tierra muerta", "BDeadSwamp" => "Pantano muerto", "BDeadTree" => "Árbol muerto",
 		"BDarkLeaves" => "Hojas oscuras",
@@ -82,6 +92,10 @@ class BlockNames {
 		"BMarsBlueRock" => "Météorite d'etherium", "BMarsCactusFlower" => "Tortillant fleuri", "BPinkCharge" => "Charge rose",
 		"BWinterHidden" => "Terre glaciale",
 		"BWinterFlowerDeleted" => "-",
+		"BAutumnHerbs1" => "Herbe rouge", "BAutumnHerbs2" => "Grande herbe rouge", "BTreeHerbs" => "Mousse pendante",
+		"BMoonHerbs1" => "Pousse lunaire", "BMoonHerbs2" => "Petite pousse lunaire", "BWinterHerb1" => "Herbe givrée",
+		"BWinterHerb2" => "Herbe givrée courte", "BWinterHerb3" => "Herbe givrée rase", "BMarsHerb1" => "Herbe des sables rase",
+		"BMarsHerb2" => "Herbe des sables courte", "BMarsHerb3" => "Herbe des sables",
 		"BBonusSmall" => "Petit cristal bonus", "BBonusMedium" => "Cristal bonus", "BBonusLarge" => "Gros cristal bonus", "BBonusCharge" => "Charge bonus",
 		"BDeadRock" => "Roche morte", "BDeadSoil" => "Terre morte", "BDeadSwamp" => "Marais mort", "BDeadTree" => "Arbre mort",
 		"BDarkLeaves" => "Feuillage sombre",

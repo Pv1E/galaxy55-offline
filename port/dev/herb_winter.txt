@@ -1,0 +1,74 @@
+# hierba helada (BWinterHerb*): al romperla se recoge la misma hierba (33 %), no hierba alta (BHighHerb1); se vuelve a poner en el
+# suelo y lleva nombre (shot herb_winter: el nombre en la barra del inventario)
+wait 3
+set 59 61 99 BRock
+set 60 61 99 BRock
+set 61 61 99 BRock
+set 62 61 99 BRock
+tp 59.5 61.5 100 0 0
+wait 5
+slot 0
+set 61 61 100 BWinterHerb1
+wait 2
+lookat 61.5 61.5 100.12
+key dig
+wait 100
+unkey
+set 61 61 100 BWinterHerb1
+wait 2
+lookat 61.5 61.5 100.12
+key dig
+wait 100
+unkey
+set 61 61 100 BWinterHerb1
+wait 2
+lookat 61.5 61.5 100.12
+key dig
+wait 100
+unkey
+set 61 61 100 BWinterHerb1
+wait 2
+lookat 61.5 61.5 100.12
+key dig
+wait 100
+unkey
+set 61 61 100 BWinterHerb1
+wait 2
+lookat 61.5 61.5 100.12
+key dig
+wait 100
+unkey
+set 61 61 100 BWinterHerb1
+wait 2
+lookat 61.5 61.5 100.12
+key dig
+wait 100
+unkey
+set 61 61 100 BWinterHerb1
+wait 2
+lookat 61.5 61.5 100.12
+key dig
+wait 100
+unkey
+set 61 61 100 BWinterHerb1
+wait 2
+lookat 61.5 61.5 100.12
+key dig
+wait 100
+unkey
+wait 100
+print loose
+print inv
+# ponerla: con la hierba en la mano, en el suelo delante
+set 61 61 100 none
+slot 1
+hand BWinterHerb1
+lookat 62.5 61.5 100
+wait 2
+print select
+key place
+wait 10
+unkey
+print block 62 61 100
+shot herb_winter
+quit
