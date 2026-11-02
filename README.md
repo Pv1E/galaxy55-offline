@@ -15,7 +15,7 @@ It was shut down and its server no longer exists. This project ports it to a **n
 
 | I want to… | Look at |
 |---|---|
-| **Play without compiling** | [pre-release v0.5](../../releases/tag/v0.5): download the zip, unzip it, run `jugar.bat` |
+| **Play without compiling** | [pre-release v0.6](../../releases/tag/v0.6): download the zip, unzip it, run `jugar.bat` |
 | **Controls and how to build** | [`port/README.md`](port/README.md) |
 | **See or report bugs** | [`BUGS.md`](BUGS.md) (known bugs); to report a new one, open an *issue* or message me |
 | **See what is missing** | [`TODO.md`](TODO.md) (to-do list) |
@@ -26,10 +26,10 @@ It was shut down and its server no longer exists. This project ports it to a **n
 
 ## Play in 3 steps
 
-1. Download the zip from the [pre-release v0.5](../../releases/tag/v0.5) and **unzip everything** (keep all its folders).
+1. Download the zip from the [pre-release v0.6](../../releases/tag/v0.6) and **unzip everything** (keep all its folders).
 2. Check that there is a **`res/`** folder next to `galaxy55.hl` (with `texture.png`, `lazer.png`… inside). If you see loose files named
    like `res\texture.png` instead, extraction failed: unzip again with a different program. (Symptom: `Can't read res/texture.png`.)
-3. Windows: double-click `jugar.bat` (if it doesn't open, `jugar_dx.bat`). **Linux / macOS (not tested by us):** download the `galaxy55-offline-v0.5-linux-mac.zip` from the release,
+3. Windows: double-click `jugar.bat` (if it doesn't open, `jugar_dx.bat`). **Linux / macOS (not tested by us):** download the `galaxy55-offline-v0.6-linux-mac.zip` from the release,
    install [HashLink](https://github.com/HaxeFoundation/hashlink) (`brew install hashlink` on macOS) and run `sh jugar.sh`. (A player got it running on Linux; tell us how it goes.)
    The language (Spanish, English, French), VSync and the FPS limit are changed in Options.
 
@@ -93,7 +93,7 @@ El objetivo es ser fiel al original; lo que añadimos está marcado como tal.
 
 | Quiero… | Mira |
 |---|---|
-| **Jugar sin compilar** | [pre-release v0.5](../../releases/tag/v0.5): descarga el zip, descomprímelo y abre `jugar.bat` |
+| **Jugar sin compilar** | [pre-release v0.6](../../releases/tag/v0.6): descarga el zip, descomprímelo y abre `jugar.bat` |
 | **Controles y cómo compilar** | [`port/LEEME.md`](port/LEEME.md) |
 | **Ver o avisar de errores** | [`ERRORES.md`](ERRORES.md); para avisar de uno nuevo, abre un *issue* o escríbeme |
 | **Saber qué falta por hacer** | [`PENDIENTES.md`](PENDIENTES.md) |
@@ -104,10 +104,10 @@ El objetivo es ser fiel al original; lo que añadimos está marcado como tal.
 
 ### Jugar en 3 pasos
 
-1. Descarga el zip de la [pre-release v0.5](../../releases/tag/v0.5) y **descomprímelo entero** (con todas sus carpetas).
+1. Descarga el zip de la [pre-release v0.6](../../releases/tag/v0.6) y **descomprímelo entero** (con todas sus carpetas).
 2. Comprueba que hay una carpeta **`res/`** junto a `galaxy55.hl` (con `texture.png`, `lazer.png`… dentro). Si en vez de eso ves
    archivos sueltos llamados `res\texture.png`, la extracción falló: vuelve a descomprimir con otro programa. (Síntoma: `Can't read res/texture.png`.)
-3. Windows: doble clic en `jugar.bat` (si no abre, `jugar_dx.bat`). **Linux / macOS (sin probar por nosotros):** descarga `galaxy55-offline-v0.5-linux-mac.zip` de la release,
+3. Windows: doble clic en `jugar.bat` (si no abre, `jugar_dx.bat`). **Linux / macOS (sin probar por nosotros):** descarga `galaxy55-offline-v0.6-linux-mac.zip` de la release,
    instala [HashLink](https://github.com/HaxeFoundation/hashlink) (`brew install hashlink` en macOS) y ejecuta `sh jugar.sh`. (Un jugador lo ha hecho funcionar en Linux; cuéntanos qué tal.)
    El idioma (español, inglés, francés), la sincronización vertical (VSync) y el límite de FPS se cambian en Opciones.
 
@@ -159,7 +159,7 @@ L'objectif est de rester fidèle à l'original ; ce que nous ajoutons est signal
 
 | Je veux… | Voir |
 |---|---|
-| **Jouer sans compiler** | [pré-version v0.5](../../releases/tag/v0.5) : télécharge le zip, décompresse-le et lance `jugar.bat` |
+| **Jouer sans compiler** | [pré-version v0.6](../../releases/tag/v0.6) : télécharge le zip, décompresse-le et lance `jugar.bat` |
 | **Les commandes et la compilation** | [`port/LISEZMOI.md`](port/LISEZMOI.md) |
 | **Voir ou signaler des bugs** | [`BUGS.fr.md`](BUGS.fr.md) (bugs connus) ; pour en signaler un nouveau, ouvre une *issue* ou écris-moi |
 | **Voir ce qui manque** | [`TODO.fr.md`](TODO.fr.md) (liste des tâches) |
@@ -170,10 +170,10 @@ L'objectif est de rester fidèle à l'original ; ce que nous ajoutons est signal
 
 ### Jouer en 3 étapes
 
-1. Télécharge le zip de la [pré-version v0.5](../../releases/tag/v0.5) et **décompresse-le entièrement** (avec tous ses dossiers).
+1. Télécharge le zip de la [pré-version v0.6](../../releases/tag/v0.6) et **décompresse-le entièrement** (avec tous ses dossiers).
 2. Vérifie qu'il y a un dossier **`res/`** à côté de `galaxy55.hl` (avec `texture.png`, `lazer.png`… dedans). Si tu vois à la place
    des fichiers isolés nommés `res\texture.png`, l'extraction a échoué : décompresse à nouveau avec un autre programme. (Symptôme : `Can't read res/texture.png`.)
-3. Windows : double-clic sur `jugar.bat` (s'il ne s'ouvre pas, `jugar_dx.bat`). **Linux / macOS (non testé par nous) :** télécharge `galaxy55-offline-v0.5-linux-mac.zip` depuis la release,
+3. Windows : double-clic sur `jugar.bat` (s'il ne s'ouvre pas, `jugar_dx.bat`). **Linux / macOS (non testé par nous) :** télécharge `galaxy55-offline-v0.6-linux-mac.zip` depuis la release,
    installe [HashLink](https://github.com/HaxeFoundation/hashlink) (`brew install hashlink` sur macOS) et lance `sh jugar.sh`. (Un joueur l'a fait fonctionner sous Linux ; dis-nous comment ça se passe.)
    La langue (espagnol, anglais, français), la synchronisation verticale (VSync) et la limite d'images par seconde se changent dans les Options.
 

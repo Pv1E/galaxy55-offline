@@ -1,19 +1,16 @@
-## Galaxy 55 (offline) v0.5 — port nativo para Windows (y Linux/macOS con HashLink)
+## Galaxy 55 (offline) v0.6 — port nativo para Windows (y Linux/macOS con HashLink)
 
 Port **no oficial** de Galaxy 55 (Motion Twin, 2012) a una aplicación nativa (Haxe + Heaps + HashLink). Sin Flash, sin navegador y sin servidor.
 
 **Cómo jugar (Windows):** descomprime la carpeta entera y haz doble clic en `jugar.bat`. Si no abre (equipos sin OpenGL 3.2 o máquinas virtuales), usa `jugar_dx.bat`, la versión DirectX. No hay que instalar nada. Las partidas se guardan en `%APPDATA%\Galaxy55\`.
 **Linux y macOS:** zip aparte; necesita HashLink 1.16 instalado (ver su `LEEME.txt`).
 
-### Novedades de la v0.5
-- **Menú de inicio nuevo**: Continuar abre la lista de partidas (jugar, renombrar, borrar); Nueva partida pide nombre, semilla y modo (Creativo: bioma y tamaño; Aventura: tutorial sí/no).
-- **Tutorial guiado** (añadido del port): las partidas de aventura nuevas empiezan en el espacio con el inventario vacío, como el original. Se puede saltar.
-- Más del original: la cámara y el HUD tiemblan al romper bloques y al aterrizar; el **turbo minero** funciona; recuperas vida en tu nave; la **bomba exótica** explota; Mayús+K funde a blanco y te devuelve a la nave.
-- Bajo el agua: campo de visión más estrecho y cielo del color del líquido; el nivel del mar baja al inundar huecos.
-- Gráficos como el original: cielo estrellado en los planetas, mipmaps (el paisaje lejano ya no parpadea), marco de selección, bloques soltados, iconos y barra de carga.
-- F2 guarda una captura sin el HUD; F muestra u oculta las coordenadas y los FPS.
-- Hangar: soportes que funcionan, sin líquidos ni bomba, sin daño, puertas abiertas que ya no cuentan como agujero.
-- Arreglos de **Cornor923** (¡gracias!, PR 17-59, también autor de casi todo lo anterior): oxígeno en creativo, hielo junto al agua, paleta creativa, tras morir te quedas en la nave, intercambios guardados en la nave nodriza, nave del mapa y más.
+### Novedades de la v0.6
+- **Pilotar la nave** (añadido del port): desde el ordenador de a bordo, "Pilotar la nave" la mueve sobre el planeta (WASD o palanca izquierda; E, Esc, B o Start la dejan y aterriza sola). El sitio se guarda por planeta.
+- **Contratos de la ESCorp** (añadido del port, de **Cornor923**): botón "Contratos (ESCorp)" del ordenador de a bordo; entrega bloques a cambio de créditos. El tablero es el mismo para todos y cambia cada 30 minutos. **Las partidas nuevas empiezan con 200 créditos (antes 500), que llegan al acabar el tutorial, o desde el principio sin tutorial**; las partidas guardadas conservan los suyos.
+- De **Cornor923** (¡gracias!, PR 60-63): la lava hace explotar la bomba antigua (cambio del port); se ponen bloques delante de plantas, modelos y bloques parciales; el marco de la ventana de la nave ya no se mezcla con el neón de fuera.
+- Arreglos de fallos encontrados por **Sekhmet** (¡gracias!): poner un bloque encima de la capa más alta ya no lo gasta sin ponerlo; con la cabeza dentro de una fuente de cascada o de arena movediza se puede excavar lo de delante; la arena movediza, el hielo y el cristal ya no se ven huecos junto a una cascada.
+- La nave que cambiaba de sitio al reabrir una partida era un fallo de la v0.4, ya arreglado desde la v0.5.
 
 Todo en el [CHANGELOG](../CHANGELOG.md).
 
@@ -24,22 +21,19 @@ Todo en el [CHANGELOG](../CHANGELOG.md).
 
 ---
 
-## Galaxy 55 (offline) v0.5 — native port for Windows (and Linux/macOS with HashLink)
+## Galaxy 55 (offline) v0.6 — native port for Windows (and Linux/macOS with HashLink)
 
 **Unofficial** port of Galaxy 55 (Motion Twin, 2012) to a native application (Haxe + Heaps + HashLink). No Flash, no browser and no server.
 
 **How to play (Windows):** unzip the whole folder and double-click `jugar.bat`. If it doesn't open (PCs without OpenGL 3.2 or virtual machines), use `jugar_dx.bat`, the DirectX build. Nothing to install. Saves go to `%APPDATA%\Galaxy55\`.
 **Linux and macOS:** separate zip; it needs HashLink 1.16 installed (see its `LEEME.txt`).
 
-### New in v0.5
-- **New start menu**: Continue opens the saved games list (play, rename, delete); New game asks for name, seed and mode (Creative: biome and size; Adventure: tutorial yes/no).
-- **Guided tutorial** (port addition): new adventure games start in space with an empty inventory, like the original. It can be skipped.
-- More from the original: the camera and the HUD shake when blocks break and when you land; the **mining turbo** works; you regain life in your ship; the **ancient bomb** explodes; Shift+K fades to white and takes you back to the ship.
-- Under water: a narrower field of view and a sky the colour of the liquid; the sea level drops when flooding holes.
-- Graphics like the original: starry sky on planets, mipmaps (the far landscape no longer flickers), selection frame, dropped blocks, icons and loading bar.
-- F2 saves a screenshot without the HUD; F shows or hides the coordinates and FPS.
-- Hangar: working supports, no liquids or bomb, no damage, open doors no longer count as holes.
-- Fixes by **Cornor923** (thank you!, PRs 17-59, who also made almost everything above): oxygen in creative, ice next to water, creative palette, you stay in the ship after dying, trades saved in the mothership, the map's ship and more.
+### New in v0.6
+- **Pilot the ship** (port addition): from the on-board computer, "Pilot the ship" moves it over the planet (WASD or left stick; E, Esc, B or Start leave it and it lands by itself). The spot is saved per planet.
+- **ESCorp contracts** (port addition, by **Cornor923**): "Contracts (ESCorp)" button on the on-board computer; deliver blocks for credits. The board is the same for everyone and changes every 30 minutes. **New games start with 200 credits (before: 500), sent at the end of the tutorial, or from the start without it**; saved games keep theirs.
+- From **Cornor923** (thank you!, PRs 60-63): lava makes the ancient bomb explode (port change); blocks can be placed in front of plants, models and partial blocks; the ship's window frame no longer mixes with the neon light outside.
+- Fixes for bugs found by **Sekhmet** (thank you!): placing a block on top of the highest layer no longer uses it up without placing it; with your head inside a cascade source or quicksand you can dig what is in front; quicksand, ice and glass no longer look hollow next to a cascade.
+- The ship that changed place when reopening a game was a v0.4 bug, already fixed since v0.5.
 
 Everything in the [CHANGELOG](../CHANGELOG.en.md).
 
@@ -50,22 +44,19 @@ Everything in the [CHANGELOG](../CHANGELOG.en.md).
 
 ---
 
-## Galaxy 55 (offline) v0.5 — portage natif pour Windows (et Linux/macOS avec HashLink)
+## Galaxy 55 (offline) v0.6 — portage natif pour Windows (et Linux/macOS avec HashLink)
 
 Portage **non officiel** de Galaxy 55 (Motion Twin, 2012) en application native (Haxe + Heaps + HashLink). Sans Flash, sans navigateur et sans serveur.
 
 **Comment jouer (Windows) :** décompresse tout le dossier et double-clique sur `jugar.bat`. S'il ne s'ouvre pas (PC sans OpenGL 3.2 ou machines virtuelles), utilise `jugar_dx.bat`, la version DirectX. Rien à installer. Les parties sont enregistrées dans `%APPDATA%\Galaxy55\`.
 **Linux et macOS :** zip séparé ; il faut HashLink 1.16 installé (voir son `LEEME.txt`).
 
-### Nouveautés de la v0.5
-- **Nouveau menu de démarrage** : Continuer ouvre la liste des parties (jouer, renommer, supprimer) ; Nouvelle partie demande le nom, la graine et le mode (Créatif : biome et taille ; Aventure : tutoriel oui/non).
-- **Tutoriel guidé** (ajout du port) : les nouvelles parties aventure commencent dans l'espace avec l'inventaire vide, comme l'original. On peut le passer.
-- Encore de l'original : la caméra et le HUD tremblent quand un bloc casse et à l'atterrissage ; le **turbo minier** fonctionne ; tu récupères de la vie dans ton vaisseau ; la **bombe antique** explose ; Maj+K fait un fondu blanc et te ramène au vaisseau.
-- Sous l'eau : champ de vision plus étroit et ciel de la couleur du liquide ; le niveau de la mer baisse en inondant les trous.
-- Graphismes comme l'original : ciel étoilé sur les planètes, mipmaps (le paysage lointain ne scintille plus), cadre de sélection, blocs lâchés, icônes et barre de chargement.
-- F2 enregistre une capture sans le HUD ; F affiche ou cache les coordonnées et les FPS.
-- Hangar : supports qui fonctionnent, sans liquides ni bombe, sans dégâts, les portes ouvertes ne comptent plus comme des trous.
-- Corrections de **Cornor923** (merci !, PR 17-59, auteur aussi de presque tout ce qui précède) : oxygène en créatif, glace près de l'eau, palette créative, on reste dans le vaisseau après la mort, échanges sauvés dans le vaisseau-mère, vaisseau de la carte et plus encore.
+### Nouveautés de la v0.6
+- **Piloter le vaisseau** (ajout du port) : depuis l'ordinateur de bord, « Piloter le vaisseau » le déplace au-dessus de la planète (WASD ou stick gauche ; E, Échap, B ou Start le laissent et il atterrit tout seul). L'endroit est enregistré par planète.
+- **Contrats ESCorp** (ajout du port, de **Cornor923**) : bouton « Contrats (ESCorp) » de l'ordinateur de bord ; livre des blocs contre des crédits. Le tableau est le même pour tous et change toutes les 30 minutes. **Les nouvelles parties commencent avec 200 crédits (avant : 500), envoyés à la fin du tutoriel, ou dès le début sans tutoriel** ; les parties enregistrées gardent les leurs.
+- De **Cornor923** (merci !, PR 60-63) : la lave fait exploser la bombe antique (changement du port) ; on pose des blocs devant les plantes, les modèles et les blocs partiels ; le cadre de la fenêtre du vaisseau ne se mélange plus avec le néon dehors.
+- Corrections de bugs trouvés par **Sekhmet** (merci !) : poser un bloc au-dessus de la couche la plus haute ne le consomme plus sans le poser ; la tête dans une source de cascade ou dans des sables mouvants, on peut creuser ce qui est devant ; les sables mouvants, la glace et le verre ne paraissent plus creux à côté d'une cascade.
+- Le vaisseau qui changeait de place en rouvrant une partie était un bug de la v0.4, déjà corrigé depuis la v0.5.
 
 Tout est dans le [CHANGELOG](../CHANGELOG.fr.md).
 

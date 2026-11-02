@@ -2,7 +2,7 @@
 
 [English: `CHANGELOG.en.md`](CHANGELOG.en.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
-## Sin publicar
+## v0.6 — pre-release
 - Repositorio: se quitan de `main` los archivos que solo compilaban la versión Flash (`client*.hxml`, `build.bat`/`build.sh`,
   los SWF de `release/`, `libs/heaps` y `libs/format_old`). Siguen intactos en la rama `flash`. El juego no cambia.
 - **Pilotar la nave** (añadido del port): en el ordenador de a bordo, "Pilotar la nave" la mueve sobre el planeta con WASD o la

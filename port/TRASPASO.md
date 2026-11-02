@@ -133,6 +133,12 @@ movediza hueca junto a la cascada) con sus guiones `altura_max`, `fuente_excavar
 `hielo_cascada` y `ventana_neon`. La nave que cambia de sitio (ERRORES #15) era el fallo de la v0.4 arreglado en la v0.5 (sitio calculado con los cambios del
 jugador); comprobado con `nave_sitio`. Conviene confirmar con Sekhmet qué versión usaba.
 
+## v0.6 (2026-11-02)
+Subido a `main` y `port-hashlink` (011ff2e) antes de preparar la versión. Versión del menú, enlaces de los README, changelogs,
+ERRORES/BUGS y `port/RELEASE.md` pasan a v0.6. Zips con `package.ps1 -Version 0.6`; probados desde una carpeta vacía (SDL y
+DirectX: carga el planeta y los contratos leen `res/contracts.json`). Etiqueta `v0.6`. La release la crea Pvie en GitHub
+(pre-release, notas de `port/RELEASE.md`, los dos zips de `port/out/release`).
+
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;

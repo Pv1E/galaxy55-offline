@@ -534,7 +534,7 @@ class GalaxyApp extends hxd.App {
 			var l = saves[0];
 			Theme.text(s, Lang.t("lastgame") + ": " + l.name + "  ·  " + Lang.duration(l.playSeconds), 1.5, Theme.DIM, 112, y + 266);
 		}
-		versionText = Theme.text(s, "v0.5 · port nativo", 1.4, Theme.DISABLED, W - 190, 690);
+		versionText = Theme.text(s, "v0.6 · port nativo", 1.4, Theme.DISABLED, W - 190, 690);
 		anchorToWindow();
 		s.onBack = null;
 		return s;

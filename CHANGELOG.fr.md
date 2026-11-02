@@ -2,7 +2,7 @@
 
 [Español : `CHANGELOG.md`](CHANGELOG.md) · [English: `CHANGELOG.en.md`](CHANGELOG.en.md)
 
-## Non publié
+## v0.6 — pre-release
 - Dépôt : les fichiers qui servaient seulement à compiler la version Flash (`client*.hxml`, `build.bat`/`build.sh`, les SWF de
   `release/`, `libs/heaps` et `libs/format_old`) sont retirés de `main`. Ils restent intacts dans la branche `flash`. Le jeu ne change pas.
 - **Piloter le vaisseau** (ajout du portage) : dans l'ordinateur de bord, « Piloter le vaisseau » le déplace au-dessus de la
