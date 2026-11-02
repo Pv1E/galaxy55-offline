@@ -1,0 +1,30 @@
+# ERRORES #15 (Sekhmet): la nave no debe cambiar de sitio al recargar la partida, aunque se cave o se construya donde aterriza.
+# Semilla por defecto: la nave aterriza en 124,21 (suelo z=36). Cada "print ship" debe decir 124,21
+wait 3
+planet
+wait 30
+print ship
+# cavar bajo la nave y alrededor (3x3, 3 capas) y construir al lado
+filla 123 20 125 22 33 35 none
+filla 121 18 127 24 36 38 BRock
+filla 123 20 125 22 36 38 none
+wait 5
+reload
+waitfor planet
+wait 30
+print ship
+# sin cambios nuevos, otra vez
+reload
+waitfor planet
+wait 30
+print ship
+# desde la nave: guardar dentro y recargar (el jugador debe seguir dentro, no caer)
+ship
+wait 10
+print pos
+reload
+waitfor planet
+wait 30
+print ship
+print pos
+quit

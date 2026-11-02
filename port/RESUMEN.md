@@ -73,7 +73,9 @@ etiqueta `flash-version` y la rama `flash`, con sus SWF y archivos de compilaci�
   cuenta al apuntar (`Render.pick` empieza el rayo en su borde): con la cabeza en una fuente de cascada se apunta lo de delante;
   `World.openAlphaNear` (cambio del port): las caras de un `BTAlpha` que no es cascada se dibujan contra la cascada, que aquí baja
   de altura y dejaba ver a través de la arena movediza. Guiones `altura_max`, `fuente_excavar`, `cascada_arena`. La nave que
-  cambia de sitio (ERRORES #15) no se reproduce.
+  cambia de sitio (ERRORES #15): ya arreglado en 167cc91 (v0.5, `World.shipPlace` antes de `applySaved`). Comprobado con
+  `nave_sitio`: con el código actual la nave sigue en 124,21 tras cavar, recargar y guardar dentro; quitando esa línea salta a
+  74,110 y se queda allí, como contó Sekhmet. Pasa con partidas de la v0.4 o anteriores.
 
 ## Qué falló y cómo se resolvió
 | Problema | Causa | Solución |

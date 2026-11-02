@@ -130,7 +130,8 @@ la lava hace explotar la bomba antigua (61, cambio del port), poner delante de m
 original) y cara trasera oculta en el marco del cristal (63, como el original). Detalle en RESUMEN. Sin subir aún a GitHub.
 Después, 3 fallos de Sekhmet arreglados (altura máxima al poner, apuntar con la cabeza en una fuente de cascada, arena
 movediza hueca junto a la cascada) con sus guiones `altura_max`, `fuente_excavar` y `cascada_arena`; pasan también `place_front`,
-`hielo_cascada` y `ventana_neon`. La nave que cambia de sitio (ERRORES #15) no se reproduce: pedir a Sekhmet la partida y la versión.
+`hielo_cascada` y `ventana_neon`. La nave que cambia de sitio (ERRORES #15) era el fallo de la v0.4 arreglado en la v0.5 (sitio calculado con los cambios del
+jugador); comprobado con `nave_sitio`. Conviene confirmar con Sekhmet qué versión usaba.
 
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**

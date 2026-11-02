@@ -13,11 +13,14 @@ Los que están **arreglados** se mueven al final. Los detalles técnicos están 
 | 8 | Invierno | Las **hojas del abeto** sueltan material; puede que en el original no. |
 | 10 | Render | Los **cristales** sueltos (cargas) se ven demasiado anchos. |
 | 14 | Agua | **(¿Arreglar?)** Al abrir una cueva junto al mar, el agua entra y la llena de golpe a la misma altura que el mar, sin bajar mientras avanza. Ahora, como en el original (`net/Local.hx` y `SReduceWater`), el agua que entra cuenta y, cada vez que suma el volumen de una capa del mar (cientos o miles de bloques, según el planeta), la capa de arriba desaparece en todo el planeta: el mar baja un bloque. Una cueva pequeña no llega a tanto y se sigue llenando de golpe hasta el nivel del mar, como en el original. |
-| 15 | Nave | **(Sin reproducir, de Sekhmet)** Al reabrir el juego la nave apareció en otro sitio del mismo planeta (dos veces seguidas, luego no): el jugador, guardado dentro de ella, cayó al suelo y murió. Hace falta la partida guardada y la versión usada. |
 
 ## Arreglados
 
 - Sin publicar (encontrados por **Sekhmet**, ¡gracias!): poner un bloque encima de la capa más alta ya no lo gasta sin ponerlo (no se apunta, como el original); con la cabeza dentro de una fuente de cascada o de arena movediza se apunta y se excava lo de delante (el original no cuenta la celda de la cámara); la arena movediza, el hielo y el cristal ya no se ven huecos junto a una cascada (cambio del port: su cara contra la cascada se dibuja, porque aquí la cascada baja de altura).
+- v0.5 (#15, de **Sekhmet**): la nave ya no cambia de sitio al reabrir la partida. Hasta la v0.4 el sitio de aterrizaje se
+  calculaba con los cambios del jugador: al cavar o construir donde aterriza, la nave salía en otro sitio y el jugador, guardado
+  dentro, caía al suelo. Desde la v0.5 se calcula sobre el terreno original (comprobado con `port/dev/nave_sitio.txt`). Una
+  partida de la v0.4 en la que la nave ya se había movido la ve volver una vez a su sitio de siempre al pasar a la v0.5.
 - v0.4: el menú usa un solo planeta de fondo, pequeño (antes tres grandes que cambiaban cada 22 s): ya no da tirones mientras se generan; queda uno de ~0,4 s al principio, cuando se dibuja el planeta por primera vez (#13). La cascada no se congela junto al hielo, solo con el congelador, como el original (#12, comprobado).
 - v0.3 (encontrados y reportados por **Sekhmet**, ¡gracias!): la arena movediza y el agua ya no se ven transparentes desde dentro (velo y niebla del color del líquido, como el original); ya no nieva bajo el agua; el agua tiene caras laterales y de fondo; el hielo sumergido queda detrás del agua; los textos del mapa de estrellas salen en el idioma elegido.
 - v0.4 (reportados por **Sekhmet**, ¡gracias!): el agua fluye (`WorldProcess.hx`, el `Process.hx` del original); se pueden poner bloques bajo el agua; ya no nieva bajo techo ni en cuevas; el hielo no suelta un bloque al romperlo (como el original); atajos de teclado (Tab excava y 1–0 son las 10 casillas; antes la última no tenía tecla).

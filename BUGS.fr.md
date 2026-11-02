@@ -13,11 +13,14 @@ Les bugs corrigés sont déplacés à la fin. Les détails techniques sont dans 
 | 8 | Hiver | Les **feuilles d'épicéa** donnent du matériau ; dans l'original, peut-être pas. |
 | 10 | Rendu | Les **cristaux** tombés (charges) paraissent trop larges. |
 | 14 | Eau | **(À corriger ?)** Quand on ouvre une grotte à côté de la mer, l'eau entre et la remplit d'un coup à la même hauteur que la mer, sans baisser en avançant. Désormais, comme dans l'original (`net/Local.hx` et `SReduceWater`), l'eau qui entre est comptée et, chaque fois qu'elle atteint le volume d'une couche de la mer (des centaines ou des milliers de blocs, selon la planète), la couche du dessus disparaît sur toute la planète : la mer baisse d'un bloc. Une petite grotte n'y arrive pas et se remplit toujours d'un coup jusqu'au niveau de la mer, comme dans l'original. |
-| 15 | Vaisseau | **(Non reproduit, de Sekhmet)** En rouvrant le jeu, le vaisseau était à un autre endroit de la même planète (deux fois de suite, puis plus jamais) : le joueur, enregistré dedans, est tombé au sol et est mort. Il faut la sauvegarde et la version utilisée. |
 
 ## Corrigés
 
 - Non publié (trouvés par **Sekhmet**, merci !) : poser un bloc au-dessus de la couche la plus haute ne le consomme plus sans le poser (rien n'est visé, comme l'original) ; la tête dans une source de cascade ou dans des sables mouvants, on vise et on creuse ce qui est devant (l'original ne compte pas la cellule de la caméra) ; les sables mouvants, la glace et le verre ne paraissent plus creux à côté d'une cascade (changement du port : leur face contre la cascade est dessinée, car ici la cascade descend).
+- v0.5 (#15, de **Sekhmet**) : le vaisseau ne change plus de place en rouvrant la partie. Jusqu'à la v0.4, le lieu d'atterrissage
+  était calculé avec les modifications du joueur : creuser ou construire là où il atterrit mettait le vaisseau ailleurs et le
+  joueur, enregistré dedans, tombait au sol. Depuis la v0.5, il est calculé sur le terrain d'origine (vérifié avec
+  `port/dev/nave_sitio.txt`). Une partie de la v0.4 où le vaisseau avait déjà bougé le voit revenir une fois à sa place habituelle en passant à la v0.5.
 - v0.4 : le menu utilise une seule petite planète de fond (avant, trois grandes qui changeaient toutes les 22 s) : plus de saccades pendant leur génération ; il reste un arrêt d'environ 0,4 s au début, quand la planète est dessinée pour la première fois (#13). La cascade ne gèle pas à côté de la glace, seulement avec le congélateur, comme l'original (#12, vérifié).
 - v0.4 (signalés par **Sekhmet**, merci !) : l'eau s'écoule (`WorldProcess.hx`, le `Process.hx` d'origine) ; on peut poser des blocs sous l'eau ; il ne neige plus sous un toit ni dans les grottes ; la glace ne laisse plus de bloc en la cassant (comme l'original) ; raccourcis clavier (Tab creuse et 1–0 sont les 10 cases ; la dernière n'avait pas de touche).
 - v0.4 : le bloc tenu en main ne tremble plus en marchant ; la surbrillance de la palette du mode créatif ne reste plus collée.
