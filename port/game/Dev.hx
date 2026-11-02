@@ -34,6 +34,8 @@ import Common;
  *                           abierta), planet (jugando en un planeta), mother (jugando en la nave nodriza), ready (cargado: jugando
  *                           o en el mapa); si no llega, lo dice
  *   waitfor ground          esperar a estar de pie en el suelo (el fotograma del aterrizaje tras una caida)
+ *   waitfor jump            esperar a que la nave salte en el mapa (entrada o salida de un sistema); exprsys pulsa el sistema
+ *                           abierto mas cercano al robot comerciante; exprinfo dice donde esta el robot y como se dibuja
  *   print land              aterrizaje: suelo, gravedad, aturdimiento (stun), cabeceo del casco (bobY), temblor y fundido
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
  *   mine x y z              excavar ese bloque con el excavador y decir cuanto tarda (y con que potencia)
@@ -138,6 +140,8 @@ class Dev {
 			// en el sector y con la animacion de salida del sistema ya terminada (mientras dura, el mapa no hace caso)
 			case "sector": app.explorer != null && app.explorer.shipPos() != null && !@:privateAccess app.explorer.locked && !@:privateAccess app.explorer.serverLock;
 			case "window": app.explorer != null && app.explorer.devWindowOpen();
+			// la nave saltando: del destello de salida (entrada o salida de un sistema) a su llegada
+			case "jump": app.explorer != null && !@:privateAccess app.explorer.shipVisible;
 			case "planet": playing && g != null && g.info.mothership != true && g.hangar == null;
 			case "mother": playing && g != null && g.info.mothership == true;
 			case "ready": playing || (g == null && app.explorer != null);
@@ -443,6 +447,7 @@ class Dev {
 				case "expship": app.explorer.devDumpShip("port/out/" + a[1] + ".png");
 				case "expinfo": Sys.println(app.explorer.devInfo());
 				case "exprobot": app.explorer.devClickRobot();
+				case "exprsys": app.explorer.devClickRobotSystem(); // el sistema abierto mas cercano al robot
 				case "exprinfo": Sys.println(app.explorer.devRobotInfo());
 				case "exppause": @:privateAccess app.openMapPause(); // Esc en el mapa
 				case "landhome": app.devLandHome(); // aterrizar en el planeta del que despegaste

@@ -1,0 +1,63 @@
+# el robot comerciante no salta con la nave: entrar en el sistema que tiene al lado (capturas durante el zoom) y volver al sector
+# (exprinfo: "dibujo=" es la posicion en pantalla, la escala y el alfa del robot; "oculto" = sin dibujar)
+wait 3
+ship
+wait 10
+explore
+wait 200
+expgo 2400 1000
+waitfor sector
+# se sigue al robot, que se para y espera; luego se entra en el sistema que tiene mas cerca
+exprobot
+waitfor window
+exprinfo
+shot salto0
+exprsys
+waitfor jump
+exprinfo
+shot salto1
+wait 3
+exprinfo
+shot salto2
+wait 3
+exprinfo
+shot salto3
+wait 6
+exprinfo
+shot salto4
+wait 10
+exprinfo
+shot salto5
+wait 10
+exprinfo
+shot salto6
+wait 10
+exprinfo
+shot salto7
+wait 120
+expinfo
+exprinfo
+shot salto8
+# vuelta al sector por el borde: el robot reaparece con los demas objetos del sector
+expgo 2400 1000
+waitfor jump
+exprinfo
+shot vuelta1
+wait 8
+exprinfo
+shot vuelta2
+wait 8
+exprinfo
+shot vuelta3
+wait 8
+exprinfo
+shot vuelta4
+wait 8
+exprinfo
+shot vuelta5
+waitfor sector
+wait 30
+expinfo
+exprinfo
+shot vuelta6
+quit
