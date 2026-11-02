@@ -19,12 +19,16 @@ class FogShader extends hxsl.Shader {
 		@param var c2 : Vec3;
 		@param var fogK : Float;
 			@param var curve : Float;
+			/** de la camara al vertice ya bajado por la curvatura */
+			@var var fogDelta : Vec3;
 
 			// el planeta es redondo: como en el original (Shaders.hx: fpos.z -= (dx*dx + dy*dy) * cam.w) cada vertice baja
 			// con el cuadrado de su distancia horizontal a la camara; curve = 2 / tamano del planeta
 			function vertex() {
 				var d = transformedPosition.xy - camera.position.xy;
-				projectedPosition = vec4(transformedPosition.x, transformedPosition.y, transformedPosition.z - dot(d, d) * curve, 1.0) * camera.viewProj;
+				var p = vec3(transformedPosition.x, transformedPosition.y, transformedPosition.z - dot(d, d) * curve);
+				fogDelta = p - camera.position;
+				projectedPosition = vec4(p, 1.0) * camera.viewProj;
 			}
 
 		function skyAt( e : Float ) : Vec3 {
@@ -38,7 +42,10 @@ class FogShader extends hxsl.Shader {
 		function fragment() {
 			var d = normalize(transformedPosition - camera.position);
 			var e = asin(clamp(d.z, -1.0, 1.0));
-			var f = clamp(1.0 - (projectedPosition.w - 10.0) * fogK, 0.0, 1.0);
+			// cambio del port: el original (Shaders.hx: fog = 1 - (tpos.z - 10) * fogPower) usa la profundidad de vista, que cambia
+			// al girar o inclinar la camara (lo del borde de la pantalla y lo lejano mirando hacia abajo salia mas claro); aqui la
+			// distancia a la camara, igual mire donde mire. En el centro de la pantalla las dos coinciden
+			var f = clamp(1.0 - (length(fogDelta) - 10.0) * fogK, 0.0, 1.0);
 			pixelColor.rgb = mix(skyAt(e), pixelColor.rgb, f);
 		}
 	};
