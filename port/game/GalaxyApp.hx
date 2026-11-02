@@ -1090,22 +1090,19 @@ class GalaxyApp extends hxd.App {
 				showToast(err, 4);
 				return;
 			}
-			showToast(Lang.t("licenses.done").split("%name%").join(name), 4);
 			openLicenses();
 		});
 	}
 
-	/** boton Abandonar de la ventana de un planeta del mapa: nunca el principal; los demas, con confirmacion */
+	/** boton Abandonar de la ventana de un planeta con licencia: nunca el principal; los demas, con confirmacion */
 	function askAbandon( p : ExpData.ExpPlanet, s : ExpData.ExpSystem ) {
 		if( explorer == null || spaceInfo == null ) return;
-		var uni = universe();
-		if( Licenses.isMain(uni, p.id) ) {
+		if( Licenses.isMain(universe(), p.id) ) {
 			showToast(Lang.t("license.keepmain"), 5);
 			return;
 		}
 		explorer.paused = true;
-		var warn = Lang.t(Licenses.has(uni, p.id) ? "abandon.warn" : "abandon.warn.unexplored");
-		askConfirm(null, Lang.t("abandon.ask").split("%name%").join(p.name), warn, Theme.DANGER, function() abandonPlanet(p, s), function() {
+		askConfirm(null, Lang.t("abandon.ask").split("%name%").join(p.name), Lang.t("abandon.warn"), Theme.DANGER, function() abandonPlanet(p, s), function() {
 			if( explorer != null ) explorer.paused = false;
 		});
 	}
@@ -1113,13 +1110,12 @@ class GalaxyApp extends hxd.App {
 	/** abandona el planeta (Licenses.abandon), lo muestra en el mapa y guarda enseguida: no se puede deshacer recargando */
 	function abandonPlanet( p : ExpData.ExpPlanet, s : ExpData.ExpSystem ) {
 		var uni = universe();
-		var freed = Licenses.has(uni, p.id);
 		if( Licenses.abandon(spaceInfo, p, s) ) {
 			explorer.abandoned(p, s.id, ExpData.ExpOffline.replaceSystem(explorer.infos, s.id, Licenses.newSystem(uni)));
-			showToast(Lang.t("abandon.gone").split("%name%").join(s.name), 7);
+			showToast(Lang.t("abandon.gone"), 7);
 		} else {
 			explorer.abandoned(p);
-			showToast(Lang.t(freed ? "abandon.freed" : "abandon.done"), 4);
+			showToast(Lang.t("abandon.freed"), 4);
 		}
 		saveGame(false);
 	}
@@ -1445,8 +1441,7 @@ class GalaxyApp extends hxd.App {
 		uni.planets = uni.planets.filter(function(q) return q.id != p.id);
 		uni.planetId = p.id;
 		// escanear gasta una licencia; el primer planeta pasa a ser el principal (Licenses)
-		if( Licenses.claim(old, p.id) )
-			planetToast = Lang.t("license.first").split("%name%").join(p.name).split("%n%").join("" + (Licenses.MAX - uni.licenses.length));
+		Licenses.claim(old, p.id);
 		explorer.dispose();
 		explorer = null;
 		spaceInfo = null;
@@ -1463,9 +1458,6 @@ class GalaxyApp extends hxd.App {
 		old.yaw = old.pitch = 0;
 		startGame(old);
 	}
-
-	/** aviso que sale al acabar de cargar el planeta (el del primer planeta principal) */
-	var planetToast : String;
 
 	/** acoplarse al robot comerciante desde el mapa: se entra en su nave (la nodriza, con la tienda y tu nave aparcada).
 	    Al salir se vuelve al mapa, donde te acoplaste; si guardas dentro, la partida sigue en el espacio */
@@ -1704,10 +1696,6 @@ class GalaxyApp extends hxd.App {
 		if( loadInfo.px < 0 && loadInfo.hangar != true && loadInfo.mothership != true ) {
 			// partida nueva: se crea el archivo enseguida para que aparezca en la lista
 			saveGame(false);
-		}
-		if( planetToast != null ) {
-			showToast(planetToast, 9);
-			planetToast = null;
 		}
 	}
 

@@ -80,9 +80,9 @@ class TutoText {
 			"Bravo ! L'ESCorp t'envoie %gift% charges bleues, %gift% charges jaunes et %credits% crédits. Tu peux maintenant quitter le système et explorer d'autres planètes, vendre tes ressources au robot marchand et remplir les contrats de l'ESCorp depuis l'ordinateur de bord."],
 		// tras "done" (Licenses): %expl% = licencias de exploracion
 		"main" => [
-			"Este planeta pasa a ser tu planeta principal: es el único sobre el que podrás pilotar la nave y elegir dónde se posa. Para explorar otros tienes %expl% licencias de exploración (cada planeta escaneado gasta una); abandona un planeta desde el mapa de estrellas para liberar la suya.",
-			"This planet is now your main planet: it is the only one where you can pilot the ship and choose where it lands. To explore others you have %expl% exploration licenses (each scanned planet uses one); abandon a planet from the star map to free its license.",
-			"Cette planète devient ta planète principale : c'est la seule où tu pourras piloter le vaisseau et choisir où il se pose. Pour en explorer d'autres, tu as %expl% licences d'exploration (chaque planète scannée en utilise une) ; abandonne une planète depuis la carte stellaire pour libérer la sienne."],
+			"Este es tu planeta principal: solo aquí puedes pilotar la nave. Tienes %expl% licencias más para escanear otros planetas.",
+			"This is your main planet: only here can you pilot the ship. You have %expl% more licenses to scan other planets.",
+			"Voici ta planète principale : c'est la seule où tu peux piloter le vaisseau. Tu as %expl% autres licences pour scanner d'autres planètes."],
 		"nobreak" => [
 			"No rompas nada en el hangar: solo tapa los agujeros.",
 			"Don't break anything in the hangar: just fill the holes.",

@@ -1,6 +1,7 @@
 # licencias de la ESCorp y planeta principal (anadido del port). Aventura sin tutorial, semilla 4242 (sistema 0: planetas 0 y 1;
 # sistema 1: 10, 11 y 12). El primer planeta escaneado pasa a ser el principal y solo en el se pilota; 4 licencias como mucho
-# ("Sin licencia" y aviso al escanear la quinta); abandonar (con confirmacion) libera la licencia; con todos sus planetas
+# ("Sin licencia" y aviso al escanear la quinta); solo se abandona un planeta con licencia (con confirmacion), y eso la
+# libera; sin aviso al escanear el primero ni al cambiar de principal; con todos sus planetas
 # abandonados el sistema desaparece y aparece otro cerca, tambien al recargar; cambiar de principal: gratis la primera vez,
 # luego 1000 creditos y 24 h de espera; el principal no se abandona; partida anterior a las licencias. -Timeout 900
 wait 3
@@ -77,6 +78,10 @@ wait 20
 print toast
 expinfo
 shot licencias_sin_licencia
+# sin explorar no se abandona: la ventana del 0 solo tiene Escanear (no se abre la confirmacion)
+expbutton 1
+wait 5
+print menu
 # abandonar el 1 libera una licencia; el 0 ya se escanea
 expplanet 1
 waitfor window

@@ -37,7 +37,7 @@ class Tutorial {
 	/** segundos de la explicacion de HULL y de la felicitacion final; despues, la del planeta principal (Licenses) */
 	static inline var HULL_TIME = 9.;
 	static inline var DONE_TIME = 16.;
-	static inline var MAIN_TIME = 16.;
+	static inline var MAIN_TIME = 10.;
 
 	var hullTime = 0.;
 	var doneTime = 0.;

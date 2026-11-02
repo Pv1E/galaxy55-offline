@@ -58,8 +58,8 @@ class Space {
 		return false;
 	}
 
-	/** la ventana del planeta ofrece abandonarlo (Licenses): no en el tutorial ni si ya esta abandonado */
-	public function canAbandon( p : ExpPlanet ) : Bool return !tutorial && p.status != PAbandonned;
+	/** la ventana del planeta ofrece abandonarlo (Licenses): solo los que tienen licencia, y no en el tutorial */
+	public function canAbandon( p : ExpPlanet ) : Bool return !tutorial && Licenses.has(uni, p.id);
 
 	/** al aterrizar, antes de cargar el planeta */
 	public function land( p : ExpPlanet ) {}

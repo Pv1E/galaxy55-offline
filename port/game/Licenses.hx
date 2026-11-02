@@ -10,8 +10,8 @@ import ExpData;
  *   es el unico sobre el que se pilota la nave (GameView.pilotLicensed), y por tanto el unico en el que se elige donde aparece.
  * - Cambiar de principal (ordenador de a bordo, entre los planetas con licencia): gratis la primera vez, luego MAIN_COST
  *   creditos; tras cada cambio hay que esperar MAIN_COOLDOWN segundos de hora real.
- * - Abandonar un planeta (ventana del mapa, con la nave a su lado; nunca el principal) libera su licencia y borra sus cambios: ya
- *   no se puede ir a el. Un sistema con todos sus planetas abandonados desaparece y deja otro cerca (UniInfo.gone).
+ * - Abandonar un planeta con licencia (ventana del mapa, con la nave a su lado; nunca el principal) libera la licencia y borra
+ *   sus cambios: ya no se puede ir a el. Un sistema con todos sus planetas abandonados desaparece y deja otro cerca (UniInfo.gone).
  * Todo va en UniInfo, en campos opcionales: las partidas anteriores se completan al leerlas (migrate).
  */
 class Licenses {
@@ -49,13 +49,11 @@ class Licenses {
 	/** se puede escanear un planeta nuevo (queda una licencia libre) */
 	public static function canClaim( info : SaveInfo ) return unlimited(info) || info.uni.licenses.length < MAX;
 
-	/** al aterrizar: el planeta gasta su licencia si aun no la tenia. true = es el primero y pasa a ser el principal (no en el tutorial) */
-	public static function claim( info : SaveInfo, id : Int ) : Bool {
+	/** al aterrizar: el planeta gasta su licencia si aun no la tenia; el primero pasa a ser el principal (no en el tutorial) */
+	public static function claim( info : SaveInfo, id : Int ) {
 		var uni = info.uni;
 		if( !has(uni, id) ) uni.licenses.push(id);
-		if( uni.main != null || Tutorial.active(info) ) return false;
-		uni.main = id;
-		return true;
+		if( uni.main == null && !Tutorial.active(info) ) uni.main = id;
 	}
 
 	/** al acabar el tutorial: su planeta, en el que estas, pasa a ser el principal */
