@@ -889,7 +889,10 @@ class GalaxyApp extends hxd.App {
 			rows.push(lang);
 			var vol = new Slider(s, Lang.t("volume"), 0, 100, 5, 660);
 			vol.value = Settings.volume;
-			vol.onChange = function(v) Settings.volume = Std.int(v);
+			vol.onChange = function(v) {
+				Settings.volume = Std.int(v);
+				Snd.applyVolume();
+			};
 			rows.push(vol);
 		case "controls":
 			var sens = new Slider(s, Lang.t("sens"), 0.2, 3.0, 0.1, 660);
