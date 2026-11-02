@@ -1,0 +1,153 @@
+# bomba antigua alcanzada por un liquido que se extiende (WorldProcess: flood, updatePlaced, updatePropagate)
+# - lava (cambio del port): explota como al activarla (bomb.txt): hoyo de radio 8, temblor a 1, dano y fundido si el jugador
+#   esta en su alcance; una sola vez aunque la alcancen dos coladas, y tambien lejos del jugador;
+# - agua puesta, cascada y mar: se rompe y se suelta, como al excavarla (el original hacia lo mismo con todos los liquidos);
+#   en creativo no se suelta nada, como con cualquier bloque;
+# - hangar: los liquidos no se mueven (hangar_liquids.txt): la bomba se queda.
+# Losa de roca de z=46 a 56 con aire encima en x 44..84, y 52..76 (como bomb.txt)
+wait 3
+maxfps 30
+planet
+wait 30
+print sea
+filla 44 52 84 76 46 56 BRock
+filla 44 52 84 76 57 75 none
+wait 20
+# 1) lava al lado; el jugador a 5.5 (dentro del alcance): 89 de dano, temblor, hoyo, ningun suelto
+tp 64.5 69.5 57.01 0 0
+lookat 64.5 64.5 57.5
+life 100
+set 64 64 57 BArtiBomb
+wait 5
+print block 64 64 57
+print around 64 64 57 8
+print drops
+setp 65 64 57 BLava
+wait 30
+print block 64 64 57
+print block 65 64 57
+print around 64 64 57 8
+print drops
+print shake
+print fade
+vitals
+wait 100
+# 2) dos coladas de lava a la vez (una a cada lado): explota una sola vez (89 de dano, no 178)
+filla 44 52 84 76 46 56 BRock
+filla 44 52 84 76 57 75 none
+tp 64.5 69.5 57.01 0 0
+wait 20
+life 100
+set 64 64 57 BArtiBomb
+wait 5
+setp 63 64 57 BLava
+setp 65 64 57 BLava
+wait 30
+print block 64 64 57
+print around 64 64 57 8
+print drops
+vitals
+wait 100
+# 3) lejos del jugador (a unos 100 bloques): explota igual (hoyo y temblor), sin dano
+filla 44 52 84 76 46 56 BRock
+filla 44 52 84 76 57 75 none
+filla 156 56 172 72 46 56 BRock
+filla 156 56 172 72 57 75 none
+tp 64.5 69.5 57.01 0 0
+wait 20
+life 100
+set 164 64 57 BArtiBomb
+wait 5
+print around 164 64 57 8
+setp 165 64 57 BLava
+wait 30
+print block 164 64 57
+print around 164 64 57 8
+print drops
+print shake
+vitals
+wait 60
+# 4) agua puesta al lado: se suelta la bomba (1 suelto), sin hoyo ni temblor ni dano
+filla 44 52 84 76 46 56 BRock
+filla 44 52 84 76 57 75 none
+tp 64.5 69.5 57.01 0 0
+wait 20
+life 100
+set 64 64 57 BArtiBomb
+wait 5
+print around 64 64 57 8
+setp 65 64 57 BWater
+wait 60
+print block 64 64 57
+print around 64 64 57 8
+print drops
+print shake
+vitals
+# 5) fuente de cascada al lado: se suelta (2 sueltos)
+filla 44 52 84 76 46 56 BRock
+filla 44 52 84 76 57 75 none
+wait 20
+set 64 64 57 BArtiBomb
+wait 5
+setp 65 64 57 BCascadeSource
+wait 60
+print block 64 64 57
+print around 64 64 57 8
+print drops
+print shake
+# 6) mar: un estanque de agua del mar (nivel 0) en la losa, separado por un muro de una zanja con la bomba al fondo; al
+#    quitar el muro el mar inunda la zanja y suelta la bomba (3 sueltos)
+filla 44 52 84 76 46 56 BRock
+filla 44 52 84 76 57 75 none
+filla 50 60 56 68 52 56 BWater
+filla 58 64 60 64 56 56 none
+wait 20
+set 60 64 56 BArtiBomb
+wait 5
+print block 60 64 56
+setp 57 64 56 none
+wait 90
+row 50 61 64 56
+print block 60 64 56
+print around 60 64 56 8
+print drops
+print shake
+vitals
+# 7) creativo: la lava la hace explotar (sin dano); el agua la quita sin soltar nada (como cualquier bloque en creativo)
+creative
+filla 44 52 84 76 46 56 BRock
+filla 44 52 84 76 57 75 none
+tp 64.5 69.5 57.01 0 0
+wait 20
+life 100
+set 64 64 57 BArtiBomb
+wait 5
+print around 64 64 57 8
+setp 65 64 57 BLava
+wait 30
+print block 64 64 57
+print around 64 64 57 8
+print shake
+vitals
+wait 60
+filla 44 52 84 76 46 56 BRock
+filla 44 52 84 76 57 75 none
+tp 64.5 69.5 57.01 0 0
+wait 20
+set 64 64 57 BArtiBomb
+wait 5
+setp 65 64 57 BWater
+wait 60
+print block 64 64 57
+print around 64 64 57 8
+print drops
+# 8) hangar: la lava no se mueve y la bomba se queda (no se pueden poner: aqui con set/setp)
+hangar
+wait 60
+set 7 3 1 BArtiBomb
+setp 8 3 1 BLava
+wait 30
+print block 7 3 1
+print block 8 3 1
+print around 7 3 1 8
+quit

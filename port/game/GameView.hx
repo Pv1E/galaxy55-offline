@@ -142,6 +142,7 @@ class GameView {
 			}
 		drops = new Drops(world, atlas);
 		process = new WorldProcess(world, (x, y, z, b) -> breakBlock(x, y, z, b, true));
+		process.lavaBombFn = lavaBomb;
 		fx = new Fx(world, atlas);
 		parts = new Parts(world, atlas);
 		hand = new Hand(world, atlas);
@@ -1216,6 +1217,15 @@ class GameView {
 
 	/** bombas alcanzadas por una explosion: explotan despues, una por fotograma (Process.onActivateLate) */
 	var bombQueue : Array<{ x : Int, y : Int, z : Int }> = [];
+
+	/**
+	 * Cambio del port: la bomba antigua que alcanza la lava explota como al activarla (en el hangar y en la nave nodriza,
+	 * donde no se activa, se rompe y se suelta). Va a bombQueue y explota en el siguiente fotograma, no en medio del paso de
+	 * los liquidos. El original la rompia y la soltaba, como sigue haciendo el agua (del mar, puesta o de cascada).
+	 */
+	function lavaBomb( x : Int, y : Int, z : Int, b : Block ) {
+		if( hangar == null && info.mothership != true ) bombQueue.push({ x : x, y : y, z : z }) else breakBlock(x, y, z, b, true);
+	}
 
 	/**
 	 * Process.onActivate (BArtiBomb): dano de 20 (en el borde) a 150 (en el centro), temblor a 1, fundido de blanco (en el

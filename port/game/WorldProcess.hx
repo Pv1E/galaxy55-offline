@@ -23,6 +23,8 @@ class WorldProcess {
 	var world : World;
 	/** rompe un bloque con sus drops (Game.blockBreak con isProcess = true) */
 	var breakFn : Int -> Int -> Int -> Block -> Void;
+	/** cambio del port: bomba antigua alcanzada por la lava (GameView.lavaBomb); sin el se rompe como con el agua */
+	public var lavaBombFn : Int -> Int -> Int -> Block -> Void;
 	var flooding : Array<Int> = [];
 	var cover : Array<{ x : Int, y : Int, z : Int }> = [];
 	var propagate : Array<{ x : Int, y : Int, z : Int, b : Block, t : Int }> = [];
@@ -198,6 +200,12 @@ class WorldProcess {
 			set(c.x, c.y, c.z, b, b.covered);
 	}
 
+	/** lo que tapa la cascada o la lava se rompe con sus drops (la bomba antigua se suelta, como con el agua). Cambio del
+	    port: la lava hace explotar la bomba; el original la rompia como a cualquier bloque reducido */
+	function flowBreak( liquid : Block, x : Int, y : Int, z : Int, t : Block ) {
+		if( t.k == BArtiBomb && liquid.hasProp(PLava) && lavaBombFn != null ) lavaBombFn(x, y, z, t) else breakFn(x, y, z, t);
+	}
+
 	public function canPropagate( b : Block, bt : Block ) {
 		return bt == null || (!bt.collide && !b.hasProp(PLiquid)) || (switch( bt.type ) { case BTModel, BTModel2Side, BTReduced: true; default: false; }) || (b.hasProp(PLava) && (bt.hasProp(PLiquid) && !bt.hasProp(PLava)));
 	}
@@ -319,7 +327,7 @@ class WorldProcess {
 			var under = get(x, y, z - 1);
 			if( z > 1 && canPropagate(b, under) ) {
 				var tb = b.hasFlag(BFFallCopy) ? b : b.propagate;
-				if( under != null ) breakFn(x, y, z - 1, under);
+				if( under != null ) flowBreak(b, x, y, z - 1, under);
 				set(x, y, z - 1, null, tb);
 				continue;
 			} else if( under == b || under == b.propagate )
@@ -330,7 +338,7 @@ class WorldProcess {
 				var tx = real(x + d[0]), ty = real(y + d[1]), tz = z;
 				var t = get(tx, ty, tz);
 				if( canPropagate(b, t) ) {
-					if( t != null ) breakFn(tx, ty, tz, t);
+					if( t != null ) flowBreak(b, tx, ty, tz, t);
 					set(tx, ty, tz, null, b.propagate);
 				} else {
 					var k = b.propagate;
