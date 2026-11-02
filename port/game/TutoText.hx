@@ -2,7 +2,8 @@ import Common;
 
 /**
  * Textos del tutorial (Tutorial) en español, inglés y francés, aparte de Lang para no alargarlo.
- * %bauxite%, %cit%, %eth%, %rock%, %alu% y %hull% son nombres de bloques en el idioma elegido; %gift% las cargas de la ESCorp y %credits% sus creditos.
+ * %bauxite%, %cit%, %eth%, %rock%, %alu% y %hull% son nombres de bloques en el idioma elegido; %gift% las cargas de la ESCorp, %credits% sus creditos
+ * y %expl% las licencias de exploracion (Licenses).
  */
 class TutoText {
 
@@ -77,6 +78,11 @@ class TutoText {
 			"¡Bien hecho! La ESCorp te envía %gift% cargas azules, %gift% cargas amarillas y %credits% créditos. Ya puedes salir del sistema y explorar otros planetas, vender tus recursos al robot comerciante y cumplir los contratos de la ESCorp desde el ordenador de a bordo.",
 			"Well done! ESCorp sends you %gift% blue charges, %gift% yellow charges and %credits% credits. You can now leave the system and explore other planets, sell your resources to the merchant robot and fulfil ESCorp contracts from the on-board computer.",
 			"Bravo ! L'ESCorp t'envoie %gift% charges bleues, %gift% charges jaunes et %credits% crédits. Tu peux maintenant quitter le système et explorer d'autres planètes, vendre tes ressources au robot marchand et remplir les contrats de l'ESCorp depuis l'ordinateur de bord."],
+		// tras "done" (Licenses): %expl% = licencias de exploracion
+		"main" => [
+			"Este planeta pasa a ser tu planeta principal: es el único sobre el que podrás pilotar la nave y elegir dónde se posa. Para explorar otros tienes %expl% licencias de exploración (cada planeta escaneado gasta una); abandona un planeta desde el mapa de estrellas para liberar la suya.",
+			"This planet is now your main planet: it is the only one where you can pilot the ship and choose where it lands. To explore others you have %expl% exploration licenses (each scanned planet uses one); abandon a planet from the star map to free its license.",
+			"Cette planète devient ta planète principale : c'est la seule où tu pourras piloter le vaisseau et choisir où il se pose. Pour en explorer d'autres, tu as %expl% licences d'exploration (chaque planète scannée en utilise une) ; abandonne une planète depuis la carte stellaire pour libérer la sienne."],
 		"nobreak" => [
 			"No rompas nada en el hangar: solo tapa los agujeros.",
 			"Don't break anything in the hangar: just fill the holes.",
@@ -111,7 +117,7 @@ class TutoText {
 		var a = T.get(key);
 		var s = a == null ? key : a[Lang.cur];
 		for( k => b in NAMES ) if( s.indexOf(k) >= 0 ) s = s.split(k).join(Block.get(b).getName());
-		s = s.split("%gift%").join("" + TutoSetup.GIFT).split("%credits%").join("" + Market.START_CREDITS);
+		s = s.split("%gift%").join("" + TutoSetup.GIFT).split("%credits%").join("" + Market.START_CREDITS).split("%expl%").join("" + (Licenses.MAX - 1));
 		return max >= 0 ? s + " (" + n + "/" + max + ")" : s;
 	}
 }

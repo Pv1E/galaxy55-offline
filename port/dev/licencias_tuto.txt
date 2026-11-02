@@ -1,0 +1,50 @@
+# tutorial y licencias (anadido del port): su planeta (el 0) se escanea y gasta una licencia pero aun no es el principal (no
+# hay aviso); el boton de las licencias del ordenador sale desactivado; al acabar pasa a ser el principal, y tras la
+# felicitacion un segundo mensaje lo explica; pasar el tutorial deja la partida sin licencias. -Timeout 400
+wait 3
+tuto new 4242
+waitfor map
+waitfor system
+print licenses
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+print toast
+print licenses
+ship
+wait 10
+computer
+wait 3
+print licenses
+close
+wait 3
+tuto step 12
+wait 10
+print licenses
+print tuto
+wait 600
+print tuto
+wait 600
+print tuto
+shot licencias_tuto_principal
+wait 600
+print tuto
+pilot
+pilotstop
+# pasar el tutorial: sin licencias ni principal
+tuto new 4242
+waitfor map
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+print licenses
+tuto skip
+waitfor map 6000
+wait 10
+print licenses
+quit

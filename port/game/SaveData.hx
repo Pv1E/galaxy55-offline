@@ -28,6 +28,17 @@ typedef UniInfo = {
 	@:optional var ship : { x : Float, y : Float };
 	/** distancia recorrida en el mapa (Space.travel; base para el combustible y otras ideas del viaje) */
 	@:optional var traveled : Float;
+	/** licencias de la ESCorp (Licenses, anadido del port): planetas escaneados, el principal incluido */
+	@:optional var licenses : Array<Int>;
+	/** planeta principal; null = aun ninguno (antes del primer escaneo o con el tutorial en curso) */
+	@:optional var main : Null<Int>;
+	/** hora real (s) del ultimo cambio de planeta principal y cuantos cambios se han hecho (el primero es gratis) */
+	@:optional var mainTime : Null<Float>;
+	@:optional var mainChanges : Null<Int>;
+	/** planetas abandonados: ya no se puede ir a ellos */
+	@:optional var abandoned : Array<Int>;
+	/** sistemas que desaparecieron (todos sus planetas abandonados), en orden: cada uno dejo otro cerca (ExpOffline.replaceSystem) */
+	@:optional var gone : Array<Int>;
 }
 
 /** Tutorial en curso (Tutorial, anadido del port): el paso y los bloques puestos para el en el planeta. */
@@ -125,10 +136,21 @@ class SaveData {
 				space : o.space == true ? true : null,
 				ship : o.ship != null ? { x : (o.ship.x : Float), y : (o.ship.y : Float) } : null,
 				traveled : o.traveled != null ? (o.traveled : Float) : 0,
+				licenses : ints(o.licenses),
+				main : o.main != null ? Std.int(o.main) : null,
+				mainTime : o.mainTime != null ? (o.mainTime : Float) : null,
+				mainChanges : o.mainChanges != null ? Std.int(o.mainChanges) : 0,
+				abandoned : ints(o.abandoned),
+				gone : ints(o.gone),
 			};
 		} catch( e : Dynamic ) {
 			return null;
 		}
+	}
+
+	/** lista de enteros guardada; null si no la hay */
+	static function ints( o : Dynamic ) : Array<Int> {
+		return o == null ? null : [for( v in (o : Array<Dynamic>) ) Std.int(v)];
 	}
 
 	/** sitio de la nave pilotada (anadido del port): null si no hay o no es valido */
@@ -211,6 +233,8 @@ class SaveData {
 		try {
 			var o : Dynamic = haxe.Json.parse(sys.io.File.getContent(jsonPath(id)));
 			if( o.version == null || o.seed == null || o.biome == null ) return null;
+			var uni = readUni(o.uni);
+			if( uni != null ) Licenses.migrate(uni, readTuto(o.tuto) != null);
 			return {
 				version : o.version, id : id, name : o.name != null ? o.name : id, seed : o.seed, biome : o.biome,
 				sizeChunks : o.sizeChunks != null ? o.sizeChunks : 1,
@@ -218,7 +242,7 @@ class SaveData {
 				playSeconds : o.playSeconds != null ? o.playSeconds : 0,
 				px : o.px != null ? o.px : -1, py : o.py != null ? o.py : -1, pz : o.pz != null ? o.pz : -1,
 				yaw : o.yaw != null ? o.yaw : 0, pitch : o.pitch != null ? o.pitch : 0, fly : o.fly == true, life : o.life != null ? o.life : 100,
-					creative : o.creative == true, tutorial : o.tutorial == null ? null : o.tutorial == true, inv : readInv(o.inv), uni : readUni(o.uni), credits : o.credits != null ? Std.int(o.credits) : Market.START_CREDITS, market : readMarket(o.market), contracts : readContracts(o.contracts), chests : readChests(o.chests), shipData : o.shipData,
+					creative : o.creative == true, tutorial : o.tutorial == null ? null : o.tutorial == true, inv : readInv(o.inv), uni : uni, credits : o.credits != null ? Std.int(o.credits) : Market.START_CREDITS, market : readMarket(o.market), contracts : readContracts(o.contracts), chests : readChests(o.chests), shipData : o.shipData,
 					shipEdits : o.shipEdits != null ? [for( v in (o.shipEdits : Array<Dynamic>) ) Std.int(v)] : [], edits : o.edits != null ? [for( v in (o.edits : Array<Dynamic>) ) Std.int(v)] : [],
 					tuto : readTuto(o.tuto), shipAt : readSpot(o.shipAt),
 			};

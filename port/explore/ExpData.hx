@@ -62,6 +62,15 @@ class ExpOffline {
 	static var NAMES = ["Aldebar", "Brume", "Cyrene", "Dorian", "Eskel", "Fenris", "Galata", "Hespera", "Ikaros", "Jovan", "Kestrel", "Lumen"];
 	static var BIOMES = ["BIAutumn", "BIWinterPeaks", "BIMars", "BIMoon", "BIAcidForest"];
 	static var BWEIGHTS = [100, 100, 80, 80, 50];
+	/** sistemas del sector; los que sustituyen a uno desaparecido (Licenses) siguen con los ids SYSTEMS, SYSTEMS + 1... */
+	public static inline var SYSTEMS = 10;
+	static var ROMAN = ["II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+
+	/** nombre de un sistema; a partir de la segunda vuelta de NAMES (sistemas que sustituyen a otros) lleva un numero */
+	static function systemName( id : Int ) : String {
+		var round = Std.int(id / NAMES.length);
+		return SYS + " " + NAMES[id % NAMES.length] + (round > 0 ? " " + ROMAN[(round - 1) % ROMAN.length] : "");
+	}
 	/** nombre del bioma en el idioma actual; tambien los que no salen al azar (la Ciudad muerta puede ser el planeta de salida) */
 	public static function biomeName( biome : String ) : String {
 		var n = Lang.t("biome." + biome);
@@ -78,7 +87,7 @@ class ExpOffline {
 		var s : ExpSystem = {
 			id : id,
 			seed : seed,
-			name : SYS + " " + NAMES[id % NAMES.length],
+			name : systemName(id),
 			planets : [],
 			x : 20 + id * 3,
 			y : 25,
@@ -111,16 +120,17 @@ class ExpOffline {
 	public static function relabel( d : ExpInfos ) {
 		d.sector.name = SEC + " " + d.sector.seed;
 		for( s in d.systems ) {
-			s.name = SYS + " " + NAMES[s.id % NAMES.length];
+			s.name = systemName(s.id);
 			for( i in 0...s.planets.length ) s.planets[i].name = s.name + " " + (i + 1);
 		}
 	}
 
 	/**
-	 * `start` sustituye al planeta 0 del sistema 0 (con el que empieza la partida), `visited` son los planetas ya pisados (activos)
-	 * y `pos` donde esta la nave en el mapa.
+	 * `start` sustituye al planeta 0 del sistema 0 (con el que empieza la partida), `visited` son los planetas con licencia
+	 * (activos), `pos` donde esta la nave en el mapa, `abandoned` los planetas abandonados y `gone` los sistemas que
+	 * desaparecieron, en orden (Licenses, anadido del port).
 	 */
-	public static function make( seed : Int, ?start : { seed : Int, biome : String, size : Int }, ?visited : Array<Int>, ?pos : Array<Int> ) : ExpInfos {
+	public static function make( seed : Int, ?start : { seed : Int, biome : String, size : Int }, ?visited : Array<Int>, ?pos : Array<Int>, ?abandoned : Array<Int>, ?gone : Array<Int> ) : ExpInfos {
 		seed = 1 + Std.int(Math.abs(seed)) % 999998;
 		var d : ExpInfos = {
 			sector : { id : 0, seed : seed, width : 50, height : 50, name : SEC + " " + seed },
@@ -129,7 +139,7 @@ class ExpOffline {
 			energy : 100,
 			freeLicense : true,
 		};
-		for( i in 0...10 ) d.systems.push(generateSystem(i, seed + i));
+		for( i in 0...SYSTEMS ) d.systems.push(generateSystem(i, seed + i));
 		var rseed = new mt.Rand(seed);
 		rseed.initSeed(seed);
 		for( s in d.systems ) {
@@ -142,16 +152,69 @@ class ExpOffline {
 			p.biome = start.biome;
 			p.size = start.size;
 		}
-		if( visited != null )
-			for( s in d.systems )
-				for( p in s.planets )
-					if( visited.indexOf(p.id) >= 0 ) p.status = PActive;
+		var removed : Array<ExpSystem> = [];
+		if( gone != null )
+			for( i in 0...gone.length ) {
+				var old = system(d, gone[i]);
+				if( replaceSystem(d, gone[i], SYSTEMS + i) != null ) removed.push(old);
+			}
+		for( s in d.systems )
+			for( p in s.planets ) {
+				if( visited != null && visited.indexOf(p.id) >= 0 ) p.status = PActive;
+				if( abandoned != null && abandoned.indexOf(p.id) >= 0 ) p.status = PAbandonned;
+			}
 		if( pos != null && pos.length > 0 )
 			d.shipPos = switch( pos[0] ) {
 				case 1: PInSystem(pos[1]);
 				case 2: PPlanet(pos[1]);
 				default: PInSector(pos[1], pos[2]);
 			};
+		// la nave estaba en un sistema que ya no esta: queda en el sector, donde estaba ese sistema
+		for( s in removed ) {
+			var inside = switch( d.shipPos ) {
+				case PInSystem(id): id == s.id;
+				case PPlanet(id): Lambda.exists(s.planets, function(p) return p.id == id);
+				default: false;
+			};
+			if( inside ) d.shipPos = PInSector(s.x, s.y);
+		}
 		return d;
+	}
+
+	public static function system( d : ExpInfos, id : Int ) : ExpSystem {
+		for( s in d.systems ) if( s.id == id ) return s;
+		return null;
+	}
+
+	/** el planeta id y su sistema (null si no esta en el sector) */
+	public static function planet( d : ExpInfos, id : Int ) : { p : ExpPlanet, s : ExpSystem } {
+		for( s in d.systems )
+			for( p in s.planets )
+				if( p.id == id ) return { p : p, s : s };
+		return null;
+	}
+
+	/**
+	 * Anadido del port (Licenses): el sistema oldId desaparece porque se abandonaron todos sus planetas y aparece el newId, con
+	 * planetas nuevos, a entre 3 y 5 casillas, en un sitio del sector a 3 o mas de los demas sistemas (si no hay ninguno, en
+	 * el mismo). Devuelve el nuevo, o null si oldId no estaba.
+	 */
+	public static function replaceSystem( d : ExpInfos, oldId : Int, newId : Int ) : ExpSystem {
+		var old = system(d, oldId);
+		if( old == null ) return null;
+		d.systems.remove(old);
+		var free = [];
+		for( dy in -5...6 )
+			for( dx in -5...6 ) {
+				var x = old.x + dx, y = old.y + dy, dd = dx * dx + dy * dy;
+				if( dd < 9 || dd > 25 || x < 2 || y < 2 || x > d.sector.width - 3 || y > d.sector.height - 3 ) continue;
+				if( !Lambda.exists(d.systems, function(o) return (o.x - x) * (o.x - x) + (o.y - y) * (o.y - y) < 9) ) free.push({ x : x, y : y });
+			}
+		var at = free.length > 0 ? free[new mt.Rand(d.sector.seed + newId * 97).random(free.length)] : { x : old.x, y : old.y };
+		var s = generateSystem(newId, d.sector.seed + newId);
+		s.x = at.x;
+		s.y = at.y;
+		d.systems.push(s);
+		return s;
 	}
 }

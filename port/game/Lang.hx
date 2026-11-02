@@ -148,6 +148,42 @@ class Lang {
 		"exp.robot" => ["Robot comerciante", "Merchant robot", "Robot marchand"],
 		"exp.dock" => ["Acoplarse", "Dock", "S'amarrer"],
 		"exp.scan" => ["Escanear", "Scan", "Scanner cette planète"],
+		"exp.nolicense" => ["Sin licencia", "No license", "Pas de licence"],
+		// licencias de la ESCorp y planeta principal (Licenses, anadido del port)
+		"exp.abandon" => ["Abandonar", "Abandon", "Abandonner"],
+		"exp.abandoned" => ["abandonado", "abandoned", "abandonnée"],
+		"exp.main" => ["planeta principal", "main planet", "planète principale"],
+		"computer.licenses" => ["Licencias (ESCorp)", "Licenses (ESCorp)", "Licences (ESCorp)"],
+		"licenses.title" => ["LICENCIAS DE LA ESCORP", "ESCORP LICENSES", "LICENCES ESCORP"],
+		// %n% en uso de %max%; %e% = licencias de exploracion (%max% - 1)
+		"licenses.count" => ["Licencias en uso: %n% / %max% (1 principal y %e% de exploración)", "Licenses in use: %n% / %max% (1 main and %e% exploration)", "Licences utilisées : %n% / %max% (1 principale et %e% d'exploration)"],
+		"licenses.unlimited" => ["Licencias en uso: %n% (sin límite en creativo)", "Licenses in use: %n% (unlimited in creative)", "Licences utilisées : %n% (illimitées en créatif)"],
+		"licenses.main" => ["Planeta principal: %name%", "Main planet: %name%", "Planète principale : %name%"],
+		"licenses.nomain" => ["Aún no tienes planeta principal: lo será el primero que escanees.", "You have no main planet yet: the first planet you scan will be.", "Tu n'as pas encore de planète principale : ce sera la première que tu scanneras."],
+		"licenses.price.free" => ["El primer cambio de planeta principal es gratis; los siguientes cuestan %n% créditos, como mucho uno cada 24 h.", "Your first main planet change is free; later ones cost %n% credits, at most one every 24 h.", "Le premier changement de planète principale est offert ; les suivants coûtent %n% crédits, un toutes les 24 h au plus."],
+		"licenses.price" => ["Cambiar de planeta principal cuesta %n% créditos, como mucho una vez cada 24 h.", "Changing your main planet costs %n% credits, at most once every 24 h.", "Changer de planète principale coûte %n% crédits, une fois toutes les 24 h au plus."],
+		// %t% = 13h 05m
+		"licenses.wait" => ["Podrás volver a cambiar de planeta principal dentro de %t%.", "You can change your main planet again in %t%.", "Tu pourras de nouveau changer de planète principale dans %t%."],
+		"licenses.pick" => ["Elige otro de tus planetas para hacerlo principal:", "Pick another of your planets to make it your main one:", "Choisis une autre de tes planètes pour en faire la principale :"],
+		"licenses.none" => ["No tienes ningún otro planeta con licencia.", "You have no other licensed planet.", "Tu n'as aucune autre planète sous licence."],
+		"licenses.more" => ["... y %n% más", "... and %n% more", "... et %n% autres"],
+		"licenses.ask" => ["¿Hacer de %name% tu planeta principal?", "Make %name% your main planet?", "Faire de %name% ta planète principale ?"],
+		"licenses.ask.free" => ["La ESCorp te regala este primer cambio. Los siguientes costarán %n% créditos, y no podrás volver a cambiar hasta dentro de 24 h.", "ESCorp gives you this first change for free. Later ones will cost %n% credits, and you won't be able to change again for 24 h.", "L'ESCorp t'offre ce premier changement. Les suivants coûteront %n% crédits, et tu ne pourras plus changer avant 24 h."],
+		"licenses.ask.paid" => ["La ESCorp te cobrará %n% créditos y no podrás volver a cambiar hasta dentro de 24 h.", "ESCorp will charge you %n% credits and you won't be able to change again for 24 h.", "L'ESCorp te prélèvera %n% crédits et tu ne pourras plus changer avant 24 h."],
+		"licenses.done" => ["%name% es ahora tu planeta principal.", "%name% is now your main planet.", "%name% est maintenant ta planète principale."],
+		"licenses.nocredits" => ["Te faltan créditos: el cambio cuesta %n%.", "Not enough credits: the change costs %n%.", "Pas assez de crédits : le changement coûte %n%."],
+		"licenses.notyours" => ["Ese planeta no puede ser tu planeta principal.", "That planet cannot be your main planet.", "Cette planète ne peut pas devenir ta planète principale."],
+		"license.full" => ["No te queda ninguna licencia libre (%max%: 1 principal y %n% de exploración). Abandona uno de tus planetas para liberar una.", "You have no free license left (%max%: 1 main and %n% exploration). Abandon one of your planets to free one.", "Tu n'as plus de licence libre (%max% : 1 principale et %n% d'exploration). Abandonne une de tes planètes pour en libérer une."],
+		// %n% = licencias de exploracion libres
+		"license.first" => ["%name% es tu planeta principal: es el único sobre el que puedes pilotar la nave y elegir dónde se posa. Te quedan %n% licencias de exploración.", "%name% is your main planet: it is the only one where you can pilot the ship and choose where it lands. You have %n% exploration licenses left.", "%name% est ta planète principale : c'est la seule où tu peux piloter le vaisseau et choisir où il se pose. Il te reste %n% licences d'exploration."],
+		"license.pilotmain" => ["Solo puedes pilotar la nave sobre tu planeta principal (%name%).", "You can only pilot the ship over your main planet (%name%).", "Tu ne peux piloter le vaisseau qu'au-dessus de ta planète principale (%name%)."],
+		"license.keepmain" => ["No puedes abandonar tu planeta principal: elige antes otro desde el ordenador de a bordo.", "You cannot abandon your main planet: pick another one from the board computer first.", "Tu ne peux pas abandonner ta planète principale : choisis-en d'abord une autre depuis l'ordinateur de bord."],
+		"abandon.ask" => ["¿Abandonar %name%?", "Abandon %name%?", "Abandonner %name% ?"],
+		"abandon.warn" => ["Perderás su licencia y todo lo que hayas cambiado en él, y no podrás volver nunca.", "You will lose its license and everything you changed there, and you will never be able to go back.", "Tu perdras sa licence et tout ce que tu y as modifié, et tu ne pourras plus jamais y retourner."],
+		"abandon.warn.unexplored" => ["No podrás escanearlo ni aterrizar en él nunca más.", "You will never be able to scan it or land on it again.", "Tu ne pourras plus jamais la scanner ni t'y poser."],
+		"abandon.done" => ["Planeta abandonado.", "Planet abandoned.", "Planète abandonnée."],
+		"abandon.freed" => ["Planeta abandonado: licencia liberada.", "Planet abandoned: license freed.", "Planète abandonnée : licence libérée."],
+		"abandon.gone" => ["Todos los planetas de %name% están abandonados: el sistema desaparece del mapa y aparece otro cerca.", "Every planet of %name% is abandoned: the system vanishes from the map and another one appears nearby.", "Toutes les planètes de %name% sont abandonnées : le système disparaît de la carte et un autre apparaît non loin."],
 	];
 
 	public static function t( key : String ) : String {

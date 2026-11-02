@@ -27,11 +27,15 @@ import Common;
  *   synth N                 usar el ordenador del sintetizador N
  *   jet 1|0                 mantener Espacio (salto y jetpack)
  *   press|release TECLA...  pulsar o soltar teclas de verdad (shift o una letra), p. ej. press shift k = Mayus+K
- *   explore                 abrir el mapa de estrellas (explorador); expsys N / expgo x y / expinfo lo manejan
+ *   explore                 abrir el mapa de estrellas (explorador); expsys N / expgo x y / expinfo lo manejan; expbutton [N]
+ *                           pulsa el boton N (0) de la ventana del planeta (1 = Abandonar)
+ *   button N                activar el control N de la ventana de confirmacion o del menu abierto (print menu)
+ *   licenses clock H|open|credits N|forget   licencias de la ESCorp: adelantar H horas su reloj; abrir su pantalla; dejar N
+ *                           creditos; quitar sus datos como en una partida antigua (print licenses)
  *   walk avance [lado]      andar (1 = adelante, -1 = atras; 0 0 para parar)
  *   waitfor COSA [max]      esperar (como mucho max fotogramas, 2000 por defecto) a: map (mapa abierto), sector (la nave fuera
  *                           de los sistemas), window (ventana del mapa
- *                           abierta), planet (jugando en un planeta), mother (jugando en la nave nodriza), ready (cargado: jugando
+ *                           abierta), system (dentro de un sistema), planet (jugando en un planeta), mother (jugando en la nave nodriza), ready (cargado: jugando
  *                           o en el mapa); si no llega, lo dice
  *   waitfor ground          esperar a estar de pie en el suelo (el fotograma del aterrizaje tras una caida)
  *   print land              aterrizaje: suelo, gravedad, aturdimiento (stun), cabeceo del casco (bobY), temblor y fundido
@@ -138,6 +142,8 @@ class Dev {
 			// en el sector y con la animacion de salida del sistema ya terminada (mientras dura, el mapa no hace caso)
 			case "sector": app.explorer != null && app.explorer.shipPos() != null && !@:privateAccess app.explorer.locked && !@:privateAccess app.explorer.serverLock;
 			case "window": app.explorer != null && app.explorer.devWindowOpen();
+			// dentro de un sistema solar, con la animacion de entrada ya terminada
+			case "system": app.explorer != null && app.explorer.shipPos() == null && !@:privateAccess app.explorer.locked && !@:privateAccess app.explorer.serverLock;
 			case "planet": playing && g != null && g.info.mothership != true && g.hangar == null;
 			case "mother": playing && g != null && g.info.mothership == true;
 			case "ready": playing || (g == null && app.explorer != null);
@@ -232,7 +238,7 @@ class Dev {
 				// aterriza sola), pilotstop la deja ya mismo
 				case "pilot":
 					g.startPiloting();
-					Sys.println("pilotar: " + (g.piloting ? "si" : "no (canPilot=" + g.canPilot() + ")"));
+					Sys.println("pilotar: " + (g.piloting ? "si" : "no (canPilot=" + g.canPilot() + " licencia=" + g.pilotLicensed() + ")"));
 				case "pilotgo": g.pilotSlide(f(a[1]), f(a[2]));
 				case "pilotkeys": g.debugPilot = f(a[1]) == 0 && f(a[2]) == 0 ? null : { speed : f(a[1]), strafe : f(a[2]) };
 				case "pilotland": g.stopPiloting();
@@ -436,7 +442,27 @@ class Dev {
 				case "explore": app.startExplorer();
 				case "expsys": app.explorer.devClickSystem(Std.parseInt(a[1]));
 				case "expplanet": app.explorer.devClickPlanet(Std.parseInt(a[1]));
-				case "expbutton": app.explorer.devPressButton();
+				case "expbutton": app.explorer.devPressButton(a.length > 1 ? Std.parseInt(a[1]) : 0);
+				case "button":
+					// button N: activa el control N de la ventana de confirmacion o del menu abierto (print menu los lista)
+					var s = @:privateAccess (app.modal != null && app.modal.parent != null ? app.modal : app.current);
+					if( s != null && s.widgets.length > Std.parseInt(a[1]) ) s.widgets[Std.parseInt(a[1])].activate();
+					else Sys.println("button: no hay control " + a[1]);
+				case "licenses":
+					// licenses clock H: adelanta H horas la hora de las licencias; licenses open: la pantalla del ordenador de a bordo;
+					// licenses credits N: deja N creditos; licenses forget: la partida como antes de las licencias (para probar migrate)
+					var info = app.curInfo();
+					switch( a[1] ) {
+					case "clock": Licenses.devShift += f(a[2]) * 3600;
+					case "open": @:privateAccess app.openLicenses();
+					case "credits": info.credits = Std.parseInt(a[2]);
+					case "forget":
+						var u = info.uni;
+						u.licenses = u.abandoned = u.gone = null;
+						u.main = u.mainChanges = null;
+						u.mainTime = null;
+					default: Sys.println("licenses: orden desconocida " + a[1]);
+					}
 				case "expgo": app.explorer.devClickPoint(f(a[1]), f(a[2]));
 				case "expgor": app.explorer.devClickPoint(f(a[1]), f(a[2]), true); // expgor DX DY: punto relativo a la nave
 				case "expangle": Sys.println(app.explorer.devShipAngle());
@@ -731,6 +757,23 @@ class Dev {
 			Sys.println("tuto: " + (info.tuto == null ? "no" : "paso " + info.tuto.step) + " objetivos " + [for( o in t.targets(g) ) o.x + "," + o.y + "," + o.z].join(" ")
 				+ "\n  bloques: " + spots.join(" ") + "\n  cargas: " + [for( c in (g != null ? g.inv.inv : info.inv).charges )Type.createEnumIndex(ChargeKind, c.c) + "x" + c.n].join(" ")
 				+ "\n  texto: " + t.text(info, g));
+			return;
+		}
+		if( a[1] == "toast" ) {
+			var t = @:privateAccess app.toast;
+			Sys.println("aviso: " + (t.visible ? t.text : "-"));
+			return;
+		}
+		if( a[1] == "licenses" ) {
+			// licencias de la ESCorp (Licenses): con licencia, principal, abandonados, sistemas desaparecidos, cambios y espera, creditos
+			var info = app.curInfo(), u = info.uni;
+			if( u == null ) {
+				Sys.println("licencias: sin universo");
+				return;
+			}
+			Sys.println("licencias: " + u.licenses + " principal " + u.main + " abandonados " + u.abandoned + " desaparecidos " + u.gone + " cambios " + u.mainChanges
+				+ " precio " + Licenses.mainPrice(u) + " espera " + Std.int(Licenses.cooldown(u)) + " s creditos " + info.credits + " planeta " + u.planetId
+				+ " pilotar " + (g == null ? "-" : "" + g.pilotLicensed()) + " boton=" + (@:privateAccess app.computerLicenses == null ? "-" : "" + @:privateAccess app.computerLicenses.enabled) + (app.explorer != null ? " sistemas " + [for( s in app.explorer.infos.systems ) s.id + "@" + s.x + "," + s.y].join(" ") : ""));
 			return;
 		}
 		if( g == null ) {
