@@ -972,7 +972,7 @@ class GalaxyApp extends hxd.App {
 			pilot.onActivate = function() {
 				resume();
 				if( game.pilotLicensed() ) game.startPiloting();
-				else showToast(Lang.t("license.pilotmain").split("%name%").join(Licenses.mainName(game.info.uni)), 5);
+				else showToast(Lang.t("license.pilotmain"), 4);
 			};
 		}
 		rows = rows.concat([edit, trade, contracts, licenses]);
@@ -1023,18 +1023,15 @@ class GalaxyApp extends hxd.App {
 	}
 
 	/**
-	 * Licencias de la ESCorp (Licenses, anadido del port): cuantas hay en uso, el planeta principal, el precio o la espera del
-	 * siguiente cambio y un boton por cada otro planeta con licencia para hacerlo principal (con confirmacion).
+	 * Licencias de exploracion (Licenses, anadido del port): cuantas hay en uso, el planeta principal y, si el planeta en el que
+	 * estas no lo es, el boton para hacerlo principal con su precio (con confirmacion); durante la espera, desactivado.
 	 */
 	function buildLicenses() : Screen {
 		var info = game.info;
 		var uni = universe();
 		var planets = Licenses.planets(uni);
-		function name( id : Int ) return planets.exists(id) ? planets.get(id).name : "?";
-		function label( id : Int ) return planets.exists(id) ? name(id) + "  ·  " + ExpData.ExpOffline.biomeName(planets.get(id).biome) : "?";
-		var others = [for( id in uni.licenses ) if( id != uni.main ) id];
-		// en aventura son MAX - 1 como mucho; en creativo no hay limite y solo caben 4
-		var shown = others.slice(0, 4);
+		function label( id : Int ) return planets.exists(id) ? planets.get(id).name + "  ·  " + ExpData.ExpOffline.biomeName(planets.get(id).biome) : "?";
+		var here = uni.planetId;
 		var wait = Licenses.cooldown(uni);
 		// se compone desde arriba del panel y despues se centra en alto (los textos largos ocupan dos lineas)
 		var PW = 860;
@@ -1048,25 +1045,26 @@ class GalaxyApp extends hxd.App {
 			y += t.textHeight * scale + 10;
 			return t;
 		}
-		var count = Licenses.unlimited(info) ? Lang.t("licenses.unlimited") : Lang.t("licenses.count").split("%max%").join("" + Licenses.MAX).split("%e%").join("" + (Licenses.MAX - 1));
+		var count = Licenses.unlimited(info) ? Lang.t("licenses.unlimited") : Lang.t("licenses.count").split("%max%").join("" + Licenses.MAX);
 		line(count.split("%n%").join("" + uni.licenses.length), 1.8, Theme.TEXT);
 		line(Lang.t("shop.credits") + " " + (info.credits == null ? Market.START_CREDITS : info.credits), 1.8, Theme.ACCENT);
-		line(uni.main == null ? Lang.t("licenses.nomain") : Lang.t("licenses.main").split("%name%").join(label(uni.main)), 1.8, Theme.CYAN);
-		var price = Licenses.mainPrice(uni);
-		if( wait > 0 ) line(Lang.t("licenses.wait").split("%t%").join(Lang.duration(wait)), 1.6, Theme.DANGER);
-		else line(Lang.t(price == 0 ? "licenses.price.free" : "licenses.price").split("%n%").join("" + Licenses.MAIN_COST), 1.6, Theme.DIM);
-		y += 6;
-		if( shown.length == 0 ) line(Lang.t("licenses.none"), 1.8, Theme.DIM);
-		else line(Lang.t("licenses.pick"), 1.6, Theme.TEXT);
-		var bw = PW - 80;
-		for( id in shown ) {
-			var b = new Button(s, label(id), bw, 54);
-			b.enabled = wait <= 0 && uni.main != null;
-			b.onActivate = function() askMainPlanet(s, id, name(id));
-			s.add(b, px, y);
-			y += 62;
+		if( Licenses.isMain(uni, here) )
+			line(Lang.t("licenses.here"), 1.8, Theme.CYAN);
+		else {
+			line(uni.main == null ? Lang.t("licenses.nomain") : Lang.t("licenses.main").split("%name%").join(label(uni.main)), 1.8, Theme.CYAN);
+			// solo el planeta en el que estas puede pasar a ser el principal
+			if( uni.main != null && Licenses.has(uni, here) ) {
+				if( wait > 0 ) line(Lang.t("licenses.wait").split("%t%").join(Lang.duration(wait)), 1.6, Theme.DANGER);
+				y += 6;
+				var price = Licenses.mainPrice(uni);
+				var cost = price == 0 ? Lang.t("licenses.free") : Lang.t("licenses.cost").split("%n%").join("" + price);
+				var b = new Button(s, Lang.t("licenses.setmain") + "  ·  " + cost, PW - 80, 54);
+				b.enabled = wait <= 0;
+				b.onActivate = function() askMainPlanet(s, here, planets.exists(here) ? planets.get(here).name : "?");
+				s.add(b, px, y);
+				y += 62;
+			}
 		}
-		if( others.length > shown.length ) line(Lang.t("licenses.more").split("%n%").join("" + (others.length - shown.length)), 1.6, Theme.DIM);
 		var back = new Button(s, Lang.t("back"));
 		s.add(back, (W - 460) * 0.5, y + 14);
 		var h = Std.int(y + 14 + 54 + 30);
@@ -1081,9 +1079,8 @@ class GalaxyApp extends hxd.App {
 
 	/** confirmar el cambio de planeta principal (gratis la primera vez); hecho, la pantalla de licencias se rehace */
 	function askMainPlanet( parent : Screen, id : Int, name : String ) {
-		var uni = universe();
-		var price = Licenses.mainPrice(uni);
-		var warn = price == 0 ? Lang.t("licenses.ask.free").split("%n%").join("" + Licenses.MAIN_COST) : Lang.t("licenses.ask.paid").split("%n%").join("" + price);
+		var price = Licenses.mainPrice(universe());
+		var warn = price == 0 ? Lang.t("licenses.ask.free") : Lang.t("licenses.ask.paid").split("%n%").join("" + price);
 		askConfirm(parent, Lang.t("licenses.ask").split("%name%").join(name), warn, Theme.ACCENT, function() {
 			var err = Licenses.setMain(game.info, id);
 			if( err != null ) {

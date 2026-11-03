@@ -1383,7 +1383,8 @@ class Explorer extends h2d.Object {
 		g.endFill();
 		g.lineStyle(1, col, 1);
 		g.drawRect(0, 0, w, 24);
-		g.y = VH - 70;
+		// cambio del port: en el centro de la barra de abajo (el original lo pegaba a su borde de arriba)
+		g.y = VH - 70 + (70 - 24) * 0.5;
 		// centrado tambien en alto: el y fijo del original (4) era para su fuente, la de Heaps deja hueco arriba y lo bajaba
 		Theme.center(label(g, text, 1.4, 0xFFFFFF), w, 24);
 		var it = new h2d.Interactive(w, 24, g);

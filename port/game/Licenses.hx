@@ -8,8 +8,8 @@ import ExpData;
  * - Escanear un planeta gasta una licencia. En aventura hay MAX (1 principal y MAX - 1 de exploracion); en creativo no hay limite.
  * - El primer planeta escaneado pasa a ser el principal; con el tutorial, su planeta al acabarlo (Tutorial.finish). En aventura
  *   es el unico sobre el que se pilota la nave (GameView.pilotLicensed), y por tanto el unico en el que se elige donde aparece.
- * - Cambiar de principal (ordenador de a bordo, entre los planetas con licencia): gratis la primera vez, luego MAIN_COST
- *   creditos; tras cada cambio hay que esperar MAIN_COOLDOWN segundos de hora real.
+ * - Cambiar de principal: solo al planeta en el que estas, desde el ordenador de a bordo (Licencias de exploracion). Gratis la
+ *   primera vez, luego MAIN_COST creditos; tras cada cambio hay que esperar MAIN_COOLDOWN segundos de hora real.
  * - Abandonar un planeta con licencia (ventana del mapa, con la nave a su lado; nunca el principal) libera la licencia y borra
  *   sus cambios: ya no se puede ir a el. Un sistema con todos sus planetas abandonados desaparece y deja otro cerca (UniInfo.gone).
  * Todo va en UniInfo, en campos opcionales: las partidas anteriores se completan al leerlas (migrate).
@@ -70,10 +70,10 @@ class Licenses {
 	/** segundos que faltan para poder cambiar otra vez de planeta principal (0 = ya se puede) */
 	public static function cooldown( uni : UniInfo ) : Float return uni.mainTime == null ? 0 : Math.max(0, uni.mainTime + MAIN_COOLDOWN - now());
 
-	/** hace de id (con licencia) el planeta principal, cobrando a la ESCorp. null si se hizo; si no, el motivo para el jugador */
+	/** hace de id (el planeta en el que estas, con licencia) el principal, cobrando a la ESCorp. null si se hizo; si no, el motivo */
 	public static function setMain( info : SaveInfo, id : Int ) : String {
 		var uni = info.uni;
-		if( uni.main == null || uni.main == id || !has(uni, id) ) return Lang.t("licenses.notyours");
+		if( uni.main == null || uni.main == id || id != uni.planetId || !has(uni, id) ) return Lang.t("licenses.notyours");
 		var wait = cooldown(uni);
 		if( wait > 0 ) return Lang.t("licenses.wait").split("%t%").join(Lang.duration(wait));
 		var price = mainPrice(uni);
@@ -119,12 +119,5 @@ class Licenses {
 			if( f != null ) out.set(id, f.p);
 		}
 		return out;
-	}
-
-	/** nombre del planeta principal ("" si aun no hay) */
-	public static function mainName( uni : UniInfo ) : String {
-		if( uni == null || uni.main == null ) return "";
-		var p = planets(uni).get(uni.main);
-		return p == null ? "?" : p.name;
 	}
 }
