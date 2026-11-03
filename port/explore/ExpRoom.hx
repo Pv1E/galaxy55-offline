@@ -536,6 +536,51 @@ class ExpRoom {
 		return planetView(infos, rseed.random(3));
 	}
 
+	/**
+	 * La cometa del sistema (Comets, añadido del port): la roca de los escombros (tiles.png "asteroid") con los colores de su
+	 * bioma, una estela que se aleja del sol y un halo. Va entre las orbitas con su propia tirada, sin tocar orbitas, anillos
+	 * ni lo que se sortea para el resto del sistema.
+	 */
+	public function cometView( infos : ExpPlanet ) : ExpPlanetView {
+		var r = new mt.Rand(infos.seed);
+		var ang = r.rand() * Math.PI * 2;
+		var d = 130 + r.rand() * Math.max(40, exitDist - 190);
+		var biome = Common.Data.getBiome(Type.createEnum(Common.BiomeKind, infos.biome));
+		var c0 = biome.exploreColors.length > 0 ? biome.exploreColors[0] : 0xA08070;
+		var w = 120;
+		var bd = new BitmapData(w, w, true, 0);
+		// estela: lineas cada vez mas debiles hacia fuera del sistema (ang), un poco abiertas
+		var tail = new flash.display.Sprite();
+		var g = tail.graphics;
+		var cx = Math.cos(ang), cy = Math.sin(ang);
+		for( i in 0...7 ) {
+			var spread = (i - 3) * 0.06;
+			var len = 56 - Math.abs(i - 3) * 6;
+			g.lineStyle(i == 3 ? 5 : 3, Color.brightnessInt(c0, 0.7), 0.7 - Math.abs(i - 3) * 0.1);
+			g.moveTo(w * 0.5, w * 0.5);
+			g.lineTo(w * 0.5 + (cx * Math.cos(spread) - cy * Math.sin(spread)) * len, w * 0.5 + (cx * Math.sin(spread) + cy * Math.cos(spread)) * len);
+		}
+		bd.draw(tail);
+		bd.applyFilter(bd, bd.rect, pt0, new flash.filters.BlurFilter(3, 3, 2));
+		var rock = frameBmp(0, 64, 32, 32);
+		rock.applyFilter(rock, rock.rect, pt0, ExpColor.getColorizeMatrixFilter(Color.brightnessInt(c0, 0.3), 0.6, 0.7));
+		var m = new flash.geom.Matrix();
+		m.translate((w - 32) * 0.5, (w - 32) * 0.5);
+		bd.draw(rock, m);
+		bd.applyFilter(bd, bd.rect, pt0, new flash.filters.GlowFilter(Color.brightnessInt(c0, 0.8), 0.9, 12, 12, 2));
+		return {
+			infos : infos,
+			x : center.x + cx * d,
+			y : center.y + cy * d,
+			bd : bd,
+			scale : 1.0,
+			icon : 2,
+			iconX : 14,
+			iconY : -14,
+			showName : true,
+		};
+	}
+
 	/** la imagen del planeta (frame = una de las 3 de tiles.png) y su icono segun el estado */
 	function planetView( infos : ExpPlanet, frame : Int ) : ExpPlanetView {
 		var size = switch( infos.size ) {

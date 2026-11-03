@@ -185,8 +185,11 @@ class World {
 		this.seed = seed;
 		this.biomeName = biomeName;
 		this.atlas = atlas;
-		size = sizeChunks << Const.BITS;
-		chunkMeshes = [for( i in 0...sizeChunks * sizeChunks * 64 ) null];
+		// las cometas (Comets, añadido del port) son mas pequenas: su tamano no va en trozos de 128 (la nave, con el bioma del
+		// planeta, sigue en 128)
+		var comet = shipData == null && Comets.isComet(biomeName);
+		size = comet ? Comets.SIZE : sizeChunks << Const.BITS;
+		chunkMeshes = [for( i in 0...(size >> 4) * (size >> 4) ) null];
 		root = new h3d.scene.Object(parent);
 		var biome : BiomeKind = Type.createEnum(BiomeKind, biomeName);
 		// la nave comparte el cielo (niebla y curvatura) del planeta
@@ -207,7 +210,7 @@ class World {
 			wave.amp = Settings.waterWaves ? WAVE_AMP : 0;
 			wave.time = 0;
 		}
-		gen = new gen.DetailsGenerator(size, seed);
+		gen = comet ? new CometGenerator(size, seed) : new gen.DetailsGenerator(size, seed);
 		var bd = Data.getBiome(biome);
 		sunP = bd.sunPower;
 		sunF = bd.sunFalloff == null ? 1 : bd.sunFalloff;
@@ -669,13 +672,17 @@ class World {
 		// cambio del port: con el nivel del mar del generador, no con el actual (el original usa planet.waterLevel): si no, tras
 		// una bajada la nave podia aterrizar en otro sitio y una partida guardada dentro de ella quedaba en el aire
 		var water = gen.getWaterInfos().level;
-		var soil = Block.get(binf.soils[1]);
+		// en una cometa (añadido del port) sobre su roca, que no tiene capa de tierra, y lejos del borde del mundo: la nave (17 de
+		// ancho) solo se dibuja donde aterrizo, no en las copias del mundo que dan la vuelta (updateWrap)
+		var comet = Comets.isComet(biomeName);
+		var soil = Block.get(binf.soils[comet ? 0 : 1]);
+		var margin = comet ? 12 : 1;
 		var through = new Map<Int, Bool>();
 		for( b in binf.startThrough ) through.set(Block.get(b).index, true);
 		var ntry = 10000;
 		while( --ntry > 0 ) {
-			var x = rnd.random(size - 2) + 1;
-			var y = rnd.random(size - 2) + 1;
+			var x = rnd.random(size - margin * 2) + margin;
+			var y = rnd.random(size - margin * 2) + margin;
 			var z = HEIGHT - 1;
 			while( z > water ) {
 				var b = block(x, y, z);

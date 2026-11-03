@@ -162,7 +162,8 @@ class Hangar {
 	static var collideBits : Array<Int>;
 	var t : Array<Int>;
 	var blocks : Array<Int>;
-	var w : World;
+	/** bloque de una celda del cobertizo (World.block del hangar, o de una nave sin mundo: speedOf) */
+	var blockAt : Int -> Int -> Int -> Block;
 
 	/** resultado: null si la nave es valida; si no, la clave del error (hangar.<clave> en Lang) */
 	public var error(default, null) : String;
@@ -170,8 +171,20 @@ class Hangar {
 	/** casilla del teletransportador (coordenadas del mundo), para la comprobacion de luz */
 	public var spawnCell(default, null) : { x : Int, y : Int, z : Int };
 
+	/**
+	 * Velocidad de una nave (PC/s) como la da check() en el hangar (añadido del port, para las cometas): la nave puesta en el
+	 * cobertizo como shedData, sin crear el mundo. 0 si la nave no es valida.
+	 */
+	public static function speedOf( ship : haxe.io.Bytes ) : Float {
+		var cells = new Map<Int, Block>();
+		for( c in shedData(ship).cells ) cells.set((c.x << 16) | (c.y << 8) | c.z, Block.all[c.id]);
+		var h = new Hangar(null);
+		h.blockAt = function(x, y, z) return x < 0 || y < 0 || z < 0 ? null : cells.get((x << 16) | (y << 8) | z);
+		return h.check() ? h.speed : 0;
+	}
+
 	public function new( w : World ) {
-		this.w = w;
+		if( w != null ) blockAt = w.block;
 		if( collideBits == null ) {
 			collideBits = [for( b in Block.all ) 0];
 			for( b in Block.all ) {
@@ -207,7 +220,7 @@ class Hangar {
 		for( z in 0...WZ )
 			for( y in 0...WY )
 				for( x in 0...WX ) {
-					var id = shipId(w.block(x + OX, y, z));
+					var id = shipId(blockAt(x + OX, y, z));
 					t.push(id);
 					blocks.push(id);
 				}

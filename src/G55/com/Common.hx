@@ -349,6 +349,8 @@ enum BiomeKind {
 	BIWinterPeaks;
 	BIMars;
 	BIDeadCity;
+	// añadidos del port: un bioma por tipo de cometa (Comets, CometGenerator); nunca salen al azar como planeta
+	BICometCinder;
 }
 
 typedef BiomeData = {

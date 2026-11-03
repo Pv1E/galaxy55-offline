@@ -53,7 +53,8 @@ class Space {
 
 	/** antes de escanear un planeta sin explorar: hace falta una licencia libre (Licenses, anadido del port) */
 	public function canScan( p : ExpPlanet ) : Bool {
-		if( tutorial || Licenses.canClaim(info) ) return true;
+		// una cometa no gasta licencia (Comets, añadido del port)
+		if( tutorial || p.comet != null || Licenses.canClaim(info) ) return true;
 		onRefuse(Lang.t("license.full"));
 		return false;
 	}

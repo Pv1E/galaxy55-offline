@@ -338,7 +338,9 @@ class Ship {
 		var onShipEntry = g.pz > Const.SIZE && g.standingBlock == Block.all[Type.enumIndex(BShipEntry)];
 		// cambio del port: desde el planeta solo se sube de pie a la altura de la base del rayo (g.pz < z + 1); el original valia
 		// cualquier altura por encima (g.pz <= Const.SIZE), p. ej. el borde de un hoyo cavado bajo la nave, a menos de 0.6 del centro
-		if( d < 0.6 && g.pz >= z && (g.pz < z + 1 || onShipEntry) ) {
+		// cometa con el tiempo acabado (Comets, añadido del port): el teletransportador de a bordo ya no baja; desde abajo se sube
+		var beamOff = onShipEntry && g.cometOver();
+		if( !beamOff && d < 0.6 && g.pz >= z && (g.pz < z + 1 || onShipEntry) ) {
 			if( g.enteringShip >= 0 && g.standingBlock != null ) {
 				g.enteringShip += tmod * 0.05;
 				if( g.enteringShip >= 1.5 ) g.gotoShip(!onShipEntry);

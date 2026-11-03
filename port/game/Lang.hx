@@ -141,6 +141,8 @@ class Lang {
 		"biome.BIWinterPeaks" => ["Cumbres nevadas", "Winter peaks", "Sommets enneigés"],
 		"biome.BIAcidForest" => ["Bosque ácido", "Acid forest", "Forêt acide"],
 		"biome.BIDeadCity" => ["Ciudad muerta", "Dead city", "Cité morte"],
+		// cometas (Comets, añadido del port): un bioma por tipo
+		"biome.BICometCinder" => ["Cometa calcinado", "Cinder comet", "Comète calcinée"],
 		"biome.random" => ["Aleatorio", "Random", "Aléatoire"],
 		// mapa de estrellas (textos de exp.OfflineData)
 		"exp.system" => ["Sistema", "System", "Système"],
@@ -176,6 +178,14 @@ class Lang {
 		"license.full" => ["No te queda ninguna licencia libre.\nAbandona uno de tus planetas para liberar una.", "You have no free license left.\nAbandon one of your planets to free one.", "Tu n'as plus de licence libre.\nAbandonne une de tes planètes pour en libérer une."],
 		"license.pilotmain" => ["Solo puedes pilotar la nave sobre tu planeta principal.", "You can only pilot the ship over your main planet.", "Tu ne peux piloter le vaisseau qu'au-dessus de ta planète principale."],
 		"license.keepmain" => ["No puedes abandonar tu planeta principal.", "You cannot abandon your main planet.", "Tu ne peux pas abandonner ta planète principale."],
+		// cometas (Comets, añadido del port). %t% = 2:15
+		"exp.comet" => ["Cometa", "Comet", "Comète"],
+		"exp.comet.scan" => ["Escanear", "Scan", "Scanner cette comète"],
+		"exp.comet.info" => ["Sin licencia · Una sola visita · Amarre limitado: %t%", "No license · Single visit · Docking limited: %t%", "Sans licence · Une seule visite · Amarrage limité : %t%"],
+		"exp.comet.gone" => ["El cometa se ha alejado.", "The comet has drifted away.", "La comète s'est éloignée."],
+		"comet.timer" => ["Cometa: %t%", "Comet: %t%", "Comète : %t%"],
+		"comet.over" => ["Se acabó el tiempo: el cometa se aleja y el teletransportador ya no baja.", "Time's up: the comet is drifting away and the teleporter no longer goes down.", "Temps écoulé : la comète s'éloigne et le téléporteur ne descend plus."],
+		"comet.beamoff" => ["El cometa se aleja: el teletransportador ya no baja", "The comet is drifting away: the teleporter no longer goes down", "La comète s'éloigne : le téléporteur ne descend plus"],
 		"abandon.ask" => ["¿Abandonar %name%?", "Abandon %name%?", "Abandonner %name% ?"],
 		"abandon.warn" => ["Perderás su licencia y todo lo que hayas cambiado en él, y no podrás volver nunca.", "You will lose its license and everything you changed there, and you will never be able to go back.", "Tu perdras sa licence et tout ce que tu y as modifié, et tu ne pourras plus jamais y retourner."],
 		"abandon.freed" => ["Planeta abandonado: licencia liberada.", "Planet abandoned: license freed.", "Planète abandonnée : licence libérée."],

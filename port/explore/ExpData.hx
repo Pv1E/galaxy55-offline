@@ -29,6 +29,8 @@ typedef ExpPlanet = {
 	var status : ExpPlanetStatus;
 	var gas : Bool;
 	var biome : String;
+	/** cometa (Comets, añadido del port): su franja de tiempo; null en los planetas */
+	@:optional var comet : Null<Int>;
 }
 
 typedef ExpSystem = {
