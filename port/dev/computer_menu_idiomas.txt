@@ -1,0 +1,70 @@
+# botones del ordenador de a bordo sin la precision entre parentesis ("Despegar", "Modificar la nave", "Pilotar la nave",
+# "Comerciar", "Contratos") en los 3 idiomas: caben en su boton y nada se sale del panel. Despues el titulo de la paleta
+# del creativo ("Bloques") y, con el tutorial en curso, el texto del paso del ordenador (elige "Modificar la nave") y su
+# menu (sin pilotar, con "Saltar el tutorial"). Capturas port/out/menu_<idioma>.png, paleta_<idioma>.png y menu_tuto_<idioma>.png
+wait 3
+ship
+wait 10
+setlang es
+activatel 64 63 3
+wait 5
+print menu
+shot menu_es
+close
+wait 5
+setlang en
+activatel 64 63 3
+wait 5
+print menu
+shot menu_en
+close
+wait 5
+setlang fr
+activatel 64 63 3
+wait 5
+print menu
+shot menu_fr
+close
+wait 5
+planet
+wait 30
+creative
+setlang es
+palette
+wait 5
+shot paleta_es
+close
+setlang fr
+palette
+wait 5
+shot paleta_fr
+close
+wait 5
+tuto new 4242
+waitfor map
+expplanet 0
+waitfor window
+expbutton
+waitfor planet
+wait 30
+ship
+wait 10
+tuto step 9
+setlang es
+print tuto
+activatel 64 63 3
+wait 5
+print menu
+shot menu_tuto_es
+close
+wait 5
+setlang fr
+print tuto
+activatel 64 63 3
+wait 5
+print menu
+shot menu_tuto_fr
+close
+wait 5
+setlang es
+quit
