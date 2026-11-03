@@ -1347,10 +1347,14 @@ class GalaxyApp extends hxd.App {
 		hxd.System.allowTimeout = false;
 		// despegue: los cambios del planeta quedan en la partida, que pasa al espacio, y el planeta se descarga
 		var takeoff = game != null;
+		Explorer.cometStart = null;
 		if( takeoff ) {
 			universe();
 			var info = game.toInfo();
-			// despegar de una cometa (Comets, añadido del port): ya no vuelve, y sus cambios se pierden
+			// despegar de una cometa (Comets, añadido del port): ya no vuelve, y sus cambios se pierden; la nave sale en el mapa
+			// donde estaba ella
+			var c = info.comet;
+			if( c != null && info.uni != null ) Explorer.cometStart = Comets.make(info.uni.seed, c.sys, c.slot);
 			Comets.leave(info);
 			shipFrames = game.ship.captureFrames(engine, s3d);
 			leaveGame();
@@ -1710,7 +1714,7 @@ class GalaxyApp extends hxd.App {
 		}
 		invBar = new InvBar(s2d, game.inv, atlas, W);
 		game.onComputer = openComputer;
-		game.onCometOver = function() showToast(Lang.t("comet.over"), 5);
+		game.onCometOver = function() showToast(Lang.t("comet.over"), GameView.COMET_OVER_TOAST);
 		game.onChest = openChest;
 		game.onChestBreak = function(t) if( chest != null && chest.box == t ) closeChest();
 		if( game.info.mothership == true ) game.onHangarExit = backFromMothership;

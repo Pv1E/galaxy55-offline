@@ -120,7 +120,7 @@ class Explorer extends h2d.Object {
 	public dynamic function isMain( p : ExpPlanet ) : Bool return false;
 	/** la cometa que tiene ahora el sistema, o null (Comets, añadido del port): solo se ve dentro del sistema */
 	public dynamic function cometOf( s : ExpSystem ) : ExpPlanet return null;
-	/** el texto de la ventana de una cometa, bajo su nombre (sin licencia, tiempo de amarre) */
+	/** el texto de la ventana de una cometa, bajo su nombre (su tiempo de amarre) */
 	public dynamic function cometInfo( p : ExpPlanet ) : String return "";
 	/** planeta al que lleva el tutorial (flecha del GPS aunque no se haya visitado); -1 = ninguno */
 	public var tutoTarget(default, set) = -1;
@@ -137,6 +137,8 @@ class Explorer extends h2d.Object {
 	public static var robotStart : { x : Float, y : Float } = null;
 	/** al volver de la nave del robot: la nave aparece donde se acoplo (en el sector) */
 	public static var shipStart : { x : Float, y : Float } = null;
+	/** al despegar de una cometa (Comets, añadido del port): la nave aparece donde estaba, aunque la cometa ya no se vea */
+	public static var cometStart : ExpPlanet = null;
 
 	var content : h2d.Object;
 	var bgBmp : h2d.Bitmap;
@@ -967,10 +969,17 @@ class Explorer extends h2d.Object {
 					room.entrance.x = pv.x + 32;
 					room.entrance.y = pv.y;
 				}
+		var fromComet = planetId < 0 && cometStart != null && cometStart.id == Comets.idOf(si.id);
+		if( fromComet ) {
+			var pv = room.cometView(cometStart);
+			room.entrance.x = pv.x + 32;
+			room.entrance.y = pv.y;
+		}
+		cometStart = null;
 		finishSolar(si);
 		solar.viewX = solarStars.viewX = ship.x;
 		solar.viewY = solarStars.viewY = ship.y;
-		ship.rotation = planetId >= 0 ? 180 : 180 + arrival * 180 / Math.PI;
+		ship.rotation = planetId >= 0 || fromComet ? 180 : 180 + arrival * 180 / Math.PI;
 		ship.dx = ship.dy = 0;
 		cursorAlpha = 0;
 	}
@@ -996,6 +1005,8 @@ class Explorer extends h2d.Object {
 			t.y = Std.int(pv.bd.height * pv.scale * 0.3);
 		}
 		sp.half = pv.bd.width * pv.scale * 0.5 - 10;
+		// la cometa es pequeña: se puede pinchar un poco alrededor (Comets, añadido del port)
+		if( pv.infos.comet != null ) sp.half += 6;
 		solarSpots.push(sp);
 		return sp;
 	}

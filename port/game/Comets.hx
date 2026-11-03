@@ -12,8 +12,9 @@ import ExpData;
  *   sistema * 10 + ID, que ningun planeta usa (ExpOffline: sistema * 10 + 0..3).
  * - No gasta licencia ni puede ser el principal; escanearla es aterrizar. Al despegar se pierde (UniInfo.comets) con sus
  *   cambios y sus cantinas.
- * - En ella el tiempo esta contado (dockTime, segun la velocidad de la nave): al acabarse, el jugador vuelve a la nave y el
- *   teletransportador ya no baja (GameView.updateComet).
+ * - En ella el tiempo esta contado (dockTime, segun la velocidad de la nave) y solo corre abajo, no a bordo: al acabarse, el
+ *   jugador vuelve a la nave y el teletransportador ya no baja (GameView.updateComet).
+ * - Al despegar, la nave sale en el mapa donde estaba la cometa (Explorer.cometStart), aunque ya no se vea.
  * Cada tipo de cometa es un bioma (BICometCinder...) con su receta en CometGenerator: para anadir otro basta con su bioma en
  * DataGen, su nombre en Lang, su caso en CometGenerator y su entrada en KINDS.
  */
@@ -28,6 +29,8 @@ class Comets {
 
 	/** solo pruebas (Dev "comet here"): sistema con cometa en cualquier franja */
 	public static var devForce = -1;
+	/** solo pruebas (--all-comets): todos los sistemas con cometa en cualquier franja (salvo la ya visitada) */
+	public static var devAll = Sys.args().indexOf("--all-comets") >= 0;
 
 	public static function isComet( biome : String ) return KINDS.indexOf(biome) >= 0;
 
@@ -49,10 +52,16 @@ class Comets {
 	public static function of( uni : UniInfo, s : ExpSystem ) : ExpPlanet {
 		var k = slot(uni.seed, s.id, Licenses.now());
 		if( visited(uni, s.id, k) ) return null;
-		var r = rand(uni.seed, s.id, k);
-		if( !draw(r) && s.id != devForce ) return null;
+		if( !drawn(uni.seed, s.id, k) && s.id != devForce && !devAll ) return null;
+		return make(uni.seed, s.id, k);
+	}
+
+	/** la cometa del sistema en la franja k, haya salido o no (la misma tirada que of: su sitio en el mapa sale de seed) */
+	public static function make( seed : Int, sys : Int, k : Int ) : ExpPlanet {
+		var r = rand(seed, sys, k);
+		draw(r);
 		return {
-			id : idOf(s.id), seed : r.random(1000000), size : 1, distance : -1, name : Lang.t("exp.comet"), status : PUnexplored, gas : false,
+			id : idOf(sys), seed : r.random(1000000), size : 1, distance : -1, name : Lang.t("exp.comet"), status : PUnexplored, gas : false,
 			biome : KINDS[r.random(KINDS.length)], comet : k,
 		};
 	}

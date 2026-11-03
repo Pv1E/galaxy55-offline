@@ -1,6 +1,6 @@
 # Cometas (Comets, añadido del port). Aventura sin tutorial, semilla 4242: la nave empieza en el sistema 0.
 # - comet stats: que sistemas tienen cometa ahora y la proporcion en 6000 franjas (1 de 6)
-# - comet force 0: el sistema 0 tiene cometa (id 9); su ventana dice sin licencia, una visita y el tiempo de amarre
+# - comet force 0: el sistema 0 tiene cometa (id 9); su ventana dice su bioma y el tiempo de amarre
 # - escanearla no gasta licencia ni la hace principal; mundo de 96x96 con cuenta atras arriba a la izquierda
 # - recargar la partida en ella: sigue en la cometa con el tiempo que quedaba
 # - al acabarse el tiempo: vuelta a la nave (fundido de Mayus+K), aviso, el teletransportador no baja y, si se baja por otro
