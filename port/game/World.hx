@@ -321,6 +321,16 @@ class World {
 		return openAlpha(x, y, z) || liquidFam(voxel(x, y, z)) == 2;
 	}
 
+	/**
+	 * Caras de la cascada. Cambio del port: tambien contra un bloque con alfa que no es cascada (cristal, hielo, arena movediza).
+	 * Con openAlpha, como el original, una cascada rodeada de cristal no tenia ninguna cara a los lados y no se veia a traves
+	 * del cristal; ahora la cara de la cascada y la del cristal (openAlphaNear) miran en sentidos contrarios y solo se ve una
+	 */
+	inline function openCascade( x : Int, y : Int, z : Int ) : Bool {
+		var id = voxel(x, y, z);
+		return openAlpha(x, y, z) || (tagOf(id) == BTAlpha && liquidFam(id) != 2);
+	}
+
 	/** Builder.isTransparentNot(p, BTWater) del original: ni bloque lleno ni agua (el aire cuenta como abierto) */
 	inline function waterOpen( x : Int, y : Int, z : Int ) : Bool {
 		var id = voxel(x, y, z);
@@ -1676,7 +1686,7 @@ class World {
 						addLiquid(waterBuf, b, 1, x, y, z, waterOpen, su, sd, sx, sy, neg);
 					case BTAlpha if( liquidFam(id) == 2 ):
 						// cascada: cada paso de Fall..Fall4 un poco mas bajo, superficie inclinada
-						addLiquid(blendBuf, b, 2, x, y, z, openAlpha, su, sd, sx, sy, neg);
+						addLiquid(blendBuf, b, 2, x, y, z, openCascade, su, sd, sx, sy, neg);
 					case BTFull, BTAlpha, BTTransp:
 						var m = b.type == BTFull ? solidBuf : (b.type == BTAlpha ? blendBuf : alphaBuf);
 						var al = b.type == BTAlpha;
