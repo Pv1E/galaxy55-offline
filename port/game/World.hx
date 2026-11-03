@@ -304,6 +304,12 @@ class World {
 		return id == 0 || tagOf(id) != BTFull;
 	}
 
+	/** true si alguna de las 6 celdas vecinas es un bloque que da luz (BFLight: neon, lamparas...) */
+	function besideLamp( x : Int, y : Int, z : Int ) : Bool {
+		return lightIdx[voxel(x - 1, y, z)] >= 0 || lightIdx[voxel(x + 1, y, z)] >= 0 || lightIdx[voxel(x, y - 1, z)] >= 0
+			|| lightIdx[voxel(x, y + 1, z)] >= 0 || lightIdx[voxel(x, y, z - 1)] >= 0 || lightIdx[voxel(x, y, z + 1)] >= 0;
+	}
+
 	/** como Builder.hx del original: los bloques con alfa (hielo, cristal) dejan ver las caras de lo que hay detras */
 	inline function openAlpha( x : Int, y : Int, z : Int ) : Bool {
 		var id = voxel(x, y, z);
@@ -1691,16 +1697,19 @@ class World {
 					case BTReduced:
 						if( b.size != null ) {
 							// igual que el original: las caras de un bloque parcial se ven si no tapan todo el lado o si el vecino es transparente.
-							// Luz por esquina como la cara entera (addCustomQuad); si la celda de al lado no tiene luz, la mas alta alrededor
+							// Luz por esquina como la cara entera (addCustomQuad); si la celda de al lado no tiene luz, la mas alta alrededor.
+							// cambio del port: pegado a un bloque que da luz (un neon...), una sola luz por cara, la de la celda de al lado,
+							// como antes: por esquina contaban la pared y el techo junto a la lampara (sin luz) y salia mucho mas oscuro
+							var lamp = besideLamp(x, y, z);
 							var s = b.size;
 							var x1 = fx + s.x1, y1 = fy + s.y1, z1 = fz + s.z1, x2 = fx + s.x2, y2 = fy + s.y2, z2 = fz + s.z2;
 							redB = [x1, y1, x2, y2, z2];
-							if( s.z2 < 1 || open(x, y, z + 1) ) { redFace = 0; addQuadL(alphaBuf, [x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2], b.tu, su, neg, 0, 0, 1, x, y, z, false, [fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1]); }
-							if( s.z1 > 0 || open(x, y, z - 1) ) { redFace = 1; addQuadL(alphaBuf, [x1, y2, z1, x2, y2, z1, x2, y1, z1, x1, y1, z1], b.td, sd, neg, 0, 0, -1, x, y, z, false, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz]); }
-							if( s.x1 > 0 || open(x - 1, y, z) ) { redFace = 2; addQuadL(alphaBuf, [x1, y2, z1, x1, y1, z1, x1, y1, z2, x1, y2, z2], b.tlr, sx, neg, -1, 0, 0, x, y, z, false, [fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1]); }
-							if( s.x2 < 1 || open(x + 1, y, z) ) { redFace = 3; addQuadL(alphaBuf, [x2, y1, z1, x2, y2, z1, x2, y2, z2, x2, y1, z2], b.tlr, sx, neg, 1, 0, 0, x, y, z, false, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1]); }
-							if( s.y1 > 0 || open(x, y - 1, z) ) { redFace = 4; addQuadL(alphaBuf, [x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2], b.tlr, sy, neg, 0, -1, 0, x, y, z, false, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1]); }
-							if( s.y2 < 1 || open(x, y + 1, z) ) { redFace = 5; addQuadL(alphaBuf, [x2, y2, z1, x1, y2, z1, x1, y2, z2, x2, y2, z2], b.tlr, sy, neg, 0, 1, 0, x, y, z, false, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1]); }
+							if( s.z2 < 1 || open(x, y, z + 1) ) { redFace = 0; addQuadL(alphaBuf, [x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2], b.tu, su, neg, 0, 0, 1, x, y, z, lamp, [fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1]); }
+							if( s.z1 > 0 || open(x, y, z - 1) ) { redFace = 1; addQuadL(alphaBuf, [x1, y2, z1, x2, y2, z1, x2, y1, z1, x1, y1, z1], b.td, sd, neg, 0, 0, -1, x, y, z, lamp, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz]); }
+							if( s.x1 > 0 || open(x - 1, y, z) ) { redFace = 2; addQuadL(alphaBuf, [x1, y2, z1, x1, y1, z1, x1, y1, z2, x1, y2, z2], b.tlr, sx, neg, -1, 0, 0, x, y, z, lamp, [fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1]); }
+							if( s.x2 < 1 || open(x + 1, y, z) ) { redFace = 3; addQuadL(alphaBuf, [x2, y1, z1, x2, y2, z1, x2, y2, z2, x2, y1, z2], b.tlr, sx, neg, 1, 0, 0, x, y, z, lamp, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1]); }
+							if( s.y1 > 0 || open(x, y - 1, z) ) { redFace = 4; addQuadL(alphaBuf, [x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2], b.tlr, sy, neg, 0, -1, 0, x, y, z, lamp, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1]); }
+							if( s.y2 < 1 || open(x, y + 1, z) ) { redFace = 5; addQuadL(alphaBuf, [x2, y2, z1, x1, y2, z1, x1, y2, z2, x2, y2, z2], b.tlr, sy, neg, 0, 1, 0, x, y, z, lamp, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1]); }
 						}
 					case BTExtended:
 						// caras con texturas distintas empaquetadas de a 12 bits (BFTextures)
