@@ -120,7 +120,9 @@ class Drops {
 			d.time -= dt / 30;
 			if( d.fixed ) {
 				if( d.obj != null ) {
-					d.obj.setPosition(d.x, d.y, d.z);
+					// cambio del port: en la copia del planeta mas cercana al jugador, como la nave en la que esta (Ship.updateWrap)
+					var s = world.size;
+					d.obj.setPosition(d.x + s * Math.round((g.px - d.x) / s), d.y + s * Math.round((g.py - d.y) / s), d.z);
 					d.obj.setRotation(0, 0, clock);
 					d.obj.setScale(SCALE);
 				}

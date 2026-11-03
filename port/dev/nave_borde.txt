@@ -1,0 +1,54 @@
+# la nave a caballo del borde del planeta (cambio del port): se dibuja en la copia del planeta mas cercana al jugador, como el
+# terreno y el rayo. Planeta de prueba (128 de lado, nave en x = 124: alli no llega al borde, acaba en x = 127). Se pilota hasta
+# x = 1 (la nave va de x = -4 a 4, locales 58..66) y se cruza el borde andando por dentro hasta la losa del sintetizador: el
+# jugador pasa de x = 0.5 a 126.45 y sigue de pie en la nave ("print pos": z = 133, suelo = BCrafter). Capturas:
+#   nave_borde_antes    dentro, antes de cruzar (la zona del sintetizador con la madera)
+#   nave_borde_despues  dentro, ya al otro lado: la nave y la vista previa del sintetizador (la tabla, dentro del transmutador)
+#   nave_borde_pilotar  pilotando desde ese lado: la nave en el centro, con el rayo debajo y el planeta
+#   nave_borde_suelo    desde el suelo al otro lado del borde (x = 1.5, la nave dejada en x = 126): la nave encima del rayo
+# Antes del cambio, en despues y en suelo no se veia la nave (solo el cielo y el rayo) y, pilotando, el rayo no salia bajo la
+# nave. -Timeout 400
+wait 3
+ship
+wait 10
+tpl 62.5 63.5 3.0 3.14 -0.45
+wait 5
+setl 59 62 3 BWood
+wait 5
+pilot
+pilotgo 5 0
+wait 3
+pilotstop
+wait 10
+print ship
+print pos
+print loose
+shot nave_borde_antes
+look -2.36 0
+walk 1
+wait 60
+walk 0
+look -0.45 -0.15
+wait 5
+print pos
+shot nave_borde_despues
+pilot
+wait 10
+print pilotcam
+shot nave_borde_pilotar
+pilotgo -3 0
+wait 5
+print pilotcam
+pilotstop
+wait 10
+print ship
+print pos
+planet
+wait 20
+nudge 3 0
+wait 20
+print pos
+look 3.14 1.5
+wait 5
+shot nave_borde_suelo
+quit
