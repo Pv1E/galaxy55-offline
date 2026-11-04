@@ -37,7 +37,10 @@ class Parts {
 		mat.mainPass.addShader(new h3d.shader.VertexColor());
 		mat.mainPass.addShader(world.sky.fog);
 		mat.textureShader.killAlpha = true;
-		mat.textureShader.killAlphaThreshold = 0.001;
+		// cambio del port: el original corta en 0.001, pero el png tiene texeles casi transparentes (alfa 1/255 a 6/255, blancos en
+		// la hierba roja) que el mundo no muestra (corte 0.5) y aqui salian opacos: trozos blancos al romper las hierbas que el
+		// port hace rompibles. Con 0.03 desaparecen; el hielo (alfa >= 0.28) no cambia y el cristal solo pierde sus pocos texeles de 6/255
+		mat.textureShader.killAlphaThreshold = 0.03;
 	}
 
 	/** Particles.doBreak (count: intentos, 75 en el original) */
