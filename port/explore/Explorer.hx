@@ -479,6 +479,9 @@ class Explorer extends h2d.Object {
 
 	function openSystems() return [for( sp in sectorSpots ) if( sp.system != null && sp.system.status == SOpen ) sp];
 
+	/** los objetos del sector en los saltos (sector.entities del original): los sistemas y el robot, que no entra en los sistemas */
+	function sectorEntities() return robot == null ? sectorSpots : sectorSpots.concat([robot]);
+
 	function addRobot() {
 		var open = openSystems();
 		if( open.length == 0 ) return;
@@ -630,7 +633,22 @@ class Explorer extends h2d.Object {
 	public function devClickRobot() if( robot != null && !inSolar ) moveShip(robot);
 	public function devWindowOpen() return win != null;
 
-	public function devRobotInfo() return robot == null ? "sin robot" : "robot en " + Std.int(robot.e.x) + "," + Std.int(robot.e.y) + " parado=" + robotStopped + " nave=" + Std.int(ship.x) + "," + Std.int(ship.y) + " ventana=" + (win != null);
+	public function devRobotInfo() return robot == null ? "sin robot" : "robot en " + Std.int(robot.e.x) + "," + Std.int(robot.e.y) + " parado=" + robotStopped + " nave=" + Std.int(ship.x) + "," + Std.int(ship.y) + " ventana=" + (win != null)
+		+ " dibujo=" + (worldSector.visible ? Std.int(robot.obj.x) + "," + Std.int(robot.obj.y) + " escala=" + Std.int(robot.obj.scaleX * 100) / 100 + " alfa=" + Std.int(robot.obj.alpha * 100) / 100 : "oculto");
+
+	/** pruebas: pulsar el sistema abierto mas cercano al robot */
+	public function devClickRobotSystem() {
+		if( robot == null || inSolar ) return;
+		var best : Spot = null, bd = 1e9;
+		for( sp in openSystems() ) {
+			var d = Math.abs(sp.e.x - robot.e.x) + Math.abs(sp.e.y - robot.e.y);
+			if( d < bd ) {
+				bd = d;
+				best = sp;
+			}
+		}
+		if( best != null ) moveShip(best);
+	}
 
 	/** boton Acoplarse de la ventana del robot */
 	function dockRobot() {
@@ -814,7 +832,7 @@ class Explorer extends h2d.Object {
 			o.l.zoom = 0;
 			tw.create(o.l, "zoom", ANIM_SECTOR_ZOOM, TEaseIn, d).onUpdateT = function(t) o.b.alpha = 1 - t;
 		}
-		for( sp in sectorSpots ) {
+		for( sp in sectorEntities() ) {
 			var e = sp.e;
 			e.zoom = 0;
 			tw.create(e, "zoom", ANIM_SECTOR_ZOOM * 0.2, TEaseIn, d * 0.4).onUpdateT = function(t) e.alpha = 1 - t;
@@ -1039,7 +1057,7 @@ class Explorer extends h2d.Object {
 			tw.create(o.l, "zoom", 0, TEaseOut, d);
 			tw.create(o.b, "alpha", 1, TEaseIn, d);
 		}
-		for( sp in sectorSpots ) {
+		for( sp in sectorEntities() ) {
 			var e = sp.e;
 			e.alpha = 0;
 			e.zoom = ANIM_SECTOR_ZOOM * 0.2;
@@ -1673,8 +1691,10 @@ class Explorer extends h2d.Object {
 		}
 		if( !paused ) updateRobot(tmod, dt);
 		if( robot != null && !inSolar ) {
-			robot.obj.setPosition(Std.int(screenX(robot.e.x, vx, zoomT)), Std.int(screenY(robot.e.y, vy, zoomT)));
-			robot.obj.setScale(1 + zoomT);
+			var z = zoomT + robot.e.zoom;
+			robot.obj.setPosition(Std.int(screenX(robot.e.x, vx, z)), Std.int(screenY(robot.e.y, vy, z)));
+			robot.obj.setScale(1 + z);
+			robot.obj.alpha = robot.e.alpha;
 			// si lo sigues y se para en un punto, el cursor va con el
 			if( robotStopped && targetSpot == robot && ship.target != null ) {
 				ship.target.x = robot.e.x;
