@@ -63,9 +63,12 @@ import Common;
  *   devsaves N              borra las partidas de la carpeta de datos de prueba y crea N de ejemplo (solo con GALAXY55_DATA)
  *   tap TECLA               pulsar y soltar una tecla: up down left right enter esc tab space pgup pgdown o una letra
  *   type TEXTO              escribir el resto de la linea en el campo de texto en el que se esta escribiendo
- *   wheel N                 rueda del raton (N > 0 = hacia abajo)
+ *   wheel N                 rueda del raton (N > 0 = hacia abajo), donde lo dejo la ultima orden mouse
  *   mouse X Y [click]       llevar el raton a ese punto de la zona 1280x720 (y hacer clic)
  *   print menu|saves        pantalla de menu abierta y su foco / partidas guardadas (waitfor menu: el menu y su fondo listos)
+ *   kube ORDEN              editor de kubes abierto (screen kubes): load BLOQUE (copiar un bloque del juego), shape ID, face NOMBRE,
+ *                           paint x0 y0 x1 y1 AARRGGBB (rectangulo de la cara, 0 = borrar), name TEXTO, tab 0|1, file N (cargar el
+ *                           .kube N de Mis kubes), save; print kube
  *   quit
  */
 class Dev {
@@ -82,6 +85,8 @@ class Dev {
 	public var inPause = false;
 	/** el guion volvio al menu principal (orden `menu`): sigue ejecutandose en los menus de inicio */
 	public var inMenu = false;
+	/** donde dejo el raton la ultima orden `mouse` (pixeles de la ventana), para `wheel` */
+	var mousePos : Array<Float>;
 	/** tecla de la orden `tap`, que se suelta en la siguiente actualizacion */
 	var tapKey = -1;
 	var lines : Array<String>;
@@ -512,7 +517,8 @@ class Dev {
 						hxd.Window.getInstance().event(e);
 					}
 				case "wheel":
-					var e = new hxd.Event(EWheel);
+					// donde dejo el raton la ultima orden mouse (la lista del editor de kubes solo la recibe encima); sin ella, en 0,0
+					var e = mousePos == null ? new hxd.Event(EWheel) : new hxd.Event(EWheel, mousePos[0], mousePos[1]);
 					e.wheelDelta = f(a[1]);
 					hxd.Window.getInstance().event(e);
 				case "mouse":
@@ -520,6 +526,7 @@ class Dev {
 					var area = Ui.Theme.visibleArea(), eng = h3d.Engine.getCurrent();
 					var mx = (f(a[1]) - area.x) * eng.width / area.w, my = (f(a[2]) - area.y) * eng.height / area.h;
 					var win = hxd.Window.getInstance();
+					mousePos = [mx, my];
 					win.event(new hxd.Event(EMove, mx, my));
 					if( a[3] == "click" ) {
 						win.event(new hxd.Event(EPush, mx, my));
@@ -532,6 +539,22 @@ class Dev {
 				case "trace": trace = true;
 				case "shop": app.openShop();
 				case "screen": @:privateAccess app.show(a[1]);
+				case "kube":
+					var k = Std.downcast(@:privateAccess app.current, KubeEditor);
+					if( k == null ) Sys.println("kube: el editor de kubes no esta abierto");
+					else switch( a[1] ) {
+						case "load": k.devLoadBlock(bk(a[2]));
+						case "shape": k.devShape(a[2]);
+						case "face": k.devFace(KubeData.FACES.indexOf(a[2]));
+						case "paint":
+							var c = a[6] == "0" ? 0 : (Std.parseInt("0x" + a[6].substr(0, 2)) << 24) | Std.parseInt("0x" + a[6].substr(2));
+							k.devPaint(Std.parseInt(a[2]), Std.parseInt(a[3]), Std.parseInt(a[4]), Std.parseInt(a[5]), c);
+						case "name": k.devName(a.slice(2).join(" "));
+						case "tab": k.devTab(Std.parseInt(a[2]));
+						case "file": k.devLoadFile(Std.parseInt(a[2]));
+						case "save": k.saveKube();
+						default: Sys.println("kube: orden desconocida " + a[1]);
+					}
 				case "winsize":
 					// winsize ANCHO ALTO: tamano de la ventana, para probar ventanas mas anchas o mas altas que 16:9
 					hxd.Window.getInstance().resize(Std.parseInt(a[1]), Std.parseInt(a[2]));
@@ -730,6 +753,11 @@ class Dev {
 		}
 		if( a[1] == "saves" ) {
 			Sys.println(app.devSavesInfo());
+			return;
+		}
+		if( a[1] == "kube" ) {
+			var k = Std.downcast(@:privateAccess app.current, KubeEditor);
+			Sys.println(k == null ? "kube: el editor de kubes no esta abierto" : k.devInfo());
 			return;
 		}
 		if( a[1] == "shots" ) {
