@@ -12,7 +12,8 @@ typedef TutoTarget = { x : Int, y : Int, z : Int };
  * BAUXITE  minar 2 bauxitas                        RETURN   volver a la nave por el rayo
  * ALU      bauxita -> aluminio en el sintetizador  PLATES   aluminio -> blindaje
  * COMPUTER ordenador de a bordo, Modificar la nave HANGAR   tapar los agujeros (solo ahi y solo blindaje)
- * LEAVE    salir del hangar con la nave estanca    DONE     la ESCorp envia cargas y creditos y se acaba
+ * LEAVE    salir del hangar con la nave estanca    DONE     la ESCorp envia cargas y creditos, el planeta pasa a ser el
+ *                                                           principal (Licenses) y se acaba
  * Mientras dura no se despega (GalaxyApp.buildComputer). El paso se guarda en SaveInfo.tuto.
  */
 class Tutorial {
@@ -33,9 +34,10 @@ class Tutorial {
 
 	static inline var NEED_CITRONOX = 3;
 	static inline var NEED_ETHERIUM = 2;
-	/** segundos de la explicacion de HULL y de la felicitacion final */
+	/** segundos de la explicacion de HULL y de la felicitacion final; despues, la del planeta principal (Licenses) */
 	static inline var HULL_TIME = 9.;
 	static inline var DONE_TIME = 16.;
+	static inline var MAIN_TIME = 10.;
 
 	var hullTime = 0.;
 	var doneTime = 0.;
@@ -83,7 +85,9 @@ class Tutorial {
 		g.inv.addCharge(CYellow, TutoSetup.GIFT);
 		g.info.credits = (g.info.credits == null ? 0 : g.info.credits) + Market.START_CREDITS;
 		g.info.tuto = null;
-		doneTime = DONE_TIME;
+		// el planeta del tutorial, el primero que se explora, pasa a ser el principal (anadido del port)
+		Licenses.tutorialDone(g.info);
+		doneTime = DONE_TIME + MAIN_TIME;
 		if( onDone != null ) onDone();
 	}
 
@@ -111,7 +115,7 @@ class Tutorial {
 
 	/** texto del objetivo (null = nada que mostrar); g es null en el espacio */
 	public function text( info : SaveInfo, g : GameView ) : String {
-		if( !active(info) ) return doneTime > 0 ? TutoText.get("done") : null;
+		if( !active(info) ) return doneTime > MAIN_TIME ? TutoText.get("done") : doneTime > 0 ? TutoText.get("main") : null;
 		var s = info.tuto.step;
 		if( g == null ) return TutoText.get("space");
 		if( g.hangar != null ) return s == HANGAR ? TutoText.get("hangar", filled(g), holes()) : TutoText.get(s == LEAVE ? "leave" : "hangarearly");

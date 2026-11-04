@@ -25,7 +25,9 @@ class TutoSetup {
 		var p = ExpData.ExpOffline.make(seed, start).systems[0].planets[PLANET];
 		var info = SaveData.create(name, p.seed, p.biome, p.size);
 		info.tutorial = tutorial;
-		info.uni = { seed : seed, planetId : PLANET, pos : [1, 0], start : { seed : p.seed, biome : p.biome, size : p.size }, planets : [], space : true };
+		// sin licencias: el primer planeta escaneado sera el principal (Licenses; con el tutorial, al acabarlo)
+		info.uni = { seed : seed, planetId : PLANET, pos : [1, 0], start : { seed : p.seed, biome : p.biome, size : p.size }, planets : [], space : true,
+			licenses : [], mainChanges : 0, abandoned : [], gone : [] };
 		info.credits = 0;
 		if( tutorial ) {
 			info.tuto = { step : 0 };
@@ -54,6 +56,9 @@ class TutoSetup {
 		info.shipEdits = [];
 		info.edits = [];
 		uni.planets = uni.planets.filter(function(p) return p.id != PLANET);
+		// el planeta del tutorial vuelve a estar sin explorar: el primero que se escanee sera el principal
+		uni.licenses = [];
+		uni.main = null;
 		if( info.chests != null ) info.chests = info.chests.filter(function(c) return !StringTools.startsWith(c.key, "p" + PLANET + ":"));
 		uni.planetId = PLANET;
 		uni.pos = [1, 0];

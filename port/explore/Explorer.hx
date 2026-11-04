@@ -110,6 +110,14 @@ class Explorer extends h2d.Object {
 	public dynamic function canLand( p : ExpPlanet ) : Bool return true;
 	/** antes de salir del sistema solar: false = la nave se para en el borde (Space; el tutorial no deja salir) */
 	public dynamic function canLeave() : Bool return true;
+	/** antes de escanear: false = no queda licencia libre (Space, Licenses; anadido del port) */
+	public dynamic function canScan( p : ExpPlanet ) : Bool return true;
+	/** la ventana del planeta tiene el boton Abandonar (Space) */
+	public dynamic function canAbandon( p : ExpPlanet ) : Bool return false;
+	/** boton Abandonar: el juego pide confirmacion y, si se abandona, llama a abandoned */
+	public dynamic function onAbandon( p : ExpPlanet, s : ExpSystem ) {}
+	/** el planeta principal de la partida (se indica en su ventana) */
+	public dynamic function isMain( p : ExpPlanet ) : Bool return false;
 	/** planeta al que lleva el tutorial (flecha del GPS aunque no se haya visitado); -1 = ninguno */
 	public var tutoTarget = -1;
 	/** boton del candado de un sistema cerrado (el original lo abria pagando la licencia): para Space */
@@ -945,7 +953,7 @@ class Explorer extends h2d.Object {
 		cursorAlpha = 0;
 	}
 
-	function addPlanet( pv : ExpPlanetView ) {
+	function addPlanet( pv : ExpPlanetView ) : Spot {
 		var sp = new Spot();
 		sp.planet = pv.infos;
 		sp.e.dataId = pv.infos.id;
@@ -967,6 +975,7 @@ class Explorer extends h2d.Object {
 		}
 		sp.half = pv.bd.width * pv.scale * 0.5 - 10;
 		solarSpots.push(sp);
+		return sp;
 	}
 
 	/** Manager.gotoSector (con animacion) */
@@ -1339,18 +1348,22 @@ class Explorer extends h2d.Object {
 		}
 		var p = sp.planet;
 		var bname = ExpOffline.biomeName(p.biome);
+		// anadido del port (Licenses): la ventana dice si es el principal o esta abandonado, y ofrece abandonarlo
+		if( p.status == PAbandonned ) bname += "  ·  " + Lang.t("exp.abandoned");
+		else if( isMain(p) ) bname += "  ·  " + Lang.t("exp.main");
+		var abandon = canAbandon(p) ? { label : Lang.t("exp.abandon"), cb : function() onAbandon(p, curSystem) } : null;
 		switch( p.status ) {
 		case PUnexplored:
-			openWindow(sp, p.name, bname, Lang.t("exp.scan"), function() startScan(p));
+			openWindow(sp, p.name, bname, Lang.t("exp.scan"), function() startScan(p), abandon);
 		case PActive, PInvited:
-			openWindow(sp, p.name, bname, Lang.t("exp.land"), function() landPlanet(p));
+			openWindow(sp, p.name, bname, Lang.t("exp.land"), function() landPlanet(p), abandon);
 		case PAbandonned, PForbidden:
 			openWindow(sp, p.name, bname, null, function() {});
 		}
 	}
 
-	/** Manager.setWindow + addButton: barra superior con el nombre, barra inferior con el boton */
-	function openWindow( sp : Spot, title : String, subtitle : String, buttonLabel : String, cb : Void -> Void ) {
+	/** Manager.setWindow + addButton: barra superior con el nombre, barra inferior con el boton (y el de abandonar al lado) */
+	function openWindow( sp : Spot, title : String, subtitle : String, buttonLabel : String, cb : Void -> Void, ?second : { label : String, cb : Void -> Void } ) {
 		closeWindow();
 		winSpot = sp;
 		win = new h2d.Object(content);
@@ -1368,20 +1381,28 @@ class Explorer extends h2d.Object {
 		var bottom = new h2d.Bitmap(h2d.Tile.fromColor(dark, VW, 70, 0.6), win);
 		bottom.y = VH - 70;
 		if( buttonLabel != null ) addButton(buttonLabel, cb);
+		if( second != null ) addButton(second.label, second.cb, 0xFF5C5C);
+		// los botones, uno al lado del otro y centrados
+		var total = -16.;
+		for( b in winButtons ) total += b.o.width + 16;
+		var bx = VW * 0.5 - total * 0.5;
+		for( b in winButtons ) {
+			b.g.x = Std.int(bx);
+			bx += b.o.width + 16;
+		}
 		zoomGoal = 0.6;
 	}
 
-	function addButton( text : String, cb : Void -> Void ) {
+	function addButton( text : String, cb : Void -> Void, col = 0x18E7DC ) {
 		var w = Math.max(128, text.length * 14);
-		var col = 0x18E7DC;
 		var g = new h2d.Graphics(win);
 		g.beginFill(col, 0.3);
 		g.drawRect(0, 0, w, 24);
 		g.endFill();
 		g.lineStyle(1, col, 1);
 		g.drawRect(0, 0, w, 24);
-		g.x = Std.int(VW * 0.5 - w * 0.5);
-		g.y = VH - 70;
+		// cambio del port: en el centro de la barra de abajo (el original lo pegaba a su borde de arriba)
+		g.y = VH - 70 + (70 - 24) * 0.5;
 		// centrado tambien en alto: el y fijo del original (4) era para su fuente, la de Heaps deja hueco arriba y lo bajaba
 		Theme.center(label(g, text, 1.4, 0xFFFFFF), w, 24);
 		var it = new h2d.Interactive(w, 24, g);
@@ -1485,7 +1506,42 @@ class Explorer extends h2d.Object {
 		tw.delay(1000, function() onLand(p, curSystem));
 	}
 
-	function startScan( p : ExpPlanet ) landPlanet(p);
+	/** Escanear: como el original, sin licencia libre sale "Pas de licence" en amarillo y no pasa nada mas */
+	function startScan( p : ExpPlanet ) {
+		if( locked ) return;
+		if( !canScan(p) ) {
+			popString(Lang.t("exp.nolicense"), 0xFFC600);
+			return;
+		}
+		landPlanet(p);
+	}
+
+	/**
+	 * Un planeta abandonado (anadido del port, Licenses.abandon): se repinta apagado y su ventana se queda sin botones. Si
+	 * con el desaparecio el sistema (goneId), en el sector se quita y aparece newSystem en su lugar; si no, se rehace su icono.
+	 */
+	public function abandoned( p : ExpPlanet, ?goneId : Int, ?newSystem : ExpSystem ) {
+		p.status = PAbandonned;
+		for( i in 0...solarSpots.length ) {
+			var old = solarSpots[i];
+			if( old.planet.id != p.id ) continue;
+			old.obj.remove();
+			var sp = addPlanet(solar.room.repaintPlanet(p));
+			solarSpots.pop();
+			solarSpots[i] = sp;
+			if( winSpot == old ) showWindow(sp);
+			break;
+		}
+		var sysId = goneId != null ? goneId : curSystem.id;
+		for( sp in sectorSpots.copy() )
+			if( sp.system.id == sysId ) {
+				sp.obj.remove();
+				sectorSpots.remove(sp);
+				if( goneId == null ) addSystem(sp.system);
+			}
+		if( newSystem != null ) addSystem(newSystem);
+		rebuildGps();
+	}
 
 	// ---------------------------------------------------------------- bucle
 
@@ -1764,8 +1820,9 @@ class Explorer extends h2d.Object {
 		for( sp in solarSpots ) if( sp.planet.id == id ) moveShip(sp);
 	}
 
-	public function devPressButton() {
-		if( winButtons.length > 0 ) winButtons[0].cb();
+	/** boton i de la ventana abierta (0 = Escanear o Aterrizar, 1 = Abandonar) */
+	public function devPressButton( i = 0 ) {
+		if( winButtons.length > i ) winButtons[i].cb();
 	}
 
 	public function devClickPoint( x : Float, y : Float, rel = false ) moveShip(null, rel ? { x : ship.x + x, y : ship.y + y } : { x : x, y : y });

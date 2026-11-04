@@ -487,6 +487,7 @@ class GalaxyApp extends hxd.App {
 				case "pause": buildPause();
 				case "mappause": buildMapPause();
 				case "computer": buildComputer();
+				case "licenses": buildLicenses();
 				default: null;
 			}
 			screens.set(name, s);
@@ -947,8 +948,10 @@ class GalaxyApp extends hxd.App {
 		var mother = GameView.editMother;
 		// anadido del port: pilotar la nave sobre el planeta (solo en los planetas jugables, fuera del tutorial)
 		var pilotOk = game != null && game.canPilot();
-		var dy = pilotOk ? 62 : 0;
-		var h = (mother ? 622 : 560) + dy;
+		// botones antes de Cerrar; con todos (solo al editar la nodriza) se juntan un poco para que el panel quepa
+		var n = 5 + (pilotOk ? 1 : 0) + (mother ? 1 : 0);
+		var step = n > 6 ? 56 : 62;
+		var h = 312 + n * step;
 		var s = panelFor(640, h, Lang.t("computer.title"));
 		var x = (W - 540) * 0.5;
 		var y = (H - h) * 0.5 + 135;
@@ -959,25 +962,30 @@ class GalaxyApp extends hxd.App {
 		// en el tutorial los contratos se ven pero no se pueden abrir (se vuelve a mirar en openComputer: el menu se guarda)
 		contracts.enabled = !Tutorial.active(game.info);
 		computerContracts = contracts;
+		// licencias de la ESCorp y planeta principal (Licenses, anadido del port): como los contratos
+		var licenses = new Button(s, Lang.t("computer.licenses"));
+		licenses.enabled = !Tutorial.active(game.info);
+		computerLicenses = licenses;
 		var close = new Button(s, Lang.t("computer.close"));
-		s.add(takeoff, x, y);
+		var rows : Array<Button> = [takeoff];
 		if( pilotOk ) {
 			var pilot = new Button(s, Lang.t("computer.pilot"));
-			s.add(pilot, x, y + 62);
+			rows.push(pilot);
+			// en aventura solo sobre el planeta principal (Licenses)
 			pilot.onActivate = function() {
 				resume();
-				game.startPiloting();
+				if( game.pilotLicensed() ) game.startPiloting();
+				else showToast(Lang.t("license.pilotmain"), 4);
 			};
 		}
-		s.add(edit, x, y + 62 + dy);
-		s.add(trade, x, y + 124 + dy);
-		s.add(contracts, x, y + 186 + dy);
+		rows = rows.concat([edit, trade, contracts, licenses]);
 		if( mother ) {
 			var visit = new Button(s, Lang.t("computer.mothership"));
-			s.add(visit, x, y + 248 + dy);
+			rows.push(visit);
 			visit.onActivate = startMothership;
 		}
-		s.add(close, x, y + (mother ? 324 : 262) + dy);
+		for( i in 0...rows.length ) s.add(rows[i], x, y + i * step);
+		s.add(close, x, y + n * step + 14);
 		var soon = function() {
 			resume();
 			showToast(Lang.t("computer.soon"));
@@ -999,9 +1007,151 @@ class GalaxyApp extends hxd.App {
 		edit.onActivate = startHangar;
 		trade.onActivate = openShop;
 		contracts.onActivate = openContracts;
+		licenses.onActivate = openLicenses;
 		close.onActivate = function() resume();
 		s.onBack = function() resume();
 		return s;
+	}
+
+	/** boton de las licencias del ordenador de a bordo (desactivado durante el tutorial) */
+	var computerLicenses : Button;
+
+	/** licencias desde el ordenador de a bordo: la pantalla se rehace cada vez (creditos, espera, planeta principal) */
+	function openLicenses() {
+		if( game == null || Tutorial.active(game.info) ) return;
+		var old = screens.get("licenses");
+		if( old != null ) old.remove();
+		screens.remove("licenses");
+		show("licenses");
+	}
+
+	/**
+	 * Licencias de exploracion (Licenses, anadido del port): cuantas hay en uso, el planeta principal y, si el planeta en el que
+	 * estas no lo es, el boton para hacerlo principal con su precio (con confirmacion); durante la espera, desactivado.
+	 */
+	function buildLicenses() : Screen {
+		var info = game.info;
+		var uni = universe();
+		var planets = Licenses.planets(uni);
+		function label( id : Int ) return planets.exists(id) ? planets.get(id).name + "  ·  " + ExpData.ExpOffline.biomeName(planets.get(id).biome) : "?";
+		var here = uni.planetId;
+		var wait = Licenses.cooldown(uni);
+		// se compone desde arriba del panel y despues se centra en alto (los textos largos ocupan dos lineas)
+		var PW = 860;
+		var s = new Screen(ui);
+		var bg = new h2d.Graphics(s);
+		var title = Theme.text(s, Lang.t("licenses.title"), 3.2, Theme.TEXT);
+		var px = (W - PW) * 0.5 + 40, y = 100.;
+		function line( str : String, scale : Float, col : Int ) {
+			var t = Theme.text(s, str, scale, col, px, y);
+			t.maxWidth = (PW - 80) / scale;
+			y += t.textHeight * scale + 10;
+			return t;
+		}
+		var count = Licenses.unlimited(info) ? Lang.t("licenses.unlimited") : Lang.t("licenses.count").split("%max%").join("" + Licenses.MAX);
+		line(count.split("%n%").join("" + uni.licenses.length), 1.8, Theme.TEXT);
+		line(Lang.t("shop.credits") + " " + (info.credits == null ? Market.START_CREDITS : info.credits), 1.8, Theme.ACCENT);
+		if( Licenses.isMain(uni, here) )
+			line(Lang.t("licenses.here"), 1.8, Theme.CYAN);
+		else {
+			line(uni.main == null ? Lang.t("licenses.nomain") : Lang.t("licenses.main").split("%name%").join(label(uni.main)), 1.8, Theme.CYAN);
+			// solo el planeta en el que estas puede pasar a ser el principal
+			if( uni.main != null && Licenses.has(uni, here) ) {
+				if( wait > 0 ) line(Lang.t("licenses.wait").split("%t%").join(Lang.duration(wait)), 1.6, Theme.DANGER);
+				y += 6;
+				var price = Licenses.mainPrice(uni);
+				var cost = price == 0 ? Lang.t("licenses.free") : Lang.t("licenses.cost").split("%n%").join("" + price);
+				var b = new Button(s, Lang.t("licenses.setmain") + "  ·  " + cost, PW - 80, 54);
+				b.enabled = wait <= 0;
+				b.onActivate = function() askMainPlanet(s, here, planets.exists(here) ? planets.get(here).name : "?");
+				s.add(b, px, y);
+				y += 62;
+			}
+		}
+		var back = new Button(s, Lang.t("back"));
+		s.add(back, (W - 460) * 0.5, y + 14);
+		var h = Std.int(y + 14 + 54 + 30);
+		var top = (H - h) * 0.5;
+		for( c in s ) if( c != bg && c != title ) c.y += top;
+		drawPanel(bg, title, PW, h);
+		var leave = function() show("computer");
+		back.onActivate = leave;
+		s.onBack = leave;
+		return s;
+	}
+
+	/** confirmar el cambio de planeta principal (gratis la primera vez); hecho, la pantalla de licencias se rehace */
+	function askMainPlanet( parent : Screen, id : Int, name : String ) {
+		var price = Licenses.mainPrice(universe());
+		var warn = price == 0 ? Lang.t("licenses.ask.free") : Lang.t("licenses.ask.paid").split("%n%").join("" + price);
+		askConfirm(parent, Lang.t("licenses.ask").split("%name%").join(name), warn, Theme.ACCENT, function() {
+			var err = Licenses.setMain(game.info, id);
+			if( err != null ) {
+				showToast(err, 4);
+				return;
+			}
+			openLicenses();
+		});
+	}
+
+	/** boton Abandonar de la ventana de un planeta con licencia: nunca el principal; los demas, con confirmacion */
+	function askAbandon( p : ExpData.ExpPlanet, s : ExpData.ExpSystem ) {
+		if( explorer == null || spaceInfo == null ) return;
+		if( Licenses.isMain(universe(), p.id) ) {
+			showToast(Lang.t("license.keepmain"), 5);
+			return;
+		}
+		explorer.paused = true;
+		askConfirm(null, Lang.t("abandon.ask").split("%name%").join(p.name), Lang.t("abandon.warn"), Theme.DANGER, function() abandonPlanet(p, s), function() {
+			if( explorer != null ) explorer.paused = false;
+		});
+	}
+
+	/** abandona el planeta (Licenses.abandon), lo muestra en el mapa y guarda enseguida: no se puede deshacer recargando */
+	function abandonPlanet( p : ExpData.ExpPlanet, s : ExpData.ExpSystem ) {
+		var uni = universe();
+		if( Licenses.abandon(spaceInfo, p, s) ) {
+			explorer.abandoned(p, s.id, ExpData.ExpOffline.replaceSystem(explorer.infos, s.id, Licenses.newSystem(uni)));
+			showToast(Lang.t("abandon.gone"), 7);
+		} else {
+			explorer.abandoned(p);
+			showToast(Lang.t("abandon.freed"), 4);
+		}
+		saveGame(false);
+	}
+
+	/** ventana de confirmacion (como askSkip): titulo, aviso (de color col) y No / Si. parent queda inactivo mientras tanto */
+	function askConfirm( parent : Screen, title : String, warn : String, col : Int, onYes : Void -> Void, ?onClose : Void -> Void ) {
+		if( modal != null && modal.parent != null ) return;
+		if( parent != null ) parent.active = false;
+		var m = new Screen(ui);
+		var bg = new h2d.Graphics(m);
+		Theme.fullRect(bg, 0x000000, 0.55);
+		Theme.rect(bg, 260, 210, 760, 300, Theme.PANEL, 1);
+		Theme.rect(bg, 260, 210, 760, 4, col);
+		var t = Theme.text(m, title, 2.2, Theme.TEXT, 290, 236);
+		t.maxWidth = 700 / t.scaleX;
+		t.textAlign = Center;
+		var n = Theme.text(m, warn, 1.7, col, 290, 236 + t.textHeight * t.scaleY + 20);
+		n.maxWidth = 700 / n.scaleX;
+		n.textAlign = Center;
+		var no = new Button(m, Lang.t("no"), 210, 52);
+		var yes = new Button(m, Lang.t("yes"), 210, 52);
+		m.add(no, 410, 430);
+		m.add(yes, 650, 430);
+		m.setFocus(0);
+		var close = function() {
+			m.remove();
+			if( parent != null ) parent.active = true;
+			if( onClose != null ) onClose();
+		};
+		no.onActivate = close;
+		m.onBack = close;
+		yes.onActivate = function() {
+			close();
+			onYes();
+		};
+		modal = m;
 	}
 
 	// ---------------------------------------------------------------- explorador (mapa de estrellas)
@@ -1029,8 +1179,10 @@ class GalaxyApp extends hxd.App {
 	/** el universo de la partida (se crea con la primera apertura del mapa si la partida es antigua) */
 	function universe() : SaveData.UniInfo {
 		var info = game != null ? game.info : spaceInfo;
+		// el planeta en el que estas es el inicial: tiene licencia y es el principal (Licenses)
 		if( info.uni == null )
-			info.uni = { seed : info.seed, planetId : 0, pos : [2, 0], start : { seed : info.seed, biome : info.biome, size : info.sizeChunks }, planets : [] };
+			info.uni = { seed : info.seed, planetId : 0, pos : [2, 0], start : { seed : info.seed, biome : info.biome, size : info.sizeChunks }, planets : [],
+				licenses : [0], main : 0, mainChanges : 0, abandoned : [], gone : [] };
 		return info.uni;
 	}
 
@@ -1185,20 +1337,24 @@ class GalaxyApp extends hxd.App {
 			spaceInfo = info;
 		}
 		var uni = universe();
-		var visited = [uni.planetId];
-		for( p in uni.planets ) visited.push(p.id);
 		Explorer.shipBytes = Hangar.currentShip(spaceInfo);
-		var infos = ExpData.ExpOffline.make(uni.seed, uni.start, visited, uni.pos);
+		// activos: los planetas con licencia de la ESCorp (Licenses)
+		var infos = ExpData.ExpOffline.make(uni.seed, uni.start, uni.licenses, uni.pos, uni.abandoned, uni.gone);
 		Explorer.robotStart = uni.robot;
 		explorer = new Explorer(s2d, infos, shipFrames);
 		hxd.System.allowTimeout = true;
 		s2d.under(explorer);
-		space = new Space(uni);
+		space = new Space(spaceInfo);
 		space.tutorial = Tutorial.active(spaceInfo);
-		space.onRefuse = function(msg) showToast(msg);
+		// los avisos largos (licencias) se quedan mas tiempo
+		space.onRefuse = function(msg) showToast(msg, Math.max(2.2, msg.length * 0.06));
 		explorer.onTravel = space.travel;
 		explorer.canLand = space.canLand;
 		explorer.canLeave = space.canLeave;
+		explorer.canScan = space.canScan;
+		explorer.canAbandon = space.canAbandon;
+		explorer.isMain = function(p) return Licenses.isMain(uni, p.id);
+		explorer.onAbandon = askAbandon;
 		explorer.tutoTarget = space.tutorial ? TutoSetup.PLANET : -1;
 		explorer.onUnlock = space.unlock;
 		explorer.onPause = openMapPause;
@@ -1277,13 +1433,15 @@ class GalaxyApp extends hxd.App {
 		uni.pos = [2, p.id];
 		uni.space = null;
 		uni.ship = null;
-		// los cambios del planeta del que despegaste se guardan con su id
+		// los cambios del planeta del que despegaste se guardan con su id (si aun tiene licencia: abandonado, se pierden)
 		uni.planets = uni.planets.filter(function(q) return q.id != uni.planetId);
-		uni.planets.push({ id : uni.planetId, edits : old.edits, shipAt : old.shipAt });
+		if( Licenses.has(uni, uni.planetId) ) uni.planets.push({ id : uni.planetId, edits : old.edits, shipAt : old.shipAt });
 		var target : SaveData.UniPlanet = null;
 		for( q in uni.planets ) if( q.id == p.id ) target = q;
 		uni.planets = uni.planets.filter(function(q) return q.id != p.id);
 		uni.planetId = p.id;
+		// escanear gasta una licencia; el primer planeta pasa a ser el principal (Licenses)
+		Licenses.claim(old, p.id);
 		explorer.dispose();
 		explorer = null;
 		spaceInfo = null;
@@ -1335,6 +1493,7 @@ class GalaxyApp extends hxd.App {
 		hud.visible = false; msgText.visible = false;
 		show("computer");
 		computerContracts.enabled = !Tutorial.active(game.info);
+		computerLicenses.enabled = !Tutorial.active(game.info);
 	}
 
 	/** boton de los contratos del ordenador de a bordo (desactivado durante el tutorial) */
@@ -1970,8 +2129,13 @@ class GalaxyApp extends hxd.App {
 
 	/** aviso abajo de la pantalla durante `time` segundos (el ultimo 0,6 s se desvanece) */
 	function showToast( msg : String, time = 2.2 ) {
+		// los largos (licencias) pasan a otra linea, hacia arriba: la ultima queda donde siempre; en el mapa, encima de la barra
+		// de abajo de la ventana del planeta (sus botones)
+		toast.maxWidth = (W - 120) / toast.scaleX;
+		toast.textAlign = Center;
 		toast.text = msg;
-		toast.x = (W - toast.textWidth * toast.scaleX) * 0.5;
+		toast.x = 60;
+		toast.y = (state == Exploring ? 548 : 640) - (toast.textHeight - toast.font.lineHeight) * toast.scaleY;
 		toast.visible = true;
 		toast.alpha = 1;
 		toastTime = time;

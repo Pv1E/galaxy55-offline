@@ -1,0 +1,214 @@
+# licencias de la ESCorp y planeta principal (anadido del port). Aventura sin tutorial, semilla 4242 (sistema 0: planetas 0 y 1;
+# sistema 1: 10, 11 y 12). El primer planeta escaneado pasa a ser el principal y solo en el se pilota; 4 licencias como mucho
+# ("Sin licencia" y aviso al escanear la quinta); solo se abandona un planeta con licencia (con confirmacion), y eso la
+# libera; sin aviso al escanear el primero ni al cambiar de principal; con todos sus planetas
+# abandonados el sistema desaparece y aparece otro cerca, tambien al recargar; cambiar de principal (solo el planeta en el que estas): gratis la primera vez,
+# luego 1000 creditos y 24 h de espera; el principal no se abandona; partida anterior a las licencias. -Timeout 900
+wait 3
+tuto notuto 4242
+waitfor map
+waitfor system
+print licenses
+# sistema 1, escanear el 10: es el principal y se pilota en el
+expgo 0 0
+waitfor sector
+expsys 1
+waitfor system
+expplanet 10
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+print toast
+print licenses
+ship
+wait 10
+pilot
+pilotstop
+# el 11: licencia, pero no se pilota (ni con la orden ni con el boton del ordenador)
+explore
+waitfor map 6000
+waitfor system
+expplanet 11
+waitfor window
+shot licencias_ventana
+expbutton
+waitfor planet 6000
+wait 30
+print licenses
+ship
+wait 10
+pilot
+computer
+wait 3
+print menu
+button 1
+wait 3
+print toast
+# el 12 y el 1 (sistema 0): cuatro licencias
+explore
+waitfor map 6000
+waitfor system
+expplanet 12
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+explore
+waitfor map 6000
+waitfor system
+expgo 0 0
+waitfor sector
+expsys 0
+waitfor system
+expplanet 1
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+print licenses
+# la quinta (el 0) no se escanea
+explore
+waitfor map 6000
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+wait 20
+print toast
+expinfo
+shot licencias_sin_licencia
+# sin explorar no se abandona: la ventana del 0 solo tiene Escanear (no se abre la confirmacion)
+expbutton 1
+wait 5
+print menu
+# abandonar el 1 libera una licencia; el 0 ya se escanea
+expplanet 1
+waitfor window
+expbutton 1
+wait 5
+print menu
+shot licencias_abandonar
+button 1
+wait 10
+print toast
+print licenses
+shot licencias_abandonado
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+print licenses
+# abandonar el 0: el sistema 0 se queda sin planetas y desaparece; aparece el 10 cerca
+explore
+waitfor map 6000
+waitfor system
+expplanet 0
+waitfor window
+expbutton 1
+wait 5
+button 1
+wait 10
+print toast
+print licenses
+expgo 0 0
+waitfor sector
+wait 60
+expinfo
+shot licencias_sistema_nuevo
+reload
+waitfor map 6000
+wait 30
+print licenses
+expinfo
+# cambiar de principal: solo al planeta en el que estas, desde su ordenador de a bordo; en el 11, gratis la primera vez
+expsys 1
+waitfor system
+expplanet 11
+waitfor window
+shot licencias_ventana_centro
+expbutton
+waitfor planet 6000
+wait 30
+ship
+wait 10
+computer
+wait 3
+licenses open
+wait 3
+print menu
+shot licencias_pantalla
+button 0
+wait 3
+print menu
+shot licencias_gratis
+button 1
+wait 5
+print toast
+print licenses
+print menu
+shot licencias_principal_aqui
+close
+wait 3
+pilot
+pilotstop
+# en el 10: espera de 24 h (boton desactivado); 25 h despues cuesta 1000 (con 200 creditos no llega, con 1500 si)
+explore
+waitfor map 6000
+waitfor system
+expplanet 10
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+ship
+wait 10
+pilot
+computer
+wait 3
+licenses open
+wait 3
+print menu
+shot licencias_espera
+licenses clock 25
+licenses open
+wait 3
+print menu
+button 0
+wait 3
+print menu
+button 1
+wait 3
+print toast
+licenses credits 1500
+licenses open
+wait 3
+button 0
+wait 3
+button 1
+wait 5
+print licenses
+print menu
+close
+wait 3
+pilot
+pilotstop
+# el principal (10) no se abandona
+explore
+waitfor map 6000
+waitfor system
+expplanet 10
+waitfor window
+expbutton 1
+wait 5
+print toast
+print menu
+# partida anterior a las licencias: el planeta inicial (0, abandonado aqui) y los visitados
+licenses forget
+closewin
+reload
+waitfor map 6000
+wait 10
+print licenses
+quit

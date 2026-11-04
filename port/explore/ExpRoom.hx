@@ -520,6 +520,24 @@ class ExpRoom {
 	}
 
 	function addPlanet( infos : ExpPlanet ) {
+		var orbitId = infos.distance;
+		initRandom(orbitId);
+		var c0r = Color.getRainbowColor(rseed.rand());
+		var pv = planetView(infos, rseed.random(3));
+		if( rseed.random(100) < 15 ) addRocksAround(c0r, pv.x, pv.y, 20, 60);
+		orbitalObjects[orbitId] = true;
+		planetViews.push(pv);
+	}
+
+	/** la imagen del planeta otra vez, con su estado de ahora (al abandonarlo con el sistema abierto: Licenses, anadido del port) */
+	public function repaintPlanet( infos : ExpPlanet ) : ExpPlanetView {
+		initRandom(infos.distance);
+		rseed.rand();
+		return planetView(infos, rseed.random(3));
+	}
+
+	/** la imagen del planeta (frame = una de las 3 de tiles.png) y su icono segun el estado */
+	function planetView( infos : ExpPlanet, frame : Int ) : ExpPlanetView {
 		var size = switch( infos.size ) {
 			case 1: 0.07;
 			case 2: 0.25;
@@ -528,10 +546,7 @@ class ExpRoom {
 			default: 0.5;
 		}
 		var orbitId = infos.distance;
-		initRandom(orbitId);
 		var ang = getOrbitAng(orbitId), d = getOrbitDist(orbitId);
-		var c0r = Color.getRainbowColor(rseed.rand());
-		var frame = rseed.random(3);
 		var bd = frameBmp(frame * 64, 5 * 32, 64, 64, 16);
 		var scale = size + 0.5;
 		var biome = Common.Data.getBiome(Type.createEnum(Common.BiomeKind, infos.biome));
@@ -572,9 +587,7 @@ class ExpRoom {
 			bd.applyFilter(bd, bd.rect, pt0, new flash.filters.GlowFilter(halo, 0.9, 8, 8, 1));
 			bd.applyFilter(bd, bd.rect, pt0, new flash.filters.GlowFilter(halo, 0.7, 32, 32, 1));
 		}
-		if( rseed.random(100) < 15 ) addRocksAround(c0r, pv.x, pv.y, 20, 60);
-		orbitalObjects[orbitId] = true;
-		planetViews.push(pv);
+		return pv;
 	}
 
 	public function generateSolarSystem( infos : ExpSystem ) {

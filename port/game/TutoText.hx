@@ -2,7 +2,8 @@ import Common;
 
 /**
  * Textos del tutorial (Tutorial) en español, inglés y francés, aparte de Lang para no alargarlo.
- * %bauxite%, %cit%, %eth%, %rock%, %alu% y %hull% son nombres de bloques en el idioma elegido; %gift% las cargas de la ESCorp y %credits% sus creditos.
+ * %bauxite%, %cit%, %eth%, %rock%, %alu% y %hull% son nombres de bloques en el idioma elegido; %gift% las cargas de la ESCorp, %credits% sus creditos
+ * y %expl% las licencias de exploracion (Licenses).
  */
 class TutoText {
 
@@ -77,6 +78,11 @@ class TutoText {
 			"¡Bien hecho! La ESCorp te envía %gift% cargas azules, %gift% cargas amarillas y %credits% créditos. Ya puedes salir del sistema y explorar otros planetas, vender tus recursos al robot comerciante y cumplir los contratos de la ESCorp desde el ordenador de a bordo.",
 			"Well done! ESCorp sends you %gift% blue charges, %gift% yellow charges and %credits% credits. You can now leave the system and explore other planets, sell your resources to the merchant robot and fulfil ESCorp contracts from the on-board computer.",
 			"Bravo ! L'ESCorp t'envoie %gift% charges bleues, %gift% charges jaunes et %credits% crédits. Tu peux maintenant quitter le système et explorer d'autres planètes, vendre tes ressources au robot marchand et remplir les contrats de l'ESCorp depuis l'ordinateur de bord."],
+		// tras "done" (Licenses): %expl% = licencias de exploracion
+		"main" => [
+			"Este es tu planeta principal: solo aquí puedes pilotar la nave. Tienes %expl% licencias más para escanear otros planetas.",
+			"This is your main planet: only here can you pilot the ship. You have %expl% more licenses to scan other planets.",
+			"Voici ta planète principale : c'est la seule où tu peux piloter le vaisseau. Tu as %expl% autres licences pour scanner d'autres planètes."],
 		"nobreak" => [
 			"No rompas nada en el hangar: solo tapa los agujeros.",
 			"Don't break anything in the hangar: just fill the holes.",
@@ -111,7 +117,7 @@ class TutoText {
 		var a = T.get(key);
 		var s = a == null ? key : a[Lang.cur];
 		for( k => b in NAMES ) if( s.indexOf(k) >= 0 ) s = s.split(k).join(Block.get(b).getName());
-		s = s.split("%gift%").join("" + TutoSetup.GIFT).split("%credits%").join("" + Market.START_CREDITS);
+		s = s.split("%gift%").join("" + TutoSetup.GIFT).split("%credits%").join("" + Market.START_CREDITS).split("%expl%").join("" + (Licenses.MAX - 1));
 		return max >= 0 ? s + " (" + n + "/" + max + ")" : s;
 	}
 }

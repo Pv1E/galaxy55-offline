@@ -1008,8 +1008,13 @@ class GameView {
 			&& life > 0 && pz >= World.SHIP_Z;
 	}
 
+	/** licencias (Licenses, anadido del port): en aventura solo se pilota sobre el planeta principal; en creativo, sobre todos */
+	public function pilotLicensed() : Bool {
+		return creative || info.uni == null || Licenses.isMain(info.uni, info.uni.planetId);
+	}
+
 	public function startPiloting() {
-		if( piloting || !canPilot() ) return;
+		if( piloting || !canPilot() || !pilotLicensed() ) return;
 		piloting = true;
 		pilotLanding = false;
 		pilotVX = pilotVY = 0;
