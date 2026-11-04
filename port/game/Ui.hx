@@ -386,7 +386,7 @@ class Screen extends h2d.Object {
 		super(parent);
 	}
 
-	/** el control que queda bajo el puntero no se lleva el foco hasta que se mueva el raton (GalaxyApp.openComputer) */
+	/** el control que queda bajo el puntero no se lleva el foco hasta que se mueva el raton (GalaxyApp.centerMouse) */
 	public function holdHover() {
 		var win = hxd.Window.getInstance();
 		heldX = win.mouseX;

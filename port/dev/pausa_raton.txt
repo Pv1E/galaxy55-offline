@@ -1,0 +1,23 @@
+# menu de pausa (Esc) y puntero: como en el ordenador de a bordo (ordenador_raton.txt), el puntero va al centro de la ventana y
+# el foco sigue en Reanudar aunque el centro caiga sobre Opciones; al mover el raton a otro boton, este se lleva el foco
+wait 3
+print mouse
+pause
+wait 5
+print mouse
+print menu
+# el movimiento que manda SDL al poner el puntero en el centro: Opciones, debajo, no se lleva el foco
+mouse 640 360
+wait 3
+print menu
+# el jugador mueve el raton a Guardar y vuelve al centro: los dos se llevan el foco
+mouse 640 290
+wait 3
+print menu
+mouse 640 360
+wait 3
+print menu
+close
+wait 5
+print menu
+quit

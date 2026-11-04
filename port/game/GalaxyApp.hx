@@ -1492,11 +1492,7 @@ class GalaxyApp extends hxd.App {
 		captureMouse(false);
 		hud.visible = false; msgText.visible = false;
 		show("computer");
-		// el puntero, en el centro de la ventana: al soltar la captura, Heaps lo devuelve a donde estaba al capturarlo (donde
-		// se cerro el menu anterior). El boton que queda debajo no se lleva el foco hasta que se mueva el raton
-		var win = hxd.Window.getInstance();
-		win.setCursorPos(win.width >> 1, win.height >> 1);
-		current.holdHover();
+		centerMouse();
 		computerContracts.enabled = !Tutorial.active(game.info);
 		computerLicenses.enabled = !Tutorial.active(game.info);
 	}
@@ -1724,6 +1720,15 @@ class GalaxyApp extends hxd.App {
 		captureMouse(false);
 		hud.visible = false; msgText.visible = false;
 		show("pause");
+		centerMouse();
+	}
+
+	/** el puntero, en el centro de la ventana: al soltar la captura, Heaps lo devuelve a donde estaba al capturarlo (donde se
+	    cerro el menu anterior). El boton que queda debajo no se lleva el foco hasta que se mueva el raton */
+	function centerMouse() {
+		var win = hxd.Window.getInstance();
+		win.setCursorPos(win.width >> 1, win.height >> 1);
+		current.holdHover();
 	}
 
 	function toMainMenu() {
