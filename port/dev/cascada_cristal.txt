@@ -1,0 +1,30 @@
+# cascada dentro de un tubo de cristal (aviso de un jugador con la v0.6; igual en la v0.5 y en la regla del original): no se
+# veia a traves del cristal porque no tenia caras contra el. Plataforma de roca en z=100; tubo de cristal 3x3 de z 101 a 108
+# con la columna del centro libre y una fuente de cascada arriba; otra cascada sin cristal al lado para comparar. Desde
+# fuera las dos deben verse igual de azules (cc_fuera); dentro de la columna, velo azul (cc_dentro); desde arriba (cc_arriba)
+wait 3
+creative
+planet
+wait 30
+filla 54 48 70 70 100 100 BRock
+filla 62 62 64 64 101 108 BGlass
+filla 63 63 63 63 101 108 none
+setp 63 63 108 BCascadeSource
+setp 57 63 108 BCascadeSource
+wait 600
+print block 63 63 106
+print block 63 63 101
+print block 57 63 104
+tp 60.5 56.5 101
+lookat 60.5 63.5 104
+wait 30
+shot cc_fuera_%b
+tp 63.5 63.5 101
+look 1.57 0.1
+wait 30
+shot cc_dentro_%b
+tp 63.5 58.5 111
+lookat 63.5 63.5 108
+wait 30
+shot cc_arriba_%b
+quit
