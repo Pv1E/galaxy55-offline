@@ -1325,6 +1325,7 @@ class GalaxyApp extends hxd.App {
 			if( game.isRobotComputer() ) openShop() else backFromMothership();
 			return;
 		}
+		// Paused deja los controles al menu, pero el juego sigue (update)
 		state = Paused;
 		captureMouse(false);
 		hud.visible = false; msgText.visible = false;
@@ -2136,6 +2137,13 @@ class GalaxyApp extends hxd.App {
 				} else if( palette != null ) {
 					palette.update(dt, pad);
 				} else if( K.isPressed(K.ESCAPE) || K.isPressed(K.I) ) closePalette();
+				// la tienda y los contratos salen del ordenador de a bordo: tampoco paran el juego (ver abajo, state == Paused); la
+				// barra de vida se ve bajo el panel
+				if( shop != null || contracts != null ) {
+					game.update(dt, false, pad);
+					if( game == null || state != Playing ) return;
+					updateJetHud(game);
+				}
 				game.updateCamera();
 			} else if( game.piloting && (K.isPressed(K.ESCAPE) || (pad != null && pad.isPressed(pad.config.start))) ) {
 				// anadido del port: Esc o Start dejan la nave donde esta (sin pausar)
@@ -2192,6 +2200,12 @@ class GalaxyApp extends hxd.App {
 				cross.y = dot.y = Std.int(H * 0.5) + hudShake;
 			}
 		} else if( state == Paused && game != null ) {
+			// el ordenador de a bordo no es una pausa (Game.openComputerMenu solo quita actionKeys): el juego sigue, se cura en la
+			// nave y el mundo no se para. Cambio del port: sin ningun control (ni andar ni mirar), el teclado y el raton son del menu
+			if( current != null && currentName == "computer" ) {
+				game.update(dt, false, pad);
+				if( game == null || state != Paused ) return;
+			}
 			game.updateCamera();
 		}
 

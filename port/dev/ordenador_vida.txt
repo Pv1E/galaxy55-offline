@@ -1,0 +1,80 @@
+# el ordenador de a bordo no es una pausa (Game.openComputerMenu: el juego sigue): con su menu abierto la vida sube en la nave
+# (1.6/s, como en vida_nave) y el tiempo de juego corre, pero W, D, E, Ctrl y el raton no mueven, no saltan, no disparan ni
+# giran la vista, y Esc cierra el menu sin pausar; al cerrarlo todo vuelve a ir. La tienda y los contratos (botones del
+# ordenador) tampoco paran el juego. La pausa (Esc jugando) si
+wait 3
+ship
+wait 10
+# 1) menu del ordenador abierto: +1.6/s y el tiempo corre
+tpl 61.5 63.5 3.0 0 -1.2
+wait 10
+life 20
+computer
+wait 10
+print menu
+print life
+wait 200
+print life
+# 2) con el menu abierto, mirando una madera de la zona del sintetizador: teclas de andar (W, D), de saltar (Ctrl) y de
+# excavar (E), mover el raton y un clic fuera de los botones. El jugador no se mueve ni gira y la madera sigue entera
+setl 59 63 3 BWood
+lookl 59.5 63.5 3.5
+print pos
+press w d e ctrl
+mouse 200 200
+mouse 1000 600
+mouse 100 650 click
+wait 60
+print pos
+print select
+print blockl 59 63 3
+release w d e ctrl
+wait 5
+# 3) Esc cierra el menu sin abrir la pausa; la vida sigue subiendo, E excava la madera y W vuelve a mover
+tap esc
+wait 5
+print menu
+print life
+press e
+wait 60
+release e
+print blockl 59 63 3
+press w
+wait 20
+release w
+print pos
+# 4) tienda (boton Comerciar del ordenador): +1.6/s y la barra de vida sube
+tpl 61.5 63.5 3.0 0 -1.2
+wait 10
+computer
+wait 5
+shop
+life 20
+wait 10
+print life
+wait 200
+print life
+shot ordenador_vida_tienda
+shopclose
+# 5) contratos (boton del ordenador): +1.6/s
+computer
+wait 5
+contracts
+life 20
+wait 10
+print life
+wait 200
+print life
+contracts close
+# 6) la pausa si para el juego: ni vida ni tiempo
+wait 5
+pause
+life 20
+wait 10
+print life
+wait 200
+print life
+close
+wait 5
+print menu
+quit
