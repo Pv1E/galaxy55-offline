@@ -34,6 +34,18 @@ class PortRules {
 		{ k : BBonusMediumRemain, drop : null, chance : 0 },
 	];
 
+	/**
+	 * Hierba alta y sbelelebs: en el original no llevan BFDetail y, sin iman, no sostienen nada. Apuntando a ellas con un bloque en
+	 * la mano no se podia poner: la sombra salia encima de la hierba y el clic no ponia nada. Aqui se pisan al poner, como las
+	 * hierbas (Block.canOverride), y sueltan lo que darian al romperlas.
+	 */
+	static var PLACE_OVER = [BHighHerb1, BHighHerb2, BHighHerb3, BHighHerb4, BHighHerb5, BHighHerb6];
+	static var placeOverIdx = new Map<Int, Bool>();
+
+	public static inline function placeOver( b : Block ) : Bool {
+		return placeOverIdx.exists(b.index);
+	}
+
 	/** radio del turbo minero (BFTrack): cambio del port, 5 en el original */
 	static inline var TURBO_RADIUS = 15;
 
@@ -64,6 +76,7 @@ class PortRules {
 			case BFTrack(t, _): turbo.flags[i] = BFTrack(t, TURBO_RADIUS);
 			default:
 			}
+		for( k in PLACE_OVER ) placeOverIdx.set(Block.get(k).index, true);
 		for( r in BREAKABLE ) {
 			var b = Block.get(r.k);
 			b.props.set(PCanPick);

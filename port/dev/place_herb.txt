@@ -1,0 +1,61 @@
+# poner un bloque apuntando a una hierba alta (BHighHerb1): va a su celda (la hierba se rompe y suelta lo suyo, PortRules.placeOver).
+# Encima de un bloque sin iman que no se pisa no se pone nada, no se gasta nada y no sale la sombra (shot place_herb_circuito).
+wait 3
+set 59 60 99 BRock
+set 60 60 99 BRock
+set 61 60 99 BRock
+set 62 60 99 BRock
+set 63 60 99 BRock
+set 59 61 99 BRock
+set 60 61 99 BRock
+set 61 61 99 BRock
+set 62 61 99 BRock
+set 63 61 99 BRock
+set 59 62 99 BRock
+set 60 62 99 BRock
+set 61 62 99 BRock
+set 62 62 99 BRock
+set 63 62 99 BRock
+set 62 61 100 BHighHerb1
+tp 59.5 61.5 100 0 -0.3
+wait 5
+slot 1
+hand BRock
+# de frente, como al andar
+lookat 62.5 61.5 100.3
+wait 2
+print select
+key place
+wait 10
+unkey
+print inv
+print drops
+print block 62 61 100
+print block 61 61 100
+# desde arriba, justo delante de la hierba
+set 62 61 100 none
+set 62 62 100 BHighHerb1
+tp 61.2 62.5 100
+lookat 62.5 62.5 100.5
+wait 2
+print select
+key place
+wait 10
+unkey
+print block 62 62 100
+print block 62 62 101
+# un bloque de circuitos (media altura, sin iman): apuntando a su cara de arriba, la celda seria la de encima y nada la sujeta
+set 62 60 100 BCircuit
+set 61 60 100 BRock
+tp 61.5 60.5 101
+lookat 62.5 60.5 100.5
+wait 2
+print select
+shot place_herb_circuito
+key place
+wait 10
+unkey
+print inv
+print block 62 60 100
+print block 62 60 101
+quit

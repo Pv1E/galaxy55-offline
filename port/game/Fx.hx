@@ -221,7 +221,7 @@ class Fx {
 			denied.setScale(s);
 			var mat = denied.material;
 			mat.color.a = 0.1 + 0.7 * Math.random();
-		} else if( Settings.placePreview && hand != null && !laser && b != null ) {
+		} else if( Settings.placePreview && hand != null && !laser && b != null && g.canPlace(sel, hand) ) {
 			// sombra del bloque de la mano en la celda donde se pondra (pedido por los jugadores: sin ella construir es dificil)
 			denied.visible = false;
 			if( overlayBlock != b ) {
