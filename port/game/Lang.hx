@@ -26,12 +26,13 @@ class Lang {
 		"size.small" => ["Pequeño (128)", "Small (128)", "Petit (128)"],
 		"size.normal" => ["Normal (256)", "Normal (256)", "Normal (256)"],
 		"computer.title" => ["ORDENADOR DE A BORDO", "BOARD COMPUTER", "ORDINATEUR DE BORD"],
-		"computer.takeoff" => ["Despegar (mapa de estrellas)", "Take off (star map)", "Décoller (carte stellaire)"],
-		"computer.edit" => ["Modificar la nave (hangar)", "Modify the ship (hangar)", "Modifier le vaisseau (hangar)"],
+		// sin la precision entre parentesis del original ("Despegar (mapa estelar)", "Comerciar (ESCorp)"...): el boton se entiende solo
+		"computer.takeoff" => ["Despegar", "Take off", "Décoller"],
+		"computer.edit" => ["Modificar la nave", "Modify the ship", "Modifier le vaisseau"],
 		// anadido del port: pilotar la nave sobre el planeta
-		"computer.pilot" => ["Pilotar la nave (sobre el planeta)", "Pilot the ship (over the planet)", "Piloter le vaisseau (survol)"],
-		"computer.trade" => ["Comerciar (ESCorp)", "Trade (ESCorp)", "Commercer (ESCorp)"],
-		"computer.contracts" => ["Contratos (ESCorp)", "Contracts (ESCorp)", "Contrats (ESCorp)"],
+		"computer.pilot" => ["Pilotar la nave", "Pilot the ship", "Piloter le vaisseau"],
+		"computer.trade" => ["Comerciar", "Trade", "Commercer"],
+		"computer.contracts" => ["Contratos", "Contracts", "Contrats"],
 		"contracts.title" => ["Contratos de la ESCorp", "ESCorp contracts", "Contrats ESCorp"],
 		// %t% = mm:ss hasta el siguiente tablero
 		"contracts.renew" => ["Nuevos contratos dentro de %t%", "New contracts in %t%", "Nouveaux contrats dans %t%"],
@@ -85,7 +86,7 @@ class Lang {
 		"mode" => ["Modo", "Mode", "Mode"],
 		"mode.adventure" => ["Aventura (original)", "Adventure (original)", "Aventure (original)"],
 		"mode.creative" => ["Creativo", "Creative", "Créatif"],
-		"palette.title" => ["Bloques (modo creativo)", "Blocks (creative mode)", "Blocs (mode créatif)"],
+		"palette.title" => ["Bloques", "Blocks", "Blocs"],
 		"palette.hint" => ["Clic / A: poner en la casilla elegida   Rueda / LB RB: cambiar de pagina   I / Esc / B: cerrar", "Click / A: put in the selected slot   Wheel / LB RB: change page   I / Esc / B: close", "Clic / A : mettre dans la case choisie   Molette / LB RB : changer de page   I / Échap / B : fermer"],
 		"hud.pilot" => ["Pilotando: WASD mover la nave   Ratón girar la cámara   E / Esc dejar la nave aquí", "Piloting: WASD move the ship   Mouse turn the camera   E / Esc leave the ship here", "Pilotage : WASD déplacer le vaisseau   Souris tourner la caméra   E / Échap laisser le vaisseau ici"],
 		"hud.creative" => ["Creativo: I abre la paleta de bloques", "Creative: I opens the block palette", "Créatif : I ouvre la palette de blocs"],

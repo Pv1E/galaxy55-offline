@@ -58,9 +58,9 @@ class TutoText {
 			"Do the same with the %alu%: the synthesizer turns it into %hull%.",
 			"Fais de même avec l'%alu% : le synthétiseur le transforme en %hull%."],
 		"computer" => [
-			"Activa el ordenador de a bordo (en verde) y elige \"Modificar la nave (hangar)\".",
-			"Activate the on-board computer (in green) and choose \"Modify the ship (hangar)\".",
-			"Active l'ordinateur de bord (en vert) et choisis \"Modifier le vaisseau (hangar)\"."],
+			"Activa el ordenador de a bordo (en verde) y elige \"Modificar la nave\".",
+			"Activate the on-board computer (in green) and choose \"Modify the ship\".",
+			"Active l'ordinateur de bord (en vert) et choisis \"Modifier le vaisseau\"."],
 		"hangar" => [
 			"Apunta a la puerta de la nave y haz clic una vez para abrirla. Luego tapa los agujeros del techo (en verde) con tu %hull%: la nave tiene que ser estanca.",
 			"Aim at the ship's door and click once to open it. Then fill the holes in the roof (in green) with your %hull%: the ship must be airtight.",
