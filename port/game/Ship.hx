@@ -45,11 +45,25 @@ class Ship {
 	var fy = 0.;
 	/** true si el jugador la ha pilotado a otro sitio de este planeta (anadido del port): ese sitio se guarda */
 	public var moved(default, null) = false;
+	/** copia del planeta en la que se dibuja la nave (vueltas enteras, updateWrap) */
+	var wrapX = 0.;
+	var wrapY = 0.;
+	/** centro de la nave (media de sus bloques), en coordenadas de la nave: con el se elige esa copia */
+	var midX = 0.;
+	var midY = 0.;
 
 	public function new( planet : World, atlas : h3d.mat.Texture, parent : h3d.scene.Object, ?edits : Array<Int>, ?shipBytes : haxe.io.Bytes, ?at : { x : Int, y : Int } ) {
 		this.planet = planet;
 		data = ShipData.load(shipBytes != null ? shipBytes : Const.DEFAULT_SHIP);
 		crafts = data.crafts;
+		for( c in data.cells ) {
+			midX += c.x + 0.5;
+			midY += c.y + 0.5;
+		}
+		if( data.cells.length > 0 ) {
+			midX /= data.cells.length;
+			midY /= data.cells.length;
+		}
 		// el sitio de aterrizaje es fijo para cada planeta (misma semilla = mismo sitio), como en Game.placeShip; anadido del port:
 		// si el jugador la ha pilotado a otro sitio (at), aparece alli
 		var p = planet.shipPlace();
@@ -191,7 +205,7 @@ class Ship {
 		// alrededor de la entrada, como el giro (setPose)
 		var ox = 0.5 + gx / n - (data.entry.x + 0.5), oy = 0.5 + gy / n - (data.entry.y + 0.5);
 		var c = Math.cos(heading), s = Math.sin(heading);
-		return { x : fx + data.entry.x + 0.5 + ox * c - oy * s, y : fy + data.entry.y + 0.5 + ox * s + oy * c, z : 0.5 + gz / n + World.SHIP_Z };
+		return { x : fx + wrapX + data.entry.x + 0.5 + ox * c - oy * s, y : fy + wrapY + data.entry.y + 0.5 + ox * s + oy * c, z : 0.5 + gz / n + World.SHIP_Z };
 	}
 
 	/** pilotando (anadido del port): el rayo se ve con esta fuerza (0 = oculto, 1 = como siempre) */
@@ -208,11 +222,26 @@ class Ship {
 		placeRoot();
 	}
 
+	/**
+	 * Cambio del port: la nave se dibuja en la copia del planeta mas cercana al jugador, como cada trozo del terreno (World.updateWrap)
+	 * y el rayo (update). Si no, al cruzar el borde del mundo dentro de la nave (GameView.clampPos lleva la x de size a 0) se quedaba a
+	 * una vuelta entera y solo se veia el cielo; pilotando desde ese lado, la camara (center) y el planeta quedaban en copias distintas.
+	 * Los bloques y la colision no cambian: el planeta los busca con el modulo de su tamano (World.shipLocal).
+	 */
+	public function updateWrap( px : Float, py : Float ) {
+		var s = planet.size;
+		var ox = s * Math.round((px - fx - midX) / s), oy = s * Math.round((py - fy - midY) / s);
+		if( ox == wrapX && oy == wrapY ) return;
+		wrapX = ox;
+		wrapY = oy;
+		placeRoot();
+	}
+
 	function placeRoot() {
 		var r = world.root;
 		if( heading == 0 && roll == 0 ) {
 			r.setRotation(0, 0, 0);
-			r.setPosition(fx, fy, World.SHIP_Z);
+			r.setPosition(fx + wrapX, fy + wrapY, World.SHIP_Z);
 			return;
 		}
 		var q = poseQ;
@@ -226,7 +255,7 @@ class Ship {
 		// la entrada (pivote) se queda donde estaba: posicion = desplazamiento + pivote - pivote girado
 		var p = new h3d.Vector(data.entry.x + 0.5, data.entry.y + 0.5, data.entry.z + 1);
 		var rp = p.transformed3x3(q.toMatrix());
-		r.setPosition(fx + p.x - rp.x, fy + p.y - rp.y, World.SHIP_Z + p.z - rp.z);
+		r.setPosition(fx + wrapX + p.x - rp.x, fy + wrapY + p.y - rp.y, World.SHIP_Z + p.z - rp.z);
 	}
 
 	/** desplaza la nave (dx, dy) sobre el planeta, a la misma altura; el rayo marca donde aterrizaria si se deja ahora */
@@ -464,7 +493,7 @@ class Ship {
 			gx += c.x;
 			gy += c.y;
 		}
-		var cx = 0.5 + gx / data.cells.length + planet.shipDX, cy = 0.5 + gy / data.cells.length + planet.shipDY;
+		var cx = 0.5 + gx / data.cells.length + planet.shipDX + wrapX, cy = 0.5 + gy / data.cells.length + planet.shipDY + wrapY;
 		var baseZ = World.SHIP_Z + 1;
 		var height = 35.;
 		var incli = 0.5;

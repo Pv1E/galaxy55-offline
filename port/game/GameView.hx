@@ -1835,6 +1835,8 @@ class GameView {
 	}
 
 	public function updateCamera() {
+		// cambio del port: la nave, en la copia del planeta mas cercana al jugador (antes de que la camara de pilotar mire a su centro)
+		if( ship != null ) ship.updateWrap(px, py);
 		if( piloting ) {
 			pilotCamera();
 			return;
