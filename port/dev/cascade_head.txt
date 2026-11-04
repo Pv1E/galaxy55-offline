@@ -1,0 +1,39 @@
+# subir por una cascada con el jetpack a fondo hasta su fuente, con un bloque encima: con la cabeza contra el, las olas (+-0.15) y
+# el balanceo (+-0.05) movian la camara por encima de los ojos y entraba en el bloque (se veia a traves). Con print cam, el hueco
+# entre la camara y el techo tiene que quedar siempre por encima del plano cercano (0.1); shot cascade_head mirando arriba
+wait 3
+set 59 61 99 BRock
+set 60 61 99 BRock
+set 61 61 99 BRock
+set 60 60 99 BRock
+set 60 62 99 BRock
+set 60 61 106 BRock
+set 60 61 105 BCascadeSource
+wait 120
+tp 60.5 61.5 100 0 1.2
+wait 5
+jet 1
+wait 120
+print pos
+print cam
+wait 15
+print cam
+wait 15
+print cam
+wait 15
+print cam
+wait 15
+print cam
+wait 15
+print cam
+wait 15
+print cam
+wait 15
+print cam
+wait 15
+print cam
+wait 15
+print cam
+shot cascade_head
+jet 0
+quit

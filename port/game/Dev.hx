@@ -864,6 +864,11 @@ class Dev {
 			inline function r( v : Float ) return Math.round(v * 1000) / 1000;
 			var hudPx = @:privateAccess app.hudShake * h3d.Engine.getCurrent().width / Ui.Theme.visibleArea().w;
 			Sys.println("temblor " + r(g.shake) + " camara " + r(g.shakeZ) + " hud " + r(hudPx) + " px  t=" + r(g.playSeconds));
+		case "cam":
+			// altura de la camara y distancia hasta el primer bloque que choca encima (negativa = la camara esta dentro de el)
+			var cz = @:privateAccess g.s3d.camera.pos.z, top = Math.floor(cz);
+			while( top < World.HEIGHT && !w.collidePoint(g.px, g.py, top + 0.5) ) top++;
+			Sys.println("camara z=" + Math.round(cz * 1000) / 1000 + " techo=" + top + " hueco=" + Math.round((top - cz) * 1000) / 1000);
 		case "fov":
 			// campo de vision de la camara y bloque en los ojos (en el agua: opcion * 0.8)
 			var b = w.block(Math.floor(g.px), Math.floor(g.py), Std.int(g.pz + g.viewZ));
