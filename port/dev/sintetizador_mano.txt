@@ -1,0 +1,91 @@
+# ordenador del sintetizador con un bloque en la mano (cambio del port): el clic izquierdo y el derecho lo usan como con la
+# mano vacia (se fabrica la receta y el bloque de la mano no se gasta); el derecho tambien con la mano vacia. Mantener el
+# clic no lo rompe y con el bloque en la mano se sigue poniendo en la zona de sintetizador.
+wait 3
+ship
+wait 10
+tpl 62.5 63.5 3.0 3.14 -0.2
+wait 5
+slot 1
+hand BWood
+print inv
+# 1) clic izquierdo con madera en la mano
+setl 59 62 3 BIron
+setl 60 62 3 BIron
+setl 59 63 3 BIron
+setl 60 63 3 BIron
+wait 10
+print msg
+lookl 61.5 62.5 4.5
+wait 3
+print select
+shot sintetizador_mano
+key place
+wait 5
+unkey
+wait 5
+print blockl 59 62 3
+print loose
+wait 90
+print inv
+# 2) clic derecho con madera en la mano
+setl 59 62 3 BIron
+setl 60 62 3 BIron
+setl 59 63 3 BIron
+setl 60 63 3 BIron
+wait 10
+print msg
+lookl 61.5 62.5 4.5
+wait 3
+press mouseright
+wait 3
+release mouseright
+wait 5
+print blockl 59 62 3
+print loose
+wait 90
+print inv
+# 3) clic derecho con la mano vacia
+slot 0
+setl 59 62 3 BIron
+setl 60 62 3 BIron
+setl 59 63 3 BIron
+setl 60 63 3 BIron
+wait 10
+lookl 61.5 62.5 4.5
+wait 3
+press mouseright
+wait 3
+release mouseright
+wait 5
+print blockl 59 62 3
+print loose
+wait 90
+print inv
+# 4) clic mantenido con madera en la mano: el ordenador no se rompe (al soltar se fabrica otra vez con el hierro del inventario:
+# la zona queda como plantilla)
+slot 1
+lookl 61.5 62.5 4.5
+wait 3
+key place
+wait 300
+unkey
+wait 5
+print blockl 61 62 4
+# 5) con madera en la mano se sigue poniendo en la zona de sintetizador (vacia, sobre la losa)
+setl 59 62 3 none
+setl 60 62 3 none
+setl 59 63 3 none
+setl 60 63 3 none
+wait 10
+lookl 59.5 62.5 2.95
+wait 3
+print select
+key place
+wait 5
+unkey
+wait 5
+print blockl 59 62 3
+print blockl 60 62 3
+print inv
+quit

@@ -64,6 +64,8 @@ class GameView {
 	public static var editMother = Sys.args().indexOf("--editnodriza") >= 0;
 	var actionPause = 0.;
 	var activatePending : Select;
+	/** se apunta al ordenador del sintetizador: el clic lo usa aunque haya un bloque en la mano (Fx lo resalta como con la mano vacia) */
+	public var synthAimed(default, null) = false;
 	var actionWait = false;
 	var armed = false;
 	/** tmod acumulado para los trozos del laser (laserParts) */
@@ -1454,6 +1456,11 @@ class GameView {
 		return null;
 	}
 
+	/** ordenador de un sintetizador de tu nave (fuera de su zona: no se rompe). En el hangar y en la nave nodriza no hay ship */
+	function isSynth( s : Select ) : Bool {
+		return s != null && ship != null && s.z >= World.SHIP_Z && s.b.k == BCrafterComputer && !ship.inCraft(s.x, s.y, s.z);
+	}
+
 	function updateAction( tmod : Float, controls : Bool, pad : hxd.Pad ) {
 		var K = hxd.Key;
 		var held = false, forceEmpty = false;
@@ -1503,7 +1510,13 @@ class GameView {
 
 		// seleccion (Game.update: no se puede apuntar a la propia celda ni a la de encima)
 		var prev = select;
-		var s = controls || select != null || debugAction ? pick(hand) : null;
+		var s : Select = null;
+		if( controls || select != null || debugAction ) {
+			// cambio del port: con un bloque en la mano, el ordenador del sintetizador se usa como con la mano vacia (antes habia que
+			// pasar a la casilla del excavador: con la mano llena el rayo solo apunta a las zonas de sintetizador)
+			if( hand != null && isSynth(s = pick(null)) ) hand = null;
+			else s = pick(hand);
+		}
 		if( s != null ) {
 			var cx = hand == null ? s.x : s.tx, cy = hand == null ? s.y : s.ty, cz = hand == null ? s.z : s.tz;
 			if( cx == Std.int(px) && cy == Std.int(py) && (cz == Std.int(pz) || cz == Std.int(pz) + 1) ) s = null;
@@ -1519,6 +1532,9 @@ class GameView {
 			s = prev;
 		}
 		select = s;
+		synthAimed = hand == null && isSynth(s);
+		// cambio del port: el clic derecho (no hacia nada) tambien usa el ordenador del sintetizador, con o sin bloque en la mano
+		if( synthAimed && controls && actionKeys && K.isPressed(K.MOUSE_RIGHT) ) activateBlock(s.x, s.y, s.z, s.b);
 
 		if( !laserActive ) {
 			if( activatePending != null ) {

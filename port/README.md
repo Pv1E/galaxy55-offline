@@ -28,7 +28,7 @@ They are the original game's (movement and physics are a copy of `ent/Hero.hx` a
 | Dig or place | left click, E or Shift (hold). With an empty hand you dig; with a block you place it if something supports it |
 | Choose slot | 1-0 or mouse wheel; Tab = digger (empty hand) |
 | Drop the selected stack | R or Del |
-| Activate (on-board computer, doors, ancient bomb) | aim, press and release. Holding on until the block breaks digs it out instead: that is how an ancient bomb is picked up without setting it off (it needs a pink charge, like ancient rock) |
+| Activate (on-board computer, doors, ancient bomb) | aim, press and release. Holding on until the block breaks digs it out instead: that is how an ancient bomb is picked up without setting it off (it needs a pink charge, like ancient rock). The synthesizer computer also works with a block in hand and with right click (port change) |
 | ESCorp canteen (chest) | aim, press and release. The game goes on: click takes and drops (Shift half, Ctrl one; or arrows and Enter, or d-pad and A), dragging outside the window looks around and walking away closes it (so do Esc and B) |
 | Return to the ship | Shift+K, or step into the landing light beam |
 | Pilot the ship (port addition) | on-board computer > Pilot the ship: WASD or left stick move it over the planet, mouse or right stick turn the camera, E, Esc, B or Start leave it where it is (it slows down, straightens up and lands by itself) |
