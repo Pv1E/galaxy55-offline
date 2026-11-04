@@ -1,0 +1,67 @@
+# niebla por distancia (cambio del port): lo que esta a la misma distancia de la camara se ve igual de claro, mire donde mire.
+# Un anillo de 24 pilares a 40 bloques del jugador, en el aire sobre el bosque: todos los pilares deben verse con la misma niebla,
+# en el centro de la pantalla o en el borde, y no cambiar al girar o inclinar la vista (con la profundidad de vista los del
+# borde salian mas claros, y mirando hacia abajo el relieve lejano se aclaraba)
+# uso: devrun.ps1 -Script port/dev/niebla_angulo.txt -Extra "--bgbiome=BIAcidForest"
+wait 3
+planet
+wait 20
+filla 63 63 65 65 100 126 none
+set 64 64 100 BRock
+filla 104 64 104 64 90 126 BWoodPlank
+filla 103 74 103 74 90 126 BWoodPlank
+filla 99 84 99 84 90 126 BWoodPlank
+filla 92 92 92 92 90 126 BWoodPlank
+filla 84 99 84 99 90 126 BWoodPlank
+filla 74 103 74 103 90 126 BWoodPlank
+filla 64 104 64 104 90 126 BWoodPlank
+filla 54 103 54 103 90 126 BWoodPlank
+filla 44 99 44 99 90 126 BWoodPlank
+filla 36 92 36 92 90 126 BWoodPlank
+filla 29 84 29 84 90 126 BWoodPlank
+filla 25 74 25 74 90 126 BWoodPlank
+filla 24 64 24 64 90 126 BWoodPlank
+filla 25 54 25 54 90 126 BWoodPlank
+filla 29 44 29 44 90 126 BWoodPlank
+filla 36 36 36 36 90 126 BWoodPlank
+filla 44 29 44 29 90 126 BWoodPlank
+filla 54 25 54 25 90 126 BWoodPlank
+filla 64 24 64 24 90 126 BWoodPlank
+filla 74 25 74 25 90 126 BWoodPlank
+filla 84 29 84 29 90 126 BWoodPlank
+filla 92 36 92 36 90 126 BWoodPlank
+filla 99 44 99 44 90 126 BWoodPlank
+filla 103 54 103 54 90 126 BWoodPlank
+tp 64.5 64.5 101.01 0 0
+wait 40
+print pos
+# de frente: el pilar del centro y los de los lados (a 15, 30 y 45 grados) iguales
+look 0 0
+wait 5
+shot niebla_%b_frente
+# girado 0.4: los mismos pilares en otro sitio de la pantalla, sin cambio
+look 0.4 0
+wait 5
+shot niebla_%b_giro
+# inclinada hacia arriba y hacia abajo (vista picada sobre el bosque, como en el informe)
+look 0 0.45
+wait 5
+shot niebla_%b_arriba
+look 0 -0.7
+wait 5
+shot niebla_%b_abajo
+look 0.4 -1.1
+wait 5
+shot niebla_%b_picado
+# en el suelo, lejos de los pilares: el bosque lejano igual mirando de frente, girando o hacia abajo
+tp 20 20 top -2.35 0
+wait 40
+print pos
+shot niebla_%b_suelo
+look -1.95 0
+wait 5
+shot niebla_%b_suelo_giro
+look -2.35 -0.5
+wait 5
+shot niebla_%b_suelo_abajo
+quit
