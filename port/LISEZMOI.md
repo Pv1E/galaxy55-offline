@@ -107,6 +107,8 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
   reste la liste des blocs triviaux des contrats de base). Ils se modifient dans `contracts.json`. Les crédits de départ sont
   de 200 et arrivent à la fin du tutoriel (avant : 500 dès le début).
 - La lave fait exploser la bombe antique (changement du port) : l'original la cassait et la lâchait, comme l'eau le fait toujours.
+- Les licences d'exploration ESCorp sont un ajout du port (dans l'original, le serveur les gérait) : en aventure on scanne
+  4 planètes (1 principale et 3 d'exploration) et le vaisseau ne se pilote qu'au-dessus de la principale.
 - Les cascades et l'eau posée par le joueur baissent à chaque pas, avec une surface inclinée : ajout du port. La mer remplit
   les trous jusqu'à son niveau et, quand l'eau qui entre atteint le volume d'une couche de la mer, le niveau baisse d'un bloc
   sur toute la planète, comme l'original.

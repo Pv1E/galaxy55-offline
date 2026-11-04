@@ -76,6 +76,12 @@ etiqueta `flash-version` y la rama `flash`, con sus SWF y archivos de compilaci�
   cambia de sitio (ERRORES #15): ya arreglado en 167cc91 (v0.5, `World.shipPlace` antes de `applySaved`). Comprobado con
   `nave_sitio`: con el código actual la nave sigue en 124,21 tras cavar, recargar y guardar dentro; quitando esa línea salta a
   74,110 y se queda allí, como contó Sekhmet. Pasa con partidas de la v0.4 o anteriores.
+- PR 64-78 de Cornor923 (2026-11-04): volumen (`Snd.applyVolume`), poner sobre hierba alta (`PortRules.placeOver`,
+  `GameView.canPlace`, que ahora tiene la guarda de 1..126), cámara bajo el techo (`CAMERA_GAP`), sueltos quietos, hierbas que
+  se sueltan a sí mismas, nieve solo en BIWinterPeaks a cielo abierto, niebla por distancia (`Sky.FogShader`), ordenador sin
+  pausa, robot en el salto del mapa, vigilante de HashLink pausado al construir el mapa, textos del ordenador, luz por cara
+  junto a un neón, `World.openCascade` (cascada contra cristal), `Ship.updateWrap` y licencias (`Licenses.hx`, añadido del
+  port). Añadido al fusionar: la pantalla `licenses` deja correr el juego como `computer` (guion `licencias_vida`).
 
 ## Qué falló y cómo se resolvió
 | Problema | Causa | Solución |

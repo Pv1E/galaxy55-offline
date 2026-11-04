@@ -16,6 +16,7 @@ Les bugs corrigés sont déplacés à la fin. Les détails techniques sont dans 
 
 ## Corrigés
 
+- Non publié (de **Sekhmet**, corrigés par **Cornor923**) : le volume à 0 ne fait plus de bruit ; une cascade derrière du verre se voit.
 - v0.6 (trouvés par **Sekhmet**, merci !) : poser un bloc au-dessus de la couche la plus haute ne le consomme plus sans le poser (rien n'est visé, comme l'original) ; la tête dans une source de cascade ou dans des sables mouvants, on vise et on creuse ce qui est devant (l'original ne compte pas la cellule de la caméra) ; les sables mouvants, la glace et le verre ne paraissent plus creux à côté d'une cascade (changement du port : leur face contre la cascade est dessinée, car ici la cascade descend).
 - v0.5 (#15, de **Sekhmet**) : le vaisseau ne change plus de place en rouvrant la partie. Jusqu'à la v0.4, le lieu d'atterrissage
   était calculé avec les modifications du joueur : creuser ou construire là où il atterrit mettait le vaisseau ailleurs et le

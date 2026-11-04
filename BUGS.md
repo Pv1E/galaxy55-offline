@@ -16,6 +16,7 @@ Fixed ones are moved to the bottom. Technical details are in [`port/RESUMEN.md`]
 
 ## Fixed
 
+- Unreleased (from **Sekhmet**, fixed by **Cornor923**): volume at 0 is silent; a cascade behind glass is visible.
 - v0.6 (found by **Sekhmet**, thank you!): placing a block on top of the highest layer no longer uses it up without placing it (nothing is aimed at, like the original); with your head inside a cascade source or quicksand you can aim at and dig what is in front (the original does not count the camera's cell); quicksand, ice and glass no longer look hollow next to a cascade (port change: their face against the cascade is drawn, since here the cascade gets lower).
 - v0.5 (#15, from **Sekhmet**): the ship no longer changes place when the game is reopened. Up to v0.4 the landing spot was
   computed with the player's changes: digging or building where it lands put the ship somewhere else and the player, saved

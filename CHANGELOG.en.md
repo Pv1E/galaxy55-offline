@@ -2,6 +2,25 @@
 
 [Español: `CHANGELOG.md`](CHANGELOG.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
+## Unreleased
+- From **Cornor923** (thank you!, PRs 64-78):
+  - **ESCorp exploration licenses** (port addition; in the original the server handled them): in adventure, scanning a planet
+    uses a license, 4 in all (1 main and 3 exploration); unlimited in creative. The first scanned planet is the main one (with
+    the tutorial, its planet). **The ship can only be piloted over the main planet.** On the on-board computer, "Exploration
+    licenses" shows them and lets you change the main planet (free the first time, then 1000 credits and 24 real hours
+    between changes); on the map, "Abandon" frees a planet's license. Older saves give a license to visited planets and the
+    start planet is the main one.
+  - The Options volume now applies to the sounds (0 is silence).
+  - A cascade behind glass is visible; the camera no longer enters the block above when climbing a cascade.
+  - Blocks can be placed on tall grass (it is trampled) and the placement ghost only shows where a block can go.
+  - Dropped blocks no longer shake on the ground; herbs drop their own herb.
+  - Snow only covers blocks on the snow planet and under the open sky.
+  - Fog depends on the distance and no longer changes when turning the camera.
+  - The on-board computer, the shop, the contracts and the licenses no longer pause the game (you keep healing in the ship).
+  - The merchant robot no longer jumps with the ship into a system; opening the map no longer closes the game on a slow PC.
+  - On-board computer buttons without the notes in parentheses.
+  - Partial blocks next to a neon light look lit again; the ship stays visible across the edge of the world.
+
 ## v0.6 — pre-release
 - Repository: the files that only built the Flash version (`client*.hxml`, `build.bat`/`build.sh`, the SWFs in `release/`,
   `libs/heaps` and `libs/format_old`) are removed from `main`. They remain untouched in the `flash` branch. The game does not change.

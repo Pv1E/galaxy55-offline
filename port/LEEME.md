@@ -98,6 +98,8 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
   servidor; solo queda la lista de bloques triviales de los contratos de base). Se editan en `contracts.json`. Los créditos
   de salida son 200 y llegan al acabar el tutorial (antes 500 desde el principio).
 - La lava hace explotar la bomba antigua (cambio del port): el original la rompía y la soltaba, como sigue haciendo el agua.
+- Las licencias de exploración de la ESCorp son un añadido de este port (en el original las llevaba el servidor): en aventura
+  se escanean 4 planetas (1 principal y 3 de exploración) y la nave solo se pilota sobre el principal.
 - La cascada y el agua que pone el jugador bajan de altura en cada paso, con la superficie inclinada: añadido de este port.
   El mar llena los huecos hasta su nivel y, cuando el agua que entra suma el volumen de una capa del mar, el nivel baja un
   bloque en todo el planeta, como el original.

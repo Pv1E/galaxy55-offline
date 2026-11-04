@@ -2,6 +2,25 @@
 
 [English: `CHANGELOG.en.md`](CHANGELOG.en.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
+## Sin publicar
+- De **Cornor923** (¡gracias!, PR 64-78):
+  - **Licencias de exploración de la ESCorp** (añadido del port; en el original las llevaba el servidor): en aventura, escanear
+    un planeta gasta una licencia, 4 en total (1 principal y 3 de exploración); en creativo no hay límite. El primer planeta
+    escaneado es el principal (con tutorial, el suyo). **Solo se pilota la nave sobre el planeta principal.** En el ordenador
+    de a bordo, "Licencias de exploración" muestra las licencias y deja cambiar de planeta principal (gratis la primera vez,
+    luego 1000 créditos y 24 horas reales entre cambios); en el mapa, "Abandonar" libera la licencia de un planeta. Las
+    partidas anteriores dan licencia a los planetas visitados y el de salida es el principal.
+  - El volumen de Opciones ya se aplica a los sonidos (a 0 no suena nada).
+  - La cascada se ve detrás del cristal; la cámara ya no se mete en el bloque de arriba al subir por una cascada.
+  - Se pone un bloque sobre la hierba alta (se pisa) y la sombra de colocar solo sale donde se puede poner.
+  - Los bloques soltados ya no tiemblan en el suelo; las hierbas sueltan su propia hierba.
+  - La nieve solo cubre bloques en el planeta nevado y a cielo abierto.
+  - La niebla depende de la distancia y no cambia al girar la cámara.
+  - El ordenador de a bordo, la tienda, los contratos y las licencias ya no paran el juego (se sigue curando en la nave).
+  - El robot comerciante ya no salta con la nave al entrar en un sistema; el juego ya no se cierra al abrir el mapa en un PC lento.
+  - Botones del ordenador de a bordo sin las notas entre paréntesis.
+  - Los bloques parciales junto a un neón vuelven a verse iluminados; la nave se sigue viendo al cruzar el borde del mundo.
+
 ## v0.6 — pre-release
 - Repositorio: se quitan de `main` los archivos que solo compilaban la versión Flash (`client*.hxml`, `build.bat`/`build.sh`,
   los SWF de `release/`, `libs/heaps` y `libs/format_old`). Siguen intactos en la rama `flash`. El juego no cambia.

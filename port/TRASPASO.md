@@ -139,6 +139,17 @@ ERRORES/BUGS y `port/RELEASE.md` pasan a v0.6. Zips con `package.ps1 -Version 0.
 DirectX: carga el planeta y los contratos leen `res/contracts.json`). Etiqueta `v0.6`. La release la crea Pvie en GitHub
 (pre-release, notas de `port/RELEASE.md`, los dos zips de `port/out/release`).
 
+## PR 64-78 de Cornor923 integrados (2026-11-04)
+Fusionados en local en orden; un conflicto en `Dev.hx` entre el 72 (`waitfor jump`) y el 77 (`waitfor system`): se conservan los
+dos. El PR 77 avisaba de que, con el 71, la pantalla de licencias también debe dejar correr el juego: añadido en
+`GalaxyApp.update` (`currentName == "licenses"`) y comprobado con `port/dev/licencias_vida.txt` (la vida sube 1,6/s). Compilan
+SDL y DX. Pasan los 16 guiones de los PR y los de siempre (altura_max, fuente_excavar, cascada_arena, nave_sitio, place_front,
+contrats, pilotar, espacio, hangar, vida). El 77 (licencias, añadido del port) lo aprobó Pvie: limita pilotar al planeta principal.
+Reportes de Sekhmet aún abiertos: la cascada que se ve opaca, blanca y deformada en su planeta de otoño (vídeo del 2026-11-03;
+no se reproduce en las pruebas, Cornor lo mira) y la nave que se movió (lo más probable, partida de la v0.4; si se repite,
+pedir su partida: en Linux, `~/Galaxy55/saves/`). Comprobado además que la nave no se mueve con distintas velocidades de carga
+ni al continuar desde el menú mientras se genera el planeta de fondo.
+
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;

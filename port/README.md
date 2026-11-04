@@ -104,6 +104,8 @@ A player got it running on Linux this way; we have not tested it.
   only the list of trivial blocks for the base contracts survives). They are edited in `contracts.json`. Starting credits
   are 200 and arrive at the end of the tutorial (before: 500 from the start).
 - Lava makes the ancient bomb explode (port change): the original broke and dropped it, as water still does.
+- ESCorp exploration licenses are an addition of this port (in the original the server handled them): in adventure you can
+  scan 4 planets (1 main and 3 exploration) and the ship can only be piloted over the main one.
 - Cascades and player-placed water get lower at each step, with a sloped surface: an addition of this port. The sea fills
   holes up to its level and, when the water that flows in adds up to the volume of one layer of the sea, the level goes down
   one block on the whole planet, like the original.
