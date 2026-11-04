@@ -1,0 +1,23 @@
+# abrir el mapa (partida nueva en el espacio y despegue) no cierra el juego en un PC lento: GalaxyApp.buildExplorer hace las
+# imagenes de la nave y los fondos del mapa en una sola imagen y el vigilante de Heaps lo tomaba por un bucle infinito pasado el
+# minuto ("Program timeout (infinite loop?)"). Lanzar con -Extra "--frametime" -Timeout 900: las "parada N ms" en estado Exploring
+# son esas imagenes; con el PC cargado pasaban de 60000 ms y el juego se cerraba
+wait 3
+trace
+tuto notuto 4242
+waitfor map 6000
+waitfor system
+expgo 0 0
+waitfor sector
+expsys 1
+waitfor system
+expplanet 10
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+explore
+waitfor map 6000
+waitfor system
+print pos
+quit

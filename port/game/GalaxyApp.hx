@@ -1170,6 +1170,9 @@ class GalaxyApp extends hxd.App {
 	function buildExplorer() {
 		ui.removeChildren();
 		bar = null;
+		// las imagenes de la nave y los fondos del mapa (por software) se hacen en una sola imagen: en un PC lento pasaba del
+		// minuto del vigilante de Heaps, que cerraba el juego con "Program timeout (infinite loop?)"; mientras, se para
+		hxd.System.allowTimeout = false;
 		// despegue: los cambios del planeta quedan en la partida, que pasa al espacio, y el planeta se descarga
 		var takeoff = game != null;
 		if( takeoff ) {
@@ -1188,6 +1191,7 @@ class GalaxyApp extends hxd.App {
 		var infos = ExpData.ExpOffline.make(uni.seed, uni.start, visited, uni.pos);
 		Explorer.robotStart = uni.robot;
 		explorer = new Explorer(s2d, infos, shipFrames);
+		hxd.System.allowTimeout = true;
 		s2d.under(explorer);
 		space = new Space(uni);
 		space.tutorial = Tutorial.active(spaceInfo);
