@@ -1,0 +1,28 @@
+# ordenador de a bordo y puntero: al abrirlo, el puntero va al centro de la ventana (antes volvia a donde se habia cerrado el
+# menu anterior) y el foco sigue en Despegar aunque el centro caiga sobre Comerciar; al mover el raton a otro boton, este se
+# lleva el foco como siempre. La ventana de prueba esta minimizada y sin foco: "sistema" dice si el cursor de verdad se ha movido
+wait 3
+ship
+wait 10
+print mouse
+activatel 64 63 3
+wait 5
+print mouse
+print menu
+# el movimiento que manda SDL al poner el puntero en el centro: Comerciar, debajo, no se lleva el foco
+mouse 640 360
+wait 3
+print menu
+# el jugador mueve el raton a otro boton: se lleva el foco
+mouse 640 250
+wait 3
+print mouse
+print menu
+# de vuelta al centro moviendo el raton: ahora Comerciar si se lleva el foco (el centro cae sobre el)
+mouse 640 360
+wait 3
+print menu
+close
+wait 5
+print menu
+quit
