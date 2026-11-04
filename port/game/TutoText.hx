@@ -58,6 +58,10 @@ class TutoText {
 			"Haz lo mismo con el %alu%: el sintetizador lo convierte en %hull%.",
 			"Do the same with the %alu%: the synthesizer turns it into %hull%.",
 			"Fais de même avec l'%alu% : le synthétiseur le transforme en %hull%."],
+		"craftonly" => [
+			"durante el tutorial, el sintetizador solo fabrica %alu% y %hull%",
+			"during the tutorial, the synthesizer only makes %alu% and %hull%",
+			"pendant le tutoriel, le synthétiseur ne fabrique que de l'%alu% et du %hull%"],
 		"computer" => [
 			"Activa el ordenador de a bordo (en verde) y elige \"Modificar la nave\".",
 			"Activate the on-board computer (in green) and choose \"Modify the ship\".",
