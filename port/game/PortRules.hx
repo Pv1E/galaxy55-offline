@@ -9,24 +9,26 @@ class PortRules {
 
 	/**
 	 * Hierbas de decoracion y estalactitas de hielo: en el original llevan BFDetail y no se pueden apuntar ni romper.
-	 * Aqui se rompen y, siguiendo la logica del juego, dan su "materia" con una probabilidad:
-	 * - hierbas -> hierba alta (BHighHerb1) un 33 %, como las plantas recogibles (BAcidHerb*: matter BHighHerb1, BFDropChance(33));
+	 * Aqui se rompen y dan, con una probabilidad:
+	 * - hierbas -> la misma hierba un 33 %, como las plantas recogibles (BAcidHerb*: BFDropChance(33)). Antes daban hierba alta
+	 *   (BHighHerb1), que no se parece a ninguna (la hierba helada daba una hierba verde). Para ponerlas se apoyan en el suelo y no
+	 *   sujetan nada, como las flores (BFAnchor(Down), BFMagnet(None)); la de los arboles cuelga;
 	 * - estalactitas de hielo -> hielo (BIce) un 7 %, como el hielo negro (BBlackIce: matter BIce, BFDropChance(7));
 	 * - restos de las plantas de cargas -> nada (para no sacar cargas sin fin).
 	 * Siguen sin chocar y conservan BFDetail (se dibujan igual): solo cambia que se pueden apuntar (PCanPick) y lo que dan.
 	 */
 	static var BREAKABLE : Array<{ k : BlockKind, drop : BlockKind, chance : Int }> = [
-		{ k : BAutumnHerbs1, drop : BHighHerb1, chance : 33 },
-		{ k : BAutumnHerbs2, drop : BHighHerb1, chance : 33 },
-		{ k : BTreeHerbs, drop : BHighHerb1, chance : 33 },
-		{ k : BMoonHerbs1, drop : BHighHerb1, chance : 33 },
-		{ k : BMoonHerbs2, drop : BHighHerb1, chance : 33 },
-		{ k : BWinterHerb1, drop : BHighHerb1, chance : 33 },
-		{ k : BWinterHerb2, drop : BHighHerb1, chance : 33 },
-		{ k : BWinterHerb3, drop : BHighHerb1, chance : 33 },
-		{ k : BMarsHerb1, drop : BHighHerb1, chance : 33 },
-		{ k : BMarsHerb2, drop : BHighHerb1, chance : 33 },
-		{ k : BMarsHerb3, drop : BHighHerb1, chance : 33 },
+		{ k : BAutumnHerbs1, drop : BAutumnHerbs1, chance : 33 },
+		{ k : BAutumnHerbs2, drop : BAutumnHerbs2, chance : 33 },
+		{ k : BTreeHerbs, drop : BTreeHerbs, chance : 33 },
+		{ k : BMoonHerbs1, drop : BMoonHerbs1, chance : 33 },
+		{ k : BMoonHerbs2, drop : BMoonHerbs2, chance : 33 },
+		{ k : BWinterHerb1, drop : BWinterHerb1, chance : 33 },
+		{ k : BWinterHerb2, drop : BWinterHerb2, chance : 33 },
+		{ k : BWinterHerb3, drop : BWinterHerb3, chance : 33 },
+		{ k : BMarsHerb1, drop : BMarsHerb1, chance : 33 },
+		{ k : BMarsHerb2, drop : BMarsHerb2, chance : 33 },
+		{ k : BMarsHerb3, drop : BMarsHerb3, chance : 33 },
 		{ k : BIceStalactite1, drop : BIce, chance : 7 },
 		{ k : BIceStalactite2, drop : BIce, chance : 7 },
 		{ k : BBonusHerb1, drop : null, chance : 0 },
@@ -86,6 +88,10 @@ class PortRules {
 				b.drop = Block.get(r.drop);
 				b.dropCount = 1;
 				b.flags.push(BFDropChance(r.chance));
+			}
+			if( r.drop == r.k ) {
+				b.anchors = Type.enumIndex(r.k == BTreeHerbs ? Up : Down);
+				b.magnets = 0;
 			}
 		}
 	}
