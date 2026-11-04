@@ -25,9 +25,19 @@ class Snd {
 		if( broken ) return null;
 		var s = get(name);
 		if( s == null ) return null;
-		try return s.play(loop, vol * VOLUME) catch( e : Dynamic ) {
+		try {
+			applyVolume();
+			return s.play(loop, vol * VOLUME);
+		} catch( e : Dynamic ) {
 			broken = true;
 			return null;
 		}
+	}
+
+	/** volumen de Opciones (Settings.volume, 0-100) como volumen maestro: vale para todos los canales, tambien los bucles
+	    que ya suenan (jetpack, laser), y a 0 no suena nada */
+	public static function applyVolume() {
+		if( broken ) return;
+		try hxd.snd.Manager.get().masterVolume = Settings.volume / 100 catch( e : Dynamic ) broken = true;
 	}
 }
