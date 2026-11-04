@@ -196,6 +196,7 @@ class KubeEditor extends Screen {
 	// color
 	var swatch : h2d.Graphics;
 	var hexText : h2d.Text;
+	var opacityText : h2d.Text;
 	var bars = new Array<h2d.Graphics>();
 	var kubeColors : h2d.Object;
 
@@ -414,6 +415,8 @@ class KubeEditor extends Screen {
 			};
 		}
 		var px0 = CX + 320, cs = 16;
+		// el % de la opacidad a la derecha de su barra, alineado con la paleta (bajo el codigo de color tapaba "Lumin.")
+		opacityText = Theme.text(this, "", 1.2, Theme.DIM, px0, y0 + 3 * 24 + 2);
 		var g = new h2d.Graphics(this);
 		for( i in 0...PALETTE.length ) {
 			var cx = px0 + (i % 8) * cs, cy = y0 + Std.int(i / 8) * cs;
@@ -1057,7 +1060,8 @@ class KubeEditor extends Screen {
 		Theme.rect(swatch, 26, 26, 26, 26, 0x363D4B);
 		Theme.rect(swatch, 0, 0, 52, 52, color & 0xFFFFFF, opacity);
 		Theme.rect(swatch, 0, 52, 52, 1, 0xFFFFFF, 0.2);
-		hexText.text = "#" + StringTools.hex(color & 0xFFFFFF, 6) + (opacity < 1 ? " " + Math.round(opacity * 100) + "%" : "");
+		hexText.text = "#" + StringTools.hex(color & 0xFFFFFF, 6);
+		opacityText.text = Math.round(opacity * 100) + "%";
 		var vals = [hue, sat, val, opacity];
 		for( i in 0...4 ) {
 			var g = bars[i];
