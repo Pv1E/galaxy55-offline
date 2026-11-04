@@ -1,0 +1,44 @@
+# luz de los bloques parciales pegados a un neon (BShipLight): caja de roca cerrada (a oscuras) en el aire; cada neon cuelga
+# del techo contra la pared del fondo con, a sus lados, roca (1), placa de la nave y cofre (2), hierro y placa de madera (3)
+# o nada (4), y placas y un cofre en el suelo. Los bloques parciales pegados a un neon toman una sola luz por cara, la de su
+# celda de al lado (cambio del port): salen tan claros como antes de la luz por esquina, no oscurecidos por la pared y el
+# techo. Los del suelo, a dos celdas, siguen con la luz por esquina del original, igual que el suelo de roca de alrededor
+wait 3
+planet
+wait 30
+filla 50 50 70 60 80 84 BRock
+filla 51 51 69 59 81 83 none
+set 52 51 83 BRock
+set 53 51 83 BShipLight
+set 54 51 83 BRock
+set 57 51 83 BShipPlate
+set 58 51 83 BShipLight
+set 59 51 83 BChest
+set 62 51 83 BIron
+set 63 51 83 BShipLight
+set 64 51 83 BWoodPlate
+set 67 51 83 BShipLight
+set 57 52 81 BShipPlate
+set 58 52 81 BShipPlate
+set 59 52 81 BShipPlate
+set 67 52 81 BChest
+set 53 52 81 BWoodPlate
+wait 200
+print lightcheck
+tp 60.5 58.5 81 0 0
+lookat 60.5 51 82.6
+wait 20
+shot luz_neon_frente
+tp 60.5 54.5 81 0 0
+lookat 58 51 83
+wait 10
+shot luz_neon_cofre
+tp 65.5 54.5 81 0 0
+lookat 63 51 83
+wait 10
+shot luz_neon_hierro
+tp 51.6 56.5 81 0 0
+lookat 56 51 83
+wait 10
+shot luz_neon_lado
+quit
