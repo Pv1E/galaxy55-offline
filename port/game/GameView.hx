@@ -127,7 +127,8 @@ class GameView {
 	public inline function onGround() return standingBlock != null;
 	var s3d : h3d.scene.Scene;
 
-	public function new( s3d : h3d.scene.Scene, world : World, info : SaveInfo, atlas : h3d.mat.Texture ) {
+	/** shipWorld: el mundo de la nave ya construido en la pantalla de carga (Ship.prepare) */
+	public function new( s3d : h3d.scene.Scene, world : World, info : SaveInfo, atlas : h3d.mat.Texture, ?shipWorld : World ) {
 		this.s3d = s3d;
 		this.world = world;
 		this.info = info;
@@ -190,7 +191,7 @@ class GameView {
 			enteringShip = -1;
 			return;
 		}
-		ship = new Ship(world, atlas, s3d, info.shipEdits, Hangar.currentShip(info), info.shipAt);
+		ship = new Ship(world, atlas, s3d, info.shipEdits, Hangar.currentShip(info), info.shipAt, shipWorld);
 		ship.initCrafts(this);
 		if( info.px < 0 ) {
 			// partida nueva: se empieza dentro de la nave, encima del teletransportador

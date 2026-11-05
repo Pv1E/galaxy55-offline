@@ -39,11 +39,11 @@ class BiomeGenerator extends Generator {
 				smoothHeight();
 				smoothHeight();
 				fillSoil(0.5);
-				addHoles(4.5, [{ h : waterLevel, v : -0.8 },{ h : maxHeight, v : 0.5 }]);
+				addHolesLater(4.5, [{ h : waterLevel, v : -0.8 },{ h : maxHeight, v : 0.5 }]);
 				addCaves(1, 1, BBrokenRock);
 				addCaveDetails();
 				removeBlobs();
-				if( smooth3D() > 0 ) stepRetry();
+				smooth3DLater(function(changed) if( changed > 0 ) stepRetry());
 				
 				addHighForest();
 				addBunker(BRock, 0.5);
@@ -98,12 +98,12 @@ class BiomeGenerator extends Generator {
 				smoothHeight();
 				smoothHeight();
 				fillSoil(0);
-				if( smooth3D() > 0 ) stepRetry();
+				smooth3DLater(function(changed) if( changed > 0 ) stepRetry());
 				addAcidTrees();
 				
 				addHerbs(BAcidHerb1, BAcidHerb2, 0.2, 2);
-				replaceSomeBlocks(BAcidHerb2, BYellowPlant, 10);
-				replaceSomeBlocks(BYellowPlant, BBluePlant, 20);
+				replaceSomeBlocksLater(BAcidHerb2, BYellowPlant, 10);
+				replaceSomeBlocksLater(BYellowPlant, BBluePlant, 20);
 				
 				var b = alloc(BCoral1);
 				addRandomUnderwaterFun(function(x,y,z) {
@@ -133,11 +133,11 @@ class BiomeGenerator extends Generator {
 				smoothHeight();
 				fillSoil(0);
 				
-				for( i in 0...10 )
-					addHoles(2 + rnd.rand() * 2, [ { h : 34, v : -0.9 }, { h : 35, v : -0.7 } ], CAVE);
-				addHoles(2, [ { h : 22, v : -0.8 }, { h : 24, v : -0.5 }, { h : 31, v : -0.6 }, { h : 33, v : -0.9 }, { h : 37, v : -1 } ], CAVE);
+				// los 10 agujeros uno detras de otro, cada uno repartido (anadido del port, ver Generator.jobs): mismo azar y orden
+				spread(10, function(_) addHolesLater(2 + rnd.rand() * 2, [ { h : 34, v : -0.9 }, { h : 35, v : -0.7 } ], CAVE));
+				addHolesLater(2, [ { h : 22, v : -0.8 }, { h : 24, v : -0.5 }, { h : 31, v : -0.6 }, { h : 33, v : -0.9 }, { h : 37, v : -1 } ], CAVE);
 				
-				if( smooth3D() > 0 ) stepRetry();
+				smooth3DLater(function(changed) if( changed > 0 ) stepRetry());
 
 				addCaves(2, 0.75, BWinterBrokenRock);
 				addCaveCrystals(3.0, BBlueCrystalLight, BBlueCrystalDense, BWinterBrokenRock, CAVE);
@@ -156,7 +156,7 @@ class BiomeGenerator extends Generator {
 				
 				addRandomUnderwater(BIce, 5);
 
-				replaceSomeBlocks(BWinterHerb2, BFreezerPlant, 12);
+				replaceSomeBlocksLater(BWinterHerb2, BFreezerPlant, 12);
 			});
 		case BIMars:
 			waterLevel = 16;
@@ -936,7 +936,10 @@ class BiomeGenerator extends Generator {
 			}
 		}
 		
-		for( t in trees ) {
+		// anadido del port: los arboles, la savia y los minerales, repartidos entre varias llamadas a process (ver
+		// Generator.jobs) en el mismo orden y con el mismo azar
+		spread(trees.length, function(ti) {
+			var t = trees[ti];
 			var oz = t.z;
 			var x = t.x;
 			var y = t.y;
@@ -1001,72 +1004,76 @@ class BiomeGenerator extends Generator {
 				for( dy in -1...2 )
 					for( dz in -3...0 )
 						carveTreeRec(x+dx, y+dy, oz + dz, wood, CAVE);
-		}
-		
-		// add parasits leaves
-		var parasit = alloc(BBrownLeaves);
-		var count = 0;
-		for( i in 0...Math.ceil(size * size / 30) ) {
-			var ntry = 100;
-			while( ntry-->0 ) {
-				var x = rnd.random(size);
-				var y = rnd.random(size);
-				var z = rnd.random(100);
-				if( get(x, y, z) != wood )
-					continue;
-				elipse(2, 2, 1.5, function(dx, dy, dz) oset(x + dx, y + dy, z + dz, parasit));
-				count++;
-				break;
-			}
-		}
-		
-		// replace CAVE by tree content
-		var sap = alloc(BAcidTreeSap);
-		for( i in 0...size * size * HEIGHT ) {
-			if( fget(i) == wood && rnd.random(10)==0 )
-				fset(i, rnd.random(100)<30 ? woodBubble : woodHole );
-			if( fget(i) == CAVE )
-				fset(i, rnd.random(5) == 0 ? sap : EMPTY);
-		}
-		
-		// add minerals
-		var rock = alloc(BHardRock);
-		for( i in 0...Math.ceil(size * size / 3000) ) {
-			var ntry = 1000;
-			while( ntry-->0 ) {
-				var x = rnd.random(size);
-				var y = rnd.random(size);
-				var z = waterLevel;
-				if( get(x, y, z) != WATER ) continue;
-				var s = 5;
-				if( get(x + s, y, z) != WATER || get(x - s, y, z) != WATER || get(x, y - s, z) != WATER || get(x, y + s, z) != WATER )
-					continue;
-				var h = 1;
-				while( get(x, y, z - h) == WATER && h < 5 )
-					h++;
-				if( h >= 3 ) continue;
-				var el = [];
-				for( i in 0...4 ) {
-					var x = x + rnd.random(5) - 2;
-					var y = y + rnd.random(5) - 2;
-					var z = z - h - 1;
-					var sx = 1.3 + rnd.rand() * 1.5;
-					var sy = 1.2 + rnd.rand() * 1.5;
-					var sz = 1 + rnd.rand() * 1.3;
-					el.push( { x:x, y:y, z:z, sx:sx, sy:sy, sz:sz } );
+		}, function() {
+			
+			// add parasits leaves
+			var parasit = alloc(BBrownLeaves);
+			var count = 0;
+			for( i in 0...Math.ceil(size * size / 30) ) {
+				var ntry = 100;
+				while( ntry-->0 ) {
+					var x = rnd.random(size);
+					var y = rnd.random(size);
+					var z = rnd.random(100);
+					if( get(x, y, z) != wood )
+						continue;
+					elipse(2, 2, 1.5, function(dx, dy, dz) oset(x + dx, y + dy, z + dz, parasit));
+					count++;
+					break;
 				}
-				var pts = [];
-				for( e in el )
-					elipse(e.sx, e.sy, e.sz, function(dx, dy, dz) {
-						var x = e.x + dx, y = e.y + dy, z = e.z + dz;
-						if( get(x, y, z) == EMPTY || get(x, y, z) == WATER ) {
-							set(x, y, z, rock);
-							pts.push( { x:x, y:y, z:z } );
-						}
-					});
-				fillMinerals(pts);
 			}
-		}
+			
+			// replace CAVE by tree content
+			var sap = alloc(BAcidTreeSap);
+			spread(size, function(y) {
+				for( i in y * size * HEIGHT...(y + 1) * size * HEIGHT ) {
+					if( fget(i) == wood && rnd.random(10)==0 )
+						fset(i, rnd.random(100)<30 ? woodBubble : woodHole );
+					if( fget(i) == CAVE )
+						fset(i, rnd.random(5) == 0 ? sap : EMPTY);
+				}
+			}, function() {
+				
+				// add minerals
+				var rock = alloc(BHardRock);
+				for( i in 0...Math.ceil(size * size / 3000) ) {
+					var ntry = 1000;
+					while( ntry-->0 ) {
+						var x = rnd.random(size);
+						var y = rnd.random(size);
+						var z = waterLevel;
+						if( get(x, y, z) != WATER ) continue;
+						var s = 5;
+						if( get(x + s, y, z) != WATER || get(x - s, y, z) != WATER || get(x, y - s, z) != WATER || get(x, y + s, z) != WATER )
+							continue;
+						var h = 1;
+						while( get(x, y, z - h) == WATER && h < 5 )
+							h++;
+						if( h >= 3 ) continue;
+						var el = [];
+						for( i in 0...4 ) {
+							var x = x + rnd.random(5) - 2;
+							var y = y + rnd.random(5) - 2;
+							var z = z - h - 1;
+							var sx = 1.3 + rnd.rand() * 1.5;
+							var sy = 1.2 + rnd.rand() * 1.5;
+							var sz = 1 + rnd.rand() * 1.3;
+							el.push( { x:x, y:y, z:z, sx:sx, sy:sy, sz:sz } );
+						}
+						var pts = [];
+						for( e in el )
+							elipse(e.sx, e.sy, e.sz, function(dx, dy, dz) {
+								var x = e.x + dx, y = e.y + dy, z = e.z + dz;
+								if( get(x, y, z) == EMPTY || get(x, y, z) == WATER ) {
+									set(x, y, z, rock);
+									pts.push( { x:x, y:y, z:z } );
+								}
+							});
+						fillMinerals(pts);
+					}
+				}
+			});
+		});
 	}
 	
 	function addCaveAccesses( zchk ) {
