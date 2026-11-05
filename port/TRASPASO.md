@@ -175,8 +175,9 @@ Arreglado en esta revisión:
 Después, aclarado y arreglado: la hierba de Marte sí se apunta; es baja y las plantas se eligen por los píxeles de su
 textura (`GameView.modelHit`), así que solo se apunta de 0,1 a 0,4 de altura (barrido de puntos). No es un bug. `herb` ahora
 usa una plataforma propia a z=99 y apunta a 0,2 (pasa en otoño, Marte y Luna). `tuto_planeta` usa la nueva orden de Dev
-`tuto goin` (dentro de la celda del objetivo) para pisar el rayo: llega al paso 7. Sigue sin comprobar `tuto_bandeau`
-(necesita un settings.json con "showHelp": false).
+`tuto goin` (dentro de la celda del objetivo) para pisar el rayo: llega al paso 7. `tuto_bandeau` comprobado con un
+settings.json `{ "lang" : "es", "showHelp" : false }` en los datos de prueba: sin la ayuda de teclas el recuadro del tutorial
+sube bajo el inventario. Ojo: "lang" tiene que ser texto; con un número la lectura se corta y se ignora el resto del archivo.
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;
