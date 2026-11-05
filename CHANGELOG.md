@@ -22,10 +22,10 @@
 - De **Cornor923** (¡gracias!, PR 64-78):
   - **Licencias de exploración de la ESCorp** (añadido del port; en el original las llevaba el servidor): en aventura, escanear
     un planeta gasta una licencia, 4 en total (1 principal y 3 de exploración); en creativo no hay límite. El primer planeta
-    escaneado es el principal (con tutorial, el suyo). **Solo se pilota la nave sobre el planeta principal.** En el ordenador
-    de a bordo, "Licencias de exploración" muestra las licencias y deja cambiar de planeta principal (gratis la primera vez,
-    luego 1000 créditos y 24 horas reales entre cambios); en el mapa, "Abandonar" libera la licencia de un planeta. Las
-    partidas anteriores dan licencia a los planetas visitados y el de salida es el principal.
+    escaneado es el principal (con tutorial, el suyo). **Solo se pilota la nave sobre el planeta principal**: en los demás, el
+    ordenador de a bordo no ofrece "Pilotar la nave". Allí, "Licencias de exploración" muestra las licencias y deja cambiar de
+    planeta principal (gratis la primera vez, luego 1000 créditos y 24 horas reales entre cambios); en el mapa, "Abandonar"
+    libera la licencia de un planeta. Las partidas anteriores dan licencia a los planetas visitados y el de salida es el principal.
   - El volumen de Opciones ya se aplica a los sonidos (a 0 no suena nada).
   - La cascada se ve detrás del cristal; la cámara ya no se mete en el bloque de arriba al subir por una cascada.
   - Se pone un bloque sobre la hierba alta (se pisa) y la sombra de colocar solo sale donde se puede poner.
