@@ -108,6 +108,10 @@ etiqueta `flash-version` y la rama `flash`, con sus SWF y archivos de compilaci�
   Desde z=76 sobre una losa de 2 y 6 de aire: al tocarla 67.8 (11 sobre roca: 69.9), abajo 63.6 (original: 100 al tocarla,
   47.0 abajo). Desde z=75 sobre un pozo de 3: 32.0 al tocarlo, 22.9 en el fondo por la arena (original: 46.4 en el fondo).
   Guion `arena_movediza`.
+- "Pilotar la nave" fuera del planeta principal (2026-11-05, Cornor923): en aventura el ordenador de a bordo ya no lo ofrece
+  (`GalaxyApp.pilotOffered`: `canPilot` y `pilotLicensed`) en vez de sacarlo y avisar al pulsarlo (se quita el texto
+  `license.pilotmain`); en creativo, en todos. El menú guardado se rehace al volver de las licencias si ha cambiado
+  (`showComputer`). Guiones `licencias` y `licencias_creativo`.
 
 ## Qué falló y cómo se resolvió
 | Problema | Causa | Solución |

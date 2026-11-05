@@ -1,0 +1,32 @@
+# Terreno de una cometa (Comets, CometGenerator; añadido del port): mundo de 96x96, valle entre dos crestas, roca madre
+# abajo, escombros calcinados, alguna veta de etherium, lava (1 o 2 fuentes) y sin agua. La partida de prueba toma el bioma
+# de --bgbiome, asi que aqui no hay cuenta atras (no hay info.comet): solo se mira el terreno.
+#   powershell -File port/dev/devrun.ps1 -Script port/dev/cometa_terreno.txt -Extra "--seed=11 --bgbiome=BICometCinder" -Timeout 400 -Data C:\Temp\g55cometa
+# en la salida: "mundo BICometCinder" con los bloques que tiene, print biome (suelo mas visto) y print comet (tamano, altura
+# maxima del terreno, lava, etherium y roca madre de abajo)
+wait 3
+print biome
+print comet
+shot cometa_nave
+planet
+wait 30
+print pos
+shot cometa_suelo
+tp 10 48 top 0 -0.2
+wait 30
+print pos
+shot cometa_valle
+# en lo alto de una cresta, mirando a lo largo del valle y al horizonte (sin huecos en el terreno lejano)
+tp 58 48 top 1.57 -0.15
+wait 30
+shot cometa_cresta
+look 3.14 -0.1
+wait 2
+shot cometa_cresta2
+tp 48 48 95 0 -0.9
+wait 2
+shot cometa_arriba
+tp 48 48 95 1.6 -0.4
+wait 2
+shot cometa_horizonte
+quit

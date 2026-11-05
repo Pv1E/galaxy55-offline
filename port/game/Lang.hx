@@ -141,6 +141,8 @@ class Lang {
 		"biome.BIWinterPeaks" => ["Cumbres nevadas", "Winter peaks", "Sommets enneigés"],
 		"biome.BIAcidForest" => ["Bosque ácido", "Acid forest", "Forêt acide"],
 		"biome.BIDeadCity" => ["Ciudad muerta", "Dead city", "Cité morte"],
+		// cometas (Comets, añadido del port): un bioma por tipo
+		"biome.BICometCinder" => ["Cometa calcinado", "Cinder comet", "Comète calcinée"],
 		"biome.random" => ["Aleatorio", "Random", "Aléatoire"],
 		// mapa de estrellas (textos de exp.OfflineData)
 		"exp.system" => ["Sistema", "System", "Système"],
@@ -174,8 +176,15 @@ class Lang {
 		"licenses.nocredits" => ["Te faltan créditos: el cambio cuesta %n%.", "Not enough credits: the change costs %n%.", "Pas assez de crédits : le changement coûte %n%."],
 		"licenses.notyours" => ["Ese planeta no puede ser tu planeta principal.", "That planet cannot be your main planet.", "Cette planète ne peut pas devenir ta planète principale."],
 		"license.full" => ["No te queda ninguna licencia libre.\nAbandona uno de tus planetas para liberar una.", "You have no free license left.\nAbandon one of your planets to free one.", "Tu n'as plus de licence libre.\nAbandonne une de tes planètes pour en libérer une."],
-		"license.pilotmain" => ["Solo puedes pilotar la nave sobre tu planeta principal.", "You can only pilot the ship over your main planet.", "Tu ne peux piloter le vaisseau qu'au-dessus de ta planète principale."],
 		"license.keepmain" => ["No puedes abandonar tu planeta principal.", "You cannot abandon your main planet.", "Tu ne peux pas abandonner ta planète principale."],
+		// cometas (Comets, añadido del port). %t% = 2:15
+		"exp.comet" => ["Cometa", "Comet", "Comète"],
+		"exp.comet.scan" => ["Escanear", "Scan", "Scanner cette comète"],
+		"exp.comet.info" => ["Amarre limitado: %t%", "Docking limited: %t%", "Amarrage limité : %t%"],
+		"exp.comet.gone" => ["El cometa se ha alejado.", "The comet has drifted away.", "La comète s'est éloignée."],
+		"comet.timer" => ["Cometa: %t%", "Comet: %t%", "Comète : %t%"],
+		"comet.over" => ["Se acabó el tiempo: el cometa se aleja, vuelta de emergencia automática a la nave.", "Time's up: the comet is drifting away, automatic emergency return to the ship.", "Temps écoulé : la comète s'éloigne, rapatriement d'urgence automatique au vaisseau."],
+		"comet.beamoff" => ["El cometa se aleja: el teletransportador no funciona", "The comet is drifting away: the teleporter does not work", "La comète s'éloigne : le téléporteur ne fonctionne pas"],
 		"abandon.ask" => ["¿Abandonar %name%?", "Abandon %name%?", "Abandonner %name% ?"],
 		"abandon.warn" => ["Perderás su licencia y todo lo que hayas cambiado en él, y no podrás volver nunca.", "You will lose its license and everything you changed there, and you will never be able to go back.", "Tu perdras sa licence et tout ce que tu y as modifié, et tu ne pourras plus jamais y retourner."],
 		"abandon.freed" => ["Planeta abandonado: licencia liberada.", "Planet abandoned: license freed.", "Planète abandonnée : licence libérée."],
@@ -183,7 +192,7 @@ class Lang {
 		// editor de kubes (anadido del port, KubeEditor)
 		"kubes" => ["Editor de kubes", "Kube editor", "Éditeur de Kubes"],
 		"kube.title" => ["EDITOR DE KUBES", "KUBE EDITOR", "ÉDITEUR DE KUBES"],
-		"kube.help" => ["B lápiz  ·  E goma  ·  G rellenar  ·  I cuentagotas  ·  M espejo  ·  Izq./Der.: cara  ·  Ctrl+Z deshacer  ·  Ctrl+S guardar  ·  Esc: volver", "B pencil  ·  E eraser  ·  G fill  ·  I picker  ·  M mirror  ·  Left/Right: face  ·  Ctrl+Z undo  ·  Ctrl+S save  ·  Esc: back", "B crayon  ·  E gomme  ·  G remplir  ·  I pipette  ·  M miroir  ·  Flèches : face  ·  Ctrl+Z annuler  ·  Ctrl+S sauver  ·  Échap : retour"],
+		"kube.help" => ["B lápiz  ·  E goma  ·  G rellenar  ·  I cuentagotas  ·  M espejo  ·  Izq./Der.: cara  ·  Ctrl+Z deshacer  ·  Ctrl+S guardar  ·  Esc: volver", "B pencil  ·  E eraser  ·  G fill  ·  I picker  ·  M mirror  ·  Left/Right: face  ·  Ctrl+Z undo  ·  Ctrl+S save  ·  Esc: back", "B crayon  ·  E gomme  ·  G remplir  ·  I pipette  ·  M miroir  ·  Flèches : face  ·  Ctrl+Z annuler  ·  Ctrl+S enregistrer  ·  Échap : retour"],
 		"kube.tab.game" => ["Kubes del juego", "Game kubes", "Kubes du jeu"],
 		"kube.tab.mine" => ["Mis kubes", "My kubes", "Mes kubes"],
 		"kube.mine.empty" => ["Aún no has guardado ningún kube. Empieza uno desde cero con la línea de arriba o parte de un kube del juego, y pulsa Guardar.", "You have not saved any kube yet. Start one from scratch with the line above or from a game kube, then press Save.", "Aucun kube enregistré pour l'instant. Commence-en un à partir de zéro avec la ligne du dessus ou pars d'un kube du jeu, puis clique sur Enregistrer."],

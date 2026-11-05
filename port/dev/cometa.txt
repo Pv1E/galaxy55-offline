@@ -1,0 +1,68 @@
+# Cometas (Comets, añadido del port). Aventura sin tutorial, semilla 4242: la nave empieza en el sistema 0.
+# - comet stats: que sistemas tienen cometa ahora y la proporcion en 6000 franjas (1 de 6)
+# - comet force 0: el sistema 0 tiene cometa (id 9); su ventana dice su bioma y el tiempo de amarre
+# - escanearla no gasta licencia ni la hace principal; mundo de 96x96 con cuenta atras arriba a la izquierda
+# - recargar la partida en ella: sigue en la cometa con el tiempo que quedaba
+# - al acabarse el tiempo: vuelta a la nave (fundido de Mayus+K), aviso, el teletransportador no baja y, si se baja por otro
+#   camino, se vuelve a la nave
+# - al despegar desaparece del sistema (aunque se fuerce) y la nave queda en el sistema; las licencias siguen igual
+#   powershell -File port/dev/devrun.ps1 -Script port/dev/cometa.txt -Timeout 900 -Data C:\Temp\g55cometa2
+wait 3
+tuto notuto 4242
+waitfor map
+waitfor system
+comet stats
+comet speed
+print licenses
+comet force 0
+wait 60
+shot cometa_sistema
+expinfo
+expplanet 9
+waitfor window
+wait 10
+shot cometa_ventana
+expbutton
+waitfor planet 6000
+wait 30
+print comet
+print licenses
+shot cometa_nave_hud
+# recargar: sigue en la cometa con el tiempo que quedaba
+comet time 100
+reload
+waitfor planet 6000
+wait 30
+print comet
+# bajar, y que se acabe el tiempo abajo
+planet
+wait 30
+print pos
+comet time 2
+wait 150
+print fade
+print toast
+wait 150
+print pos
+print comet
+shot cometa_fin
+# el teletransportador de a bordo ya no baja
+tele
+wait 200
+print pos
+print msg
+shot cometa_tele
+# bajar por otro camino: vuelve a la nave
+planet
+wait 10
+print pos
+wait 200
+print pos
+# despegar: la cometa desaparece, la nave sigue en el sistema 0, las licencias igual
+explore
+waitfor map 6000
+waitfor system
+expinfo
+print licenses
+shot cometa_despues
+quit

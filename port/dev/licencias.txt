@@ -1,5 +1,6 @@
 # licencias de la ESCorp y planeta principal (anadido del port). Aventura sin tutorial, semilla 4242 (sistema 0: planetas 0 y 1;
-# sistema 1: 10, 11 y 12). El primer planeta escaneado pasa a ser el principal y solo en el se pilota; 4 licencias como mucho
+# sistema 1: 10, 11 y 12). El primer planeta escaneado pasa a ser el principal y solo en el se pilota (en los demas el ordenador
+# no tiene "Pilotar la nave"; al volver de hacer principal el planeta en el que estas, si); 4 licencias como mucho
 # ("Sin licencia" y aviso al escanear la quinta); solo se abandona un planeta con licencia (con confirmacion), y eso la
 # libera; sin aviso al escanear el primero ni al cambiar de principal; con todos sus planetas
 # abandonados el sistema desaparece y aparece otro cerca, tambien al recargar; cambiar de principal (solo el planeta en el que estas): gratis la primera vez,
@@ -25,7 +26,7 @@ ship
 wait 10
 pilot
 pilotstop
-# el 11: licencia, pero no se pilota (ni con la orden ni con el boton del ordenador)
+# el 11: licencia, pero no se pilota (con la orden no, y el ordenador no tiene "Pilotar la nave")
 explore
 waitfor map 6000
 waitfor system
@@ -42,9 +43,9 @@ pilot
 computer
 wait 3
 print menu
-button 1
+shot licencias_sin_pilotar
+close
 wait 3
-print toast
 # el 12 y el 1 (sistema 0): cuatro licencias
 explore
 waitfor map 6000
@@ -149,6 +150,11 @@ print toast
 print licenses
 print menu
 shot licencias_principal_aqui
+# de vuelta al ordenador (el menu se guarda): ya tiene "Pilotar la nave"
+button 0
+wait 3
+print menu
+shot licencias_pilotar_aqui
 close
 wait 3
 pilot
@@ -167,6 +173,7 @@ wait 10
 pilot
 computer
 wait 3
+print menu
 licenses open
 wait 3
 print menu
@@ -189,6 +196,10 @@ wait 3
 button 1
 wait 5
 print licenses
+print menu
+# el 10 vuelve a ser el principal: de vuelta al ordenador, otra vez "Pilotar la nave"
+button 0
+wait 3
 print menu
 close
 wait 3
