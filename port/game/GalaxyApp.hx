@@ -1383,6 +1383,7 @@ class GalaxyApp extends hxd.App {
 		captureMouse(false);
 		if( takeoff ) {
 			space.takeoff();
+			tutorial.takeoff();
 			// se guarda en cuanto el mapa se ha dibujado (para la miniatura); si antes se cierra la ventana, se guarda igual
 			takeoffSave = 1.0;
 		}
