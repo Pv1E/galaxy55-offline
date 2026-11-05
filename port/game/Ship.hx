@@ -398,6 +398,9 @@ class Ship {
 
 	function checkCraft( c : ShipData.CraftArea, g : GameView ) {
 		var r = c.engine.checkAll();
+		// tutorial: solo el aluminio y el blindaje que pide (Tutorial.craftAllowed); lo demas no se fabrica y la zona lo dice en rojo
+		var refused = r != null && !Tutorial.craftAllowed(g.info, r);
+		if( refused ) r = null;
 		c.curCraft = r;
 		if( c.preview != null ) {
 			g.drops.remove(c.preview);
@@ -414,7 +417,7 @@ class Ship {
 		var bl = c.engine.getBlocks(false);
 		for( b in bl ) text.push(b.n + "x " + b.b.getName());
 		if( bl.length > 0 )
-			text.push(" = " + (r != null ? (r.count != null && r.count > 1 ? r.count + " x " : "") + Block.get(r.out).getName() : Lang.t("craft.norecipe")));
+			text.push(" = " + (refused ? TutoText.get("craftonly") : r != null ? (r.count != null && r.count > 1 ? r.count + " x " : "") + Block.get(r.out).getName() : Lang.t("craft.norecipe")));
 		c.curText = text.length == 0 ? null : text.join("
 ");
 	}
@@ -448,7 +451,10 @@ class Ship {
 				c = cc;
 				break;
 			}
-		if( c == null || c.curCraft == null ) return;
+		if( c == null ) return;
+		// lo puesto en la zona se mira otra vez: el tutorial puede haber acabado con una receta rechazada en ella
+		checkCraft(c, g);
+		if( c.curCraft == null ) return;
 		var cur = c.curCraft;
 		var blocks = c.engine.getBlocks(true);
 		// ShipLogic.activateBlock (hasInv): si el inventario tiene todos los bloques de la receta se gastan esos y la zona queda

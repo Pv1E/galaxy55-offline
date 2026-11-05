@@ -91,6 +91,17 @@ class Tutorial {
 		if( onDone != null ) onDone();
 	}
 
+	/**
+	 * Mientras dura, el sintetizador solo fabrica lo que el tutorial pide: aluminio (de la bauxita, ALU) y blindaje (del aluminio,
+	 * PLATES). Si no, el aluminio se podia gastar en otra receta (tubos, malla, dalle blindados...) y el tutorial se quedaba sin
+	 * salida: no hay mas bauxita que la que pone.
+	 */
+	public static function craftAllowed( info : SaveInfo, r : CraftRule ) : Bool {
+		if( !active(info) ) return true;
+		var out = Block.get(r.out).k;
+		return out == BAluminium || out == BShipHull;
+	}
+
 	/** al salir del hangar con la nave guardada (valida y cambiada): se acaba en la siguiente actualizacion */
 	public static function repaired( info : SaveInfo ) if( active(info) ) info.tuto.step = DONE;
 
