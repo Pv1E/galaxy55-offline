@@ -139,4 +139,9 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
   qu'ils ne sont pas autorisés à bord. L'original n'empêchait de poser que ce qui se propage (source de cascade et lave), sans message.
 - Dans le hangar, on creuse quatre fois plus vite et sans charges, comme dans les zones de synthétiseur du vaisseau : changement
   du port, pour modifier le vaisseau confortablement. Dans l'original, on y creusait comme sur une planète, avec les charges.
+- Tomber dans le sable mouvant (changement du port) : en le touchant, on prend le choc de la chute jusqu'à lui, comme sur le
+  sol, et le sable arrête la chute ; en le quittant par le bas, la chute se compte depuis la sortie. Dans l'original, il ne
+  faisait que ralentir le temps : la vitesse continuait d'augmenter dedans et les dégâts arrivaient à la fin, ceux de toute la
+  chute. Comme dans l'original, le sable fait perdre de la vie quand les yeux sont dedans et, de l'intérieur, on ne vise rien
+  en regardant vers le bas.
 - Ce qui manque est dans `TODO.fr.md`, les bugs dans `BUGS.fr.md` et les idées pour plus tard dans `IDEAS.fr.md` (racine du dépôt).

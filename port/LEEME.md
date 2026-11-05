@@ -124,4 +124,8 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
   no están permitidos a bordo. El original solo impedía poner lo que se extiende (fuente de cascada y lava), sin aviso.
 - En el hangar se excava cuatro veces más rápido y sin cargas, como en las zonas de sintetizador de la nave: cambio de este port,
   para editar la nave con comodidad. En el original se excavaba como en el planeta, con las cargas.
+- Caer en la arena movediza (cambio de este port): al tocarla se recibe el golpe de la caída hasta ella, como en el suelo, y
+  la arena para la caída; al salir por debajo, la caída se cuenta desde la salida. En el original solo ralentizaba el tiempo:
+  la velocidad seguía creciendo dentro y el daño llegaba al final, el de toda la caída. Como en el original, con los ojos
+  dentro la arena quita vida y mirando abajo desde ella no se apunta nada.
 - Lo que falta está en `PENDIENTES.md`, los fallos en `ERRORES.md` y las ideas para más adelante en `IDEAS.md` (raíz del repositorio).
