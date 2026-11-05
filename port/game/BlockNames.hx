@@ -137,6 +137,35 @@ class BlockNames {
 		return cache[lang] = out;
 	}
 
+	/** nombre propio de un bloque en espanol (sin el de su bloque base); null = interno o variante sin nombre */
+	static function ownName( b : Block ) : String {
+		var v = ES.get(Type.enumConstructor(b.k));
+		if( v == null && NamesGen.ES[b.index] != null ) v = NamesGen.ES[b.index].name;
+		return v == null || v == "" || v == "-" ? null : v;
+	}
+
+	static var entries : Array<Block>;
+
+	/**
+	 * Ficha del Kubindex de un bloque (anadido del port): su bloque principal (cubierto, girado, abierto), el que le da nombre si
+	 * no tiene uno propio (roca rota, lava que corre) y, entre los que se llaman igual (roca lunar rota, los dos fosiles, la nieve
+	 * con una planta dentro), el primero. null = bloque interno, sin nombre en ningun idioma.
+	 */
+	public static function entry( b : Block ) : Block {
+		if( entries == null ) {
+			var own = [for( x in Block.all ) {
+				var m = x.getMain(), n = 0;
+				while( m != null && ownName(m) == null && n++ < 8 ) m = base(m);
+				m != null && ownName(m) != null ? m : null;
+			}];
+			var first = new Map<String, Block>();
+			for( m in own )
+				if( m != null && (!first.exists(ownName(m)) || first.get(ownName(m)).index > m.index) ) first.set(ownName(m), m);
+			entries = [for( m in own ) m == null ? null : first.get(ownName(m))];
+		}
+		return entries[b.index];
+	}
+
 	/** bloque del que toma el nombre uno sin nombre propio, o null */
 	static function base( b : Block ) : Block {
 		// cubierto (nieve, hierba), girado o puerta abierta: el principal, como en Block.getDrop

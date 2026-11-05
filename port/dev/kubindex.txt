@@ -1,0 +1,115 @@
+# Base de datos ESCorp (Kubindex, anadido del port): el planeta queda explorado; el laser localiza un kube; romper madera la
+# suelta y al recogerla queda recuperada (1 rota); el hielo no suelta nada y se recupera al romperlo; poner cuenta; fabricar
+# en el sintetizador cuenta la receta; lo que entra en el inventario (give) queda recuperado; se guarda con la partida.
+# Despues el panel: sus tres pestanas, una ficha recuperada, una localizada y el boton del ordenador de a bordo con lo nuevo.
+# Al empezar, los kubes de la nave ya son conocidos (recuperados); las cargas y la Ciudad muerta no son fichas. Avisos arriba a
+# la derecha al localizar y al recuperar. -Extra "--lang=fr"
+wait 3
+print kub
+kub forget
+kub visit
+planet
+wait 20
+print kub
+filla 18 18 46 24 100 106 none
+filla 18 18 46 24 99 99 BWood
+tp 25.4 21.5 100.01 3.14 -0.5
+wait 10
+# la madera del suelo: localizada en cuanto el laser la toca, recuperada al recogerla
+mine 24 21 99
+wait 80
+unkey
+wait 20
+print kub
+shot kub_aviso
+wait 20
+# hielo (0 %): recuperado al romperlo
+set 24 22 100 BIce
+mine 24 22 100
+wait 60
+unkey
+wait 10
+print kub
+# avisos arriba a la derecha: uno por kube (recuperado sustituye a localizado), mas nuevo arriba
+kub see BMarsRock
+kub see BLavaRock
+kub got BLavaRock
+kub got BCoal
+wait 5
+print kub
+shot kub_avisos
+# poner roca: 1 puesta
+give BRock 5
+print inv
+slot 11
+hand BRock
+lookat 24.5 20.5 100.05
+wait 3
+key place
+wait 5
+unkey
+wait 10
+print kub
+# sintetizador: 4 de hierro en la zona -> receta 42 (turbo minero)
+ship
+wait 10
+tpl 62.5 63.5 3.0 3.14 -0.2
+wait 5
+setl 59 62 3 BIron
+setl 60 62 3 BIron
+setl 59 63 3 BIron
+setl 60 63 3 BIron
+wait 10
+synth 0
+wait 60
+print kub
+# el panel
+kub
+wait 3
+shot kub_bloques
+kub pick BWood
+wait 2
+shot kub_madera
+kub pick BIce
+wait 2
+shot kub_hielo
+kub got BYellowCrystalLight
+kub got BYellowCrystalDense
+kub pick BYellowCrystalLight
+wait 2
+shot kub_citronox_viejo
+kub pick BYellowCrystalDense
+wait 2
+shot kub_citronox
+kub got BShipComputer
+kub pick BShipComputer
+wait 2
+shot kub_especial
+kub page 1
+wait 2
+shot kub_planetas_cat
+kub got BCoal
+kub tab 1
+wait 2
+shot kub_planetas
+kub page 1
+wait 2
+shot kub_cometas
+kub page 1
+kub nav 0 18
+wait 2
+shot kub_anomalia
+kub tab 2
+wait 2
+shot kub_recetas
+cover kub
+kub close
+wait 3
+computer
+wait 5
+print menu
+shot kub_menu
+close
+wait 3
+print kub
+quit

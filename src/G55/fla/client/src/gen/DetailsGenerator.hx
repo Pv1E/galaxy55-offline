@@ -12,6 +12,8 @@ class DetailsGenerator extends BiomeGenerator {
 	static inline var CAVE = Generator.CAVE;
 	
 	public static var DETAILS = [];
+	/** anadido del port: anomalias puestas en este planeta (n = su tipo en kubindex.json; Base de datos ESCorp) */
+	public var placed : Array<{ x : Int, y : Int, z : Int, n : String }> = [];
 	
 	override function addHeightDetails() {
 		// p(X) ~= 1 planete sur X
@@ -49,18 +51,18 @@ class DetailsGenerator extends BiomeGenerator {
 	
 	override function addCaveDetails() {
 		var det = [
-			{ f : detCaveField, p : 3 },
-			{ f : detCaveCeilPlant, p : 3 },
-			{ f : detCaveSphere, p : 15 },
-			{ f : detCaveBuilding, p : 15 },
-			{ f : detCaveCascade, p : 1 },
-			{ f : detCaveCeilCascade, p : 1 },
-			{ f : detCaveMaterial, p : 3 },
-			{ f : detCaveFrozen, p : 6 },
-			{ f : detCaveToxicPlants, p : 4 },
-			{ f : detCaveCeilCharges, p : 3 },
-			{ f : detCaveWallDetails, p : 2 },
-			{ f : detCaveHeal, p : 5 },
+			{ f : detCaveField, p : 3, n : "cavegarden" },
+			{ f : detCaveCeilPlant, p : 3, n : "cavegarden" },
+			{ f : detCaveSphere, p : 15, n : "cavesphere" },
+			{ f : detCaveBuilding, p : 15, n : "caveruins" },
+			{ f : detCaveCascade, p : 1, n : "cavecascade" },
+			{ f : detCaveCeilCascade, p : 1, n : "cavecascade" },
+			{ f : detCaveMaterial, p : 3, n : "caveveins" },
+			{ f : detCaveFrozen, p : 6, n : "cavefrozen" },
+			{ f : detCaveToxicPlants, p : 4, n : "cavegarden" },
+			{ f : detCaveCeilCharges, p : 3, n : "cavecharges" },
+			{ f : detCaveWallDetails, p : 2, n : "caveveins" },
+			{ f : detCaveHeal, p : 5, n : "cavegarden" },
 		];
 		
 		FlashSort.sort(det, function(d1, d2) return Reflect.compare(d2.p, d1.p));
@@ -69,7 +71,7 @@ class DetailsGenerator extends BiomeGenerator {
 			var found = null;
 			for( d in det )
 				if( rnd.random(d.p*4) == 0 ) {
-					found = d.f;
+					found = d;
 					break;
 				}
 			if( found == null )
@@ -83,8 +85,9 @@ class DetailsGenerator extends BiomeGenerator {
 				if( get(x, y, z) != CAVE ) continue;
 				while( get(x, y, z-1) == CAVE )
 					z--;
-				if( found(x, y, z) ) {
+				if( found.f(x, y, z) ) {
 					DETAILS.push( { x:x, y:y, z:z } );
+					placed.push({ x : x, y : y, z : z, n : found.n });
 					break;
 				}
 			}
@@ -141,28 +144,28 @@ class DetailsGenerator extends BiomeGenerator {
 	override function addDetails() {
 		// p(X) ~= 1 planete sur X
 		var det = [
-			{ f : detBigCrater, p : 100 },
-			{ f : detSmallCrater, p : 10 },
-			{ f : detStrangePilars, p : 200 },
-			{ f : detHighBuilding, p : 40 },
-			{ f : detGroundBuilding, p : 60 },
-			{ f : detGroundArtifact, p : 20 },
-			{ f : detFence, p : 15 },
-			{ f : detCapsule, p : 250 },
-			{ f : detBigChampi, p : 50 },
-			{ f : detVolcano, p : 15 },
-			{ f : detAlienRobot, p : 130 },
-			{ f : detPyramid, p : 100 },
-			{ f : detTree, p : 6 },
-			{ f : detForest, p : 30 },
-			{ f : detIce, p : 40 },
-			{ f : detBurned, p : 6 },
-			{ f : detField, p : 8 },
-			{ f : detLargePit, p : 50 },
-			{ f : detSmallPit, p : 20 },
-			{ f : detRuin, p : 50 },
-			{ f : detCascade, p : 7 },
-			{ f : detHeal, p : 5 },
+			{ f : detBigCrater, p : 100, n : "bigcrater" },
+			{ f : detSmallCrater, p : 10, n : "crater" },
+			{ f : detStrangePilars, p : 200, n : "pillars" },
+			{ f : detHighBuilding, p : 40, n : "ruins" },
+			{ f : detGroundBuilding, p : 60, n : "ruins" },
+			{ f : detGroundArtifact, p : 20, n : "artifact" },
+			{ f : detFence, p : 15, n : "fence" },
+			{ f : detCapsule, p : 250, n : "capsule" },
+			{ f : detBigChampi, p : 50, n : "bigmush" },
+			{ f : detVolcano, p : 15, n : "volcano" },
+			{ f : detAlienRobot, p : 130, n : "robot" },
+			{ f : detPyramid, p : 100, n : "pyramid" },
+			{ f : detTree, p : 6, n : "tree" },
+			{ f : detForest, p : 30, n : "grove" },
+			{ f : detIce, p : 40, n : "ice" },
+			{ f : detBurned, p : 6, n : "burned" },
+			{ f : detField, p : 8, n : "meadow" },
+			{ f : detLargePit, p : 50, n : "largepit" },
+			{ f : detSmallPit, p : 20, n : "pit" },
+			{ f : detRuin, p : 50, n : "ruins" },
+			{ f : detCascade, p : 7, n : "cascade" },
+			{ f : detHeal, p : 5, n : "heal" },
 		];
 		
 		FlashSort.sort(det, function(d1, d2) return Reflect.compare(d2.p, d1.p));
@@ -171,7 +174,7 @@ class DetailsGenerator extends BiomeGenerator {
 			var found = null;
 			for( d in det )
 				if( rnd.random(d.p*4) == 0 ) {
-					found = d.f;
+					found = d;
 					break;
 				}
 			if( found == null )
@@ -182,8 +185,9 @@ class DetailsGenerator extends BiomeGenerator {
 				var x = rnd.random(size);
 				var y = rnd.random(size);
 				var z = height(x, y);
-				if( found(x, y, z) ) {
+				if( found.f(x, y, z) ) {
 					DETAILS.push( { x:x, y:y, z:z } );
+					placed.push({ x : x, y : y, z : z, n : found.n });
 					break;
 				}
 			}

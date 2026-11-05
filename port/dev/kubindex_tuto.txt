@@ -1,0 +1,50 @@
+# Base de datos ESCorp en el tutorial: tras fabricar el blindaje (PLATES) el paso DATABASE marca el ordenador de a bordo y pide
+# abrir la base de datos; abrirla pasa a COMPUTER (Modificar la nave). Lo que se mina en el tutorial queda en el Kubindex.
+# Ir al hangar sin abrirla tambien vale. Comerciar sigue desactivado todo el tutorial. -Timeout 300 -Extra "--lang=fr"
+wait 3
+tuto new 4242
+waitfor map
+expplanet 0
+waitfor window
+expbutton
+waitfor planet
+wait 30
+print kub
+ship
+wait 10
+# al principio Comerciar y la base de datos estan desactivados (panel=cerrado aunque se pida)
+computer
+wait 5
+shot kub_tuto_menu_debut
+close
+wait 3
+kub
+wait 3
+print kub
+tuto step 8
+give BShipHull 2
+wait 5
+print tuto
+shot kub_tuto_paso
+computer
+wait 5
+shot kub_tuto_menu
+close
+wait 3
+kub
+wait 3
+print tuto
+shot kub_tuto_panel
+kub close
+wait 5
+print tuto
+# hangar directamente desde DATABASE: el paso pasa a HANGAR
+tuto step 13
+wait 3
+computer
+wait 5
+button 1
+waitfor planet
+wait 10
+print tuto
+quit
