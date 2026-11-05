@@ -44,7 +44,8 @@ print inv
 print tuto
 wait 5
 shot tuto_volver
-tuto goto
+# dentro del rayo (goto deja al jugador al lado y no sube a la nave)
+tuto goin
 wait 5
 tele
 wait 60

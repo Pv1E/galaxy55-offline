@@ -1,12 +1,17 @@
-# hierbas rompibles (PortRules): se pone una hierba de Marte delante, se apunta y se excava
+# hierbas rompibles (PortRules): se pone una hierba de Marte delante, se apunta y se excava. En una plataforma propia a z=99
+# (antes la hierba iba a z=85 fija y el jugador, en el suelo real, no la apuntaba). La hierba de Marte es baja: se apunta a
+# 0,2 de altura, donde tiene pixeles (las plantas se eligen por los pixeles de su textura, GameView.modelHit)
 wait 3
 planet
 wait 20
-tp 64 64 top 0 0
+filla 60 60 70 70 99 99 BRock
+filla 60 60 70 70 100 105 none
+wait 10
+tp 64.5 64.5 100 0 0
 wait 20
-set 66 64 85 BMarsHerb1
+set 66 64 100 BMarsHerb1
 wait 5
-lookat 66.5 64.5 85.4
+lookat 66.5 64.5 100.2
 slot 0
 wait 5
 print select
@@ -17,7 +22,7 @@ wait 90
 unkey
 wait 60
 print select
-print block 66 64 85
+print block 66 64 100
 print drops
 print inv
 quit

@@ -58,6 +58,7 @@ import Common;
  *                           las acciones (izq / der = flechas, ok = Intro, clic< / clic> = clic en esas flechas, clicfila =
  *                           clic en el titulo de la fila) y pulsa Crear; seguir con waitfor planet y print biome
  *   tuto new|notuto [semilla] partida de aventura nueva en el espacio, con o sin tutorial; tuto step N; tuto skip (sin preguntar)
+ *                           tuto goto|goin|mine|activate: junto al primer objetivo / dentro de su celda / excavarlo / activarlo
  *   print tuto              paso del tutorial, objetivos marcados, sus bloques en el planeta y el texto (tambien en el mapa)
  *   menu                    Menu principal (guarda la partida, como desde la pausa); el guion sigue en los menus de inicio
  *   devsaves N              borra las partidas de la carpeta de datos de prueba y crea N de ejemplo (solo con GALAXY55_DATA)
@@ -616,10 +617,12 @@ class Dev {
 							lines.insert(pc, "lookat " + (t.x + 0.5) + " " + (t.y + 0.5) + " " + (t.z + 0.5));
 							lines.insert(pc, "tp " + (t.x + 0.5 + d[0] * 6) + " " + (t.y + 0.5 + d[1] * 6) + " top");
 						}
-					case "goto", "mine", "activate":
-						// sobre el primer objetivo marcado: goto = de pie a 1,5 bloques mirandolo; mine y activate como esas ordenes
+					case "goto", "goin", "mine", "activate":
+						// sobre el primer objetivo marcado: goto = de pie a 1,5 bloques mirandolo; goin = dentro de su celda (el rayo de
+						// la nave, que hay que pisar); mine y activate como esas ordenes
 						var t = @:privateAccess app.tutorial.targets(g)[0];
 						if( t == null ) Sys.println("tuto " + a[1] + ": sin objetivo");
+						else if( a[1] == "goin" ) lines.insert(pc, "tp " + (t.x + 0.5) + " " + (t.y + 0.5) + " " + t.z);
 						else if( a[1] == "goto" ) {
 							// en una celda libre junto a el (con sitio para la cabeza): el hueco del risco, el lado del filon
 							var at = null;

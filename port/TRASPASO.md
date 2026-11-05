@@ -172,9 +172,11 @@ Arreglado en esta revisión:
   Con `GalaxyApp.TEST_RUN` (--script/--shot) se crea en -10000,-10000 y no captura el ratón; por eso fallaba a ratos
   `menu_partidas` (el cursor real daba el foco a otro botón).
 - Editor de kubes: nombres reservados de Windows (con, aux...) se guardan con "-kube"; `print menu` con el editor abierto.
-Pendiente (guiones viejos, no del juego): `herb` pone la hierba a z=85 fija y el jugador no la apunta (en Marte cae dentro del
-terreno); `tuto_planeta` deja al jugador junto al rayo (98,71) y no dentro (99,71), debería usar `tp`; `tuto_bandeau` necesita
-un settings.json con "showHelp": false. Sin aclarar: en una plataforma propia en Marte la hierba no se apuntó (place_front sí la apunta).
+Después, aclarado y arreglado: la hierba de Marte sí se apunta; es baja y las plantas se eligen por los píxeles de su
+textura (`GameView.modelHit`), así que solo se apunta de 0,1 a 0,4 de altura (barrido de puntos). No es un bug. `herb` ahora
+usa una plataforma propia a z=99 y apunta a 0,2 (pasa en otoño, Marte y Luna). `tuto_planeta` usa la nueva orden de Dev
+`tuto goin` (dentro de la celda del objetivo) para pisar el rayo: llega al paso 7. Sigue sin comprobar `tuto_bandeau`
+(necesita un settings.json con "showHelp": false).
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;
