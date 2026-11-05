@@ -183,6 +183,8 @@ class GalaxyApp extends hxd.App {
 	static inline var W = Theme.W;
 	static inline var H = Theme.H;
 	static inline var TITLE = "Galaxy 55 (offline)";
+	/** el juego corre en pruebas (--script o --shot): no se mueve el cursor del sistema (centerMouse) */
+	static var TEST_RUN = Lambda.exists(Sys.args(), a -> StringTools.startsWith(a, "--shot=") || StringTools.startsWith(a, "--script="));
 	/** color de fx.Load */
 	static inline var LOAD_COLOR = 0xC93814;
 	static var BIOMES = ["BIAutumn", "BIMoon", "BIMars", "BIWinterPeaks", "BIAcidForest"];
@@ -1739,7 +1741,10 @@ class GalaxyApp extends hxd.App {
 	    cerro el menu anterior). El boton que queda debajo no se lleva el foco hasta que se mueva el raton */
 	function centerMouse() {
 		var win = hxd.Window.getInstance();
-		win.setCursorPos(win.width >> 1, win.height >> 1);
+		// en pruebas (--script/--shot) la ventana esta minimizada y sin foco, pero SDL_WarpMouseInWindow movia igual el cursor
+		// del escritorio: solo se le dice al juego donde esta el puntero, sin mover el de verdad
+		if( TEST_RUN || !win.isFocused ) @:privateAccess { win.curMouseX = win.width >> 1; win.curMouseY = win.height >> 1; }
+		else win.setCursorPos(win.width >> 1, win.height >> 1);
 		current.holdHover();
 	}
 
@@ -1769,6 +1774,9 @@ class GalaxyApp extends hxd.App {
 	function captureMouse( on : Bool ) {
 		captured = on;
 		if( game != null ) game.mouseLook = on;
+		// en pruebas (--script/--shot) no se captura: al soltar la captura Heaps lleva el cursor del escritorio a la ventana
+		// (warpMouse), y la ventana de prueba esta minimizada mientras se usa el PC; los guiones no miran con el raton
+		if( TEST_RUN ) return;
 		hxd.Window.getInstance().mouseMode = on ? Relative(onMouse, true) : Absolute;
 	}
 
@@ -2211,6 +2219,8 @@ class GalaxyApp extends hxd.App {
 		var s = modal != null && modal.parent != null ? modal : current;
 		if( s == null ) return curInfo() != null ? "jugando '" + curInfo().name + "'" : "ninguna";
 		function desc( w : Widget ) : String {
+			// pantallas sin controles navegables (el editor de kubes): no hay foco que describir
+			if( w == null ) return "-";
 			if( Std.isOfType(w, SaveRow) ) {
 				var r = cast(w, SaveRow);
 				return "fila '" + r.info.name + "' (" + SaveRow.ACTIONS[r.action] + ")";
@@ -2917,7 +2927,13 @@ class GalaxyApp extends hxd.App {
 			};
 		// cambio del port: Heaps abre la ventana en 800x600 y sin titulo antes de init, que despues la pasaba a W x H: al arrancar
 		// se veia un momento una ventana casi cuadrada que crecia de golpe. Se crea ya con su tamano y su titulo
-		hxd.System.createWindow = function() return new hxd.Window(TITLE, W, H);
+		hxd.System.createWindow = function() {
+			var w = new hxd.Window(TITLE, W, H);
+			// en pruebas (--script/--shot) la ventana se aparta fuera de la pantalla: devrun la pide minimizada, pero SDL la
+			// muestra igual en el centro del escritorio mientras se usa el PC. Se sigue dibujando (las capturas salen bien)
+			if( TEST_RUN ) @:privateAccess w.window.setPosition(-10000, -10000);
+			return w;
+		};
 		new GalaxyApp();
 	}
 }

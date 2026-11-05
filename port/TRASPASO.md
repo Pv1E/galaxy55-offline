@@ -162,6 +162,19 @@ ordenador_raton, pausa_raton, kubes) y los de siempre synth y computer_menu; el 
 (2026-11-05): la línea de ayuda del editor de kubes no cabía en español ni en francés (la última orden bajaba a una segunda
 línea; en inglés sí cabe). Se acortan en `Lang.hx` ("Izq./Der.: cara"; "Flèches : face", "Ctrl+S sauver") y caben en una línea
 en los tres idiomas (capturas kubes_ayuda_es/en/fr). Arriba y abajo no hacen nada en el editor, así que "Flèches" no engaña.
+Revisión a fondo posterior (2026-11-05), sin regresiones de los PR 79-86: unos 45 guiones (colocar, sintetizador, trozos,
+tutorial, ordenador y pausa, mapa, menús, partida) más 14 guiones en BIMoon, BIMars, BIWinterPeaks y BIAcidForest, y pruebas
+propias (menú de inicio con teclado, editor de kubes, pausa y ordenador seguidos, clic derecho, recetas en el tutorial).
+Arreglado en esta revisión:
+- Suelo negro bajo cuatro lingotes juntos en la nave (reportado por Pvie): `World.cornerLight`, cambio del port, solo caras de
+  arriba. Comparado píxel a píxel con el build anterior en 9 escenas de luz: solo cambia ese suelo.
+- Pruebas: la ventana de prueba salía visible en el centro del escritorio y movía el cursor real (captura del ratón de Heaps).
+  Con `GalaxyApp.TEST_RUN` (--script/--shot) se crea en -10000,-10000 y no captura el ratón; por eso fallaba a ratos
+  `menu_partidas` (el cursor real daba el foco a otro botón).
+- Editor de kubes: nombres reservados de Windows (con, aux...) se guardan con "-kube"; `print menu` con el editor abierto.
+Pendiente (guiones viejos, no del juego): `herb` pone la hierba a z=85 fija y el jugador no la apunta (en Marte cae dentro del
+terreno); `tuto_planeta` deja al jugador junto al rayo (98,71) y no dentro (99,71), debería usar `tp`; `tuto_bandeau` necesita
+un settings.json con "showHelp": false. Sin aclarar: en una plataforma propia en Marte la hierba no se apuntó (place_front sí la apunta).
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;

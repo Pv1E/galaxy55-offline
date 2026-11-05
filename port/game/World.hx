@@ -1425,12 +1425,26 @@ class World {
 					for( b in 0...2 ) {
 						if( ox != 0 ) s += lightAt(nx, vy - a, vz - b);
 						else if( oy != 0 ) s += lightAt(vx - a, ny, vz - b);
-						else s += lightAt(vx - a, vy - b, nz);
+						else s += oz > 0 ? cornerLight(vx - a, vy - b, nz) : lightAt(vx - a, vy - b, nz);
 					}
 				shv[k] = s * shade * (0.25 / LBASE);
 			}
 		}
 		addQuad4(m, p, tile);
+	}
+
+	/**
+	 * Luz de una celda para la esquina de una cara. Cambio del port: un bloque parcial (BTReduced: lingotes de hierro o
+	 * aluminio, placas...) no deja pasar la luz, como en el original, y las caras que la tomaban de el salian negras: el suelo
+	 * entre cuatro lingotes juntos se veia oscuro. Se usa la luz mas alta alrededor de ese bloque, como sus propias caras (ERRORES #4).
+	 * Solo para las caras de arriba (el suelo bajo el bloque): en paredes y techos se mantiene la sombra de contacto del original.
+	 */
+	function cornerLight( x : Int, y : Int, z : Int ) : Int {
+		var l = lightAt(x, y, z);
+		if( l != 0 ) return l;
+		var b = block(x, y, z);
+		if( b == null || b.type != BTReduced ) return 0;
+		return Std.int(Math.max(Math.max(lightAt(x + 1, y, z), lightAt(x - 1, y, z)), Math.max(Math.max(lightAt(x, y + 1, z), lightAt(x, y - 1, z)), Math.max(lightAt(x, y, z + 1), lightAt(x, y, z - 1)))));
 	}
 
 	function addQuad4( m : MeshBuf, p : Array<Float>, tile : Int ) {

@@ -17,6 +17,7 @@ Los que están **arreglados** se mueven al final. Los detalles técnicos están 
 ## Arreglados
 
 - Sin publicar (de **Sekhmet**, arreglados por **Cornor923**): el volumen a 0 ya no suena; la cascada se ve detrás del cristal.
+- Sin publicar: el suelo bajo cuatro lingotes juntos en la nave ya no se ve negro (cambio del port).
 - Sin publicar (arreglados por **Cornor923**, PR 81-86): la hierba roja alta ya no suelta trozos blancos; el tutorial ya no se queda atascado si el aluminio se gasta en otra receta; sale la flecha verde del tutorial; la ventana ya no se ve pequeña al arrancar.
 - v0.6 (encontrados por **Sekhmet**, ¡gracias!): poner un bloque encima de la capa más alta ya no lo gasta sin ponerlo (no se apunta, como el original); con la cabeza dentro de una fuente de cascada o de arena movediza se apunta y se excava lo de delante (el original no cuenta la celda de la cámara); la arena movediza, el hielo y el cristal ya no se ven huecos junto a una cascada (cambio del port: su cara contra la cascada se dibuja, porque aquí la cascada baja de altura).
 - v0.5 (#15, de **Sekhmet**): la nave ya no cambia de sitio al reabrir la partida. Hasta la v0.4 el sitio de aterrizaje se

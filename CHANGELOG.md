@@ -16,6 +16,9 @@
   - Al abrir el ordenador de a bordo o el menú de pausa, el puntero va al centro de la ventana.
   - La ventana del juego se abre ya con su tamaño y su título (antes se veía un momento pequeña).
   - La hierba roja alta ya no suelta trozos blancos al romperse.
+- El suelo bajo bloques parciales juntos (p. ej. cuatro lingotes de hierro o aluminio en la nave) ya no se ve negro (cambio
+  del port: en el original esos bloques no dejan pasar la luz; paredes y techos siguen igual).
+- Editor de kubes: un kube llamado como un nombre reservado de Windows (con, aux, nul...) ya se puede guardar.
 - De **Cornor923** (¡gracias!, PR 64-78):
   - **Licencias de exploración de la ESCorp** (añadido del port; en el original las llevaba el servidor): en aventura, escanear
     un planeta gasta una licencia, 4 en total (1 principal y 3 de exploración); en creativo no hay límite. El primer planeta

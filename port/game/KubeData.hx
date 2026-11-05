@@ -290,6 +290,8 @@ class KubeData {
 		}
 		var r = out.toString();
 		while( StringTools.endsWith(r, "-") ) r = r.substr(0, r.length - 1);
+		// nombres de dispositivo de Windows (con, aux, nul, prn, com1..9, lpt1..9): con ellos el archivo no se puede crear
+		if( ~/^(con|aux|nul|prn|com[1-9]|lpt[1-9])$/.match(r) ) r += "-kube";
 		return r == "" ? "kube" : r;
 	}
 

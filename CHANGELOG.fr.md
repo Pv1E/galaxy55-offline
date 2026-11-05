@@ -16,6 +16,9 @@
   - En ouvrant l'ordinateur de bord ou le menu pause, le pointeur va au centre de la fenêtre.
   - La fenêtre du jeu s'ouvre directement à sa taille et avec son titre (avant, elle apparaissait petite un instant).
   - Les hautes herbes rouges ne lâchent plus de morceaux blancs en cassant.
+- Le sol sous des blocs partiels collés (p. ex. quatre lingots de fer ou d'aluminium dans le vaisseau) n'est plus noir
+  (changement du portage : dans l'original ces blocs ne laissent pas passer la lumière ; murs et plafonds inchangés).
+- Éditeur de Kubes : un kube nommé comme un nom réservé de Windows (con, aux, nul...) peut maintenant être enregistré.
 - De **Cornor923** (merci !, PR 64-78) :
   - **Licences d'exploration ESCorp** (ajout du port ; dans l'original, le serveur les gérait) : en aventure, scanner une
     planète utilise une licence, 4 en tout (1 principale et 3 d'exploration) ; illimité en créatif. La première planète

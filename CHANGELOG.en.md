@@ -15,6 +15,9 @@
   - Opening the on-board computer or the pause menu puts the pointer at the centre of the window.
   - The game window opens at its size and with its title (it used to show small for a moment).
   - The tall red grass no longer throws white pieces when broken.
+- The floor under partial blocks placed together (e.g. four iron or aluminium ingots in the ship) no longer looks black
+  (port change: in the original those blocks let no light through; walls and ceilings are unchanged).
+- Kube editor: a kube named like a reserved Windows name (con, aux, nul...) can now be saved.
 - From **Cornor923** (thank you!, PRs 64-78):
   - **ESCorp exploration licenses** (port addition; in the original the server handled them): in adventure, scanning a planet
     uses a license, 4 in all (1 main and 3 exploration); unlimited in creative. The first scanned planet is the main one (with

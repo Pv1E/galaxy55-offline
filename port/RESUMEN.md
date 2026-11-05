@@ -90,6 +90,14 @@ etiqueta `flash-version` y la rama `flash`, con sus SWF y archivos de compilaci�
   en ordenador y pausa (`GalaxyApp.centerMouse`, `Screen.holdHover`). Arreglado al fusionar: `print mouse` (PR 86) usaba
   `sdl.Sdl` sin guarda y el build DirectX no compilaba; ahora va en `#if hlsdl`. Después: la ayuda del editor (`kube.help`)
   se acorta en ES y FR para que quepa en una línea.
+- Revisión posterior (2026-11-05): `World.cornerLight` (cambio del port) da a las esquinas de las caras de arriba la luz más
+  alta alrededor de un bloque parcial (BTReduced) vecino en vez de 0: el suelo entre cuatro lingotes salía negro. Solo caras
+  de arriba; comparado píxel a píxel con el build anterior en luz_parcial, luz_neon, ventana_neon, snow_cover, hangar, mother,
+  homebay, zones y sintetizador_mano (solo cambia ese suelo). `GalaxyApp.TEST_RUN`: con --script/--shot no se captura el ratón
+  ni se mueve el cursor del sistema (Heaps lo llevaba a la ventana de prueba al soltar la captura). `KubeData.slug` añade
+  "-kube" a los nombres de dispositivo de Windows (con, aux, nul, prn, com1-9, lpt1-9).
+  Con TEST_RUN la ventana además se crea fuera de la pantalla (-10000,-10000): devrun la pedía minimizada, pero SDL la mostraba
+  en el centro del escritorio (pasaba ya antes de estos PR); las capturas salen igual.
 
 ## Qué falló y cómo se resolvió
 | Problema | Causa | Solución |
