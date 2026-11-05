@@ -160,8 +160,9 @@ el botón Editor de kubes al menú de inicio (los demás botones bajan una fila)
 Pasan los guiones de los PR (herbe_particules, tuto_flecha, tuto_sintetizador, sintetizador_rapido, sintetizador_mano,
 ordenador_raton, pausa_raton, kubes) y los de siempre synth y computer_menu; el build DX abre el menú de inicio. Después
 (2026-11-05): la línea de ayuda del editor de kubes no cabía en español ni en francés (la última orden bajaba a una segunda
-línea; en inglés sí cabe). Se acortan en `Lang.hx` ("Izq./Der.: cara"; "Flèches : face", "Ctrl+S sauver") y caben en una línea
-en los tres idiomas (capturas kubes_ayuda_es/en/fr). Arriba y abajo no hacen nada en el editor, así que "Flèches" no engaña.
+línea; en inglés sí cabe). Se acortan en `Lang.hx` ("Izq./Der.: cara"; "Flèches : face") y caben en una línea en los tres
+idiomas (capturas kubes_ayuda_es/en/fr). Arriba y abajo no hacen nada en el editor, así que "Flèches" no engaña. En francés
+Ctrl+S sigue siendo "enregistrer" ("sauver" no se dice de guardar en una interfaz) y la línea sigue cabiendo.
 Revisión a fondo posterior (2026-11-05), sin regresiones de los PR 79-86: unos 45 guiones (colocar, sintetizador, trozos,
 tutorial, ordenador y pausa, mapa, menús, partida) más 14 guiones en BIMoon, BIMars, BIWinterPeaks y BIAcidForest, y pruebas
 propias (menú de inicio con teclado, editor de kubes, pausa y ordenador seguidos, clic derecho, recetas en el tutorial).
