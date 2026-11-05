@@ -35,6 +35,8 @@ class GameView {
 	static inline var HEAD_RADIUS = 0.2;
 	/** hueco minimo entre la camara y el bloque de encima: algo mas que su plano cercano (zNear = 0.1) */
 	static inline var CAMERA_GAP = 0.12;
+	/** con los pies en la arena movediza todo va a 0.3 (Hero.doMove: dt *= 0.3) */
+	static inline var SAND_SLOW = 0.3;
 
 	public var world(default, null) : World;
 	public var info(default, null) : SaveInfo;
@@ -113,6 +115,8 @@ class GameView {
 	var oldSpeedX = 0.;
 	var oldSpeedY = 0.;
 	var stun = 0.;
+	/** los pies estaban en la arena movediza en el paso anterior de doMove */
+	var inSand = false;
 
 	// vida y oxigeno (Hero.life, Hero.oxygen): de 0 a 100. En creativo no se recibe dano ni se gasta oxigeno
 	public var life = 100.;
@@ -777,19 +781,54 @@ class GameView {
 
 	// ---------------------------------------------------------------- fisica (Hero.doMove)
 
+	/** golpe de una caida a esa velocidad, al aterrizar o al tocar la arena movediza: caida fuerte, dano y temblor segun la
+	    velocidad; caida suave, solo temblor (Hero.doMove). Devuelve el dano (-1 si es una caida suave) */
+	function fallImpact( fall : Float ) : Float {
+		var threshold = 0.4;
+		var hitPow = fall / maxGravity;
+		if( hitPow > threshold && !creative ) {
+			Snd.play("landHard", 1.5);
+			Snd.play("hit", 0.7);
+			hitPow = (hitPow - threshold) / (1 - threshold);
+			shake += 0.4 * hitPow;
+			var dmg = 1 + Math.pow(hitPow * 15, 2);
+			if( dmg > life ) dmg = life;
+			hit(dmg);
+			return dmg;
+		}
+		// cambio del port: en creativo una caida fuerte tiembla como la caida suave mas fuerte (g = 0.4: 0.112). Si no,
+		// 0.7 * g^2 llegaba a 0.7, mas que el temblor de una caida con dano (0.4 como mucho) y parecia un golpe. El
+		// original solo se saltaba el dano con cheating (vuelo de depuracion)
+		if( hitPow > threshold ) hitPow = threshold;
+		shake += 0.7 * hitPow * hitPow;
+		return -1;
+	}
+
 	function doMove( dt : Float, speed : Float, strafe : Float, useJetpack : Bool ) {
 		if( stun > 0 ) stun -= dt;
 
 		var waterBlock = world.block(Math.floor(px), Math.floor(py), Std.int(pz + 0.1));
 		if( waterBlock != null && !waterBlock.hasFlag(BFLiquid) ) waterBlock = null;
-		if( waterBlock != null && waterBlock.k == BMarsQuickSand ) {
-			// hundido hasta los ojos: se ahoga poco a poco
+		var sand = waterBlock != null && waterBlock.k == BMarsQuickSand;
+		if( sand ) {
+			// cambio del port: tocar la arena movediza cayendo es como aterrizar: el dano de la caida hasta ella y se para; luego
+			// se hunde despacio desde quieto. El original solo ralentizaba el tiempo (dt) y la gravedad seguia creciendo dentro:
+			// al salir se volvia de golpe (casi) a la velocidad de una caida sin arena y el dano era el de toda la caida
+			if( !inSand && gravity > 0 ) {
+				fallImpact(gravity);
+				gravity = 0;
+			}
+			// hundido hasta los ojos: se ahoga poco a poco. Es del original y se queda a proposito
 			if( world.block(Math.floor(px), Math.floor(py), Std.int(pz + viewZ)) == waterBlock && Std.random(20) == 0 )
 				hit(dt * 5);
-			dt *= 0.3;
+			dt *= SAND_SLOW;
 			speed *= 0.6;
 			strafe *= 0.6;
-		}
+		} else if( inSand && gravity > 0 )
+			// cambio del port: al salir de la arena cayendo se sigue a la velocidad que se veia dentro (la caida se cuenta desde la
+			// salida); en el original se volvia a la de sin frenar
+			gravity *= SAND_SLOW;
+		inSand = sand;
 
 		swimming = inWater();
 		if( creative ) {
@@ -904,25 +943,8 @@ class GameView {
 					}
 			if( feet != standingBlock ) {
 				standingBlock = feet;
-				// caida fuerte: dano y temblor segun la velocidad; caida suave: solo temblor (Hero.doMove)
-				var threshold = 0.4;
-				var hitPow = gravity / maxGravity;
-				if( hitPow > threshold && !creative ) {
-					Snd.play("landHard", 1.5);
-					Snd.play("hit", 0.7);
-					hitPow = (hitPow - threshold) / (1 - threshold);
-					shake += 0.4 * hitPow;
-					var dmg = 1 + Math.pow(hitPow * 15, 2);
-					if( dmg > life ) dmg = life;
-					hit(dmg);
-					fallBob = dmg + 20;
-				} else {
-					// cambio del port: en creativo una caida fuerte tiembla como la caida suave mas fuerte (g = 0.4: 0.112). Si no,
-					// 0.7 * g^2 llegaba a 0.7, mas que el temblor de una caida con dano (0.4 como mucho) y parecia un golpe. El
-					// original solo se saltaba el dano con cheating (vuelo de depuracion)
-					if( hitPow > threshold ) hitPow = threshold;
-					shake += 0.7 * hitPow * hitPow;
-				}
+				var dmg = fallImpact(gravity);
+				if( dmg >= 0 ) fallBob = dmg + 20; // game.bobbingY
 			}
 			if( speed > 0 && footCD <= 0 && !swimming ) {
 				footCD = 9;
@@ -1549,7 +1571,8 @@ class GameView {
 		laserActive = controls && held && armed && !actionWait;
 		if( actionPause > 0 ) actionPause -= tmod;
 
-		// seleccion (Game.update: no se puede apuntar a la propia celda ni a la de encima)
+		// seleccion (Game.update: no se puede apuntar a la propia celda ni a la de encima). Con los pies en la arena movediza el
+		// rayo para en ella (Render.pick) y mirando abajo no se apunta nada: es del original y se queda a proposito
 		var prev = select;
 		var s : Select = null;
 		if( controls || select != null || debugAction ) {

@@ -1,0 +1,103 @@
+# arena movediza (BMarsQuickSand: BFLiquid, no choca, se apunta). Losa de roca en z=56, aire encima.
+# 1) dano dentro (del original y a proposito, se queda): Hero.doMove, solo con los ojos dentro de la arena (1 de cada 20 pasos
+#    de fisica, dt * 5): charco de 1 (ojos fuera) ritmo 0; pozo de 3 (ojos dentro) unos -6 a -8 por segundo
+# 2) caidas (cambio del port): tocar la arena cayendo es como aterrizar (el dano de la caida hasta ella) y se para; luego se
+#    hunde desde quieto y, al salir por debajo, la caida se cuenta desde la salida. El original solo ralentizaba el tiempo
+#    (dt * 0.3): la gravedad seguia creciendo y el dano llegaba al final, el de toda la caida. Vida, original -> port:
+#    6 de aire desde parado 97.1 (control, igual); losa de 1 y 6 de aire, desde encima 97.9 -> 98.9;
+#    11 sobre roca (control del golpe) 69.9; desde z=76 sobre una losa de 2: al tocarla 100 -> 67.8 (como la roca), abajo tras
+#    6 de aire 47.0 -> 63.6; desde z=75 sobre un pozo de 3: al tocarlo 100 -> 32.0, en el fondo 46.4 -> 22.9 (sin golpe: lo
+#    que falta lo quita la arena con los ojos dentro mientras se hunde)
+# 3) excavar desde dentro (del original y a proposito, se queda): se apunta a la arena de delante; mirando abajo, nada
+#    (Render.pick para en la arena y Game.update no deja apuntar a la celda de los pies ni a la de encima)
+wait 3
+planet
+wait 30
+filla 50 50 78 78 57 110 none
+filla 50 50 78 78 56 56 BRock
+tp 54.5 54.5 57.01 0 0
+waitfor ground
+wait 10
+# 1) dano
+filla 60 60 68 68 57 57 BMarsQuickSand
+tp 64.5 64.5 57.01 0 0
+wait 5
+print life
+wait 100
+print life
+filla 60 60 68 68 57 59 BMarsQuickSand
+tp 64.5 64.5 57.01 0 0
+wait 5
+print life
+wait 100
+print life
+vitals
+filla 60 60 68 68 57 59 none
+life 100 100
+wait 60
+# 2) caidas: 6 de aire desde parado (control)
+tp 64.5 64.5 63.01 0 0
+waitfor ground
+print land
+wait 60
+# losa de 1 (z 63) desde encima: se hunde desde quieto y cae 6
+filla 60 60 68 68 63 63 BMarsQuickSand
+life 100 100
+tp 64.5 64.5 64.01 0 0
+waitfor ground
+print land
+wait 60
+# control del golpe: desde z=76 sobre roca en z 63..64 (11 de caida)
+filla 60 60 68 68 63 64 BRock
+life 100 100
+tp 64.5 64.5 76 0 0
+waitfor ground
+print land
+wait 60
+# la misma caida sobre arena en z 63..64: golpe al tocarla, luego se hunde 2 y cae 6
+filla 60 60 68 68 63 64 BMarsQuickSand
+life 100 100
+tp 64.5 64.5 76 0 0
+until fade 0.4
+print life
+waitfor ground
+print land
+wait 60
+# desde z=75 sobre un pozo de 3 (z 57..59): golpe al tocarlo; en el fondo ya no
+filla 60 60 68 68 63 64 none
+filla 60 60 68 68 57 59 BMarsQuickSand
+life 100 100
+tp 64.5 64.5 75 0 0
+until fade 0.4
+print life
+waitfor ground
+print land
+# 3) excavar dentro del pozo (ojos dentro): delante la arena, abajo nada
+life 100 100
+lookat 66.5 64.5 58.5
+wait 3
+print select
+lookat 64.5 64.5 55.5
+wait 3
+print select
+mine 65 64 58
+print block 65 64 58
+# charco de 1 (ojos fuera) junto a un muro de roca en x=66 (con arena al pie): el muro, la arena de al lado y abajo nada
+filla 60 60 68 68 58 59 none
+filla 66 60 66 68 58 60 BRock
+life 100 100
+tp 64.5 64.5 57.01 0 0
+waitfor ground
+wait 10
+lookat 66.5 64.5 58.5
+wait 3
+print select
+lookat 64.5 64.5 55.5
+wait 3
+print select
+lookat 66.5 64.5 57.5
+wait 3
+print select
+mine 65 64 57
+print block 65 64 57
+quit
