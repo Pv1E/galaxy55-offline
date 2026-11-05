@@ -1072,7 +1072,7 @@ class Dev {
 						if( b == null ) continue;
 						if( z + 1 > top ) top = z + 1;
 						if( b.k == BLava ) lava++;
-						if( b.k == BBlueCrystalDense || b.k == BBlueCrystalLight ) ether++;
+						if( b.k == BBlueCrystalDense || b.k == BBlueCrystalLight || b.k == BMarsBlueRock ) ether++;
 					}
 				}
 			var c = g.info.comet;

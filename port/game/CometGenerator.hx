@@ -99,14 +99,14 @@ class CometGenerator extends gen.DetailsGenerator {
 		}
 	}
 
-	/** vetas de etherium azul (alguna con fragmentos) que salen a la superficie */
+	/** vetas de etherium azul (alguna con meteoritos de etherium) que salen a la superficie */
 	function addVeins( n : Int ) {
-		var dense = alloc(BBlueCrystalDense), frag = alloc(BBlueCrystalLight);
+		var dense = alloc(BBlueCrystalDense), meteor = alloc(BMarsBlueRock);
 		for( i in 0...n ) {
 			var x = rnd.random(size), y = rnd.random(size);
 			var z = topAt(x, y) - 1 - rnd.random(3);
 			for( k in 0...4 + rnd.random(6) ) {
-				if( get(x, y, z) == ROCK ) set(x, y, z, rnd.random(6) == 0 ? frag : dense);
+				if( get(x, y, z) == ROCK ) set(x, y, z, rnd.random(6) == 0 ? meteor : dense);
 				switch( rnd.random(6) ) {
 				case 0: x++;
 				case 1: x--;
