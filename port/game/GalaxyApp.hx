@@ -265,6 +265,8 @@ class GalaxyApp extends hxd.App {
 	var helmetOnDone : Void -> Void;
 	var toast : h2d.Text;
 	var toastTime = 0.;
+	/** avisos de la Base de datos ESCorp (arriba a la derecha) */
+	public var kubNotify : KubNotify;
 	var orbit = 0.;
 	var autosaveTimer = 0.;
 	var frames = 0;
@@ -422,6 +424,9 @@ class GalaxyApp extends hxd.App {
 		toast.visible = false;
 		guide = new TutoGuide(s2d);
 		tutorial.onDone = function() saveGame(false);
+		// Base de datos ESCorp: lo nuevo se avisa arriba a la derecha, con un aviso ligero
+		kubNotify = new KubNotify(s2d, atlas);
+		Kubindex.onNews = function(n) if( state == Playing ) kubNotify.push(n);
 
 		if( demoSaves ) makeDemoSaves();
 
@@ -969,8 +974,8 @@ class GalaxyApp extends hxd.App {
 		// anadido del port: pilotar la nave sobre el planeta (solo en los planetas jugables, fuera del tutorial)
 		var pilotOk = game != null && game.canPilot();
 		// botones antes de Cerrar; con todos (solo al editar la nodriza) se juntan un poco para que el panel quepa
-		var n = 5 + (pilotOk ? 1 : 0) + (mother ? 1 : 0);
-		var step = n > 6 ? 56 : 62;
+		var n = 6 + (pilotOk ? 1 : 0) + (mother ? 1 : 0);
+		var step = n > 7 ? 48 : n > 6 ? 56 : 62;
 		var h = 312 + n * step;
 		var s = panelFor(640, h, Lang.t("computer.title"));
 		var x = (W - 540) * 0.5;
@@ -978,6 +983,9 @@ class GalaxyApp extends hxd.App {
 		var takeoff = new Button(s, Lang.t("computer.takeoff"));
 		var edit = new Button(s, Lang.t("computer.edit"));
 		var trade = new Button(s, Lang.t("computer.trade"));
+		// en el tutorial no se comercia (como los contratos); se vuelve a mirar en openComputer: el menu se guarda
+		trade.enabled = !Tutorial.active(game.info);
+		computerTrade = trade;
 		var contracts = new Button(s, Lang.t("computer.contracts"));
 		// en el tutorial los contratos se ven pero no se pueden abrir (se vuelve a mirar en openComputer: el menu se guarda)
 		contracts.enabled = !Tutorial.active(game.info);
@@ -986,6 +994,10 @@ class GalaxyApp extends hxd.App {
 		var licenses = new Button(s, Lang.t("computer.licenses"));
 		licenses.enabled = !Tutorial.active(game.info);
 		computerLicenses = licenses;
+		// Base de datos ESCorp (Kubindex, anadido del port): tambien durante el tutorial, que la presenta
+		var database = new Button(s, KubText.get("computer.database"));
+		database.enabled = Tutorial.databaseAllowed(game.info);
+		computerDatabase = database;
 		var close = new Button(s, Lang.t("computer.close"));
 		var rows : Array<Button> = [takeoff];
 		if( pilotOk ) {
@@ -998,7 +1010,7 @@ class GalaxyApp extends hxd.App {
 				else showToast(Lang.t("license.pilotmain"), 4);
 			};
 		}
-		rows = rows.concat([edit, trade, contracts, licenses]);
+		rows = rows.concat([edit, database, trade, contracts, licenses]);
 		if( mother ) {
 			var visit = new Button(s, Lang.t("computer.mothership"));
 			rows.push(visit);
@@ -1025,9 +1037,10 @@ class GalaxyApp extends hxd.App {
 			skip.onActivate = function() askSkip(s);
 		}
 		edit.onActivate = startHangar;
-		trade.onActivate = openShop;
+		trade.onActivate = function() if( !Tutorial.active(game.info) ) openShop();
 		contracts.onActivate = openContracts;
 		licenses.onActivate = openLicenses;
+		database.onActivate = openDatabase;
 		close.onActivate = function() resume();
 		s.onBack = function() resume();
 		return s;
@@ -1215,6 +1228,7 @@ class GalaxyApp extends hxd.App {
 		closePalette();
 		closeShop();
 		closeContracts();
+		closeDatabase();
 		closeChest();
 		game.dispose();
 		if( invBar != null ) {
@@ -1529,7 +1543,14 @@ class GalaxyApp extends hxd.App {
 		centerMouse();
 		computerContracts.enabled = !Tutorial.active(game.info);
 		computerLicenses.enabled = !Tutorial.active(game.info);
+		computerTrade.enabled = !Tutorial.active(game.info);
+		computerDatabase.enabled = Tutorial.databaseAllowed(game.info);
 	}
+
+	/** boton de la Base de datos ESCorp del ordenador de a bordo (en el tutorial, desde su paso) */
+	var computerDatabase : Button;
+	/** boton Comerciar del ordenador de a bordo (desactivado durante el tutorial) */
+	var computerTrade : Button;
 
 	/** boton de los contratos del ordenador de a bordo (desactivado durante el tutorial) */
 	var computerContracts : Button;
@@ -1670,6 +1691,9 @@ class GalaxyApp extends hxd.App {
 	// ---------------------------------------------------------------- flujo del juego
 
 	function startGame( info : SaveInfo ) {
+		// antes de cualquier copia para el hangar o la nodriza: las copias comparten la Base de datos ESCorp
+		Kubindex.ensure(info);
+		warmIcons(info);
 		state = Loading;
 		clearUi();
 		hud.visible = false; msgText.visible = false;
@@ -1713,6 +1737,10 @@ class GalaxyApp extends hxd.App {
 			return;
 		}
 		invBar = new InvBar(s2d, game.inv, atlas, W);
+		// Base de datos ESCorp: los kubes de tu nave se conocen y el planeta o la cometa quedan explorados
+		Kubindex.shipKnown(game.info);
+		Kubindex.visit(game.info);
+		warmDelay = 2;
 		game.onComputer = openComputer;
 		game.onCometOver = function() showToast(Lang.t("comet.over"), GameView.COMET_OVER_TOAST);
 		game.onChest = openChest;
@@ -1811,6 +1839,7 @@ class GalaxyApp extends hxd.App {
 		}
 		if( game == null || state != Playing ) return;
 		if( shop != null ) shop.scroll(e.wheelDelta);
+		else if( database != null ) database.scroll(e.wheelDelta);
 		else if( paletteOpen && palette != null ) palette.scroll(e.wheelDelta);
 		else game.scrollInventory(e.wheelDelta > 0 ? -1 : 1);
 	}
@@ -1899,6 +1928,44 @@ class GalaxyApp extends hxd.App {
 		contracts.onClose = closeContracts;
 		paletteOpen = true;
 		captureMouse(false);
+	}
+
+	/** Base de datos ESCorp (DatabasePanel, anadido del port), desde el ordenador de a bordo; en el tutorial es un paso */
+	public var database : DatabasePanel;
+
+	public function openDatabase() {
+		if( game == null || database != null || !Tutorial.databaseAllowed(game.info) ) return;
+		if( current != null ) resume();
+		database = new DatabasePanel(s2d, atlas, game.info);
+		database.onClose = closeDatabase;
+		Tutorial.databaseOpened(game.info);
+		paletteOpen = true;
+		captureMouse(false);
+	}
+
+	/** segundos de juego tras llegar al planeta antes de seguir con los iconos de reserva que falten (no se suman a la llegada) */
+	var warmDelay = 0.;
+
+	/**
+	 * Los iconos grandes de la Base de datos ESCorp se hacen de reserva en la pantalla de carga (Icons.pump, en update): al
+	 * abrirla ya estan. Primero las fichas que ya salen en el Kubindex
+	 */
+	function warmIcons( info : SaveInfo ) {
+		if( !Tutorial.databaseAllowed(info) ) return;
+		var d = KubData.get();
+		var known = [for( e in d.entries ) if( Kubindex.known(info, e) ) e];
+		IconMesh.Icons.warm(known.concat(d.charges).concat(d.entries), atlas);
+	}
+
+	public function closeDatabase() {
+		if( database == null ) return;
+		database.remove();
+		database = null;
+		paletteOpen = false;
+		if( game != null && state == Playing ) {
+			captureMouse(true);
+			game.releaseAction();
+		}
 	}
 
 	public function closeContracts() {
@@ -2302,6 +2369,11 @@ class GalaxyApp extends hxd.App {
 			lastStamp = now;
 		}
 		if( dt > 0.1 ) dt = 0.1;
+		// iconos grandes de la Base de datos ESCorp: unos pocos por fotograma (mas con ella abierta); los de reserva, en la pantalla
+		// de carga del planeta y, si faltan, jugando y pasado un rato desde la llegada
+		if( warmDelay > 0 && state == Playing ) warmDelay -= dt;
+		var spareIcons = (state == Loading && loadWorld != null) || (state == Playing && warmDelay <= 0);
+		if( IconMesh.Icons.busy(spareIcons) ) IconMesh.Icons.pump(database != null ? 8 : 3, spareIcons);
 		if( state != Playing ) {
 			jetBar.visible = false;
 			lifeBar.visible = false;
@@ -2355,12 +2427,14 @@ class GalaxyApp extends hxd.App {
 					shop.update(dt, pad);
 				} else if( contracts != null ) {
 					contracts.update(dt, pad);
+				} else if( database != null ) {
+					database.update(dt, pad);
 				} else if( palette != null ) {
 					palette.update(dt, pad);
 				} else if( K.isPressed(K.ESCAPE) || K.isPressed(K.I) ) closePalette();
 				// la tienda y los contratos salen del ordenador de a bordo: tampoco paran el juego (ver abajo, state == Paused); la
 				// barra de vida se ve bajo el panel
-				if( shop != null || contracts != null ) {
+				if( shop != null || contracts != null || database != null ) {
 					game.update(dt, false, pad);
 					if( game == null || state != Playing ) return;
 					updateJetHud(game);
@@ -2457,6 +2531,9 @@ class GalaxyApp extends hxd.App {
 			pausedThisFrame = false;
 		}
 
+		kubNotify.update(dt);
+		// ni en los menus ni con un panel abierto (la tienda, los contratos, la propia base de datos)
+		kubNotify.visible = state == Playing && !paletteOpen;
 		if( toastTime > 0 ) {
 			toastTime -= dt;
 			if( toastTime < 0.6 ) toast.alpha = Math.max(0, toastTime / 0.6);
@@ -2887,6 +2964,8 @@ class GalaxyApp extends hxd.App {
 	}
 
 	public function capture( path : String, exit = true ) {
+		// los iconos de la Base de datos ESCorp que aun se estan haciendo salen ya en la captura
+		IconMesh.Icons.flush();
 		var w = engine.width, h = engine.height;
 		var tex = new h3d.mat.Texture(w, h, [Target]);
 		tex.depthBuffer = new h3d.mat.Texture(w, h, [Target], Depth24Stencil8);
@@ -2906,8 +2985,9 @@ class GalaxyApp extends hxd.App {
 	    el casco y el HUD se ocultan un momento) y mira si queda magenta en algun punto de los cuatro bordes de la ventana. Se
 	    usa un color y no el alfa porque el mapa de estrellas suma sus capas (blend Add): su alfa es 1 aunque deje ver el fondo. */
 	public function devCover( ?name : String ) : String {
-		var top : h2d.Object = shop != null ? shop : contracts != null ? contracts : chest != null ? chest : palette != null ? palette : explorer != null ? explorer : current != null ? ui : null;
+		var top : h2d.Object = shop != null ? shop : contracts != null ? contracts : database != null ? database : chest != null ? chest : palette != null ? palette : explorer != null ? explorer : current != null ? ui : null;
 		if( top == null ) return "nada abierto";
+		IconMesh.Icons.flush();
 		var hidden = [];
 		for( o in s2d )
 			if( o != top && o.visible ) {

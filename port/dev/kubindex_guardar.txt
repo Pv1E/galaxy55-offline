@@ -1,0 +1,25 @@
+# Base de datos ESCorp: lo localizado, lo recuperado, las estadisticas, las recetas fabricadas y los planetas explorados se
+# guardan con la partida y vuelven al recargarla (print kub igual antes y despues, salvo "nuevos" si se miro el panel).
+wait 3
+kub forget
+kub visit
+kub see BMinAluminium
+kub got BWood
+kub break BIce
+ship
+wait 10
+tpl 62.5 63.5 3.0 3.14 -0.2
+wait 5
+setl 59 62 3 BIron
+setl 60 62 3 BIron
+setl 59 63 3 BIron
+setl 60 63 3 BIron
+wait 10
+synth 0
+wait 30
+print kub
+reload
+waitfor ready
+wait 10
+print kub
+quit

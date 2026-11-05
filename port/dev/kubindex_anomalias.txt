@@ -1,0 +1,45 @@
+# Base de datos ESCorp, anomalias: una anomalia no se conoce ("???" en los sitios de sus kubes) hasta pasar cerca de una
+# (kub goanomaly lleva junto a la primera del planeta); categorias: la phosphomousse es de planeta, el blindaje fabricado
+# y el motor espacial especial aunque salgan en anomalias. Iconos lisos (kub_iconos). -Extra "--lang=fr --seed=5"
+wait 3
+kub forget
+kub got BShipEngine
+kub got BChampiLight
+kub got BShipHull
+kub got BAlienRock
+kub got BBigMushTrunk
+kub
+wait 3
+kub pick BShipEngine
+wait 2
+shot kub_motor_antes
+kub close
+wait 2
+print kub
+kub goanomaly 0
+wait 60
+print kub
+kub anomaly capsule
+kub
+wait 3
+kub pick BShipEngine
+wait 2
+shot kub_motor_capsula
+kub pick BChampiLight
+wait 2
+shot kub_phospho
+kub page 2
+wait 2
+shot kub_cat_anomalias
+kub tab 1
+wait 2
+shot kub_espacio
+kub nav 0 6
+wait 2
+shot kub_esp_capsula
+kub nav 0 22
+wait 2
+shot kub_esp_cueva
+kub close
+print kub
+quit

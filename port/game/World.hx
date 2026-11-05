@@ -232,6 +232,9 @@ class World {
 
 	public inline function isReady() return phase >= 2;
 
+	/** anomalias puestas por el generador (DetailsGenerator.placed: posicion y tipo), para la Base de datos ESCorp */
+	public function anomalies() return gen.placed;
+
 	/** Avanza la carga durante budgetMs milisegundos; devuelve el progreso de 0 a 1. */
 	public function step( budgetMs : Float ) : Float {
 		var t0 = haxe.Timer.stamp();

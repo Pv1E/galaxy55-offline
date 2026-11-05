@@ -11,10 +11,12 @@ typedef TutoTarget = { x : Int, y : Int, z : Int };
  * CITRONOX 3 citronox viejos (cargas amarillas)   ETHERIUM 2 fragmentos de etherium (cargas azules)
  * BAUXITE  minar 2 bauxitas                        RETURN   volver a la nave por el rayo
  * ALU      bauxita -> aluminio en el sintetizador  PLATES   aluminio -> blindaje
+ * DATABASE ordenador de a bordo, Base de datos ESCorp (Kubindex: lo que ya has localizado y recuperado)
  * COMPUTER ordenador de a bordo, Modificar la nave HANGAR   tapar los agujeros (solo ahi y solo blindaje)
  * LEAVE    salir del hangar con la nave estanca    DONE     la ESCorp envia cargas y creditos, el planeta pasa a ser el
  *                                                           principal (Licenses) y se acaba
- * Mientras dura no se despega (GalaxyApp.buildComputer). El paso se guarda en SaveInfo.tuto.
+ * Mientras dura no se despega (GalaxyApp.buildComputer). El paso se guarda en SaveInfo.tuto. DATABASE va entre PLATES y
+ * COMPUTER pero lleva el numero siguiente a DONE: las partidas guardadas con el tutorial a medias conservan su paso.
  */
 class Tutorial {
 
@@ -31,6 +33,7 @@ class Tutorial {
 	public static inline var HANGAR = 10;
 	public static inline var LEAVE = 11;
 	public static inline var DONE = 12;
+	public static inline var DATABASE = 13;
 
 	static inline var NEED_CITRONOX = 3;
 	static inline var NEED_ETHERIUM = 2;
@@ -55,7 +58,8 @@ class Tutorial {
 		var t = g.info.tuto;
 		if( t == null || g.info.mothership == true ) return;
 		if( g.hangar != null ) {
-			if( t.step == COMPUTER ) t.step = HANGAR;
+			// sin pasar por la base de datos tambien vale: el paso solo la presenta
+			if( t.step == COMPUTER || t.step == DATABASE ) t.step = HANGAR;
 			if( t.step == HANGAR && holesFilled(g) && g.hangarValid ) t.step = LEAVE;
 			else if( t.step == LEAVE && !holesFilled(g) ) t.step = HANGAR;
 			return;
@@ -72,7 +76,7 @@ class Tutorial {
 		case BAUXITE: if( count(g, [BMinAluminium, BAluminium, BShipHull]) >= holes() ) t.step = RETURN;
 		case RETURN: if( g.pz >= World.SHIP_Z ) t.step = ALU;
 		case ALU: if( count(g, [BAluminium, BShipHull]) >= holes() ) t.step = PLATES;
-		case PLATES: if( count(g, [BShipHull]) >= holes() ) t.step = COMPUTER;
+		case PLATES: if( count(g, [BShipHull]) >= holes() ) t.step = DATABASE;
 		// guardada en el hangar: se vuelve a la nave sin el
 		case HANGAR, LEAVE: t.step = COMPUTER;
 		case DONE: finish(g);
@@ -101,6 +105,15 @@ class Tutorial {
 		var out = Block.get(r.out).k;
 		return out == BAluminium || out == BShipHull;
 	}
+
+	/**
+	 * La Base de datos ESCorp se abre desde su paso (DATABASE, tras fabricar el blindaje) hasta el final: COMPUTER y los numeros
+	 * de despues (HANGAR, LEAVE, DONE y DATABASE) son todos posteriores a PLATES. Antes, el boton sale desactivado.
+	 */
+	public static function databaseAllowed( info : SaveInfo ) return !active(info) || info.tuto.step >= COMPUTER;
+
+	/** se abre la Base de datos ESCorp: el paso DATABASE esta hecho */
+	public static function databaseOpened( info : SaveInfo ) if( active(info) && info.tuto.step == DATABASE ) info.tuto.step = COMPUTER;
 
 	/** al salir del hangar con la nave guardada (valida y cambiada): se acaba en la siguiente actualizacion */
 	public static function repaired( info : SaveInfo ) if( active(info) ) info.tuto.step = DONE;
@@ -139,6 +152,7 @@ class Tutorial {
 			case RETURN: TutoText.get("return");
 			case ALU: TutoText.get(g.pz < World.SHIP_Z ? "return" : "alu", count(g, [BAluminium, BShipHull]), holes());
 			case PLATES: TutoText.get(g.pz < World.SHIP_Z ? "return" : "plates", count(g, [BShipHull]), holes());
+			case DATABASE: TutoText.get(g.pz < World.SHIP_Z ? "return" : "database");
 			default: TutoText.get(g.pz < World.SHIP_Z ? "return" : "computer");
 		}
 	}

@@ -15,9 +15,9 @@ class TutoText {
 			"Alert! The ship's hull is breached. Make an emergency landing on the planet shown by the green arrow.",
 			"Alerte ! La coque du vaisseau est percée. Pose-toi en urgence sur la planète indiquée par la flèche verte."],
 		"badplanet" => [
-			"Este planeta no sirve para nuestro aterrizaje de emergencia.",
-			"This planet is not suitable for our emergency landing.",
-			"Cette planète n'est pas adaptée à notre atterrissage d'urgence."],
+			"Este planeta no sirve para un aterrizaje de emergencia.",
+			"This planet is not suitable for an emergency landing.",
+			"Cette planète n'est pas adaptée à un atterrissage d'urgence."],
 		"noleave" => [
 			"La nave está demasiado dañada para salir del sistema.",
 			"The ship is too damaged to leave the system.",
@@ -62,6 +62,10 @@ class TutoText {
 			"durante el tutorial, el sintetizador solo fabrica %alu% y %hull%",
 			"during the tutorial, the synthesizer only makes %alu% and %hull%",
 			"pendant le tutoriel, le synthétiseur ne fabrique que de l'%alu% et du %hull%"],
+		"database" => [
+			"Activa el ordenador de a bordo (en verde) y abre la \"Base de datos ESCorp\": allí quedan los kubes que has identificado con el láser y los que has recuperado, los planetas explorados y las recetas descubiertas.",
+			"Activate the on-board computer (in green) and open the \"ESCorp database\": it keeps the kubes you have identified with your laser and the ones you have collected, the planets you have explored and the recipes you have discovered.",
+			"Active l'ordinateur de bord (en vert) et ouvre la \"Base de données ESCorp\" : elle garde les kubes identifiés avec ton laser et ceux que tu as récupérés, les planètes explorées et les recettes découvertes."],
 		"computer" => [
 			"Activa el ordenador de a bordo (en verde) y elige \"Modificar la nave\".",
 			"Activate the on-board computer (in green) and choose \"Modify the ship\".",

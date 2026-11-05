@@ -482,6 +482,7 @@ class Ship {
 		}
 		var out = Block.get(cur.out);
 		var n = cur.count != null ? cur.count : 1;
+		Kubindex.crafted(g.info, cur);
 		var p = outPos(c);
 		for( i in 0...n ) {
 			var d = g.drops.add(p.x, p.y, p.z, out);

@@ -8,6 +8,8 @@ import Protocol;
 class Inv extends Inventory {
 
 	public var onChange : Void -> Void;
+	/** el contenido ha cambiado (Base de datos ESCorp: lo que entra queda recuperado, Kubindex.scan) */
+	public var onContent : Void -> Void;
 
 	public function new( i : InventoryInfos ) {
 		super(i);
@@ -15,10 +17,12 @@ class Inv extends Inventory {
 	}
 
 	override public function display() {
+		if( onContent != null ) onContent();
 		if( onChange != null ) onChange();
 	}
 
 	override function redraw() {
+		if( onContent != null ) onContent();
 		if( onChange != null ) onChange();
 	}
 

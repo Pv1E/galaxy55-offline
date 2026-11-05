@@ -1,0 +1,22 @@
+# Base de datos ESCorp: aterrizar en una cometa la apunta como explorada (su tipo, BICometCinder) y no como planeta.
+# -Timeout 400 -Extra "--lang=fr"
+wait 3
+tuto notuto 4242
+waitfor map
+waitfor system
+print kub
+comet force 0
+wait 60
+expplanet 9
+waitfor window
+wait 10
+expbutton
+waitfor planet 6000
+wait 30
+print kub
+kub
+kub tab 1
+kub page 1
+wait 3
+shot kub_cometa
+quit

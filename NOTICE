@@ -3,3 +3,6 @@ https://creativecommons.org/licenses/by-nc-sa/4.0/
 Source: https://github.com/motion-twin/WebGamesArchives
 This repository contains modifications and is distributed under the same license.
 Add the full license text (e.g. GitHub "Add file > Create new file > LICENSE" and pick CC BY-NC-SA 4.0).
+
+"New" marker of the ESCorp database (src/G55/fla/client/gfx/mush_recent.png): icon recent.png from Mush,
+(c) Motion Twin, CC BY-NC-SA 4.0, https://github.com/motion-twin/WebGamesArchives (Mush/www/img/icons/ui/recent.png), unmodified.

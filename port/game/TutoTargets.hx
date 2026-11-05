@@ -20,7 +20,7 @@ class TutoTargets {
 			case Tutorial.ETHERIUM: nearest(g, BBlueCrystalLight);
 			case Tutorial.BAUXITE: nearest(g, BMinAluminium);
 			case Tutorial.ALU, Tutorial.PLATES if( inShip ): craftTarget(g);
-			case Tutorial.COMPUTER if( inShip ): computerCell(g);
+			case Tutorial.COMPUTER, Tutorial.DATABASE if( inShip ): computerCell(g);
 			case Tutorial.HULL: [];
 			// la base del rayo de luz
 			default: inShip ? [] : [{ x : ship.x, y : ship.y, z : Std.int(ship.z) }];

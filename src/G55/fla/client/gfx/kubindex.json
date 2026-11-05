@@ -1,0 +1,935 @@
+{
+ "_doc": "Base de datos ESCorp (KubData): las cargas no son fichas. Sitios de cada bloque del mundo (constructor de BlockKind; las variantes y la roca rota cuentan para su ficha): un bioma de planeta, un tipo de cometa (Comets.KINDS) o a:<anomalia>. Anomalia con biomes null = en todos los planetas.",
+ "hidden": [
+  "BTest",
+  "BTreeHerbs",
+  "BDeadRock",
+  "BDeadSoil",
+  "BDeadSwamp",
+  "BDeadTree",
+  "BDarkLeaves"
+ ],
+ "hiddenBiomes": [
+  "BIDeadCity"
+ ],
+ "anomalies": [
+  {
+   "id": "capsule",
+   "names": [
+    "Cápsula estrellada",
+    "Crashed capsule",
+    "Capsule écrasée"
+   ],
+   "biomes": null
+  },
+  {
+   "id": "pillars",
+   "names": [
+    "Pilares extraños",
+    "Strange pillars",
+    "Piliers étranges"
+   ],
+   "biomes": null
+  },
+  {
+   "id": "robot",
+   "names": [
+    "Robot abandonado",
+    "Abandoned robot",
+    "Robot abandonné"
+   ],
+   "biomes": null
+  },
+  {
+   "id": "bigcrater",
+   "names": [
+    "Gran cráter",
+    "Large crater",
+    "Grand cratère"
+   ],
+   "biomes": null
+  },
+  {
+   "id": "pyramid",
+   "names": [
+    "Pirámide",
+    "Pyramid",
+    "Pyramide"
+   ],
+   "biomes": null
+  },
+  {
+   "id": "ruins",
+   "names": [
+    "Ruinas",
+    "Ruins",
+    "Ruines"
+   ],
+   "biomes": null
+  },
+  {
+   "id": "bigmush",
+   "names": [
+    "Seta gigante",
+    "Giant mushroom",
+    "Champignon géant"
+   ],
+   "biomes": null
+  },
+  {
+   "id": "largepit",
+   "names": [
+    "Gran sima",
+    "Deep shaft",
+    "Gouffre"
+   ],
+   "biomes": null
+  },
+  {
+   "id": "ice",
+   "names": [
+    "Banquisa",
+    "Ice field",
+    "Banquise"
+   ],
+   "biomes": null
+  },
+  {
+   "id": "grove",
+   "names": [
+    "Arboleda",
+    "Grove",
+    "Bosquet"
+   ],
+   "biomes": null
+  },
+  {
+   "id": "artifact",
+   "names": [
+    "Artefacto",
+    "Artifact",
+    "Artefact"
+   ],
+   "biomes": null
+  },
+  {
+   "id": "pit",
+   "names": [
+    "Pozo",
+    "Pit",
+    "Puits"
+   ],
+   "biomes": null
+  },
+  {
+   "id": "fence",
+   "names": [
+    "Cercado",
+    "Enclosure",
+    "Enclos"
+   ],
+   "biomes": null
+  },
+  {
+   "id": "volcano",
+   "names": [
+    "Volcán",
+    "Volcano",
+    "Volcan"
+   ],
+   "biomes": null
+  },
+  {
+   "id": "crater",
+   "names": [
+    "Cráter de meteorito",
+    "Meteor crater",
+    "Cratère de météorite"
+   ],
+   "biomes": null
+  },
+  {
+   "id": "meadow",
+   "names": [
+    "Pradera",
+    "Meadow",
+    "Prairie"
+   ],
+   "biomes": null
+  },
+  {
+   "id": "cascade",
+   "names": [
+    "Cascada",
+    "Waterfall",
+    "Cascade"
+   ],
+   "biomes": null
+  },
+  {
+   "id": "tree",
+   "names": [
+    "Árbol solitario",
+    "Lone tree",
+    "Arbre isolé"
+   ],
+   "biomes": null
+  },
+  {
+   "id": "burned",
+   "names": [
+    "Tierra quemada",
+    "Burnt ground",
+    "Terre brûlée"
+   ],
+   "biomes": null
+  },
+  {
+   "id": "heal",
+   "names": [
+    "Mata de caléndula",
+    "Calendula patch",
+    "Massif de calendula"
+   ],
+   "biomes": null
+  },
+  {
+   "id": "bonus",
+   "names": [
+    "Cristales verdes",
+    "Green crystals",
+    "Cristaux verts"
+   ],
+   "biomes": null,
+   "byBlocks": true
+  },
+  {
+   "id": "cavesphere",
+   "names": [
+    "Geoda",
+    "Geode",
+    "Géode"
+   ],
+   "biomes": [
+    "BIAutumn",
+    "BIWinterPeaks",
+    "BIMars"
+   ]
+  },
+  {
+   "id": "caveruins",
+   "names": [
+    "Ruinas subterráneas",
+    "Underground ruins",
+    "Ruines souterraines"
+   ],
+   "biomes": [
+    "BIAutumn",
+    "BIWinterPeaks",
+    "BIMars"
+   ]
+  },
+  {
+   "id": "cavefrozen",
+   "names": [
+    "Cueva helada",
+    "Frozen cave",
+    "Grotte gelée"
+   ],
+   "biomes": [
+    "BIAutumn",
+    "BIWinterPeaks",
+    "BIMars"
+   ]
+  },
+  {
+   "id": "cavegarden",
+   "names": [
+    "Jardín subterráneo",
+    "Underground garden",
+    "Jardin souterrain"
+   ],
+   "biomes": [
+    "BIAutumn",
+    "BIWinterPeaks",
+    "BIMars"
+   ]
+  },
+  {
+   "id": "cavecharges",
+   "names": [
+    "Gruta de citronox",
+    "Citronox grotto",
+    "Grotte à citronox"
+   ],
+   "biomes": [
+    "BIAutumn",
+    "BIWinterPeaks",
+    "BIMars"
+   ]
+  },
+  {
+   "id": "caveveins",
+   "names": [
+    "Vetas",
+    "Veins",
+    "Filons"
+   ],
+   "biomes": [
+    "BIAutumn",
+    "BIWinterPeaks",
+    "BIMars"
+   ]
+  },
+  {
+   "id": "cavecascade",
+   "names": [
+    "Manantial subterráneo",
+    "Underground spring",
+    "Source souterraine"
+   ],
+   "biomes": [
+    "BIAutumn",
+    "BIWinterPeaks",
+    "BIMars"
+   ]
+  },
+  {
+   "id": "cavebonus",
+   "names": [
+    "Cristales verdes subterráneos",
+    "Underground green crystals",
+    "Cristaux verts souterrains"
+   ],
+   "biomes": [
+    "BIAutumn",
+    "BIWinterPeaks",
+    "BIMars"
+   ],
+   "byBlocks": true
+  }
+ ],
+ "special": [
+  "BShipEngine"
+ ],
+ "places": {
+  "BRock": [
+   "BIAutumn",
+   "a:caveveins"
+  ],
+  "BSoil": [
+   "BIAutumn"
+  ],
+  "BSoilCover": [
+   "BIAutumn"
+  ],
+  "BBrokenRock": [
+   "BIAutumn"
+  ],
+  "BBlueCrystalLight": [
+   "BIAutumn",
+   "BIMoon",
+   "BIWinterPeaks"
+  ],
+  "BBlueCrystalDense": [
+   "BIAutumn",
+   "BIMoon",
+   "BIWinterPeaks",
+   "BICometCinder"
+  ],
+  "BHardRock": [
+   "BIAutumn",
+   "BIMoon",
+   "BIAcidForest",
+   "BIWinterPeaks",
+   "BIMars"
+  ],
+  "BMinIron": [
+   "BIAutumn",
+   "BIMoon",
+   "BIAcidForest",
+   "BIWinterPeaks",
+   "BIMars",
+   "a:tree"
+  ],
+  "BMinAluminium": [
+   "BIAutumn",
+   "BIMoon",
+   "BIAcidForest",
+   "BIWinterPeaks",
+   "BIMars",
+   "a:bigcrater",
+   "a:tree"
+  ],
+  "BWood": [
+   "BIAutumn",
+   "BIMoon",
+   "a:grove",
+   "a:pit",
+   "a:tree"
+  ],
+  "BGreenLeaves": [
+   "BIAutumn",
+   "a:ruins",
+   "a:grove",
+   "a:tree",
+   "a:caveveins"
+  ],
+  "BVines": [
+   "BIAutumn"
+  ],
+  "BVinesY": [
+   "BIAutumn"
+  ],
+  "BChampiLight": [
+   "BIAutumn",
+   "a:ruins",
+   "a:grove",
+   "a:artifact",
+   "a:pit",
+   "a:tree",
+   "a:cavesphere",
+   "a:caveruins",
+   "a:caveveins"
+  ],
+  "BCactus": [
+   "BIAutumn"
+  ],
+  "BCactusBase": [
+   "BIAutumn"
+  ],
+  "BCactusFlower": [
+   "BIAutumn"
+  ],
+  "BYellowCrystalLight": [
+   "BIAutumn",
+   "BIMoon"
+  ],
+  "BYellowCrystalDense": [
+   "BIAutumn",
+   "BIMoon"
+  ],
+  "BAutumnStraw": [
+   "BIAutumn"
+  ],
+  "BAutumnHerbs1": [
+   "BIAutumn"
+  ],
+  "BAutumnHerbs2": [
+   "BIAutumn"
+  ],
+  "BPinkFlower": [
+   "BIAutumn",
+   "a:meadow"
+  ],
+  "BMoonRock": [
+   "BIMoon",
+   "a:robot",
+   "a:cavesphere",
+   "a:caveveins"
+  ],
+  "BMoonSoil": [
+   "BIMoon"
+  ],
+  "BMoonSoilCover": [
+   "BIMoon"
+  ],
+  "BMoonBrokenRock": [
+   "BIMoon"
+  ],
+  "BMoonRockColumn": [
+   "BIMoon"
+  ],
+  "BStainPurple": [
+   "BIMoon",
+   "a:meadow"
+  ],
+  "BStainEmpty": [
+   "BIMoon",
+   "BIWinterPeaks",
+   "BIMars",
+   "a:meadow"
+  ],
+  "BPurpleLeaves": [
+   "BIMoon",
+   "a:grove",
+   "a:tree"
+  ],
+  "BPinkLeaves": [
+   "BIMoon",
+   "a:grove",
+   "a:tree"
+  ],
+  "BMoonLight": [
+   "BIMoon",
+   "a:robot",
+   "a:ruins",
+   "a:grove",
+   "a:artifact",
+   "a:pit",
+   "a:tree",
+   "a:cavesphere",
+   "a:caveruins",
+   "a:caveveins"
+  ],
+  "BMoonLightDead": [
+   "BIMoon",
+   "a:caveveins"
+  ],
+  "BMoonLightColumn": [
+   "BIMoon",
+   "a:robot"
+  ],
+  "BMoonSand": [
+   "BIMoon"
+  ],
+  "BMoonHerbs1": [
+   "BIMoon"
+  ],
+  "BMoonHerbs2": [
+   "BIMoon"
+  ],
+  "BCoral2": [
+   "BIMoon"
+  ],
+  "BAcidRock": [
+   "BIAcidForest",
+   "a:caveveins"
+  ],
+  "BAcidSoil": [
+   "BIAcidForest"
+  ],
+  "BAcidSoilCover": [
+   "BIAcidForest"
+  ],
+  "BAcidWood": [
+   "BIAcidForest",
+   "a:grove",
+   "a:tree"
+  ],
+  "BAcidWoodHole": [
+   "BIAcidForest"
+  ],
+  "BAcidWoodBubble": [
+   "BIAcidForest"
+  ],
+  "BAcidLeaves": [
+   "BIAcidForest",
+   "a:grove",
+   "a:tree"
+  ],
+  "BAcidLeavesBubble": [
+   "BIAcidForest"
+  ],
+  "BAcidLeaves2": [
+   "BIAcidForest",
+   "a:grove",
+   "a:tree"
+  ],
+  "BAcidLeaves2Bubble": [
+   "BIAcidForest"
+  ],
+  "BAcidMush": [
+   "BIAcidForest"
+  ],
+  "BStainGreen": [
+   "BIAcidForest"
+  ],
+  "BAcidFruit": [
+   "BIAcidForest"
+  ],
+  "BBrownLeaves": [
+   "BIAcidForest",
+   "a:grove",
+   "a:tree"
+  ],
+  "BAcidTreeSap": [
+   "BIAcidForest"
+  ],
+  "BAcidHerb1": [
+   "BIAcidForest",
+   "a:grove",
+   "a:meadow",
+   "a:cavegarden"
+  ],
+  "BAcidHerb2": [
+   "BIAcidForest",
+   "a:grove",
+   "a:meadow",
+   "a:cavegarden"
+  ],
+  "BYellowPlant": [
+   "BIAcidForest",
+   "BIWinterPeaks",
+   "a:meadow"
+  ],
+  "BBluePlant": [
+   "BIAcidForest",
+   "a:meadow"
+  ],
+  "BCoral1": [
+   "BIAcidForest"
+  ],
+  "BWinterRock": [
+   "BIWinterPeaks",
+   "a:caveveins"
+  ],
+  "BWinterSoil": [
+   "BIWinterPeaks"
+  ],
+  "BWinterSoilCover": [
+   "BIWinterPeaks"
+  ],
+  "BWinterBrokenRock": [
+   "BIWinterPeaks"
+  ],
+  "BIce": [
+   "BIWinterPeaks",
+   "BIMars",
+   "a:ice",
+   "a:grove",
+   "a:pit",
+   "a:cavefrozen"
+  ],
+  "BCascadeSource": [
+   "BIWinterPeaks",
+   "a:grove",
+   "a:cascade",
+   "a:tree",
+   "a:cavecascade"
+  ],
+  "BWinterHidden": [
+   "BIWinterPeaks"
+  ],
+  "BStainWhite": [
+   "BIWinterPeaks",
+   "a:meadow"
+  ],
+  "BWinterWood": [
+   "BIWinterPeaks",
+   "a:grove",
+   "a:tree"
+  ],
+  "BWinterLeaves": [
+   "BIWinterPeaks",
+   "a:grove",
+   "a:tree"
+  ],
+  "BWinterLeavesCover": [
+   "BIWinterPeaks"
+  ],
+  "BBlackIce": [
+   "BIWinterPeaks",
+   "a:ice",
+   "a:grove",
+   "a:pit",
+   "a:tree"
+  ],
+  "BBlackIceLight": [
+   "BIWinterPeaks",
+   "a:robot",
+   "a:cavesphere"
+  ],
+  "BWinterHerb1": [
+   "BIWinterPeaks"
+  ],
+  "BWinterHerb2": [
+   "BIWinterPeaks"
+  ],
+  "BWinterHerb3": [
+   "BIWinterPeaks"
+  ],
+  "BFreezerPlant": [
+   "BIWinterPeaks"
+  ],
+  "BMarsRock": [
+   "BIMars",
+   "a:caveveins"
+  ],
+  "BMarsSoil": [
+   "BIMars"
+  ],
+  "BMarsQuickSand": [
+   "BIMars"
+  ],
+  "BMarsSoil2": [
+   "BIMars"
+  ],
+  "BMarsHardRock": [
+   "BIMars"
+  ],
+  "BMarsCraterRock": [
+   "BIMars",
+   "BICometCinder",
+   "a:caveveins"
+  ],
+  "BMarsBlueRock": [
+   "BIMars",
+   "BICometCinder",
+   "a:caveveins"
+  ],
+  "BMarsCactus": [
+   "BIMars"
+  ],
+  "BMarsCactusFossil": [
+   "BIMars"
+  ],
+  "BMarsCactusFlower": [
+   "BIMars"
+  ],
+  "BMarsRockFossil": [
+   "BIMars",
+   "a:caveveins"
+  ],
+  "BStainOrange": [
+   "BIMars",
+   "a:meadow"
+  ],
+  "BMarsHerb1": [
+   "BIMars"
+  ],
+  "BMarsHerb2": [
+   "BIMars"
+  ],
+  "BMarsHerb3": [
+   "BIMars"
+  ],
+  "BCoal": [
+   "BICometCinder",
+   "a:bigcrater",
+   "a:ruins",
+   "a:largepit",
+   "a:grove",
+   "a:crater",
+   "a:burned",
+   "a:cavesphere",
+   "a:caveveins"
+  ],
+  "BCoalHot": [
+   "BICometCinder",
+   "a:bigcrater",
+   "a:largepit",
+   "a:grove",
+   "a:crater",
+   "a:tree",
+   "a:burned",
+   "a:cavesphere",
+   "a:caveveins"
+  ],
+  "BLavaRock": [
+   "BICometCinder",
+   "a:volcano",
+   "a:crater",
+   "a:cavecascade"
+  ],
+  "BLava": [
+   "BICometCinder",
+   "a:largepit",
+   "a:volcano",
+   "a:cascade",
+   "a:cavecascade"
+  ],
+  "BShipHull": [
+   "a:capsule",
+   "a:robot"
+  ],
+  "BShipEngine": [
+   "a:capsule"
+  ],
+  "BShipWire": [
+   "a:capsule",
+   "a:robot"
+  ],
+  "BShipGlass": [
+   "a:capsule"
+  ],
+  "BAlienRock": [
+   "a:pillars",
+   "a:pyramid",
+   "a:crater",
+   "a:cavesphere"
+  ],
+  "BShipTubes": [
+   "a:robot"
+  ],
+  "BBonusMedium": [
+   "a:pyramid",
+   "a:ruins",
+   "a:artifact",
+   "a:bonus",
+   "a:cavesphere",
+   "a:caveruins",
+   "a:cavebonus"
+  ],
+  "BAlienTreasure": [
+   "a:pyramid",
+   "a:ruins",
+   "a:artifact",
+   "a:cavesphere",
+   "a:caveruins"
+  ],
+  "BHardRockWall": [
+   "a:ruins",
+   "a:pit",
+   "a:fence",
+   "a:caveruins"
+  ],
+  "BWoodPlank": [
+   "a:ruins",
+   "a:pit",
+   "a:caveruins"
+  ],
+  "BRockWall": [
+   "a:ruins",
+   "a:pit",
+   "a:fence",
+   "a:caveruins"
+  ],
+  "BRockWallSquare": [
+   "a:ruins",
+   "a:caveruins"
+  ],
+  "BWinterWall": [
+   "a:ruins",
+   "a:caveruins"
+  ],
+  "BMarsWall": [
+   "a:ruins",
+   "a:pit",
+   "a:caveruins"
+  ],
+  "BAcidWall": [
+   "a:ruins",
+   "a:caveruins"
+  ],
+  "BWoodPlate": [
+   "a:ruins",
+   "a:fence"
+  ],
+  "BShipPlate": [
+   "a:ruins"
+  ],
+  "BWoodColumn": [
+   "a:ruins",
+   "a:fence"
+  ],
+  "BHardRockColumn": [
+   "a:ruins"
+  ],
+  "BHealPlant": [
+   "a:ruins",
+   "a:artifact",
+   "a:meadow",
+   "a:heal",
+   "a:cavesphere",
+   "a:caveruins",
+   "a:cavegarden"
+  ],
+  "BBonusLarge": [
+   "a:ruins",
+   "a:artifact",
+   "a:cavesphere",
+   "a:caveruins",
+   "a:cavebonus"
+  ],
+  "BBlackLight": [
+   "a:ruins",
+   "a:artifact",
+   "a:crater",
+   "a:cavesphere",
+   "a:caveruins"
+  ],
+  "BBigMushHead": [
+   "a:bigmush"
+  ],
+  "BBigMushTrunk": [
+   "a:bigmush"
+  ],
+  "BMush": [
+   "a:bigmush",
+   "a:meadow"
+  ],
+  "BFrozenRock": [
+   "a:ice",
+   "a:cavesphere",
+   "a:cavefrozen",
+   "a:caveveins"
+  ],
+  "BPlantSoil": [
+   "a:grove",
+   "a:meadow",
+   "a:heal",
+   "a:cavegarden"
+  ],
+  "BHighHerb1": [
+   "a:grove",
+   "a:fence",
+   "a:meadow",
+   "a:cavegarden"
+  ],
+  "BHighHerb2": [
+   "a:grove",
+   "a:fence",
+   "a:meadow",
+   "a:cavegarden"
+  ],
+  "BHighHerb3": [
+   "a:grove",
+   "a:fence",
+   "a:meadow",
+   "a:cavegarden"
+  ],
+  "BHighHerb4": [
+   "a:grove",
+   "a:fence",
+   "a:meadow",
+   "a:cavegarden"
+  ],
+  "BHighHerb5": [
+   "a:grove",
+   "a:fence",
+   "a:meadow",
+   "a:cavegarden"
+  ],
+  "BHighHerb6": [
+   "a:grove",
+   "a:fence",
+   "a:meadow",
+   "a:cavegarden"
+  ],
+  "BArtiBomb": [
+   "a:crater"
+  ],
+  "BStainRed": [
+   "a:meadow"
+  ],
+  "BBonusSmall": [
+   "a:bonus",
+   "a:cavebonus"
+  ],
+  "BPlantRock": [
+   "a:cavesphere",
+   "a:caveveins",
+   "a:cavecascade"
+  ],
+  "BAcidHerbCeil": [
+   "a:cavegarden",
+   "a:cavecharges"
+  ],
+  "BCavePlantCeil": [
+   "a:cavegarden",
+   "a:cavecharges"
+  ],
+  "BYellowCeil": [
+   "a:cavecharges"
+  ],
+  "BPinkCharge": [
+   "a:crater",
+   "a:meadow",
+   "a:ruins",
+   "a:artifact",
+   "a:cavesphere",
+   "a:caveruins"
+  ]
+ }
+}
