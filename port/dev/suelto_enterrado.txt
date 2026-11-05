@@ -1,0 +1,56 @@
+# cambio del port: un suelto enterrado (un bloque puesto encima con otro solido encima) sale a una celda de al lado libre, la
+# mas cercana al jugador; sin lado libre, en la nave va al jugador. Antes subia atravesando todo lo de encima: en la zona del
+# sintetizador (local 59..60, 62..63, 3..4, bajo el techo de z 5) acababa sobre el techo de la nave (z 136), fuera de alcance.
+# Uso: devrun.ps1 -Script port/dev/suelto_enterrado.txt -Extra "--inv=BRock"
+wait 3
+# planeta: con un bloque puesto en su celda sube sobre el, como antes; con otro encima y uno en su celda sale por el lado del
+# jugador (61,61) y cae sobre la roca
+set 60 61 99 BRock
+set 61 61 99 BRock
+set 63 61 99 BRock
+tp 63.5 61.5 100 3.14 -0.5
+drop 60.5 61.5 100.5 BIron
+wait 60
+print loose
+set 60 61 100 BRock
+wait 30
+print loose
+set 60 61 102 BRock
+set 60 61 101 BRock
+wait 60
+print loose
+ship
+wait 10
+# columna 60,63 (jugador en la entrada, 63.5,62.5): con un bloque encima sube sobre el, como antes; con el segundo (y el techo
+# encima) sale al lado libre mas cercano al jugador, 61,63 (la sala), y cae al suelo. Antes subia hasta el techo de la nave (z 136)
+setl 60 63 3 BIron
+breakl 60 63 3
+wait 40
+print loose
+setl 60 63 3 BRock
+wait 30
+print loose
+setl 60 63 4 BRock
+wait 40
+print loose
+# esquina 59,62 (casco a dos lados) con los otros dos lados llenos: sin lado libre, va al jugador, que lo recoge
+setl 59 62 3 BIron
+breakl 59 62 3
+wait 40
+setl 60 62 3 BRock
+setl 59 63 3 BRock
+setl 60 62 4 BRock
+setl 59 63 4 BRock
+setl 59 62 3 BRock
+wait 30
+print loose
+setl 59 62 4 BRock
+wait 40
+print loose
+print inv
+# el de la sala se recoge al acercarse
+tpl 62.5 63.5 3
+wait 60
+print loose
+print inv
+quit
