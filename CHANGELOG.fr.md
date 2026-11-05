@@ -3,7 +3,7 @@
 [Español : `CHANGELOG.md`](CHANGELOG.md) · [English: `CHANGELOG.en.md`](CHANGELOG.en.md)
 
 ## Non publié
-- De **Cornor923** (merci !, PR 87-94) :
+- De **Cornor923** (merci !, PR 64-94) :
   - **Base de données ESCorp** (ajout du portage), dans l'ordinateur de bord, avec trois onglets : le **Kubindex**, avec tous
     les kubes du jeu par catégorie (viser un kube au laser le repère ; l'avoir dans l'inventaire le récupère, avec le nombre de
     fois où il a été posé, cassé et fabriqué, les recettes qui le donnent et celles qui l'utilisent) ; **Espace**, avec les types
@@ -28,7 +28,6 @@
   - Les félicitations de la fin du tutoriel disparaissent au décollage et durent 12 s (16 avant) : elles ne reviennent plus sur
     la planète suivante, suivies de « voici ta planète principale ».
   - Éditeur de Kubes : en français, l'aide dit de nouveau « enregistrer » pour Ctrl+S.
-- De **Cornor923** (merci !, PR 79-86) :
   - **Éditeur de Kubes** (ajout du portage) : dans le menu de démarrage, sous Nouvelle partie. On dessine les faces d'un bloc
     pixel par pixel dans une des formes que le jeu sait déjà dessiner (cube, cube à 6 faces, boîte, porte, plante, panneau,
     colonne...), on le voit tourner en 3D et on l'enregistre en fichier `.kube` dans le dossier `kubes` des données du jeu pour
@@ -41,10 +40,9 @@
   - En ouvrant l'ordinateur de bord ou le menu pause, le pointeur va au centre de la fenêtre.
   - La fenêtre du jeu s'ouvre directement à sa taille et avec son titre (avant, elle apparaissait petite un instant).
   - Les hautes herbes rouges ne lâchent plus de morceaux blancs en cassant.
-- Le sol sous des blocs partiels collés (p. ex. quatre lingots de fer ou d'aluminium dans le vaisseau) n'est plus noir
-  (changement du portage : dans l'original ces blocs ne laissent pas passer la lumière ; murs et plafonds inchangés).
-- Éditeur de Kubes : un kube nommé comme un nom réservé de Windows (con, aux, nul...) peut maintenant être enregistré.
-- De **Cornor923** (merci !, PR 64-78) :
+  - Le sol sous des blocs partiels collés (p. ex. quatre lingots de fer ou d'aluminium dans le vaisseau) n'est plus noir
+    (changement du portage : dans l'original ces blocs ne laissent pas passer la lumière ; murs et plafonds inchangés).
+  - Éditeur de Kubes : un kube nommé comme un nom réservé de Windows (con, aux, nul...) peut maintenant être enregistré.
   - **Licences d'exploration ESCorp** (ajout du port ; dans l'original, le serveur les gérait) : en aventure, scanner une
     planète utilise une licence, 4 en tout (1 principale et 3 d'exploration) ; illimité en créatif. La première planète
     scannée est la principale (avec le tutoriel, la sienne). **Le vaisseau ne se pilote qu'au-dessus de la planète
