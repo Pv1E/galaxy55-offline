@@ -1496,6 +1496,9 @@ class GameView {
 		if( !held ) {
 			armed = true;
 			actionWait = false;
+			// cambio del port: la pausa tras poner (15, Game.checkAction) solo marca el ritmo con el boton mantenido; al soltarlo se
+			// quita, si no un clic rapido justo despues (p. ej. una segunda tabla encima de la primera) no ponia nada
+			if( placedHold ) actionPause = 0;
 			placedHold = false;
 		}
 		laserActive = controls && held && armed && !actionWait;
