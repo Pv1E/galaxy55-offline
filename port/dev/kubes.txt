@@ -1,0 +1,159 @@
+# Editor de kubes (Menu principal > Editor de Kubes, debajo de Nueva partida): copiar bloques del juego de cada forma (neon,
+# puerta, planta, motor de 6 caras, columna), ver su vista previa 3D y las zonas que la forma no muestra, pintar, guardar en
+# port/out/testdata/Galaxy55/kubes y volver a cargarlo desde Mis kubes. print kube: forma, caja, caras y pixeles visibles.
+# Capturas port/out/kubes_*.png
+wait 3
+setlang fr
+# en el planeta, la cantina (una caja) ensena su "ES" al derecho por las caras +x y -y; un cubo entero lo ensenaria al reves
+# (sus UV van al contrario): el lienzo del editor tiene que ensenar las caras como el bloque (kubes_cantina_*)
+planet
+wait 30
+filla 44 52 84 76 46 56 BRock
+filla 44 52 84 76 57 75 none
+wait 20
+set 64 64 57 BChest
+tp 66.5 62.5 57.01 0 0
+lookat 64.5 64.5 57.4
+wait 10
+shot kubes_juego_cantina
+menu
+waitfor menu
+print menu
+shot kubes_menu
+tap down
+tap down
+tap enter
+wait 30
+print kube
+shot kubes_nuevo
+# neon: caja de 28 a 32 en Z con luz BFLight(12, 3) = Forte (12), se apaga a 4 kubes; solo se ven 4 filas de los lados
+kube load BShipLight
+wait 5
+print kube
+shot kubes_neon
+# la cantina en el lienzo y en la vista previa: "ES" al derecho. Pasada a cubo entero sigue igual en los dos (la casilla
+# guardada va dada la vuelta, como la necesita el atlas)
+kube load BChest
+wait 5
+print kube
+shot kubes_cantina_caja
+kube shape cube
+wait 5
+print kube
+shot kubes_cantina_cubo
+# guardada (su side.png va dada la vuelta) y vuelta a cargar: el lienzo ensena otra vez "ES" al derecho
+kube name Cantine cube test
+kube save
+kube load BRock
+kube tab 1
+kube file 0
+wait 5
+print kube
+shot kubes_cantina_recargada
+kube tab 0
+# la rueda sobre la lista la desplaza poco a poco, sin volver a pintar los iconos
+mouse 150 300
+wheel 1
+wheel 1
+wheel 1
+wait 2
+shot kubes_lista_rueda_mitad
+wait 30
+shot kubes_lista_rueda
+# puerta: caja fina y modelo abierto (cara Ouverte)
+kube load BShipDoor
+wait 3
+print kube
+kube face open
+wait 5
+print kube
+shot kubes_puerta_abierta
+kube load BPinkFlower
+wait 5
+print kube
+shot kubes_planta
+kube load BShipEngine
+wait 5
+print kube
+shot kubes_motor
+kube load BWoodColumn
+wait 5
+print kube
+shot kubes_columna
+# un kube nuevo: neon azul, pintado y guardado
+kube load BShipLight
+kube name Neon bleu test
+kube face side
+kube paint 0 0 31 3 FF5FCDE4
+kube face down
+kube paint 0 0 31 31 FF639BFF
+kube paint 4 4 27 27 FFCBDBFC
+wait 5
+print kube
+shot kubes_pintado
+kube save
+wait 3
+print kube
+kube tab 1
+wait 10
+print kube
+shot kubes_mios
+# cargar otro bloque con cambios: hace falta un segundo clic (mensaje en rojo)
+kube paint 0 0 1 1 FFFF0000
+mouse 44 132 click
+wait 5
+print kube
+shot kubes_aviso
+kube file 0
+wait 5
+print kube
+kube shape cube6
+wait 5
+print kube
+shot kubes_cubo6
+# las formas que el original tenia en Models.hx sin usarlas
+kube shape pipe
+wait 5
+print kube
+shot kubes_tubo
+kube shape pyramid
+wait 5
+print kube
+shot kubes_piramide
+kube shape cage
+wait 5
+print kube
+shot kubes_jaula
+# un cubo opaco con el dessous vacio avisa (el mundo lo pintaria negro); un clic en la flecha derecha de Rendu lo pasa a Ajoure
+kube load BRock
+wait 3
+kube face down
+kube paint 0 0 31 31 0
+wait 5
+shot kubes_opaco_hueco
+mouse 1240 151 click
+wait 5
+print kube
+shot kubes_calado_hueco
+# con el raton en el lienzo: B + clic pinta un pixel (deshacer 2), G + clic rellena el hueco (deshacer 3), Ctrl+Z lo anula
+kube face side
+tap b
+mouse 447 111 click
+wait 3
+print kube
+tap g
+kube face down
+mouse 600 300 click
+wait 3
+print kube
+shot kubes_relleno
+press ctrl
+tap z
+release ctrl
+wait 3
+print kube
+shot kubes_deshecho
+tap esc
+wait 3
+print menu
+quit
