@@ -23,7 +23,8 @@
   - **Licences d'exploration ESCorp** (ajout du port ; dans l'original, le serveur les gérait) : en aventure, scanner une
     planète utilise une licence, 4 en tout (1 principale et 3 d'exploration) ; illimité en créatif. La première planète
     scannée est la principale (avec le tutoriel, la sienne). **Le vaisseau ne se pilote qu'au-dessus de la planète
-    principale.** Dans l'ordinateur de bord, « Licences d'exploration » les montre et permet de changer de planète principale
+    principale** : ailleurs, l'ordinateur de bord ne propose pas « Piloter le vaisseau ». Là, « Licences d'exploration » les
+    montre et permet de changer de planète principale
     (gratuit la première fois, puis 1000 crédits et 24 heures réelles entre deux changements) ; sur la carte, « Abandonner »
     libère la licence d'une planète. Les anciennes parties donnent une licence aux planètes visitées et celle de départ est la principale.
   - Le volume des Options s'applique enfin aux sons (à 0, plus rien).

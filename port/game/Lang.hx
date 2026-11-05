@@ -174,7 +174,6 @@ class Lang {
 		"licenses.nocredits" => ["Te faltan créditos: el cambio cuesta %n%.", "Not enough credits: the change costs %n%.", "Pas assez de crédits : le changement coûte %n%."],
 		"licenses.notyours" => ["Ese planeta no puede ser tu planeta principal.", "That planet cannot be your main planet.", "Cette planète ne peut pas devenir ta planète principale."],
 		"license.full" => ["No te queda ninguna licencia libre.\nAbandona uno de tus planetas para liberar una.", "You have no free license left.\nAbandon one of your planets to free one.", "Tu n'as plus de licence libre.\nAbandonne une de tes planètes pour en libérer une."],
-		"license.pilotmain" => ["Solo puedes pilotar la nave sobre tu planeta principal.", "You can only pilot the ship over your main planet.", "Tu ne peux piloter le vaisseau qu'au-dessus de ta planète principale."],
 		"license.keepmain" => ["No puedes abandonar tu planeta principal.", "You cannot abandon your main planet.", "Tu ne peux pas abandonner ta planète principale."],
 		"abandon.ask" => ["¿Abandonar %name%?", "Abandon %name%?", "Abandonner %name% ?"],
 		"abandon.warn" => ["Perderás su licencia y todo lo que hayas cambiado en él, y no podrás volver nunca.", "You will lose its license and everything you changed there, and you will never be able to go back.", "Tu perdras sa licence et tout ce que tu y as modifié, et tu ne pourras plus jamais y retourner."],

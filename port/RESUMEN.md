@@ -98,6 +98,10 @@ etiqueta `flash-version` y la rama `flash`, con sus SWF y archivos de compilaci�
   "-kube" a los nombres de dispositivo de Windows (con, aux, nul, prn, com1-9, lpt1-9).
   Con TEST_RUN la ventana además se crea fuera de la pantalla (-10000,-10000): devrun la pedía minimizada, pero SDL la mostraba
   en el centro del escritorio (pasaba ya antes de estos PR); las capturas salen igual.
+- "Pilotar la nave" fuera del planeta principal (2026-11-05, Cornor923): en aventura el ordenador de a bordo ya no lo ofrece
+  (`GalaxyApp.pilotOffered`: `canPilot` y `pilotLicensed`) en vez de sacarlo y avisar al pulsarlo (se quita el texto
+  `license.pilotmain`); en creativo, en todos. El menú guardado se rehace al volver de las licencias si ha cambiado
+  (`showComputer`). Guiones `licencias` y `licencias_creativo`.
 
 ## Qué falló y cómo se resolvió
 | Problema | Causa | Solución |

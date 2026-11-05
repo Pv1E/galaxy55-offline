@@ -1,5 +1,5 @@
 # creativo y licencias (anadido del port): sin limite (se escanean 5 planetas), el planeta inicial es el principal y se pilota
-# en todos; la pantalla de licencias lo dice. Semilla 4242 (sistema 0: planetas 0 y 1; sistema 1: 10, 11 y 12). -Timeout 600
+# en todos (el ordenador tiene "Pilotar la nave" tambien fuera del principal); la pantalla de licencias lo dice. Semilla 4242 (sistema 0: planetas 0 y 1; sistema 1: 10, 11 y 12). -Timeout 600
 wait 3
 newgame 4242
 waitfor planet 6000
@@ -48,6 +48,8 @@ pilot
 pilotstop
 computer
 wait 3
+print menu
+shot licencias_creativo_ordenador
 licenses open
 wait 3
 print menu
