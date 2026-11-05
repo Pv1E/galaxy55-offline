@@ -130,4 +130,8 @@ A player got it running on Linux this way; we have not tested it.
   not allowed on board. The original only stopped the blocks that spread (cascade source and lava), without a message.
 - In the hangar you dig four times faster and without charges, like in the ship's synthesizer areas: a change of this port,
   so that editing the ship is comfortable. In the original you dug there as on a planet, with the charges.
+- Falling into quicksand (a change of this port): touching it gives the hit of the fall down to it, as on the ground, and the
+  sand stops the fall; when leaving it from below, the fall counts from the way out. In the original it only slowed time
+  down: the speed kept growing inside and the damage came at the end, that of the whole fall. As in the original, the sand
+  takes life while your eyes are in it and, from inside, looking down aims at nothing.
 - What is missing is in `TODO.md`, bugs in `BUGS.md` and ideas for later in `IDEAS.en.md` (repository root).

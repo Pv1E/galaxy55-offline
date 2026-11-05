@@ -7,7 +7,8 @@ import ExpData;
  * ella, "Pas de licence" al escanear) y los planetas se abandonaban desde la web (ADiscardPlanet); esa parte no se publico.
  * - Escanear un planeta gasta una licencia. En aventura hay MAX (1 principal y MAX - 1 de exploracion); en creativo no hay limite.
  * - El primer planeta escaneado pasa a ser el principal; con el tutorial, su planeta al acabarlo (Tutorial.finish). En aventura
- *   es el unico sobre el que se pilota la nave (GameView.pilotLicensed), y por tanto el unico en el que se elige donde aparece.
+ *   es el unico sobre el que se pilota la nave (GameView.pilotLicensed; en los demas el ordenador de a bordo no lo ofrece), y por
+ *   tanto el unico en el que se elige donde aparece.
  * - Cambiar de principal: solo al planeta en el que estas, desde el ordenador de a bordo (Licencias de exploracion). Gratis la
  *   primera vez, luego MAIN_COST creditos; tras cada cambio hay que esperar MAIN_COOLDOWN segundos de hora real.
  * - Abandonar un planeta con licencia (ventana del mapa, con la nave a su lado; nunca el principal) libera la licencia y borra

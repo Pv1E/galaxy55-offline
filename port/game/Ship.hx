@@ -52,7 +52,28 @@ class Ship {
 	var midX = 0.;
 	var midY = 0.;
 
-	public function new( planet : World, atlas : h3d.mat.Texture, parent : h3d.scene.Object, ?edits : Array<Int>, ?shipBytes : haxe.io.Bytes, ?at : { x : Int, y : Int } ) {
+	/**
+	 * El mundo de la nave sin construir (anadido del port), para la pantalla de carga: lo construye poco a poco (World.step)
+	 * mientras se carga el planeta y luego se lo da a new Ship (ready). Construirlo de golpe al llegar al planeta (la luz y los
+	 * 64 trozos de la nave) alargaba la imagen de la llegada
+	 */
+	public static function prepare( planet : World, atlas : h3d.mat.Texture, parent : h3d.scene.Object, ?edits : Array<Int>, ?shipBytes : haxe.io.Bytes ) : World {
+		var w = makeWorld(planet, atlas, parent, edits, ShipData.load(shipBytes != null ? shipBytes : Const.DEFAULT_SHIP));
+		// no se dibuja hasta la llegada (new Ship)
+		w.root.visible = false;
+		return w;
+	}
+
+	static function makeWorld( planet : World, atlas : h3d.mat.Texture, parent : h3d.scene.Object, edits : Array<Int>, data : ShipData.ShipDataInfo ) : World {
+		// cambio del port: una puerta abierta a bordo vuelve cerrada al rehacer la nave (cargar, viajar, volver del hangar), como en
+		// el original, que no guardaba los cambios de la nave (ShipLogic.init). Las claves negativas son del mar, no bloques
+		if( edits != null )
+			edits = [for( i in 0...edits.length ) i & 1 == 1 && edits[i - 1] >= 0 ? Hangar.shipId(Block.all[edits[i] & 0xFFFF]) | (edits[i] & ~0xFFFF) : edits[i]];
+		return new World(planet.seed, planet.biomeName, 1, parent, atlas, false, edits, data, planet.sky);
+	}
+
+	/** ready: su mundo, de Ship.prepare con los mismos edits y shipBytes (si no, se construye aqui) */
+	public function new( planet : World, atlas : h3d.mat.Texture, parent : h3d.scene.Object, ?edits : Array<Int>, ?shipBytes : haxe.io.Bytes, ?at : { x : Int, y : Int }, ?ready : World ) {
 		this.planet = planet;
 		data = ShipData.load(shipBytes != null ? shipBytes : Const.DEFAULT_SHIP);
 		crafts = data.crafts;
@@ -77,11 +98,11 @@ class Ship {
 		}
 		start = { x : data.entry.x, y : data.entry.y, z : data.entry.z + 1 + World.SHIP_Z };
 		var dx = x - start.x, dy = y - start.y;
-		// cambio del port: una puerta abierta a bordo vuelve cerrada al rehacer la nave (cargar, viajar, volver del hangar), como en
-		// el original, que no guardaba los cambios de la nave (ShipLogic.init). Las claves negativas son del mar, no bloques
-		if( edits != null )
-			edits = [for( i in 0...edits.length ) i & 1 == 1 && edits[i - 1] >= 0 ? Hangar.shipId(Block.all[edits[i] & 0xFFFF]) | (edits[i] & ~0xFFFF) : edits[i]];
-		world = new World(planet.seed, planet.biomeName, 1, parent, atlas, false, edits, data, planet.sky);
+		world = ready != null ? ready : makeWorld(planet, atlas, parent, edits, data);
+		// la ya construida pasa al final de la escena, donde quedaba al crearla aqui (despues de la mano, los objetos sueltos y las
+		// particulas): el orden de dibujo no cambia
+		parent.addChild(world.root);
+		world.root.visible = true;
 		var guard = 0;
 		while( !world.isReady() && guard++ < 1000 ) world.step(1000);
 		// el ordenador de la nave no se puede perder (sin el no hay mapa ni hangar): si una partida lo tiene roto, vuelve

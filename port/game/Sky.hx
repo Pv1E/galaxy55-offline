@@ -211,8 +211,24 @@ class Sky {
 		dome.visible = false;
 		if( stars != null ) stars.visible = false;
 		space = new h3d.scene.Object(root);
-		SpaceSky.build(space);
+		spaceTask = SpaceSky.build(space);
 		shooting = [];
+	}
+
+	/** lo que falta por pintar del cielo de espacio (SpaceSky.build): la pantalla de carga lo pinta poco a poco (stepSpace) */
+	var spaceTask : Void -> Bool;
+
+	/** pinta un poco mas del cielo de espacio durante unos budgetMs; true si ya esta entero */
+	public function stepSpace( budgetMs : Float ) : Bool {
+		if( spaceTask == null ) return true;
+		var t0 = haxe.Timer.stamp();
+		do {
+			if( !spaceTask() ) {
+				spaceTask = null;
+				return true;
+			}
+		} while( (haxe.Timer.stamp() - t0) * 1000 < budgetMs );
+		return false;
 	}
 
 	static function dirRand( rnd : hxd.Rand ) {

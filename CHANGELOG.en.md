@@ -21,10 +21,10 @@
 - From **Cornor923** (thank you!, PRs 64-78):
   - **ESCorp exploration licenses** (port addition; in the original the server handled them): in adventure, scanning a planet
     uses a license, 4 in all (1 main and 3 exploration); unlimited in creative. The first scanned planet is the main one (with
-    the tutorial, its planet). **The ship can only be piloted over the main planet.** On the on-board computer, "Exploration
-    licenses" shows them and lets you change the main planet (free the first time, then 1000 credits and 24 real hours
-    between changes); on the map, "Abandon" frees a planet's license. Older saves give a license to visited planets and the
-    start planet is the main one.
+    the tutorial, its planet). **The ship can only be piloted over the main planet**: elsewhere, the on-board computer does
+    not offer "Pilot the ship". There, "Exploration licenses" shows them and lets you change the main planet (free the first
+    time, then 1000 credits and 24 real hours between changes); on the map, "Abandon" frees a planet's license. Older saves
+    give a license to visited planets and the start planet is the main one.
   - The Options volume now applies to the sounds (0 is silence).
   - A cascade behind glass is visible; the camera no longer enters the block above when climbing a cascade.
   - Blocks can be placed on tall grass (it is trampled) and the placement ghost only shows where a block can go.

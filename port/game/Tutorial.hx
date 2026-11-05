@@ -37,9 +37,12 @@ class Tutorial {
 
 	static inline var NEED_CITRONOX = 3;
 	static inline var NEED_ETHERIUM = 2;
-	/** segundos de la explicacion de HULL y de la felicitacion final; despues, la del planeta principal (Licenses) */
+	/**
+	 * segundos de la explicacion de HULL y de la felicitacion final; despues, la del planeta principal (Licenses). Las dos
+	 * ultimas solo en el planeta: se quitan al despegar (takeoff)
+	 */
 	static inline var HULL_TIME = 9.;
-	static inline var DONE_TIME = 16.;
+	static inline var DONE_TIME = 12.;
 	static inline var MAIN_TIME = 10.;
 
 	var hullTime = 0.;
@@ -94,6 +97,12 @@ class Tutorial {
 		doneTime = DONE_TIME + MAIN_TIME;
 		if( onDone != null ) onDone();
 	}
+
+	/**
+	 * al despegar: fuera la felicitacion y el mensaje del planeta principal. El tiempo solo corre jugando (update), asi que la
+	 * felicitacion se quedaba en el mapa y el mensaje del planeta principal ("aqui") salia despues, al aterrizar en otro
+	 */
+	public function takeoff() doneTime = 0;
 
 	/**
 	 * Mientras dura, el sintetizador solo fabrica lo que el tutorial pide: aluminio (de la bauxita, ALU) y blindaje (del aluminio,

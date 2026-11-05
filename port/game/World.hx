@@ -39,6 +39,38 @@ class MeshBuf {
 	public function new() {}
 }
 
+/**
+ * Malla de un trozo del mundo (anadido del port): un Polygon que, al subirse a la tarjeta, suelta sus puntos, normales, uvs y
+ * colores (cuatro objetos por vertice) y se queda solo con los floats ya preparados, por si hubiera que volver a subirlos.
+ * Con los de todo el planeta vivos, cada pasada del recolector de memoria de HashLink tardaba decenas de ms (al construir
+ * los trozos en la carga y al jugar)
+ */
+class ChunkPrim extends h3d.prim.Polygon {
+	var data : hxd.FloatBuffer;
+	var format : hxd.BufferFormat;
+	var verts = 0;
+
+	override function alloc( engine : h3d.Engine ) {
+		if( data == null ) {
+			format = getBufferFormat();
+			data = getCPUBuffer();
+			verts = points.length;
+			// la caja (getBounds) se calcula con los puntos y se queda guardada
+			getBounds();
+			points = null;
+			normals = null;
+			uvs = null;
+			colors = null;
+		}
+		dispose();
+		buffer = h3d.Buffer.ofFloats(data, format);
+		if( idx != null )
+			indexes = h3d.Indexes.alloc(idx);
+	}
+
+	override function vertexCount() return verts;
+}
+
 /** Una bajada del mar mientras se reparte su luz (World.reduceWater), que puede durar varios fotogramas. */
 class SeaLight {
 	public var z = 0;
@@ -232,6 +264,35 @@ class World {
 
 	public inline function isReady() return phase >= 2;
 
+	/** la luz de todo el mundo mientras se carga (lightTask), repartida entre los pasos, y lo que lleva gastado */
+	var lighting : Void -> Bool;
+	var lightSpent = 0.;
+
+	/** avanza la luz hasta acabarla o hasta gastar el tiempo de este paso (empezado en t0); true si ha acabado */
+	function lightSteps( t0 : Float, budgetMs : Float ) : Bool {
+		var t1 = haxe.Timer.stamp();
+		var more = true;
+		while( more && (haxe.Timer.stamp() - t0) * 1000 < budgetMs )
+			more = lighting();
+		lightSpent += haxe.Timer.stamp() - t1;
+		if( more ) return false;
+		lighting = null;
+		lightTime();
+		return true;
+	}
+
+	/** --lighttime: lo que ha costado la luz de todo el mundo y su suma (Adler-32), para comprobar que no cambia */
+	function lightTime() {
+		if( Sys.args().indexOf("--lighttime") < 0 ) return;
+		var ms = Std.int(lightSpent * 1000), a = 1, b = 0;
+		for( i in 0...light.length ) {
+			a = (a + light.get(i)) % 65521;
+			b = (b + a) % 65521;
+		}
+		Sys.println("luz " + biomeName + (isShip ? " (nave)" : "") + " " + size + ": " + ms + " ms, suma "
+			+ StringTools.hex(a, 4) + StringTools.hex(b, 4));
+	}
+
 	/** anomalias puestas por el generador (DetailsGenerator.placed: posicion y tipo), para la Base de datos ESCorp */
 	public function anomalies() return gen.placed;
 
@@ -239,29 +300,31 @@ class World {
 	public function step( budgetMs : Float ) : Float {
 		var t0 = haxe.Timer.stamp();
 		if( phase == 0 && isShip ) {
-			applySaved();
-			computeLight();
-			phase = 1;
+			if( shipCells != null && !placeCells(t0, budgetMs) ) return progress = 0.25;
+			if( lighting == null ) {
+				applySaved();
+				lighting = lightTask();
+			}
+			if( lightSteps(t0, budgetMs) ) phase = 1;
 			return progress = 0.75;
 		}
 		if( phase == 0 ) {
-			var p0 = gen.progress;
-			var busy = gen.process(Std.int(budgetMs));
-			if( Sys.args().indexOf("--frametime") >= 0 && haxe.Timer.stamp() - t0 > 0.2 )
-				Sys.println("generador: " + Std.int((haxe.Timer.stamp() - t0) * 1000) + " ms en un paso (progreso " + Std.int(p0 * 100) + "% -> " + Std.int(gen.progress * 100) + "%)");
-			if( !busy ) {
+			if( lighting == null ) {
+				var p0 = gen.progress;
+				var busy = gen.process(Std.int(budgetMs));
+				if( Sys.args().indexOf("--frametime") >= 0 && haxe.Timer.stamp() - t0 > 0.2 )
+					Sys.println("generador: " + Std.int((haxe.Timer.stamp() - t0) * 1000) + " ms en un paso (progreso " + Std.int(p0 * 100) + "% -> " + Std.int(gen.progress * 100) + "%)");
+				if( busy ) return progress = gen.progress * 0.75;
 				bytes = gen.getBytes().b;
 				initLightTables();
 				// el sitio de la nave se elige antes de aplicar los cambios guardados: si no, con el suelo cavado o construido bajo
 				// la nave, al cargar la partida la nave aparecia en otro sitio
 				if( savedEdits != null && savedEdits.length > 0 ) shipPlace();
 				applySaved();
-				var tl = haxe.Timer.stamp();
-				computeLight();
-				if( Sys.args().indexOf("--lighttime") >= 0 ) Sys.println("luz " + size + ": " + Std.int((haxe.Timer.stamp() - tl) * 1000) + " ms");
-				phase = 1;
+				lighting = lightTask();
 			}
-			return progress = (phase == 0 ? gen.progress * 0.75 : 0.75);
+			if( lightSteps(t0, budgetMs) ) phase = 1;
+			return progress = 0.75;
 		}
 		if( phase == 1 ) {
 			var n = size >> 4;
@@ -504,6 +567,17 @@ class World {
 	 * despues cada bloque luminoso (BFLight) ilumina su entorno.
 	 */
 	function computeLight() {
+		var task = lightTask();
+		while( task() ) {}
+	}
+
+	/**
+	 * computeLight a trozos (anadido del port): de una vez tardaba 50-130 ms en la pantalla de carga de un planeta y casi un
+	 * segundo en la de la nave nodriza. Cada llamada a la tarea hace un trozo (una fila de columnas al sol, unos miles de
+	 * celdas de la onda, las lamparas de una fila) y devuelve false al acabar. Todo en el mismo orden que de una vez: la luz
+	 * sale igual (--lighttime da su suma)
+	 */
+	function lightTask() : Void -> Bool {
 		var n = size * size * HEIGHT;
 		light = haxe.io.Bytes.alloc(n);
 		idTag = [for( b in gen.blocks ) b == null ? 0 : Type.enumIndex(b.type)];
@@ -512,87 +586,120 @@ class World {
 		if( lsun < 0 ) lsun = 0;
 		var seeds = new Array<Int>();
 		var top = lightTop >= 0 ? lightTop : HEIGHT - 1;
-		for( y in 0...size )
-			for( x in 0...size ) {
-				var col = x + y * size;
-				var base = col << ZBITS;
-				var cxm = x == 0 ? col + size - 1 : col - 1;
-				var cym = y == 0 ? col + size * (size - 1) : col - size;
-				var z = top;
-				while( z >= 0 ) {
-					var p = base | z;
-					var t = idTag[bytes.get(p)];
-					if( t != 0 ) {
-						if( t < NOLIGHT ) {
-							light.set(p, lsun);
-							seeds.push(p);
-						}
-						break;
-					}
-					light.set(p, lmax);
-					// la luz se cuela hacia los vecinos -x e -y que aun no la tienen
-					var q = (cxm << ZBITS) | z;
-					if( light.get(q) == 0 && idTag[bytes.get(q)] < NOLIGHT ) {
-						light.set(q, lsun);
-						seeds.push(q);
-					}
-					q = (cym << ZBITS) | z;
-					if( light.get(q) == 0 && idTag[bytes.get(q)] < NOLIGHT ) {
-						light.set(q, lsun);
-						seeds.push(q);
-					}
-					z--;
+		var stage = 0, y = 0, p0 = 0;
+		var wave : Void -> Bool = null;
+		var infos = new Array<{ p : Int, f : Float }>();
+		var lightIdx : Array<Int> = null, powers : Array<Float> = null;
+		return function() {
+			switch( stage ) {
+			case 0:
+				// luz de sol, una fila de columnas
+				sunRow(y, lmax, lsun, top, seeds);
+				if( ++y == size ) {
+					stage = 1;
+					wave = floodTask(seeds, sunP - sunF * 2, sunF);
 				}
-				// bajo el primer bloque: aire/bloques con luz directa a su lado
-				while( z > 0 ) {
-					var p = base | z;
-					if( idTag[bytes.get(p)] < NOLIGHT && (isSunAir((cxm << ZBITS) | z, lmax) || isSunAir((cym << ZBITS) | z, lmax)) ) {
+			case 1:
+				if( wave() ) return true;
+				// bloques luminosos
+				lightIdx = [for( b in gen.blocks ) -1];
+				for( i in 0...gen.blocks.length ) {
+					var b = gen.blocks[i];
+					if( b == null || b.special == null ) continue;
+					switch( b.special ) {
+					case BFLight(p, f):
+						var ip = Std.int(p);
+						if( ip > 15 ) ip = 15;
+						lightIdx[i] = infos.length;
+						infos.push({ p : ip, f : lampFalloff != null ? lampFalloff : (f == null ? 1.0 : f) });
+					default:
+					}
+				}
+				powers = [for( b in gen.blocks ) 0.];
+				for( i in 0...gen.blocks.length ) {
+					var b = gen.blocks[i];
+					if( b == null || b.special == null ) continue;
+					switch( b.special ) {
+					case BFLight(p, _): powers[i] = p;
+					default:
+					}
+				}
+				stage = infos.length > 0 ? 2 : 3;
+			case 2:
+				// las lamparas de un cuarto de fila de columnas (en la nodriza, llena de lamparas, una fila entera pasaba de 50 ms)
+				var end = p0 + (size * HEIGHT >> 2);
+				lamps(p0, end, lightIdx, infos, powers);
+				p0 = end;
+				if( p0 >= n ) {
+					stage = 3;
+					p0 = 0;
+				}
+			default:
+				if( minLight <= 0 || p0 >= n ) return false;
+				var end = p0 + size * HEIGHT;
+				for( p in p0...end )
+					if( light.get(p) < minLight ) light.set(p, minLight);
+				p0 = end;
+			}
+			return true;
+		};
+	}
+
+	/** luz de sol de la fila y de columnas (lightTask) */
+	function sunRow( y : Int, lmax : Int, lsun : Int, top : Int, seeds : Array<Int> ) {
+		for( x in 0...size ) {
+			var col = x + y * size;
+			var base = col << ZBITS;
+			var cxm = x == 0 ? col + size - 1 : col - 1;
+			var cym = y == 0 ? col + size * (size - 1) : col - size;
+			var z = top;
+			while( z >= 0 ) {
+				var p = base | z;
+				var t = idTag[bytes.get(p)];
+				if( t != 0 ) {
+					if( t < NOLIGHT ) {
 						light.set(p, lsun);
 						seeds.push(p);
 					}
-					z--;
+					break;
 				}
+				light.set(p, lmax);
+				// la luz se cuela hacia los vecinos -x e -y que aun no la tienen
+				var q = (cxm << ZBITS) | z;
+				if( light.get(q) == 0 && idTag[bytes.get(q)] < NOLIGHT ) {
+					light.set(q, lsun);
+					seeds.push(q);
+				}
+				q = (cym << ZBITS) | z;
+				if( light.get(q) == 0 && idTag[bytes.get(q)] < NOLIGHT ) {
+					light.set(q, lsun);
+					seeds.push(q);
+				}
+				z--;
 			}
-		flood(seeds, sunP - sunF * 2, sunF);
+			// bajo el primer bloque: aire/bloques con luz directa a su lado
+			while( z > 0 ) {
+				var p = base | z;
+				if( idTag[bytes.get(p)] < NOLIGHT && (isSunAir((cxm << ZBITS) | z, lmax) || isSunAir((cym << ZBITS) | z, lmax)) ) {
+					light.set(p, lsun);
+					seeds.push(p);
+				}
+				z--;
+			}
+		}
+	}
 
-		// bloques luminosos
-		var infos = new Array<{ p : Int, f : Float }>();
-		var lightIdx = [for( b in gen.blocks ) -1];
-		for( i in 0...gen.blocks.length ) {
-			var b = gen.blocks[i];
-			if( b == null || b.special == null ) continue;
-			switch( b.special ) {
-			case BFLight(p, f):
-				var ip = Std.int(p);
-				if( ip > 15 ) ip = 15;
-				lightIdx[i] = infos.length;
-				infos.push({ p : ip, f : lampFalloff != null ? lampFalloff : (f == null ? 1.0 : f) });
-			default:
-			}
+	/** las lamparas de las celdas p0 ... end - 1 (lightTask): cada una ilumina su entorno */
+	function lamps( p0 : Int, end : Int, lightIdx : Array<Int>, infos : Array<{ p : Int, f : Float }>, powers : Array<Float> ) {
+		for( p in p0...end ) {
+			var id = bytes.get(p);
+			var li = lightIdx[id];
+			if( li < 0 ) continue;
+			var info = infos[li];
+			if( light.get(p) >= info.p ) continue;
+			light.set(p, info.p);
+			flood([p], powers[id] - info.f, info.f);
 		}
-		if( infos.length > 0 ) {
-			var powers = [for( b in gen.blocks ) 0.];
-			for( i in 0...gen.blocks.length ) {
-				var b = gen.blocks[i];
-				if( b == null || b.special == null ) continue;
-				switch( b.special ) {
-				case BFLight(p, _): powers[i] = p;
-				default:
-				}
-			}
-			for( p in 0...n ) {
-				var id = bytes.get(p);
-				var li = lightIdx[id];
-				if( li < 0 ) continue;
-				var info = infos[li];
-				if( light.get(p) >= info.p ) continue;
-				light.set(p, info.p);
-				flood([p], powers[id] - info.f, info.f);
-			}
-		}
-		if( minLight > 0 )
-			for( p in 0...n )
-				if( light.get(p) < minLight ) light.set(p, minLight);
 	}
 
 	inline function isSunAir( p : Int, lmax : Int ) : Bool {
@@ -606,7 +713,6 @@ class World {
 
 	function flood( seeds : Array<Int>, lvalue : Float, delta : Float ) {
 		var cur = seeds;
-		var sz = size;
 		var spare = floodA;
 		while( true ) {
 			var l = Std.int(lvalue);
@@ -614,26 +720,64 @@ class World {
 			if( l <= 0 || cur.length == 0 ) break;
 			var next = spare == cur ? (cur == floodA ? floodB : floodA) : spare;
 			next.resize(0);
-			for( p in cur ) {
-				var z = p & (HEIGHT - 1);
-				var col = p >> ZBITS;
-				var x = col % sz;
-				var y = Std.int(col / sz);
-				var c = x == 0 ? col + sz - 1 : col - 1;
-				spread((c << ZBITS) | z, l, next);
-				c = x == sz - 1 ? col - (sz - 1) : col + 1;
-				spread((c << ZBITS) | z, l, next);
-				c = y == 0 ? col + sz * (sz - 1) : col - sz;
-				spread((c << ZBITS) | z, l, next);
-				c = y == sz - 1 ? col - sz * (sz - 1) : col + sz;
-				spread((c << ZBITS) | z, l, next);
-				if( z > 0 ) spread(p - 1, l, next);
-				if( z < HEIGHT - 1 ) spread(p + 1, l, next);
-			}
+			for( p in cur )
+				floodCell(p, l, next);
 			spare = cur == floodA || cur == floodB ? cur : (next == floodA ? floodB : floodA);
 			cur = next;
 			lvalue -= delta;
 		}
+	}
+
+	/** celdas de la onda de lightTask por llamada */
+	static inline var FLOOD_CHUNK = 4096;
+
+	/** flood a trozos (lightTask): FLOOD_CHUNK celdas del anillo por llamada, en el mismo orden; false al acabar */
+	function floodTask( seeds : Array<Int>, lvalue : Float, delta : Float ) : Void -> Bool {
+		var cur = seeds, next = new Array<Int>(), i = 0;
+		var other = new Array<Int>();
+		return function() {
+			var l = Std.int(lvalue);
+			if( l > 15 ) l = 15;
+			if( l <= 0 || cur.length == 0 ) return false;
+			var end = i + FLOOD_CHUNK;
+			if( end > cur.length ) end = cur.length;
+			floodRange(cur, i, end, l, next);
+			i = end;
+			if( i == cur.length ) {
+				// el anillo siguiente
+				var old = cur;
+				cur = next;
+				next = old == seeds ? other : old;
+				next.resize(0);
+				i = 0;
+				lvalue -= delta;
+			}
+			return true;
+		};
+	}
+
+	function floodRange( cur : Array<Int>, from : Int, to : Int, l : Int, next : Array<Int> ) {
+		for( k in from...to )
+			floodCell(cur[k], l, next);
+	}
+
+	/** un paso de la onda desde la celda p: sus 6 vecinas que tengan menos luz que l pasan a l y van a next */
+	inline function floodCell( p : Int, l : Int, next : Array<Int> ) {
+		var sz = size;
+		var z = p & (HEIGHT - 1);
+		var col = p >> ZBITS;
+		var x = col % sz;
+		var y = Std.int(col / sz);
+		var c = x == 0 ? col + sz - 1 : col - 1;
+		spread((c << ZBITS) | z, l, next);
+		c = x == sz - 1 ? col - (sz - 1) : col + 1;
+		spread((c << ZBITS) | z, l, next);
+		c = y == 0 ? col + sz * (sz - 1) : col - sz;
+		spread((c << ZBITS) | z, l, next);
+		c = y == sz - 1 ? col - sz * (sz - 1) : col + sz;
+		spread((c << ZBITS) | z, l, next);
+		if( z > 0 ) spread(p - 1, l, next);
+		if( z < HEIGHT - 1 ) spread(p + 1, l, next);
 	}
 
 	inline function spread( q : Int, l : Int, next : Array<Int> ) {
@@ -650,8 +794,29 @@ class World {
 		wraps = false;
 		bytes = haxe.io.Bytes.alloc(size * size * HEIGHT);
 		initLightTables();
-		for( c in d.cells )
-			bytes.set(((c.x + c.y * size) << ZBITS) | c.z, localId(Block.all[c.id]));
+		// las celdas se ponen en los primeros pasos de la carga (placeCells): las ~390 000 de la nave nodriza tardaban ~100 ms
+		shipCells = d.cells;
+		shipCell = 0;
+	}
+
+	/** celdas de la nave aun por poner (initShip) y la siguiente */
+	var shipCells : Array<ShipData.ShipCell>;
+	var shipCell = 0;
+
+	/** pone celdas de la nave, en orden, hasta acabarlas o gastar el tiempo de este paso (empezado en t0); true si estan todas */
+	function placeCells( t0 : Float, budgetMs : Float ) : Bool {
+		var cells = shipCells;
+		while( shipCell < cells.length ) {
+			if( (haxe.Timer.stamp() - t0) * 1000 >= budgetMs ) return false;
+			var end = shipCell + 8192 < cells.length ? shipCell + 8192 : cells.length;
+			for( i in shipCell...end ) {
+				var c = cells[i];
+				bytes.set(((c.x + c.y * size) << ZBITS) | c.z, localId(Block.all[c.id]));
+			}
+			shipCell = end;
+		}
+		shipCells = null;
+		return true;
 	}
 
 	/** coordenada de la nave que corresponde a una del planeta (el planeta da la vuelta) */
@@ -1544,10 +1709,13 @@ class World {
 
 	function emitMesh( m : MeshBuf, kind : Int ) {
 		if( m.pts.length == 0 ) return;
-		var poly = new h3d.prim.Polygon(m.pts, m.idx);
+		var poly = new ChunkPrim(m.pts, m.idx);
 		poly.addNormals(); // DirectX exige la entrada 'normal' del shader aunque no se use (OpenGL la descarta)
 		poly.uvs = m.uvs;
 		poly.colors = m.cols;
+		// sus buffers se crean y se suben ya, con el trozo (en la carga, dentro del tiempo de cada paso): si no, se hacian en el
+		// primer dibujo, los de todo el planeta en la misma imagen (~280 buffers y 350-730 ms al aparecer el menu o el planeta)
+		poly.alloc(h3d.Engine.getCurrent());
 		// con mipmaps como el original (DefShader, TransShader, WaterShader1); el hielo y el cristal sin ellos (AlphaShader1)
 		var mat = h3d.mat.Material.create(kind == 3 || Atlas.mipped == null ? atlas : Atlas.mipped);
 		mat.shadows = false;

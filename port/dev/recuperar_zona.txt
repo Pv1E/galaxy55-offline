@@ -1,0 +1,234 @@
+# cambio del port: lo que suelta con probabilidad (BFDropChance) se recupera siempre en la zona del sintetizador y en el hangar.
+# Debris calcinados (BCoal, 10 %; el suelo de las cometas calcinadas) y hielo negro (BBlackIce, 7 %), puestos y rotos uno a uno:
+# en la zona (local 59..60, 62..63, 3..4) y en el hangar caen todos; en el planeta, 1 de cada 10 mas o menos, como en el original.
+# Uso: devrun.ps1 -Script port/dev/recuperar_zona.txt -Extra "--inv=BRock" (inventario casi vacio: cabe todo lo que se recoge)
+wait 3
+ship
+wait 10
+print inv
+# zona del sintetizador, con el jugador dentro: 20 BCoal y 10 BBlackIce, y se recoge cada uno antes de poner el siguiente
+# (asi ningun bloque se pone encima de un suelto, que lo sacaria de su celda: suelto_enterrado.txt)
+tpl 60.5 63.5 3
+wait 5
+setl 59 62 3 BCoal
+breakl 59 62 3
+wait 30
+setl 59 62 4 BCoal
+breakl 59 62 4
+wait 30
+setl 59 62 3 BCoal
+breakl 59 62 3
+wait 30
+setl 59 62 4 BCoal
+breakl 59 62 4
+wait 30
+setl 59 62 3 BCoal
+breakl 59 62 3
+wait 30
+setl 59 62 4 BCoal
+breakl 59 62 4
+wait 30
+setl 59 62 3 BCoal
+breakl 59 62 3
+wait 30
+setl 59 62 4 BCoal
+breakl 59 62 4
+wait 30
+setl 59 62 3 BCoal
+breakl 59 62 3
+wait 30
+setl 59 62 4 BCoal
+breakl 59 62 4
+wait 30
+setl 59 62 3 BCoal
+breakl 59 62 3
+wait 30
+setl 59 62 4 BCoal
+breakl 59 62 4
+wait 30
+setl 59 62 3 BCoal
+breakl 59 62 3
+wait 30
+setl 59 62 4 BCoal
+breakl 59 62 4
+wait 30
+setl 59 62 3 BCoal
+breakl 59 62 3
+wait 30
+setl 59 62 4 BCoal
+breakl 59 62 4
+wait 30
+setl 59 62 3 BCoal
+breakl 59 62 3
+wait 30
+setl 59 62 4 BCoal
+breakl 59 62 4
+wait 30
+setl 59 62 3 BCoal
+breakl 59 62 3
+wait 30
+setl 59 62 4 BCoal
+breakl 59 62 4
+wait 30
+setl 59 63 3 BBlackIce
+breakl 59 63 3
+wait 30
+setl 59 63 3 BBlackIce
+breakl 59 63 3
+wait 30
+setl 59 63 3 BBlackIce
+breakl 59 63 3
+wait 30
+setl 59 63 3 BBlackIce
+breakl 59 63 3
+wait 30
+setl 59 63 3 BBlackIce
+breakl 59 63 3
+wait 30
+setl 59 63 3 BBlackIce
+breakl 59 63 3
+wait 30
+setl 59 63 3 BBlackIce
+breakl 59 63 3
+wait 30
+setl 59 63 3 BBlackIce
+breakl 59 63 3
+wait 30
+setl 59 63 3 BBlackIce
+breakl 59 63 3
+wait 30
+setl 59 63 3 BBlackIce
+breakl 59 63 3
+wait 30
+print drops
+print inv
+# planeta (bajo la nave nada se recoge): 40 BCoal rotos en la misma celda, quedan unos 4
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+set 60 61 99 BCoal
+breakp 60 61 99
+wait 30
+print drops
+# hangar, lejos del teletransportador: 20 BCoal
+hangar
+wait 60
+print hangar
+setp 20 14 1 BCoal
+breakp 20 14 1
+setp 20 14 1 BCoal
+breakp 20 14 1
+setp 20 14 1 BCoal
+breakp 20 14 1
+setp 20 14 1 BCoal
+breakp 20 14 1
+setp 20 14 1 BCoal
+breakp 20 14 1
+setp 20 14 1 BCoal
+breakp 20 14 1
+setp 20 14 1 BCoal
+breakp 20 14 1
+setp 20 14 1 BCoal
+breakp 20 14 1
+setp 20 14 1 BCoal
+breakp 20 14 1
+setp 20 14 1 BCoal
+breakp 20 14 1
+setp 20 14 1 BCoal
+breakp 20 14 1
+setp 20 14 1 BCoal
+breakp 20 14 1
+setp 20 14 1 BCoal
+breakp 20 14 1
+setp 20 14 1 BCoal
+breakp 20 14 1
+setp 20 14 1 BCoal
+breakp 20 14 1
+setp 20 14 1 BCoal
+breakp 20 14 1
+setp 20 14 1 BCoal
+breakp 20 14 1
+setp 20 14 1 BCoal
+breakp 20 14 1
+setp 20 14 1 BCoal
+breakp 20 14 1
+setp 20 14 1 BCoal
+breakp 20 14 1
+wait 30
+print drops
+quit

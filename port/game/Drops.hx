@@ -108,6 +108,37 @@ class Drops {
 		return d;
 	}
 
+	/**
+	 * Cambio del port: un suelto enterrado (un bloque puesto encima de el con otro solido encima, p. ej. al llenar una columna de
+	 * la zona del sintetizador) sale a una celda de al lado libre, la mas cercana al jugador. En el original (Dummy.updatePos) subia
+	 * atravesando todo lo de encima: en la nave acababa sobre el techo, fuera de alcance. Sin lado libre, en la nave va al jugador
+	 * (alli solo el pone bloques, desde dentro); en el planeta sigue subiendo hasta salir, como antes.
+	 */
+	function unbury( d : Drop, g : GameView ) {
+		var hz = d.z + 0.3;
+		if( !collide(d.x, d.y, hz) || !collide(d.x, d.y, Math.floor(hz) + 1) ) return;
+		var cx = Math.floor(d.x), cy = Math.floor(d.y);
+		var best = -1., bx = 0, by = 0;
+		for( o in [[1, 0], [-1, 0], [0, 1], [0, -1]] ) {
+			var nx = cx + o[0], ny = cy + o[1];
+			if( collide(nx + 0.5, ny + 0.5, hz) ) continue;
+			var dx = dist(g.px, nx + 0.5), dy = dist(g.py, ny + 0.5);
+			if( best < 0 || dx * dx + dy * dy < best ) {
+				best = dx * dx + dy * dy;
+				bx = nx;
+				by = ny;
+			}
+		}
+		if( best >= 0 ) {
+			d.x = bx + 0.5;
+			d.y = by + 0.5;
+		} else if( d.z >= World.SHIP_Z && g.pz >= World.SHIP_Z ) {
+			d.x = g.px;
+			d.y = g.py;
+			d.z = g.pz;
+		}
+	}
+
 	/** reloj del juego en segundos (Game.time): todos los sueltos giran con el, a 1 rad/s (Render, dummies: mpos.rotate(fx.time)) */
 	var clock = 0.;
 
@@ -142,6 +173,7 @@ class Drops {
 			else {
 				d.active = true;
 				if( d.vz < 0 ) d.vz *= Math.pow(0.3, dt);
+				unbury(d, g);
 				// cambio del port: solo se sube si se ha hundido en el suelo (el original subia mientras z - 0.01 chocase: se quedaba
 				// 0.01 por encima, al fotograma siguiente ya no tocaba y volvia a caer, y en el suelo temblaba sin parar)
 				var r = 0;

@@ -98,6 +98,20 @@ etiqueta `flash-version` y la rama `flash`, con sus SWF y archivos de compilaci�
   "-kube" a los nombres de dispositivo de Windows (con, aux, nul, prn, com1-9, lpt1-9).
   Con TEST_RUN la ventana además se crea fuera de la pantalla (-10000,-10000): devrun la pedía minimizada, pero SDL la mostraba
   en el centro del escritorio (pasaba ya antes de estos PR); las capturas salen igual.
+- Arena movediza (2026-11-05, Cornor923). **A propósito, se quedan como el original** (no "arreglarlo"): el daño dentro
+  (`Hero.doMove`: con los ojos dentro, 1 de cada 20 pasos de física, `hit(dt * 5)`, unos 6-8 por segundo) y que mirando abajo
+  desde dentro no se apunte nada (`Render.pick` para en la arena y `Game.update` no deja apuntar a la celda de los pies ni a la
+  de encima; el original tampoco apuntaba nada mientras se estaba aturdido). Cambio del port en la caída: el original solo
+  frenaba con `dt *= 0.3`; la gravedad seguía creciendo y el daño llegaba al final, el de toda la caída. Ahora tocar la arena
+  cayendo es como aterrizar (`GameView.fallImpact`, el mismo golpe que en el suelo) y la gravedad vuelve a 0; al salir por
+  debajo se sigue a la velocidad que se veía dentro (`SAND_SLOW`, `inSand`), así que la caída se cuenta desde la salida.
+  Desde z=76 sobre una losa de 2 y 6 de aire: al tocarla 67.8 (11 sobre roca: 69.9), abajo 63.6 (original: 100 al tocarla,
+  47.0 abajo). Desde z=75 sobre un pozo de 3: 32.0 al tocarlo, 22.9 en el fondo por la arena (original: 46.4 en el fondo).
+  Guion `arena_movediza`.
+- "Pilotar la nave" fuera del planeta principal (2026-11-05, Cornor923): en aventura el ordenador de a bordo ya no lo ofrece
+  (`GalaxyApp.pilotOffered`: `canPilot` y `pilotLicensed`) en vez de sacarlo y avisar al pulsarlo (se quita el texto
+  `license.pilotmain`); en creativo, en todos. El menú guardado se rehace al volver de las licencias si ha cambiado
+  (`showComputer`). Guiones `licencias` y `licencias_creativo`.
 
 ## Qué falló y cómo se resolvió
 | Problema | Causa | Solución |
