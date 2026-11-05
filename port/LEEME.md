@@ -79,7 +79,8 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
 
 - `game/` el juego: menús (`GalaxyApp`, `Ui`), idiomas (`Lang`), ajustes (`Settings`), partidas (`SaveData`), planeta, luz y mallado (`World`),
   modelos de bloque (`Models`), cielo y niebla (`Sky`), nieve (`Snow`), jugador, excavar y colocar (`GameView`), inventario (`Inv`, `InvBar`, `Palette`),
-  efectos y sueltos (`Fx`, `Drops`) y la nave (`Ship`, `ShipData`).
+  efectos y sueltos (`Fx`, `Drops`), la nave (`Ship`, `ShipData`), los cometas (`Comets`, `CometGenerator`) y la Base de datos
+  ESCorp (`Kubindex`, `KubData`, `DatabasePanel` y las vistas `Kub*`).
 - `explore/` el mapa de estrellas (`Explorer`, con el robot comerciante y las flechas GPS). El agua que fluye está en `game/WorldProcess.hx`.
 - `shim/` capa de compatibilidad `flash.*` para que los generadores originales compilen en HashLink.
 - `headless/` programas de verificación: los mundos son idénticos a los de Flash (hash Adler-32, agua y bloques); también leen la nave y el guardado.
@@ -112,7 +113,7 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
 - El haz de luz del aterrizaje sigue cualquier cambio en la columna bajo la nave y empieza encima de los bloques bajos como las
   placas (el original solo lo movía al romper un bloque ahí); se vuelve a la nave solo de pie en su base, no desde más arriba.
 - Pilotar la nave sobre el planeta es un añadido de este port (el original la dejaba siempre en el mismo sitio de cada planeta):
-  desde el ordenador de a bordo, solo en los planetas jugables (no en la nave nodriza, el hangar ni durante el tutorial). Va
+  desde el ordenador de a bordo, solo en los planetas jugables (no en la nave nodriza, el hangar, los cometas ni durante el tutorial; en aventura, solo sobre el planeta principal). Va
   siempre a la misma altura, sin gasto, con una cámara por detrás y por encima y la niebla más suave mientras dura; el haz de
   luz marca dónde quedará (a toda velocidad se desvanece y vuelve al ir despacio, al pararse y al aterrizar). Acelera y frena con suavidad, gira hacia donde va y se inclina en las curvas; al dejarla vuelve a su
   orientación de siempre antes de aterrizar (sus bloques, cofres y sintetizadores no giran). El sitio se guarda por planeta; sin pilotarla, la nave aterriza donde siempre.
@@ -128,4 +129,12 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
   la arena para la caída; al salir por debajo, la caída se cuenta desde la salida. En el original solo ralentizaba el tiempo:
   la velocidad seguía creciendo dentro y el daño llegaba al final, el de toda la caída. Como en el original, con los ojos
   dentro la arena quita vida y mirando abajo desde ella no se apunta nada.
+- La Base de datos ESCorp (ordenador de a bordo) es un añadido de este port: el Kubindex con todos los kubes, los tipos de
+  planeta y de cometa, las anomalías y las recetas, que se van llenando al jugar. La marca de lo nuevo es un icono de Mush
+  (`recent.png`, Motion Twin, CC BY-NC-SA 4.0).
+- Los cometas son un añadido de este port: mundos de 96x96 que visitan los sistemas un tiempo (los da una tirada fija por
+  sistema y franja de 2 horas, no el servidor). No gastan licencia y el tiempo de amarre depende de la velocidad de la nave.
+- En la zona del sintetizador y en el hangar, lo que se rompe se suelta siempre (cambio de este port: en el original, lo que
+  solo se suelta con suerte se perdía a menudo al recogerlo de ahí). Un suelto enterrado bajo bloques puestos sale por un lado;
+  en el original subía atravesándolos y, en la nave, acababa en el techo.
 - Lo que falta está en `PENDIENTES.md`, los fallos en `ERRORES.md` y las ideas para más adelante en `IDEAS.md` (raíz del repositorio).

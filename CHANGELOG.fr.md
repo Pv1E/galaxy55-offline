@@ -3,6 +3,31 @@
 [Español : `CHANGELOG.md`](CHANGELOG.md) · [English: `CHANGELOG.en.md`](CHANGELOG.en.md)
 
 ## Non publié
+- De **Cornor923** (merci !, PR 87-94) :
+  - **Base de données ESCorp** (ajout du portage), dans l'ordinateur de bord, avec trois onglets : le **Kubindex**, avec tous
+    les kubes du jeu par catégorie (viser un kube au laser le repère ; l'avoir dans l'inventaire le récupère, avec le nombre de
+    fois où il a été posé, cassé et fabriqué, les recettes qui le donnent et celles qui l'utilisent) ; **Espace**, avec les types
+    de planète et de comète explorés et les anomalies croisées ; et **Recettes**, découvertes en récupérant un de leurs kubes.
+    Une notification en haut à droite annonce les nouveautés et les nouvelles fiches sont marquées jusqu'à ce qu'on les
+    regarde. Elle s'ouvre instantanément. En créatif, tout est connu ; dans le tutoriel, elle s'ouvre après la fabrication
+    du blindage.
+  - **Comètes** (ajout du portage) : de petits mondes qui passent un moment dans les systèmes solaires (à chaque tranche de
+    2 heures, un système a 1 chance sur 6). Scanner une comète, c'est y atterrir, sans utiliser de licence. Le temps d'amarrage
+    est compté (de 1:30 à 15:00 selon la vitesse du vaisseau ; il ne s'écoule qu'au sol) et, une fois écoulé, on revient au
+    vaisseau. Au décollage, elle est perdue. La comète calcinée a un sol de roche de cratère, des débris calcinés, des filons
+    d'etherium avec des météorites d'etherium et de la lave, sans eau.
+  - Plus de blocages à l'apparition du menu de démarrage, sur les écrans de chargement, en arrivant sur une planète ni au
+    chargement du vaisseau-mère (avant, jusqu'à près d'une seconde, et environ 6 s à la première visite du vaisseau-mère).
+  - Tomber dans le sable mouvant : en le touchant, on prend le choc de la chute, comme sur le sol, et le sable arrête la chute
+    (changement du portage : dans l'original, les dégâts arrivaient à la fin, pour toute la chute).
+  - Un bloc cassé dans la zone du synthétiseur ou dans le hangar tombe toujours, même s'il ne tombe ailleurs qu'avec de la
+    chance ; un bloc tombé enterré sous des blocs posés ressort par le côté au lieu de finir sur le toit du vaisseau
+    (changements du portage).
+  - Hors de la planète principale, l'ordinateur de bord ne propose plus « Piloter le vaisseau » (avant, il s'affichait puis
+    refusait).
+  - Les félicitations de la fin du tutoriel disparaissent au décollage et durent 12 s (16 avant) : elles ne reviennent plus sur
+    la planète suivante, suivies de « voici ta planète principale ».
+  - Éditeur de Kubes : en français, l'aide dit de nouveau « enregistrer » pour Ctrl+S.
 - De **Cornor923** (merci !, PR 79-86) :
   - **Éditeur de Kubes** (ajout du portage) : dans le menu de démarrage, sous Nouvelle partie. On dessine les faces d'un bloc
     pixel par pixel dans une des formes que le jeu sait déjà dessiner (cube, cube à 6 faces, boîte, porte, plante, panneau,

@@ -3,6 +3,28 @@
 [Español: `CHANGELOG.md`](CHANGELOG.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
 ## Unreleased
+- From **Cornor923** (thank you!, PRs 87-94):
+  - **ESCorp database** (port addition), on the on-board computer, with three tabs: the **Kubindex**, with every kube of the
+    game by category (pointing the laser at one spots it; having it in the inventory collects it, with how many times it was
+    placed, broken and crafted, the recipes that make it and the ones that use it); **Space**, with the planet and comet types
+    explored and the anomalies met; and **Recipes**, discovered when one of their kubes is collected. A notice top right says
+    what is new and new entries are marked until looked at. It opens at once. In creative everything is known; in the
+    tutorial it opens after the hull plating is made.
+  - **Comets** (port addition): small worlds that visit solar systems for a while (in each 2-hour slot, a system has a 1 in 6
+    chance). Scanning one is landing, without using a license. Docking time is limited (1:30 to 15:00 depending on the ship's
+    speed; it only runs on the ground) and, when it runs out, you go back to the ship. Taking off loses it. The cinder comet
+    has Meteorite Bed rock, Charred Debris, blue etherium veins with Etherium Meteorites and lava, no water.
+  - No more stops when the start menu appears, on the loading screens, when arriving on a planet or loading the mothership
+    (up to nearly a second before, and about 6 s on the first visit to the mothership).
+  - Falling into quicksand: touching it gives the hit of the fall, as on the ground, and the sand stops the fall (port change:
+    in the original the damage came at the end, for the whole fall).
+  - A block broken in the synthesizer area or in the hangar always drops, even if elsewhere it only drops by chance; a drop
+    buried under placed blocks comes out by the side instead of ending on the ship's roof (port changes).
+  - Away from the main planet, the on-board computer no longer offers "Pilot the ship" (it used to show it and refuse when
+    pressed).
+  - The congratulations at the end of the tutorial go away on takeoff and last 12 s (16 before): they no longer come back on
+    the next planet, followed by "this is your main planet".
+  - Kube editor: in French, the help says "enregistrer" again for Ctrl+S.
 - From **Cornor923** (thank you!, PRs 79-86):
   - **Kube editor** (port addition): in the start menu, under New game. Draw the faces of a block pixel by pixel in one of the
     shapes the game already draws (cube, 6-sided cube, box, door, plant, panel, column...), watch it turn in 3D and save it as a

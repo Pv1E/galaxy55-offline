@@ -3,6 +3,28 @@
 [English: `CHANGELOG.en.md`](CHANGELOG.en.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
 ## Sin publicar
+- De **Cornor923** (¡gracias!, PR 87-94):
+  - **Base de datos ESCorp** (añadido del port), en el ordenador de a bordo, con tres pestañas: el **Kubindex**, con todos los
+    kubes del juego por categorías (apuntar uno con el láser lo localiza; tenerlo en el inventario lo recupera, con las veces
+    que se ha puesto, roto y fabricado, las recetas que lo dan y las que lo usan); **Espacio**, con los tipos de planeta y de
+    cometa explorados y las anomalías cruzadas; y **Recetas**, que se descubren al recuperar uno de sus kubes. Un aviso arriba
+    a la derecha dice lo nuevo y las fichas nuevas llevan una marca hasta mirarlas. Se abre al instante. En creativo se sabe
+    todo; en el tutorial se abre después de fabricar el blindaje.
+  - **Cometas** (añadido del port): mundos pequeños que visitan los sistemas solares un tiempo (en cada franja de 2 horas, cada
+    sistema tiene 1 posibilidad entre 6). Escanear uno es aterrizar, sin gastar licencia. El amarre está contado (de 1:30 a
+    15:00 según la velocidad de la nave; el tiempo solo corre abajo) y, al acabarse, se vuelve a la nave. Al despegar se
+    pierde. El cometa calcinado tiene roca de cráter de meteoritos, escombros calcinados, vetas de eterium con meteoritos de
+    eterium y lava, sin agua.
+  - Sin parones al aparecer el menú de inicio, en las pantallas de carga, al llegar a un planeta ni al cargar la nave nodriza
+    (antes, hasta casi un segundo, y unos 6 s la primera visita a la nodriza).
+  - Caer en la arena movediza: al tocarla se recibe el golpe de la caída, como en el suelo, y la arena para la caída (cambio
+    del port: en el original el daño llegaba al final, el de toda la caída).
+  - Un bloque roto en la zona del sintetizador o en el hangar se suelta siempre, aunque en otro sitio solo se suelte con
+    suerte; un suelto enterrado bajo bloques puestos sale por un lado en vez de acabar en el techo de la nave (cambios del port).
+  - Fuera del planeta principal, el ordenador de a bordo ya no ofrece "Pilotar la nave" (antes salía y avisaba al pulsarlo).
+  - Las felicitaciones del final del tutorial se van al despegar y duran 12 s (antes 16): ya no vuelven en el planeta
+    siguiente, seguidas de "este es tu planeta principal".
+  - Editor de kubes: en francés, la ayuda vuelve a decir "enregistrer" para Ctrl+S.
 - De **Cornor923** (¡gracias!, PR 79-86):
   - **Editor de kubes** (añadido del port): en el menú de inicio, debajo de Nueva partida. Se dibujan las caras de un bloque
     píxel a píxel en una de las formas que ya dibuja el juego (cubo, cubo de 6 caras, caja, puerta, planta, panel, columna...),
