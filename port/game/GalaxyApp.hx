@@ -47,7 +47,7 @@ class SaveRow extends Widget {
 			Theme.rect(ph, 8, 7, 160, 90, 0xFFFFFF, 0.07);
 		}
 		Theme.text(this, info.name, 2.4, Theme.TEXT, 190, 10);
-		var size = 128 * info.sizeChunks;
+		var size = Comets.isComet(info.biome) ? Comets.SIZE : 128 * info.sizeChunks;
 		var where = info.uni != null && info.uni.space == true ? Lang.t("save.space") : Lang.t("biome." + info.biome) + "  ·  " + size + "x" + size;
 		Theme.text(this, where + "  ·  " + Lang.t("seed") + " " + info.seed + (info.creative == true ? "  ·  " + Lang.t("mode.creative") : ""), 1.7, Theme.CYAN, 190, 48);
 		Theme.text(this, Lang.t("played") + " " + Lang.duration(info.playSeconds) + "   " + Lang.t("saved") + " " + Lang.date(info.saved), 1.5, Theme.DIM, 190, 74);
@@ -231,6 +231,8 @@ class GalaxyApp extends hxd.App {
 	var loadAnim : h2d.Graphics;
 	var loadAnimPos = 0.;
 	var hud : h2d.Text;
+	/** cuenta atras en una cometa (Comets, añadido del port) */
+	var cometHud : h2d.Text;
 	/** F: coordenadas y fps (Game.showFPS del original): ocultos al empezar y sin guardar en settings.json, como en el original */
 	var showFps = false;
 	var msgText : h2d.Text;
@@ -404,6 +406,10 @@ class GalaxyApp extends hxd.App {
 		hud = Theme.text(s2d, "", 1.8, 0xFFFFFF, 14, 74);
 		hud.dropShadow = { dx : 1, dy : 1, color : 0, alpha : 0.9 };
 		hud.visible = false;
+		// cuenta atras en una cometa (Comets, añadido del port), arriba a la izquierda, encima de la ayuda
+		cometHud = Theme.text(s2d, "", 2.2, 0xFFB050, 14, 24);
+		cometHud.dropShadow = { dx : 1, dy : 1, color : 0, alpha : 0.9 };
+		cometHud.visible = false;
 		msgText = Theme.text(s2d, "", 2.2, 0xFFFFFF, 0, 0);
 		msgText.dropShadow = { dx : 1, dy : 1, color : 0, alpha : 0.9 };
 		msgText.textAlign = Center;
@@ -1341,9 +1347,15 @@ class GalaxyApp extends hxd.App {
 		hxd.System.allowTimeout = false;
 		// despegue: los cambios del planeta quedan en la partida, que pasa al espacio, y el planeta se descarga
 		var takeoff = game != null;
+		Explorer.cometStart = null;
 		if( takeoff ) {
 			universe();
 			var info = game.toInfo();
+			// despegar de una cometa (Comets, añadido del port): ya no vuelve, y sus cambios se pierden; la nave sale en el mapa
+			// donde estaba ella
+			var c = info.comet;
+			if( c != null && info.uni != null ) Explorer.cometStart = Comets.make(info.uni.seed, c.sys, c.slot);
+			Comets.leave(info);
 			shipFrames = game.ship.captureFrames(engine, s3d);
 			leaveGame();
 			info.uni.space = true;
@@ -1368,6 +1380,12 @@ class GalaxyApp extends hxd.App {
 		explorer.canScan = space.canScan;
 		explorer.canAbandon = space.canAbandon;
 		explorer.isMain = function(p) return Licenses.isMain(uni, p.id);
+		// cometas (Comets, añadido del port): no en el tutorial; su ventana dice el tiempo de amarre con la nave de ahora
+		var tuto = Tutorial.active(spaceInfo);
+		var dock = Comets.dockTime(Hangar.speedOf(Hangar.currentShip(spaceInfo)));
+		explorer.cometOf = function(s) return tuto ? null : Comets.of(uni, s);
+		explorer.cometInfo = function(p) return Lang.t("exp.comet.info").split("%t%").join(Comets.clock(dock));
+		explorer.addComet();
 		explorer.onAbandon = askAbandon;
 		explorer.tutoTarget = space.tutorial ? TutoSetup.PLANET : -1;
 		explorer.onUnlock = space.unlock;
@@ -1455,8 +1473,10 @@ class GalaxyApp extends hxd.App {
 		for( q in uni.planets ) if( q.id == p.id ) target = q;
 		uni.planets = uni.planets.filter(function(q) return q.id != p.id);
 		uni.planetId = p.id;
-		// escanear gasta una licencia; el primer planeta pasa a ser el principal (Licenses)
-		Licenses.claim(old, p.id);
+		// escanear gasta una licencia; el primer planeta pasa a ser el principal (Licenses). Una cometa no (Comets, añadido del
+		// port): se cuenta su tiempo de amarre con la velocidad de la nave
+		if( p.comet == null ) Licenses.claim(old, p.id);
+		old.comet = p.comet == null ? null : { sys : s.id, slot : p.comet, left : Comets.dockTime(Hangar.speedOf(Hangar.currentShip(old))) };
 		explorer.dispose();
 		explorer = null;
 		spaceInfo = null;
@@ -1716,6 +1736,7 @@ class GalaxyApp extends hxd.App {
 		}
 		invBar = new InvBar(s2d, game.inv, atlas, W);
 		game.onComputer = openComputer;
+		game.onCometOver = function() showToast(Lang.t("comet.over"), GameView.COMET_OVER_TOAST);
 		game.onChest = openChest;
 		game.onChestBreak = function(t) if( chest != null && chest.box == t ) closeChest();
 		if( game.info.mothership == true ) game.onHangarExit = backFromMothership;
@@ -2501,6 +2522,15 @@ class GalaxyApp extends hxd.App {
 			var scale = Math.min(ww / W, wh / H);
 			var visW = ww / scale, visH = wh / scale;
 			snow.update(dt, s3d.camera, snowWorld, (W - visW) * 0.5, (H - visH) * 0.5, visW, visH);
+		}
+
+		// cuenta atras de la cometa (añadido del port): con el resto del HUD; en rojo el ultimo medio minuto y al acabarse
+		var c = game != null && game.hangar == null ? game.info.comet : null;
+		cometHud.visible = hud.visible && c != null && (state == Playing || state == Paused);
+		if( cometHud.visible ) {
+			cometHud.text = Lang.t("comet.timer").split("%t%").join(Comets.clock(c.left));
+			cometHud.textColor = c.left <= 30 ? 0xFF4C3C : 0xFFB050;
+			cometHud.y = 24 + hudShake;
 		}
 
 		// F2 (Interface.hx del original): en el planeta, la nave, el hangar y la nodriza, tambien con un menu abierto; no en el mapa

@@ -231,7 +231,8 @@ class DataGen {
 		{ id : BIAcidForest, sunPower : 9.0, sunFalloff : 0.75, fog : [0x65A39F,0xB3CE8C,0x081808], fogPower : 2.5, water : BAcidWater, soils : [BAcidRock,BAcidSoil], exploreColors : [0x2d6743,0x49712b], proba : 50, startThrough : [BAcidLeaves,BAcidLeaves2] },
 		{ id : BIWinterPeaks, sunPower : 10.0, sunFalloff : null, fog : [0xD2C8E6,0x877da2,0x4D4561], fogPower : 4.0, water : BWinterWater, soils : [BWinterRock,BWinterSoil], exploreColors : [0xdfbee4,0xfceaff], proba : 100, startThrough : [] },
 		{ id : BIMars, sunPower : 12.0, sunFalloff : 1.25, fog : [0xffa018,0xb53629,0x760606], fogPower : 1.4, water : BIce, soils : [BMarsRock,BMarsSoil], exploreColors : [0xca6c2e,0x995d3c], proba : 80, startThrough : [] },
-		{ id : BIDeadCity, sunPower : 14.0, sunFalloff : 1.5, fog : [0x0,0x5C5047,0x303030], fogPower : 0.8, water : BDarkWater, soils : [BDeadRock,BDeadSoil], exploreColors : [], proba : 0, startThrough : [] }
+		{ id : BIDeadCity, sunPower : 14.0, sunFalloff : 1.5, fog : [0x0,0x5C5047,0x303030], fogPower : 0.8, water : BDarkWater, soils : [BDeadRock,BDeadSoil], exploreColors : [], proba : 0, startThrough : [] },
+		{ id : BICometCinder, sunPower : 8.0, sunFalloff : null, fog : [0x0,0x4A3328,0x0E0907], fogPower : 1.0, water : BWater, soils : [BMarsCraterRock,BCoal], exploreColors : [0x8A6A58,0x3A3440], proba : 0, startThrough : [] }
 	];
 
 	public static var CHARGES : Array<ChargeData> = [

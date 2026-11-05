@@ -536,6 +536,35 @@ class ExpRoom {
 		return planetView(infos, rseed.random(3));
 	}
 
+	/**
+	 * La cometa del sistema (Comets, añadido del port): un planeta Luna muy oscurecido (una capa negra encima), mas pequeño
+	 * que un planeta pequeño, con el halo de los planetas sin explorar y sin nombre debajo. Va entre las orbitas con su propia
+	 * tirada, sin tocar orbitas, anillos ni lo que se sortea para el resto del sistema.
+	 */
+	public function cometView( infos : ExpPlanet ) : ExpPlanetView {
+		var r = new mt.Rand(infos.seed);
+		var ang = r.rand() * Math.PI * 2;
+		var d = 130 + r.rand() * Math.max(40, exitDist - 190);
+		var bd = planetBmp("BIMoon", r.random(3));
+		bd.colorTransform(bd.rect, new flash.geom.ColorTransform(0.3, 0.3, 0.3));
+		var halo = Color.brightnessInt(bgColor, 0.5);
+		bd.applyFilter(bd, bd.rect, pt0, new flash.filters.GlowFilter(halo, 0.9, 8, 8, 1));
+		bd.applyFilter(bd, bd.rect, pt0, new flash.filters.GlowFilter(halo, 0.7, 32, 32, 1));
+		// un planeta pequeño (size 1) va a 0.57
+		var scale = 0.5;
+		return {
+			infos : infos,
+			x : center.x + Math.cos(ang) * d,
+			y : center.y + Math.sin(ang) * d,
+			bd : bd,
+			scale : scale,
+			icon : 2,
+			iconX : Std.int(bd.width * scale * 0.2),
+			iconY : Std.int(-bd.height * scale * 0.2),
+			showName : false,
+		};
+	}
+
 	/** la imagen del planeta (frame = una de las 3 de tiles.png) y su icono segun el estado */
 	function planetView( infos : ExpPlanet, frame : Int ) : ExpPlanetView {
 		var size = switch( infos.size ) {
@@ -547,17 +576,8 @@ class ExpRoom {
 		}
 		var orbitId = infos.distance;
 		var ang = getOrbitAng(orbitId), d = getOrbitDist(orbitId);
-		var bd = frameBmp(frame * 64, 5 * 32, 64, 64, 16);
+		var bd = planetBmp(infos.biome, frame);
 		var scale = size + 0.5;
-		var biome = Common.Data.getBiome(Type.createEnum(Common.BiomeKind, infos.biome));
-		// la Ciudad muerta no salia en el mapa del original y no tiene exploreColors: como planeta de salida (Nueva partida) se
-		// pinta con los colores de su niebla en vez de negro
-		var cols = biome.exploreColors.length > 0 ? biome.exploreColors : biome.fog.slice(1);
-		var c0 = cols.length >= 1 ? cols[0] : 0x0;
-		var c1 = cols.length >= 2 ? cols[1] : c0;
-		var c2 = cols.length >= 3 ? cols[2] : c1;
-		ExpColor.paintBitmap(bd, ExpColor.makeNicePalette(c0), ExpColor.makeNicePalette(c1), ExpColor.makeNicePalette(c2));
-		bd.applyFilter(bd, bd.rect, pt0, new flash.filters.DropShadowFilter(5, -45, 0x0, 0.4, 4, 4, 1, 1, true));
 		var pv : ExpPlanetView = {
 			infos : infos,
 			x : center.x + Math.cos(ang) * d,
@@ -588,6 +608,21 @@ class ExpRoom {
 			bd.applyFilter(bd, bd.rect, pt0, new flash.filters.GlowFilter(halo, 0.7, 32, 32, 1));
 		}
 		return pv;
+	}
+
+	/** la imagen de un planeta del bioma (frame = una de las 3 de tiles.png) con sus colores y su sombra, sin halo */
+	function planetBmp( biomeName : String, frame : Int ) : BitmapData {
+		var bd = frameBmp(frame * 64, 5 * 32, 64, 64, 16);
+		var biome = Common.Data.getBiome(Type.createEnum(Common.BiomeKind, biomeName));
+		// la Ciudad muerta no salia en el mapa del original y no tiene exploreColors: como planeta de salida (Nueva partida) se
+		// pinta con los colores de su niebla en vez de negro
+		var cols = biome.exploreColors.length > 0 ? biome.exploreColors : biome.fog.slice(1);
+		var c0 = cols.length >= 1 ? cols[0] : 0x0;
+		var c1 = cols.length >= 2 ? cols[1] : c0;
+		var c2 = cols.length >= 3 ? cols[2] : c1;
+		ExpColor.paintBitmap(bd, ExpColor.makeNicePalette(c0), ExpColor.makeNicePalette(c1), ExpColor.makeNicePalette(c2));
+		bd.applyFilter(bd, bd.rect, pt0, new flash.filters.DropShadowFilter(5, -45, 0x0, 0.4, 4, 4, 1, 1, true));
+		return bd;
 	}
 
 	public function generateSolarSystem( infos : ExpSystem ) {

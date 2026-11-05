@@ -118,6 +118,10 @@ class Explorer extends h2d.Object {
 	public dynamic function onAbandon( p : ExpPlanet, s : ExpSystem ) {}
 	/** el planeta principal de la partida (se indica en su ventana) */
 	public dynamic function isMain( p : ExpPlanet ) : Bool return false;
+	/** la cometa que tiene ahora el sistema, o null (Comets, añadido del port): solo se ve dentro del sistema */
+	public dynamic function cometOf( s : ExpSystem ) : ExpPlanet return null;
+	/** el texto de la ventana de una cometa, bajo su nombre (su tiempo de amarre) */
+	public dynamic function cometInfo( p : ExpPlanet ) : String return "";
 	/** planeta al que lleva el tutorial (flecha del GPS aunque no se haya visitado); -1 = ninguno */
 	public var tutoTarget(default, set) = -1;
 
@@ -133,6 +137,8 @@ class Explorer extends h2d.Object {
 	public static var robotStart : { x : Float, y : Float } = null;
 	/** al volver de la nave del robot: la nave aparece donde se acoplo (en el sector) */
 	public static var shipStart : { x : Float, y : Float } = null;
+	/** al despegar de una cometa (Comets, añadido del port): la nave aparece donde estaba, aunque la cometa ya no se vea */
+	public static var cometStart : ExpPlanet = null;
 
 	var content : h2d.Object;
 	var bgBmp : h2d.Bitmap;
@@ -886,8 +892,19 @@ class Explorer extends h2d.Object {
 		worldSolar = new h2d.Object(content);
 		content.addChildAt(worldSolar, content.getChildIndex(shipWorld));
 		for( pv in room.planetViews ) addPlanet(pv);
+		// la cometa del sistema (Comets, añadido del port): fuera de si.planets, asi que el sector y las licencias no la ven
+		var c = cometOf(si);
+		if( c != null ) addPlanet(room.cometView(c));
 		solar.viewX = solarStars.viewX = room.entrance.x;
 		solar.viewY = solarStars.viewY = room.entrance.y;
+	}
+
+	/** la cometa del sistema en el que ya esta la nave al abrir el mapa: cometOf se pone despues de crear el Explorer */
+	public function addComet() {
+		if( !inSolar || curSystem == null ) return;
+		for( sp in solarSpots ) if( sp.planet.comet != null ) return;
+		var c = cometOf(curSystem);
+		if( c != null ) addPlanet(solar.room.cometView(c));
 	}
 
 	/** Room.generateSolarSystem + generateSolarStars: solo calcula imagenes (BitmapData por software), se puede hacer en otro hilo */
@@ -952,10 +969,17 @@ class Explorer extends h2d.Object {
 					room.entrance.x = pv.x + 32;
 					room.entrance.y = pv.y;
 				}
+		var fromComet = planetId < 0 && cometStart != null && cometStart.id == Comets.idOf(si.id);
+		if( fromComet ) {
+			var pv = room.cometView(cometStart);
+			room.entrance.x = pv.x + 32;
+			room.entrance.y = pv.y;
+		}
+		cometStart = null;
 		finishSolar(si);
 		solar.viewX = solarStars.viewX = ship.x;
 		solar.viewY = solarStars.viewY = ship.y;
-		ship.rotation = planetId >= 0 ? 180 : 180 + arrival * 180 / Math.PI;
+		ship.rotation = planetId >= 0 || fromComet ? 180 : 180 + arrival * 180 / Math.PI;
 		ship.dx = ship.dy = 0;
 		cursorAlpha = 0;
 	}
@@ -981,6 +1005,8 @@ class Explorer extends h2d.Object {
 			t.y = Std.int(pv.bd.height * pv.scale * 0.3);
 		}
 		sp.half = pv.bd.width * pv.scale * 0.5 - 10;
+		// la cometa es pequeña: se puede pinchar un poco alrededor (Comets, añadido del port)
+		if( pv.infos.comet != null ) sp.half += 6;
 		solarSpots.push(sp);
 		return sp;
 	}
@@ -1354,6 +1380,11 @@ class Explorer extends h2d.Object {
 			return;
 		}
 		var p = sp.planet;
+		// cometa (Comets, añadido del port): sin licencia ni boton Abandonar; dice antes de escanear que el amarre tiene tiempo
+		if( p.comet != null ) {
+			openWindow(sp, p.name, Lang.t("biome." + p.biome) + "  ·  " + cometInfo(p), Lang.t("exp.comet.scan"), function() startScan(p));
+			return;
+		}
 		var bname = ExpOffline.biomeName(p.biome);
 		// anadido del port (Licenses): la ventana dice si es el principal o esta abandonado, y ofrece abandonarlo
 		if( p.status == PAbandonned ) bname += "  ·  " + Lang.t("exp.abandoned");
@@ -1848,7 +1879,8 @@ class Explorer extends h2d.Object {
 			+ " tuto=" + tutoTarget;
 		var list = inSolar ? solarSpots : sectorSpots;
 		for( sp in list )
-			s += "\n  " + (sp.system != null ? "sistema " + sp.system.id + " " + sp.system.name : "planeta " + sp.planet.id + " " + sp.planet.name + " " + sp.planet.biome + " (" + ExpOffline.biomeName(sp.planet.biome) + ") tam=" + sp.planet.size) + " en " + Std.int(sp.e.x) + "," + Std.int(sp.e.y);
+			s += "\n  " + (sp.system != null ? "sistema " + sp.system.id + " " + sp.system.name : "planeta " + sp.planet.id + " " + sp.planet.name + " " + sp.planet.biome + " (" + ExpOffline.biomeName(sp.planet.biome) + ") tam=" + sp.planet.size
+				+ (sp.planet.comet != null ? " COMETA franja " + sp.planet.comet : "")) + " en " + Std.int(sp.e.x) + "," + Std.int(sp.e.y);
 		return s;
 	}
 

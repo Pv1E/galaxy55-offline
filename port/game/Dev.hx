@@ -30,6 +30,8 @@ import Common;
  *   explore                 abrir el mapa de estrellas (explorador); expsys N / expgo x y / expinfo lo manejan; expbutton [N]
  *                           pulsa el boton N (0) de la ventana del planeta (1 = Abandonar)
  *   button N                activar el control N de la ventana de confirmacion o del menu abierto (print menu)
+ *   comet force N|time S|speed|stats   cometas (anadido del port): el sistema N con cometa en cualquier franja; quedan S
+ *                           segundos en la cometa; velocidad de la nave y tiempo de amarre; cometas de cada sistema (print comet)
  *   licenses clock H|open|credits N|forget   licencias de la ESCorp: adelantar H horas su reloj; abrir su pantalla; dejar N
  *                           creditos; quitar sus datos como en una partida antigua (print licenses)
  *   walk avance [lado]      andar (1 = adelante, -1 = atras; 0 0 para parar)
@@ -474,6 +476,30 @@ class Dev {
 						u.main = u.mainChanges = null;
 						u.mainTime = null;
 					default: Sys.println("licenses: orden desconocida " + a[1]);
+					}
+				case "comet":
+					// cometas (Comets, añadido del port): comet force N = el sistema N tiene cometa en cualquier franja (y se ve ya si
+					// estas en el); comet time S = quedan S segundos en la cometa; comet speed = velocidad de la nave y tiempo de amarre;
+					// comet stats = cometas de cada sistema ahora y proporcion en 6000 franjas
+					var info = app.curInfo();
+					switch( a[1] ) {
+					case "force":
+						Comets.devForce = Std.parseInt(a[2]);
+						if( app.explorer != null ) app.explorer.addComet();
+					case "time": if( info.comet != null ) info.comet.left = f(a[2]);
+					case "speed":
+						var s = Hangar.speedOf(Hangar.currentShip(info));
+						Sys.println("cometa: nave a " + s + " PC/s, amarre " + Comets.clock(Comets.dockTime(s)) + " | " + [for( v in [0.1, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 1.0, 2.75, 3.0] ) v + "->" + Comets.clock(Comets.dockTime(v))].join(" "));
+					case "stats":
+						var u = info.uni, n = 0, tot = 0;
+						var now = [for( s in ExpData.ExpOffline.make(u.seed, u.start, u.licenses, u.pos, u.abandoned, u.gone).systems ) { var c = Comets.of(u, s); s.id + (c == null ? ":-" : ":" + c.biome + "/franja " + c.comet); }];
+						for( s in 0...10 )
+							for( k in Comets.slot(u.seed, s, Licenses.now()) - 300...Comets.slot(u.seed, s, Licenses.now()) + 300 ) {
+								tot++;
+								if( Comets.drawn(u.seed, s, k) ) n++;
+							}
+						Sys.println("cometas ahora: " + now.join(" ") + " | con cometa " + n + " de " + tot + " franjas (1 de " + Math.round(tot / n * 100) / 100 + ")");
+					default: Sys.println("comet: orden desconocida " + a[1]);
 					}
 				case "expgo": app.explorer.devClickPoint(f(a[1]), f(a[2]));
 				case "expgor": app.explorer.devClickPoint(f(a[1]), f(a[2]), true); // expgor DX DY: punto relativo a la nave
@@ -1032,6 +1058,28 @@ class Dev {
 		case "pilot":
 			Sys.println("pilotando: " + (g.piloting ? "si" : "no") + " pausa: " + (@:privateAccess app.current != null) + " guardado shipAt: " + g.info.shipAt
 				+ (g.ship != null ? " rumbo " + Math.round(g.ship.heading * 100) / 100 + " velocidad " + Math.round(Math.sqrt(@:privateAccess (g.pilotVX * g.pilotVX + g.pilotVY * g.pilotVY)) * 10) / 10 + " jugador " + Math.round(g.px * 100) / 100 + "," + Math.round(g.py * 100) / 100 : ""));
+		case "comet":
+			// cometa (Comets, añadido del port): tamano del mundo, altura del terreno, capas de roca madre, fuentes de lava,
+			// etherium y la cuenta atras
+			var top = 0, lava = 0, ether = 0, bed = World.HEIGHT;
+			for( y in 0...w.size )
+				for( x in 0...w.size ) {
+					var z = 0;
+					while( z < World.HEIGHT && w.block(x, y, z) != null && w.block(x, y, z).k == BBedrock ) z++;
+					if( z < bed ) bed = z;
+					for( z in 0...World.HEIGHT ) {
+						var b = w.block(x, y, z);
+						if( b == null ) continue;
+						if( z + 1 > top ) top = z + 1;
+						if( b.k == BLava ) lava++;
+						if( b.k == BBlueCrystalDense || b.k == BBlueCrystalLight || b.k == BMarsBlueRock ) ether++;
+					}
+				}
+			var c = g.info.comet;
+			Sys.println("cometa: mundo " + w.biomeName + " " + w.size + "x" + w.size + ", terreno hasta z=" + top + ", roca madre " + bed + " capas, lava " + lava
+				+ ", etherium " + ether + (c == null ? ", sin cuenta atras" : ", sistema " + c.sys + " franja " + c.slot + " quedan " + Comets.clock(c.left)
+				+ ", teletransportador " + (g.cometOver() ? "bloqueado" : "libre")) + ", planeta " + (g.info.uni == null ? "-" : "" + g.info.uni.planetId)
+				+ ", licencias " + (g.info.uni == null ? "-" : "" + g.info.uni.licenses) + ", principal " + (g.info.uni == null ? "-" : "" + g.info.uni.main));
 		case "ship":
 			if( g.ship == null ) {
 				Sys.println("sin nave (nave nodriza o hangar)");
