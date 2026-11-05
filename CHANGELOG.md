@@ -3,61 +3,58 @@
 [English: `CHANGELOG.en.md`](CHANGELOG.en.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
 ## Sin publicar
-- De **Cornor923** (¡gracias!, PR 87-94):
-  - **Base de datos ESCorp** (añadido del port), en el ordenador de a bordo, con tres pestañas: el **Kubindex**, con todos los
-    kubes del juego por categorías (apuntar uno con el láser lo localiza; tenerlo en el inventario lo recupera, con las veces
-    que se ha puesto, roto y fabricado, las recetas que lo dan y las que lo usan); **Espacio**, con los tipos de planeta y de
-    cometa explorados y las anomalías cruzadas; y **Recetas**, que se descubren al recuperar uno de sus kubes. Un aviso arriba
-    a la derecha dice lo nuevo y las fichas nuevas llevan una marca hasta mirarlas. Se abre al instante. En creativo se sabe
-    todo; en el tutorial se abre después de fabricar el blindaje.
-  - **Cometas** (añadido del port): mundos pequeños que visitan los sistemas solares un tiempo (en cada franja de 2 horas, cada
-    sistema tiene 1 posibilidad entre 6). Escanear uno es aterrizar, sin gastar licencia. El amarre está contado (de 1:30 a
-    15:00 según la velocidad de la nave; el tiempo solo corre abajo) y, al acabarse, se vuelve a la nave. Al despegar se
-    pierde. El cometa calcinado tiene roca de cráter de meteoritos, escombros calcinados, vetas de eterium con meteoritos de
-    eterium y lava, sin agua.
-  - Sin parones al aparecer el menú de inicio, en las pantallas de carga, al llegar a un planeta ni al cargar la nave nodriza
-    (antes, hasta casi un segundo, y unos 6 s la primera visita a la nodriza).
-  - Caer en la arena movediza: al tocarla se recibe el golpe de la caída, como en el suelo, y la arena para la caída (cambio
-    del port: en el original el daño llegaba al final, el de toda la caída).
-  - Un bloque roto en la zona del sintetizador o en el hangar se suelta siempre, aunque en otro sitio solo se suelte con
-    suerte; un suelto enterrado bajo bloques puestos sale por un lado en vez de acabar en el techo de la nave (cambios del port).
-  - Fuera del planeta principal, el ordenador de a bordo ya no ofrece "Pilotar la nave" (antes salía y avisaba al pulsarlo).
-  - Las felicitaciones del final del tutorial se van al despegar y duran 12 s (antes 16): ya no vuelven en el planeta
-    siguiente, seguidas de "este es tu planeta principal".
-  - Editor de kubes: en francés, la ayuda vuelve a decir "enregistrer" para Ctrl+S.
-- De **Cornor923** (¡gracias!, PR 79-86):
-  - **Editor de kubes** (añadido del port): en el menú de inicio, debajo de Nueva partida. Se dibujan las caras de un bloque
-    píxel a píxel en una de las formas que ya dibuja el juego (cubo, cubo de 6 caras, caja, puerta, planta, panel, columna...),
-    se ve girar en 3D y se guarda como archivo `.kube` en la carpeta `kubes` de los datos del juego para enviárnoslo. Se puede
-    partir de cualquier bloque del juego.
-  - El ordenador del sintetizador se usa también con un bloque en la mano y con el clic derecho (cambio del port).
-  - Dos clics rápidos ponen los dos bloques (cambio del port: el original no ponía el segundo si llegaba antes de 0,47 s).
-  - Durante el tutorial el sintetizador solo fabrica aluminio y blindaje: ya no se puede gastar el aluminio en otra receta y
-    quedarse atascado.
-  - En el tutorial sale la flecha verde hacia el planeta del aterrizaje de emergencia.
-  - Al abrir el ordenador de a bordo o el menú de pausa, el puntero va al centro de la ventana.
-  - La ventana del juego se abre ya con su tamaño y su título (antes se veía un momento pequeña).
-  - La hierba roja alta ya no suelta trozos blancos al romperse.
+- **Base de datos ESCorp** (añadido del port), en el ordenador de a bordo, con tres pestañas: el **Kubindex**, con todos los
+  kubes del juego por categorías (apuntar uno con el láser lo localiza; tenerlo en el inventario lo recupera, con las veces
+  que se ha puesto, roto y fabricado, las recetas que lo dan y las que lo usan); **Espacio**, con los tipos de planeta y de
+  cometa explorados y las anomalías cruzadas; y **Recetas**, que se descubren al recuperar uno de sus kubes. Un aviso arriba
+  a la derecha dice lo nuevo y las fichas nuevas llevan una marca hasta mirarlas. Se abre al instante. En creativo se sabe
+  todo; en el tutorial se abre después de fabricar el blindaje.
+- **Cometas** (añadido del port): mundos pequeños que visitan los sistemas solares un tiempo (en cada franja de 2 horas, cada
+  sistema tiene 1 posibilidad entre 6). Escanear uno es aterrizar, sin gastar licencia. El amarre está contado (de 1:30 a
+  15:00 según la velocidad de la nave; el tiempo solo corre abajo) y, al acabarse, se vuelve a la nave. Al despegar se
+  pierde. El cometa calcinado tiene roca de cráter de meteoritos, escombros calcinados, vetas de eterium con meteoritos de
+  eterium y lava, sin agua.
+- Sin parones al aparecer el menú de inicio, en las pantallas de carga, al llegar a un planeta ni al cargar la nave nodriza
+  (antes, hasta casi un segundo, y unos 6 s la primera visita a la nodriza).
+- Caer en la arena movediza: al tocarla se recibe el golpe de la caída, como en el suelo, y la arena para la caída (cambio
+  del port: en el original el daño llegaba al final, el de toda la caída).
+- Un bloque roto en la zona del sintetizador o en el hangar se suelta siempre, aunque en otro sitio solo se suelte con
+  suerte; un suelto enterrado bajo bloques puestos sale por un lado en vez de acabar en el techo de la nave (cambios del port).
+- Fuera del planeta principal, el ordenador de a bordo ya no ofrece "Pilotar la nave" (antes salía y avisaba al pulsarlo).
+- Las felicitaciones del final del tutorial se van al despegar y duran 12 s (antes 16): ya no vuelven en el planeta
+  siguiente, seguidas de "este es tu planeta principal".
+- Editor de kubes: en francés, la ayuda vuelve a decir "enregistrer" para Ctrl+S.
+- **Editor de kubes** (añadido del port): en el menú de inicio, debajo de Nueva partida. Se dibujan las caras de un bloque
+  píxel a píxel en una de las formas que ya dibuja el juego (cubo, cubo de 6 caras, caja, puerta, planta, panel, columna...),
+  se ve girar en 3D y se guarda como archivo `.kube` en la carpeta `kubes` de los datos del juego para enviárnoslo. Se puede
+  partir de cualquier bloque del juego.
+- El ordenador del sintetizador se usa también con un bloque en la mano y con el clic derecho (cambio del port).
+- Dos clics rápidos ponen los dos bloques (cambio del port: el original no ponía el segundo si llegaba antes de 0,47 s).
+- Durante el tutorial el sintetizador solo fabrica aluminio y blindaje: ya no se puede gastar el aluminio en otra receta y
+  quedarse atascado.
+- En el tutorial sale la flecha verde hacia el planeta del aterrizaje de emergencia.
+- Al abrir el ordenador de a bordo o el menú de pausa, el puntero va al centro de la ventana.
+- La ventana del juego se abre ya con su tamaño y su título (antes se veía un momento pequeña).
+- La hierba roja alta ya no suelta trozos blancos al romperse.
 - El suelo bajo bloques parciales juntos (p. ej. cuatro lingotes de hierro o aluminio en la nave) ya no se ve negro (cambio
-  del port: en el original esos bloques no dejan pasar la luz; paredes y techos siguen igual).
+del port: en el original esos bloques no dejan pasar la luz; paredes y techos siguen igual).
 - Editor de kubes: un kube llamado como un nombre reservado de Windows (con, aux, nul...) ya se puede guardar.
-- De **Cornor923** (¡gracias!, PR 64-78):
-  - **Licencias de exploración de la ESCorp** (añadido del port; en el original las llevaba el servidor): en aventura, escanear
-    un planeta gasta una licencia, 4 en total (1 principal y 3 de exploración); en creativo no hay límite. El primer planeta
-    escaneado es el principal (con tutorial, el suyo). **Solo se pilota la nave sobre el planeta principal**: en los demás, el
-    ordenador de a bordo no ofrece "Pilotar la nave". Allí, "Licencias de exploración" muestra las licencias y deja cambiar de
-    planeta principal (gratis la primera vez, luego 1000 créditos y 24 horas reales entre cambios); en el mapa, "Abandonar"
-    libera la licencia de un planeta. Las partidas anteriores dan licencia a los planetas visitados y el de salida es el principal.
-  - El volumen de Opciones ya se aplica a los sonidos (a 0 no suena nada).
-  - La cascada se ve detrás del cristal; la cámara ya no se mete en el bloque de arriba al subir por una cascada.
-  - Se pone un bloque sobre la hierba alta (se pisa) y la sombra de colocar solo sale donde se puede poner.
-  - Los bloques soltados ya no tiemblan en el suelo; las hierbas sueltan su propia hierba.
-  - La nieve solo cubre bloques en el planeta nevado y a cielo abierto.
-  - La niebla depende de la distancia y no cambia al girar la cámara.
-  - El ordenador de a bordo, la tienda, los contratos y las licencias ya no paran el juego (se sigue curando en la nave).
-  - El robot comerciante ya no salta con la nave al entrar en un sistema; el juego ya no se cierra al abrir el mapa en un PC lento.
-  - Botones del ordenador de a bordo sin las notas entre paréntesis.
-  - Los bloques parciales junto a un neón vuelven a verse iluminados; la nave se sigue viendo al cruzar el borde del mundo.
+- **Licencias de exploración de la ESCorp** (añadido del port; en el original las llevaba el servidor): en aventura, escanear
+  un planeta gasta una licencia, 4 en total (1 principal y 3 de exploración); en creativo no hay límite. El primer planeta
+  escaneado es el principal (con tutorial, el suyo). **Solo se pilota la nave sobre el planeta principal**: en los demás, el
+  ordenador de a bordo no ofrece "Pilotar la nave". Allí, "Licencias de exploración" muestra las licencias y deja cambiar de
+  planeta principal (gratis la primera vez, luego 1000 créditos y 24 horas reales entre cambios); en el mapa, "Abandonar"
+  libera la licencia de un planeta. Las partidas anteriores dan licencia a los planetas visitados y el de salida es el principal.
+- El volumen de Opciones ya se aplica a los sonidos (a 0 no suena nada).
+- La cascada se ve detrás del cristal; la cámara ya no se mete en el bloque de arriba al subir por una cascada.
+- Se pone un bloque sobre la hierba alta (se pisa) y la sombra de colocar solo sale donde se puede poner.
+- Los bloques soltados ya no tiemblan en el suelo; las hierbas sueltan su propia hierba.
+- La nieve solo cubre bloques en el planeta nevado y a cielo abierto.
+- La niebla depende de la distancia y no cambia al girar la cámara.
+- El ordenador de a bordo, la tienda, los contratos y las licencias ya no paran el juego (se sigue curando en la nave).
+- El robot comerciante ya no salta con la nave al entrar en un sistema; el juego ya no se cierra al abrir el mapa en un PC lento.
+- Botones del ordenador de a bordo sin las notas entre paréntesis.
+- Los bloques parciales junto a un neón vuelven a verse iluminados; la nave se sigue viendo al cruzar el borde del mundo.
 
 ## v0.6 — pre-release
 - Repositorio: se quitan de `main` los archivos que solo compilaban la versión Flash (`client*.hxml`, `build.bat`/`build.sh`,
