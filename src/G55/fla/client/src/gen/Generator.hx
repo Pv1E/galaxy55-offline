@@ -343,55 +343,87 @@ class Generator {
 	}
 	#end
 
+	/**
+	 * Anadido del port: lo que queda de un paso largo, repartido entre varias llamadas a process (en el juego, unos ms por
+	 * imagen): un paso de 100-300 ms paraba la pantalla de carga. process llama al trabajo de arriba hasta que devuelve false
+	 * (un trabajo puede poner otro encima y esperarlo) antes de pasar al paso siguiente. Entre medias no hay initStep ni nada
+	 * que toque el mundo, el perlin o el azar: mismo orden de calculo, mismo mundo.
+	 */
+	var jobs : Array<Void -> Bool> = [];
+
+	/** f(0) ... f(n - 1), una por llamada (y los trabajos que ponga cada una), y luego done */
+	function spread( n : Int, f : Int -> Void, ?done : Void -> Void ) {
+		var i = 0;
+		jobs.push(function() {
+			if( i < n ) {
+				f(i++);
+				return true;
+			}
+			if( done != null ) done();
+			return false;
+		});
+	}
+
+	function runJob() {
+		var j = jobs[jobs.length - 1];
+		if( !j() ) jobs.remove(j);
+	}
+
 	public function process( maxTimeSlice = 100 ) {
 		var t0 = flash.Lib.getTimer();
 		perlin.select();
-		if( curPosition >= steps.length ) {
+		if( curPosition >= steps.length && jobs.length == 0 ) {
 			return false;
 		}
 		while( true ) {
 			var t = flash.Lib.getTimer();
-			var cur = steps[curPosition];
-			curPosition++;
-			#if genDebug
-			var dbgT0 = haxe.Timer.stamp();
-			#end
-			cur.f();
-			#if genDebug
-			{
-				var a = 1, b = 0, i = outPos, end = outPos + (size * size << HBITS);
-				while( i < end ) {
-					a = (a + flash.Memory.getByte(i)) % 65521;
-					b = (b + a) % 65521;
-					i += 7;
+			if( jobs.length > 0 )
+				runJob();
+			else {
+				var cur = steps[curPosition];
+				curPosition++;
+				#if genDebug
+				var dbgT0 = haxe.Timer.stamp();
+				#end
+				cur.f();
+				#if genDebug
+				// el paso entero, con sus trabajos: las sumas son las de antes
+				while( jobs.length > 0 ) runJob();
+				{
+					var a = 1, b = 0, i = outPos, end = outPos + (size * size << HBITS);
+					while( i < end ) {
+						a = (a + flash.Memory.getByte(i)) % 65521;
+						b = (b + a) % 65521;
+						i += 7;
+					}
+					var ha = 1, hb = 0;
+					for( j in 0...size * size ) {
+						ha = (ha + flash.Memory.getByte(outHeight + j)) % 65521;
+						hb = (hb + ha) % 65521;
+					}
+					var da = 1, db = 0, j = perlin.outOffset;
+					var dend = perlin.outOffset + size * size * 8;
+					while( j < dend ) {
+						da = (da + flash.Memory.getByte(j)) % 65521;
+						db = (db + da) % 65521;
+						j += 3;
+					}
+					var msg = "STEP " + (curPosition - 1) + " " + cur.p.fileName + ":" + cur.p.lineNumber + " heights=" + StringTools.hex(ha, 4) + StringTools.hex(hb, 4) + " doubles=" + StringTools.hex(da, 4) + StringTools.hex(db, 4) + " world=" + StringTools.hex(a, 4) + StringTools.hex(b, 4) + " ms=" + Std.int((haxe.Timer.stamp() - dbgT0) * 1000);
+					#if flash
+					flash.Lib.trace(msg);
+					#else
+					Sys.println(msg);
+					#end
 				}
-				var ha = 1, hb = 0;
-				for( j in 0...size * size ) {
-					ha = (ha + flash.Memory.getByte(outHeight + j)) % 65521;
-					hb = (hb + ha) % 65521;
-				}
-				var da = 1, db = 0, j = perlin.outOffset;
-				var dend = perlin.outOffset + size * size * 8;
-				while( j < dend ) {
-					da = (da + flash.Memory.getByte(j)) % 65521;
-					db = (db + da) % 65521;
-					j += 3;
-				}
-				var msg = "STEP " + (curPosition - 1) + " " + cur.p.fileName + ":" + cur.p.lineNumber + " heights=" + StringTools.hex(ha, 4) + StringTools.hex(hb, 4) + " doubles=" + StringTools.hex(da, 4) + StringTools.hex(db, 4) + " world=" + StringTools.hex(a, 4) + StringTools.hex(b, 4) + " ms=" + Std.int((haxe.Timer.stamp() - dbgT0) * 1000);
-				#if flash
-				flash.Lib.trace(msg);
-				#else
-				Sys.println(msg);
 				#end
 			}
-			#end
 			var t2 = flash.Lib.getTimer();
 			spentTime += t2 - t;
 			var dt = t2 - t0;
 			if( dt > maxTime ) maxTime = dt;
 			var p = curPosition / steps.length;
 			progress = p;
-			if( dt >= maxTimeSlice || curPosition >= steps.length ) {
+			if( dt >= maxTimeSlice || (curPosition >= steps.length && jobs.length == 0) ) {
 				totalTime += dt;
 				break;
 			}
@@ -482,6 +514,17 @@ class Generator {
 			if( fget(i) == b && rnd.random(100)<pctChance )
 				fset(i, by);
 	}
+
+	/** replaceSomeBlocks repartido, una fila y de columnas por llamada (anadido del port, ver jobs): mismo orden de celdas */
+	function replaceSomeBlocksLater( b:BlockKind, by:BlockKind, pctChance:Int ) {
+		var b = alloc(b);
+		var by = alloc(by);
+		spread(size, function(y) {
+			for( i in y * size * HEIGHT...(y + 1) * size * HEIGHT )
+				if( fget(i) == b && rnd.random(100)<pctChance )
+					fset(i, by);
+		});
+	}
 	
 	function around(x, y, z, b) {
 		return get(x - 1, y, z) == b || get(x + 1, y, z) == b || get(x, y - 1, z) == b || get(x, y + 1, z) == b || get(x, y, z - 1) == b || get(x, y, z + 1) == b;
@@ -534,6 +577,18 @@ class Generator {
 	}
 
 	function addHoles( hsize : Float, levels : Array<{ h : Int, v : Float }>, ?block=EMPTY ) {
+		var row = holesRow(hsize, levels, block);
+		for( y in 0...size )
+			row(y);
+	}
+
+	/** addHoles repartido, una fila por llamada (anadido del port, ver jobs) */
+	function addHolesLater( hsize : Float, levels : Array<{ h : Int, v : Float }>, ?block=EMPTY ) {
+		spread(size, holesRow(hsize, levels, block));
+	}
+
+	/** lo de antes de las filas de addHoles (perlin y alturas) y la funcion que hace la fila y */
+	function holesRow( hsize : Float, levels : Array<{ h : Int, v : Float }>, block : Int ) : Int -> Void {
 		initPerlin(hsize);
 		var heights = new flash.Vector<Float>();
 		var cur = 0;
@@ -554,7 +609,7 @@ class Generator {
 			}
 		}
 		var hstart = levels[0].h;
-		for( y in 0...size )
+		return function( y : Int ) {
 			for( x in 0...size ) {
 				var p = x + y * size;
 				var h = height(x, y);
@@ -572,6 +627,7 @@ class Generator {
 					addr++;
 				}
 			}
+		};
 	}
 	
 	var blobsStep : Int;
@@ -687,24 +743,36 @@ class Generator {
 		var changed = 0;
 		if( hmin < 0 ) hmin = waterLevel;
 		for( y in 0...size )
-			for( x in 0...size ) {
-				var h = height(x,y);
-				if( h <= hmin || h > hmax ) continue;
-				var addr = ((x + y * size) << HBITS) + hmin;
-				for( z in hmin...HEIGHT ) {
-					var b = fget(addr);
-					if( b == EMPTY ) {
-						var count = countEmpty(x, y, z, addr);
-						if( count <= 2 )
-							changed += smooth3DEmptyRec(x, y, z, addr, 4);
-					} else if( b != WATER ) {
-						var count = countEmpty(x, y, z, addr);
-						if( count >= 5 )
-							changed += smooth3DRec(x, y, z, addr, 10);
-					}
-					addr++;
+			changed += smooth3DRow(y, hmin, hmax);
+		return changed;
+	}
+
+	/** smooth3D() repartido, una fila por llamada (anadido del port, ver jobs); then recibe lo que ha cambiado */
+	function smooth3DLater( then : Int -> Void ) {
+		var changed = 0, hmin = waterLevel;
+		spread(size, function(y) changed += smooth3DRow(y, hmin, 255), function() then(changed));
+	}
+
+	function smooth3DRow( y : Int, hmin : Int, hmax : Int ) {
+		var changed = 0;
+		for( x in 0...size ) {
+			var h = height(x,y);
+			if( h <= hmin || h > hmax ) continue;
+			var addr = ((x + y * size) << HBITS) + hmin;
+			for( z in hmin...HEIGHT ) {
+				var b = fget(addr);
+				if( b == EMPTY ) {
+					var count = countEmpty(x, y, z, addr);
+					if( count <= 2 )
+						changed += smooth3DEmptyRec(x, y, z, addr, 4);
+				} else if( b != WATER ) {
+					var count = countEmpty(x, y, z, addr);
+					if( count >= 5 )
+						changed += smooth3DRec(x, y, z, addr, 10);
 				}
+				addr++;
 			}
+		}
 		return changed;
 	}
 	

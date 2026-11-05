@@ -302,6 +302,7 @@ class GalaxyApp extends hxd.App {
 	var mapToast : String;
 
 	override function init() {
+		var tInit = haxe.Timer.stamp();
 		PortRules.apply();
 		for( a in Sys.args() ) {
 			if( StringTools.startsWith(a, "--shot=") ) shotPath = a.substr(7);
@@ -430,6 +431,7 @@ class GalaxyApp extends hxd.App {
 		showLoading(Lang.t("loading"));
 
 		hxd.Pad.wait(function(p) pad = p);
+		if( frameTime ) Sys.println("init: " + Std.int((haxe.Timer.stamp() - tInit) * 1000) + " ms");
 	}
 
 	// ---------------------------------------------------------------- utilidades de pantalla
@@ -1696,6 +1698,18 @@ class GalaxyApp extends hxd.App {
 		clearUi();
 		hud.visible = false; msgText.visible = false;
 		loadInfo = info;
+		loadWorld = null;
+		loadShip = null;
+		// la nave nodriza: sus datos (~100 ms la primera vez) y su mundo, cada uno en una imagen de la pantalla de carga
+		if( info.mothership == true ) loadSteps = [function() { Mothership.data(); }, function() createWorld(info)];
+		else createWorld(info);
+		showPlanetLoading();
+	}
+
+	/** lo que queda por hacer en la pantalla de carga antes de tener el mundo (uno por imagen) */
+	var loadSteps : Array<Void -> Void> = [];
+
+	function createWorld( info : SaveInfo ) {
 		loadWorld = info.mothership == true
 			? new World(info.seed, "BIMoon", (Mothership.data() != null ? Mothership.sizeChunks : 1), s3d, atlas, false, null, Mothership.withShip(Hangar.currentShip(info)))
 			: info.hangar == true
@@ -1715,8 +1729,12 @@ class GalaxyApp extends hxd.App {
 			loadWorld.lightTop = Hangar.SZ; // y planet.lightHeight: el sol entra bajo el techo
 		}
 		loadWorld.root.visible = false;
-		showPlanetLoading();
+		// la nave del planeta (no en la nodriza ni en el hangar) tambien se construye en la pantalla de carga, despues del planeta
+		loadShip = info.mothership == true || info.hangar == true ? null : Ship.prepare(loadWorld, atlas, s3d, info.shipEdits, Hangar.currentShip(info));
 	}
+
+	/** el mundo de la nave mientras se carga el planeta (Ship.prepare) */
+	var loadShip : World;
 
 	function finishLoading() {
 		bgDisposeAll();
@@ -1725,8 +1743,9 @@ class GalaxyApp extends hxd.App {
 			Sys.println("mundo " + loadWorld.biomeName + ": " + loadWorld.faces + " caras, spawn z=" + loadWorld.spawnPoint().z);
 			Sys.println(loadWorld.debugStats());
 		}
-		game = new GameView(s3d, loadWorld, loadInfo, atlas);
+		game = new GameView(s3d, loadWorld, loadInfo, atlas, loadShip);
 		loadWorld = null;
+		loadShip = null;
 		if( loadInfo.uni != null && loadInfo.uni.space == true && loadInfo.hangar != true && loadInfo.mothership != true ) {
 			// partida en el espacio: el planeta solo se carga para hacer las imagenes de la nave; luego se abre el mapa
 			shipFrames = game.ship.captureFrames(engine, s3d);
@@ -2290,7 +2309,16 @@ class GalaxyApp extends hxd.App {
 
 	// ---------------------------------------------------------------- bucle principal
 
-	static var frameTime = Sys.args().indexOf("--frametime") >= 0;
+	/** --frametime[=MS]: avisar de los fotogramas de mas de MS milisegundos (250 por defecto) */
+	static var frameTime = frameLimit() > 0;
+	static var frameMax = frameLimit();
+	static function frameLimit() : Float {
+		for( a in Sys.args() ) {
+			if( a == "--frametime" ) return 0.25;
+			if( StringTools.startsWith(a, "--frametime=") ) return Std.parseFloat(a.substr(12)) / 1000;
+		}
+		return 0;
+	}
 	var lastStamp = 0.;
 
 	/** VSync de Opciones (--novsync lo quita siempre, para diagnosticar) */
@@ -2317,10 +2345,10 @@ class GalaxyApp extends hxd.App {
 	override function update( dt : Float ) {
 		limitFps();
 		frames++;
-		// diagnostico (--frametime): fotogramas de mas de 250 ms y en que estado estaba el juego
+		// diagnostico (--frametime): fotogramas lentos y en que estado estaba el juego
 		if( frameTime ) {
 			var now = haxe.Timer.stamp();
-			if( lastStamp > 0 && now - lastStamp > 0.25 ) Sys.println("parada " + Std.int((now - lastStamp) * 1000) + " ms en el fotograma " + frames + ", estado " + state + (bgBuilding != null ? ", construyendo fondo" : ""));
+			if( lastStamp > 0 && now - lastStamp > frameMax ) Sys.println("parada " + Std.int((now - lastStamp) * 1000) + " ms en el fotograma " + frames + ", estado " + state + (bgBuilding != null ? ", construyendo fondo" : ""));
 			lastStamp = now;
 		}
 		if( dt > 0.1 ) dt = 0.1;
@@ -2359,14 +2387,22 @@ class GalaxyApp extends hxd.App {
 			bgCamera(dt);
 		}
 
-		if( state == Loading && loadWorld != null ) {
-			loadWorld.step(14);
+		if( state == Loading && (loadWorld != null || loadSteps.length > 0) ) {
+			var skyDone = false;
+			if( loadWorld == null )
+				loadSteps.shift()();
+			else {
+				if( !loadWorld.isReady() ) loadWorld.step(14);
+				else if( loadShip != null ) loadShip.step(14);
+				// el cielo de espacio de la nodriza (Sky.stepSpace) se pinta a la vez; mas deprisa cuando el mundo ya esta
+				skyDone = loadWorld.sky.stepSpace(loadWorld.isReady() ? 30 : 8);
+			}
 			// Game.update: el trozo avanza 0.1 en cada imagen y vuelve al principio
 			loadAnimPos += 0.1;
 			if( loadAnimPos > 1 ) loadAnimPos--;
 			drawLoadAnim();
 			if( dev != null ) dev.loadingFrame(this);
-			if( loadWorld.isReady() ) finishLoading();
+			if( skyDone && loadWorld.isReady() && (loadShip == null || loadShip.isReady()) ) finishLoading();
 		}
 
 		if( state == Playing && game != null ) {
@@ -2588,8 +2624,12 @@ class GalaxyApp extends hxd.App {
 		var cands = [[0.5, 0.5, 0.2], [0.5, 0.5, 0.3], [0.5, 0.5, 0.4], [0.4, 0.4, 0.2], [0.6, 0.4, 0.2], [0.4, 0.6, 0.2], [0.6, 0.6, 0.2], [0.4, 0.4, 0.3], [0.6, 0.4, 0.3], [0.4, 0.6, 0.3], [0.6, 0.6, 0.3]];
 		var best : Array<Float> = null;
 		var bestScore = 1e18;
+		// altura de cada columna, calculada una sola vez: las rutas pasan por las mismas columnas (topCollide ~100 000 veces
+		// costaba 100-170 ms en la imagen en que aparece el menu)
+		var tops = new haxe.ds.Vector<Int>(s * s);
+		for( i in 0...s * s ) tops[i] = -1;
 		for( c in cands ) {
-			var tab = bgPathAlt(w, s * c[0], s * c[1], s * c[2]);
+			var tab = bgPathAlt(w, s * c[0], s * c[1], s * c[2], tops);
 			var total = 0., mx = 0.;
 			for( i in 0...tab.length ) {
 				total += Math.abs(tab[(i + 1) % tab.length] - tab[i]);
@@ -2618,9 +2658,9 @@ class GalaxyApp extends hxd.App {
 		}
 	}
 
-	/** Tabla de alturas (180 muestras) para una ruta circular. */
-	function bgPathAlt( w : World, cx : Float, cy : Float, r : Float ) : Array<Float> {
-		var M = 180;
+	/** Tabla de alturas (180 muestras) para una ruta circular. tops: altura de cada columna ya calculada (-1 = aun no) */
+	function bgPathAlt( w : World, cx : Float, cy : Float, r : Float, tops : haxe.ds.Vector<Int> ) : Array<Float> {
+		var M = 180, s = w.size;
 		var raw = new Array<Float>();
 		for( i in 0...M ) {
 			var a = i / M * Math.PI * 2;
@@ -2628,7 +2668,10 @@ class GalaxyApp extends hxd.App {
 			var top = 0;
 			for( dx in -3...4 )
 				for( dy in -3...4 ) {
-					var hh = w.topCollide(x + dx * 2, y + dy * 2);
+					// la misma columna que lee topCollide (el planeta da la vuelta)
+					var col = ((x + dx * 2) % s + s) % s + ((y + dy * 2) % s + s) % s * s;
+					var hh = tops[col];
+					if( hh < 0 ) hh = tops[col] = w.topCollide(x + dx * 2, y + dy * 2);
 					if( hh > top ) top = hh;
 				}
 			raw.push(top);
