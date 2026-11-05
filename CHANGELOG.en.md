@@ -3,6 +3,18 @@
 [Español: `CHANGELOG.md`](CHANGELOG.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
 ## Unreleased
+- From **Cornor923** (thank you!, PRs 79-86):
+  - **Kube editor** (port addition): in the start menu, under New game. Draw the faces of a block pixel by pixel in one of the
+    shapes the game already draws (cube, 6-sided cube, box, door, plant, panel, column...), watch it turn in 3D and save it as a
+    `.kube` file in the `kubes` folder of the game data to send it to us. Any game block can be the starting point.
+  - The synthesizer computer also works with a block in hand and with right click (port change).
+  - Two quick clicks place both blocks (port change: the original did not place the second one if it came within 0.47 s).
+  - During the tutorial the synthesizer only makes aluminium and hull plating: the aluminium can no longer be used up on
+    another recipe, leaving the tutorial stuck.
+  - The tutorial shows the green arrow to the emergency landing planet.
+  - Opening the on-board computer or the pause menu puts the pointer at the centre of the window.
+  - The game window opens at its size and with its title (it used to show small for a moment).
+  - The tall red grass no longer throws white pieces when broken.
 - From **Cornor923** (thank you!, PRs 64-78):
   - **ESCorp exploration licenses** (port addition; in the original the server handled them): in adventure, scanning a planet
     uses a license, 4 in all (1 main and 3 exploration); unlimited in creative. The first scanned planet is the main one (with

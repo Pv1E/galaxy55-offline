@@ -82,6 +82,13 @@ etiqueta `flash-version` y la rama `flash`, con sus SWF y archivos de compilaci�
   pausa, robot en el salto del mapa, vigilante de HashLink pausado al construir el mapa, textos del ordenador, luz por cara
   junto a un neón, `World.openCascade` (cascada contra cristal), `Ship.updateWrap` y licencias (`Licenses.hx`, añadido del
   port). Añadido al fusionar: la pantalla `licenses` deja correr el juego como `computer` (guion `licencias_vida`).
+- PR 79-86 de Cornor923 (2026-11-05): editor de kubes (`KubeEditor.hx`, `KubeData.hx`, pantalla `kubes` del menú de inicio,
+  añadido del port; guarda `.kube` en `Settings.dir()/kubes`), ventana creada ya a W x H con título (`hxd.System.createWindow`
+  en `main`), corte de alfa de los trozos 0.03 (`Parts`, cambio del port), flecha del tutorial (`Explorer.tutoTarget` con
+  setter), `Tutorial.craftAllowed` en `Ship.checkCraft`, pausa tras poner anulada al soltar (`GameView`, cambio del port),
+  ordenador del sintetizador con bloque en la mano y clic derecho (`GameView.synthAimed`, cambio del port) y puntero al centro
+  en ordenador y pausa (`GalaxyApp.centerMouse`, `Screen.holdHover`). Arreglado al fusionar: `print mouse` (PR 86) usaba
+  `sdl.Sdl` sin guarda y el build DirectX no compilaba; ahora va en `#if hlsdl`.
 
 ## Qué falló y cómo se resolvió
 | Problema | Causa | Solución |

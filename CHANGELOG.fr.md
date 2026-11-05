@@ -3,6 +3,19 @@
 [Español : `CHANGELOG.md`](CHANGELOG.md) · [English: `CHANGELOG.en.md`](CHANGELOG.en.md)
 
 ## Non publié
+- De **Cornor923** (merci !, PR 79-86) :
+  - **Éditeur de Kubes** (ajout du portage) : dans le menu de démarrage, sous Nouvelle partie. On dessine les faces d'un bloc
+    pixel par pixel dans une des formes que le jeu sait déjà dessiner (cube, cube à 6 faces, boîte, porte, plante, panneau,
+    colonne...), on le voit tourner en 3D et on l'enregistre en fichier `.kube` dans le dossier `kubes` des données du jeu pour
+    nous l'envoyer. On peut partir de n'importe quel bloc du jeu.
+  - L'ordinateur du synthétiseur marche aussi avec un bloc en main et au clic droit (changement du portage).
+  - Deux clics rapides posent les deux blocs (changement du portage : l'original ne posait pas le second avant 0,47 s).
+  - Pendant le tutoriel, le synthétiseur ne fabrique que de l'aluminium et du blindage : on ne peut plus gaspiller l'aluminium
+    dans une autre recette et rester bloqué.
+  - Le tutoriel affiche la flèche verte vers la planète de l'atterrissage d'urgence.
+  - En ouvrant l'ordinateur de bord ou le menu pause, le pointeur va au centre de la fenêtre.
+  - La fenêtre du jeu s'ouvre directement à sa taille et avec son titre (avant, elle apparaissait petite un instant).
+  - Les hautes herbes rouges ne lâchent plus de morceaux blancs en cassant.
 - De **Cornor923** (merci !, PR 64-78) :
   - **Licences d'exploration ESCorp** (ajout du port ; dans l'original, le serveur les gérait) : en aventure, scanner une
     planète utilise une licence, 4 en tout (1 principale et 3 d'exploration) ; illimité en créatif. La première planète

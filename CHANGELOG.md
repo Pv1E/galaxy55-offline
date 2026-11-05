@@ -3,6 +3,19 @@
 [English: `CHANGELOG.en.md`](CHANGELOG.en.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
 ## Sin publicar
+- De **Cornor923** (¡gracias!, PR 79-86):
+  - **Editor de kubes** (añadido del port): en el menú de inicio, debajo de Nueva partida. Se dibujan las caras de un bloque
+    píxel a píxel en una de las formas que ya dibuja el juego (cubo, cubo de 6 caras, caja, puerta, planta, panel, columna...),
+    se ve girar en 3D y se guarda como archivo `.kube` en la carpeta `kubes` de los datos del juego para enviárnoslo. Se puede
+    partir de cualquier bloque del juego.
+  - El ordenador del sintetizador se usa también con un bloque en la mano y con el clic derecho (cambio del port).
+  - Dos clics rápidos ponen los dos bloques (cambio del port: el original no ponía el segundo si llegaba antes de 0,47 s).
+  - Durante el tutorial el sintetizador solo fabrica aluminio y blindaje: ya no se puede gastar el aluminio en otra receta y
+    quedarse atascado.
+  - En el tutorial sale la flecha verde hacia el planeta del aterrizaje de emergencia.
+  - Al abrir el ordenador de a bordo o el menú de pausa, el puntero va al centro de la ventana.
+  - La ventana del juego se abre ya con su tamaño y su título (antes se veía un momento pequeña).
+  - La hierba roja alta ya no suelta trozos blancos al romperse.
 - De **Cornor923** (¡gracias!, PR 64-78):
   - **Licencias de exploración de la ESCorp** (añadido del port; en el original las llevaba el servidor): en aventura, escanear
     un planeta gasta una licencia, 4 en total (1 principal y 3 de exploración); en creativo no hay límite. El primer planeta
