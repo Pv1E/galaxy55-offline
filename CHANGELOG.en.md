@@ -3,60 +3,57 @@
 [Español: `CHANGELOG.md`](CHANGELOG.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
 ## Unreleased
-- From **Cornor923** (thank you!, PRs 87-94):
-  - **ESCorp database** (port addition), on the on-board computer, with three tabs: the **Kubindex**, with every kube of the
-    game by category (pointing the laser at one spots it; having it in the inventory collects it, with how many times it was
-    placed, broken and crafted, the recipes that make it and the ones that use it); **Space**, with the planet and comet types
-    explored and the anomalies met; and **Recipes**, discovered when one of their kubes is collected. A notice top right says
-    what is new and new entries are marked until looked at. It opens at once. In creative everything is known; in the
-    tutorial it opens after the hull plating is made.
-  - **Comets** (port addition): small worlds that visit solar systems for a while (in each 2-hour slot, a system has a 1 in 6
-    chance). Scanning one is landing, without using a license. Docking time is limited (1:30 to 15:00 depending on the ship's
-    speed; it only runs on the ground) and, when it runs out, you go back to the ship. Taking off loses it. The cinder comet
-    has Meteorite Bed rock, Charred Debris, blue etherium veins with Etherium Meteorites and lava, no water.
-  - No more stops when the start menu appears, on the loading screens, when arriving on a planet or loading the mothership
-    (up to nearly a second before, and about 6 s on the first visit to the mothership).
-  - Falling into quicksand: touching it gives the hit of the fall, as on the ground, and the sand stops the fall (port change:
-    in the original the damage came at the end, for the whole fall).
-  - A block broken in the synthesizer area or in the hangar always drops, even if elsewhere it only drops by chance; a drop
-    buried under placed blocks comes out by the side instead of ending on the ship's roof (port changes).
-  - Away from the main planet, the on-board computer no longer offers "Pilot the ship" (it used to show it and refuse when
-    pressed).
-  - The congratulations at the end of the tutorial go away on takeoff and last 12 s (16 before): they no longer come back on
-    the next planet, followed by "this is your main planet".
-  - Kube editor: in French, the help says "enregistrer" again for Ctrl+S.
-- From **Cornor923** (thank you!, PRs 79-86):
-  - **Kube editor** (port addition): in the start menu, under New game. Draw the faces of a block pixel by pixel in one of the
-    shapes the game already draws (cube, 6-sided cube, box, door, plant, panel, column...), watch it turn in 3D and save it as a
-    `.kube` file in the `kubes` folder of the game data to send it to us. Any game block can be the starting point.
-  - The synthesizer computer also works with a block in hand and with right click (port change).
-  - Two quick clicks place both blocks (port change: the original did not place the second one if it came within 0.47 s).
-  - During the tutorial the synthesizer only makes aluminium and hull plating: the aluminium can no longer be used up on
-    another recipe, leaving the tutorial stuck.
-  - The tutorial shows the green arrow to the emergency landing planet.
-  - Opening the on-board computer or the pause menu puts the pointer at the centre of the window.
-  - The game window opens at its size and with its title (it used to show small for a moment).
-  - The tall red grass no longer throws white pieces when broken.
+- **ESCorp database** (port addition), on the on-board computer, with three tabs: the **Kubindex**, with every kube of the
+  game by category (pointing the laser at one spots it; having it in the inventory collects it, with how many times it was
+  placed, broken and crafted, the recipes that make it and the ones that use it); **Space**, with the planet and comet types
+  explored and the anomalies met; and **Recipes**, discovered when one of their kubes is collected. A notice top right says
+  what is new and new entries are marked until looked at. It opens at once. In creative everything is known; in the
+  tutorial it opens after the hull plating is made.
+- **Comets** (port addition): small worlds that visit solar systems for a while (in each 2-hour slot, a system has a 1 in 6
+  chance). Scanning one is landing, without using a license. Docking time is limited (1:30 to 15:00 depending on the ship's
+  speed; it only runs on the ground) and, when it runs out, you go back to the ship. Taking off loses it. The cinder comet
+  has Meteorite Bed rock, Charred Debris, blue etherium veins with Etherium Meteorites and lava, no water.
+- No more stops when the start menu appears, on the loading screens, when arriving on a planet or loading the mothership
+  (up to nearly a second before, and about 6 s on the first visit to the mothership).
+- Falling into quicksand: touching it gives the hit of the fall, as on the ground, and the sand stops the fall (port change:
+  in the original the damage came at the end, for the whole fall).
+- A block broken in the synthesizer area or in the hangar always drops, even if elsewhere it only drops by chance; a drop
+  buried under placed blocks comes out by the side instead of ending on the ship's roof (port changes).
+- Away from the main planet, the on-board computer no longer offers "Pilot the ship" (it used to show it and refuse when
+  pressed).
+- The congratulations at the end of the tutorial go away on takeoff and last 12 s (16 before): they no longer come back on
+  the next planet, followed by "this is your main planet".
+- Kube editor: in French, the help says "enregistrer" again for Ctrl+S.
+- **Kube editor** (port addition): in the start menu, under New game. Draw the faces of a block pixel by pixel in one of the
+  shapes the game already draws (cube, 6-sided cube, box, door, plant, panel, column...), watch it turn in 3D and save it as a
+  `.kube` file in the `kubes` folder of the game data to send it to us. Any game block can be the starting point.
+- The synthesizer computer also works with a block in hand and with right click (port change).
+- Two quick clicks place both blocks (port change: the original did not place the second one if it came within 0.47 s).
+- During the tutorial the synthesizer only makes aluminium and hull plating: the aluminium can no longer be used up on
+  another recipe, leaving the tutorial stuck.
+- The tutorial shows the green arrow to the emergency landing planet.
+- Opening the on-board computer or the pause menu puts the pointer at the centre of the window.
+- The game window opens at its size and with its title (it used to show small for a moment).
+- The tall red grass no longer throws white pieces when broken.
 - The floor under partial blocks placed together (e.g. four iron or aluminium ingots in the ship) no longer looks black
   (port change: in the original those blocks let no light through; walls and ceilings are unchanged).
 - Kube editor: a kube named like a reserved Windows name (con, aux, nul...) can now be saved.
-- From **Cornor923** (thank you!, PRs 64-78):
-  - **ESCorp exploration licenses** (port addition; in the original the server handled them): in adventure, scanning a planet
-    uses a license, 4 in all (1 main and 3 exploration); unlimited in creative. The first scanned planet is the main one (with
-    the tutorial, its planet). **The ship can only be piloted over the main planet**: elsewhere, the on-board computer does
-    not offer "Pilot the ship". There, "Exploration licenses" shows them and lets you change the main planet (free the first
-    time, then 1000 credits and 24 real hours between changes); on the map, "Abandon" frees a planet's license. Older saves
-    give a license to visited planets and the start planet is the main one.
-  - The Options volume now applies to the sounds (0 is silence).
-  - A cascade behind glass is visible; the camera no longer enters the block above when climbing a cascade.
-  - Blocks can be placed on tall grass (it is trampled) and the placement ghost only shows where a block can go.
-  - Dropped blocks no longer shake on the ground; herbs drop their own herb.
-  - Snow only covers blocks on the snow planet and under the open sky.
-  - Fog depends on the distance and no longer changes when turning the camera.
-  - The on-board computer, the shop, the contracts and the licenses no longer pause the game (you keep healing in the ship).
-  - The merchant robot no longer jumps with the ship into a system; opening the map no longer closes the game on a slow PC.
-  - On-board computer buttons without the notes in parentheses.
-  - Partial blocks next to a neon light look lit again; the ship stays visible across the edge of the world.
+- **ESCorp exploration licenses** (port addition; in the original the server handled them): in adventure, scanning a planet
+  uses a license, 4 in all (1 main and 3 exploration); unlimited in creative. The first scanned planet is the main one (with
+  the tutorial, its planet). **The ship can only be piloted over the main planet**: elsewhere, the on-board computer does
+  not offer "Pilot the ship". There, "Exploration licenses" shows them and lets you change the main planet (free the first
+  time, then 1000 credits and 24 real hours between changes); on the map, "Abandon" frees a planet's license. Older saves
+  give a license to visited planets and the start planet is the main one.
+- The Options volume now applies to the sounds (0 is silence).
+- A cascade behind glass is visible; the camera no longer enters the block above when climbing a cascade.
+- Blocks can be placed on tall grass (it is trampled) and the placement ghost only shows where a block can go.
+- Dropped blocks no longer shake on the ground; herbs drop their own herb.
+- Snow only covers blocks on the snow planet and under the open sky.
+- Fog depends on the distance and no longer changes when turning the camera.
+- The on-board computer, the shop, the contracts and the licenses no longer pause the game (you keep healing in the ship).
+- The merchant robot no longer jumps with the ship into a system; opening the map no longer closes the game on a slow PC.
+- On-board computer buttons without the notes in parentheses.
+- Partial blocks next to a neon light look lit again; the ship stays visible across the edge of the world.
 
 ## v0.6 — pre-release
 - Repository: the files that only built the Flash version (`client*.hxml`, `build.bat`/`build.sh`, the SWFs in `release/`,
