@@ -1,0 +1,10 @@
+# tutorial, al empezar en el espacio: la flecha verde del GPS apunta al planeta del aterrizaje de emergencia (TutoSetup.PLANET).
+# El mapa se crea antes de que GalaxyApp le diga ese planeta (tutoTarget) y las flechas ya estaban hechas sin el: expinfo debe
+# decir gps=1 con el planeta 0 y la captura tuto_flecha mostrar la flecha junto a la nave. -Extra "--lang=fr"
+wait 3
+tuto new 4242
+waitfor map
+wait 90
+expinfo
+shot tuto_flecha
+quit
