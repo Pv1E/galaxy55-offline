@@ -1,6 +1,8 @@
 # fin del tutorial y despegue (anadido del port): en el planeta, la felicitacion y despues, sola, el mensaje del planeta
 # principal; al despegar se quitan los dos (en el mapa no queda ninguno), tambien si se despega en plena felicitacion, y al
 # volver a aterrizar no salen. -Timeout 400
+# los mensajes cuentan el tiempo de verdad: a 30 imagenes por segundo (como mucho) las esperas caen igual en todos los PC
+maxfps 30
 wait 3
 tuto new 4242
 waitfor map
@@ -16,12 +18,11 @@ tuto step 12
 wait 10
 print tuto
 shot tuto_despegue_felicitacion
-# felicitacion (Tutorial.DONE_TIME, 12 s) y despues el planeta principal (MAIN_TIME, 10 s); el tiempo es el de verdad y la
-# ventana de prueba va a unas 30-40 imagenes por segundo: 550 actualizaciones caen en el segundo mensaje
-wait 540
+# felicitacion (Tutorial.DONE_TIME, 12 s) y despues el planeta principal (MAIN_TIME, 10 s): unos 17 s y luego 27 s
+wait 500
 print tuto
 shot tuto_despegue_principal
-wait 600
+wait 300
 print tuto
 computer
 wait 3
