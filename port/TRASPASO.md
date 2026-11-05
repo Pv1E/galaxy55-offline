@@ -158,8 +158,10 @@ headless. Cambios del port respecto al original: el 85 (en Flash un segundo clic
 82 (ordenador del sintetizador con bloque en la mano y clic derecho) y el 81 (corte de alfa 0.03 en los trozos). El 79 añade
 el botón Editor de kubes al menú de inicio (los demás botones bajan una fila).
 Pasan los guiones de los PR (herbe_particules, tuto_flecha, tuto_sintetizador, sintetizador_rapido, sintetizador_mano,
-ordenador_raton, pausa_raton, kubes) y los de siempre synth y computer_menu; el build DX abre el menú de inicio. Detalle
-pendiente para Cornor: en francés la línea de ayuda del editor de kubes no cabe y "Échap : retour" pasa a una segunda línea.
+ordenador_raton, pausa_raton, kubes) y los de siempre synth y computer_menu; el build DX abre el menú de inicio. Después
+(2026-11-05): la línea de ayuda del editor de kubes no cabía en español ni en francés (la última orden bajaba a una segunda
+línea; en inglés sí cabe). Se acortan en `Lang.hx` ("Izq./Der.: cara"; "Flèches : face", "Ctrl+S sauver") y caben en una línea
+en los tres idiomas (capturas kubes_ayuda_es/en/fr). Arriba y abajo no hacen nada en el editor, así que "Flèches" no engaña.
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;

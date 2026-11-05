@@ -88,7 +88,8 @@ etiqueta `flash-version` y la rama `flash`, con sus SWF y archivos de compilaci�
   setter), `Tutorial.craftAllowed` en `Ship.checkCraft`, pausa tras poner anulada al soltar (`GameView`, cambio del port),
   ordenador del sintetizador con bloque en la mano y clic derecho (`GameView.synthAimed`, cambio del port) y puntero al centro
   en ordenador y pausa (`GalaxyApp.centerMouse`, `Screen.holdHover`). Arreglado al fusionar: `print mouse` (PR 86) usaba
-  `sdl.Sdl` sin guarda y el build DirectX no compilaba; ahora va en `#if hlsdl`.
+  `sdl.Sdl` sin guarda y el build DirectX no compilaba; ahora va en `#if hlsdl`. Después: la ayuda del editor (`kube.help`)
+  se acorta en ES y FR para que quepa en una línea.
 
 ## Qué falló y cómo se resolvió
 | Problema | Causa | Solución |
