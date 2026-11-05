@@ -26,7 +26,7 @@ import Common;
  *   activate x y z          activar el bloque de esa celda (puertas, ordenadores); activatel = local; si abre un menu, el guion sigue en el
  *   synth N                 usar el ordenador del sintetizador N
  *   jet 1|0                 mantener Espacio (salto y jetpack)
- *   press|release TECLA...  pulsar o soltar teclas de verdad (shift o una letra), p. ej. press shift k = Mayus+K
+ *   press|release TECLA...  pulsar o soltar teclas de verdad (shift, mouseright o una letra), p. ej. press shift k = Mayus+K
  *   explore                 abrir el mapa de estrellas (explorador); expsys N / expgo x y / expinfo lo manejan; expbutton [N]
  *                           pulsa el boton N (0) de la ventana del planeta (1 = Abandonar)
  *   button N                activar el control N de la ventana de confirmacion o del menu abierto (print menu)
@@ -126,6 +126,7 @@ class Dev {
 			case "space": K.SPACE;
 			case "pgup": K.PGUP;
 			case "pgdown": K.PGDOWN;
+			case "mouseright": K.MOUSE_RIGHT; // boton derecho del raton
 			default: n.toUpperCase().charCodeAt(0);
 		}
 	}

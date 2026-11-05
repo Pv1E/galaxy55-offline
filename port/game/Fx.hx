@@ -162,7 +162,7 @@ class Fx {
 		time += tmod;
 		var sel = g.select;
 		var laser = g.laserActive;
-		var hand = g.inv.getCurrentBlock();
+		var hand = g.synthAimed ? null : g.inv.getCurrentBlock(); // el ordenador del sintetizador se usa como con la mano vacia
 
 		if( sel == null || (hand != null && !laser && false) ) {
 			box.visible = false;
