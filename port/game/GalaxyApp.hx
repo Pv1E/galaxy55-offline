@@ -182,6 +182,7 @@ class GalaxyApp extends hxd.App {
 
 	static inline var W = Theme.W;
 	static inline var H = Theme.H;
+	static inline var TITLE = "Galaxy 55 (offline)";
 	/** color de fx.Load */
 	static inline var LOAD_COLOR = 0xC93814;
 	static var BIOMES = ["BIAutumn", "BIMoon", "BIMars", "BIWinterPeaks", "BIAcidForest"];
@@ -323,7 +324,6 @@ class GalaxyApp extends hxd.App {
 		}
 
 		var win = hxd.Window.getInstance();
-		win.title = "Galaxy 55 (offline)";
 		applyVsync();
 		win.onClose = function() {
 			// en el mapa se guarda la partida en el espacio; durante el despegue el planeta aun esta cargado
@@ -2893,6 +2893,9 @@ class GalaxyApp extends hxd.App {
 				Sys.stderr().writeString(Std.string(e) + "\n" + haxe.CallStack.toString(haxe.CallStack.exceptionStack()) + "\n");
 				Sys.exit(1);
 			};
+		// cambio del port: Heaps abre la ventana en 800x600 y sin titulo antes de init, que despues la pasaba a W x H: al arrancar
+		// se veia un momento una ventana casi cuadrada que crecia de golpe. Se crea ya con su tamano y su titulo
+		hxd.System.createWindow = function() return new hxd.Window(TITLE, W, H);
 		new GalaxyApp();
 	}
 }
