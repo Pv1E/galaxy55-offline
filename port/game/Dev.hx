@@ -66,6 +66,7 @@ import Common;
  *   wheel N                 rueda del raton (N > 0 = hacia abajo)
  *   mouse X Y [click]       llevar el raton a ese punto de la zona 1280x720 (y hacer clic)
  *   print menu|saves        pantalla de menu abierta y su foco / partidas guardadas (waitfor menu: el menu y su fondo listos)
+ *   print mouse             donde cree el juego que esta el puntero (pixeles de la ventana, zona 1280x720) y el cursor del sistema
  *   quit
  */
 class Dev {
@@ -521,6 +522,8 @@ class Dev {
 					var area = Ui.Theme.visibleArea(), eng = h3d.Engine.getCurrent();
 					var mx = (f(a[1]) - area.x) * eng.width / area.w, my = (f(a[2]) - area.y) * eng.height / area.h;
 					var win = hxd.Window.getInstance();
+					// como un movimiento de verdad, la ventana sabe donde esta el puntero (Screen.holdHover lo mira)
+					@:privateAccess { win.curMouseX = Std.int(mx); win.curMouseY = Std.int(my); }
 					win.event(new hxd.Event(EMove, mx, my));
 					if( a[3] == "click" ) {
 						win.event(new hxd.Event(EPush, mx, my));
@@ -731,6 +734,13 @@ class Dev {
 		}
 		if( a[1] == "saves" ) {
 			Sys.println(app.devSavesInfo());
+			return;
+		}
+		if( a[1] == "mouse" ) {
+			var win = hxd.Window.getInstance(), gx = 0, gy = 0;
+			sdl.Sdl.getGlobalMouseState(gx, gy);
+			Sys.println("raton: ventana " + win.mouseX + "," + win.mouseY + " de " + win.width + "x" + win.height
+				+ " | zona " + Std.int(app.s2d.mouseX) + "," + Std.int(app.s2d.mouseY) + " | sistema " + gx + "," + gy);
 			return;
 		}
 		if( a[1] == "shots" ) {

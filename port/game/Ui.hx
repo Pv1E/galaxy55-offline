@@ -378,9 +378,19 @@ class Screen extends h2d.Object {
 	public var onBack : Void -> Void;
 	public var active = true;
 	var navCooldown = 0.;
+	/** punto de la ventana donde se ha dejado el puntero (holdHover) */
+	var heldX = -1;
+	var heldY = -1;
 
 	public function new( parent : h2d.Object ) {
 		super(parent);
+	}
+
+	/** el control que queda bajo el puntero no se lleva el foco hasta que se mueva el raton (GalaxyApp.centerMouse) */
+	public function holdHover() {
+		var win = hxd.Window.getInstance();
+		heldX = win.mouseX;
+		heldY = win.mouseY;
 	}
 
 	public function add( w : Widget, x : Float, y : Float ) : Widget {
@@ -388,7 +398,12 @@ class Screen extends h2d.Object {
 		w.y = y;
 		addChild(w);
 		widgets.push(w);
-		w.onHover = function(o) setFocus(widgets.indexOf(o));
+		w.onHover = function(o) {
+			var win = hxd.Window.getInstance();
+			if( win.mouseX == heldX && win.mouseY == heldY ) return;
+			heldX = -1;
+			setFocus(widgets.indexOf(o));
+		};
 		w.onPress = function(o) setFocus(widgets.indexOf(o));
 		return w;
 	}
