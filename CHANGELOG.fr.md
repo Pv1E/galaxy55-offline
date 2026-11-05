@@ -3,40 +3,62 @@
 [Español : `CHANGELOG.md`](CHANGELOG.md) · [English: `CHANGELOG.en.md`](CHANGELOG.en.md)
 
 ## Non publié
-- De **Cornor923** (merci !, PR 79-86) :
-  - **Éditeur de Kubes** (ajout du portage) : dans le menu de démarrage, sous Nouvelle partie. On dessine les faces d'un bloc
-    pixel par pixel dans une des formes que le jeu sait déjà dessiner (cube, cube à 6 faces, boîte, porte, plante, panneau,
-    colonne...), on le voit tourner en 3D et on l'enregistre en fichier `.kube` dans le dossier `kubes` des données du jeu pour
-    nous l'envoyer. On peut partir de n'importe quel bloc du jeu.
-  - L'ordinateur du synthétiseur marche aussi avec un bloc en main et au clic droit (changement du portage).
-  - Deux clics rapides posent les deux blocs (changement du portage : l'original ne posait pas le second avant 0,47 s).
-  - Pendant le tutoriel, le synthétiseur ne fabrique que de l'aluminium et du blindage : on ne peut plus gaspiller l'aluminium
-    dans une autre recette et rester bloqué.
-  - Le tutoriel affiche la flèche verte vers la planète de l'atterrissage d'urgence.
-  - En ouvrant l'ordinateur de bord ou le menu pause, le pointeur va au centre de la fenêtre.
-  - La fenêtre du jeu s'ouvre directement à sa taille et avec son titre (avant, elle apparaissait petite un instant).
-  - Les hautes herbes rouges ne lâchent plus de morceaux blancs en cassant.
+- **Base de données ESCorp** (ajout du portage), dans l'ordinateur de bord, avec trois onglets : le **Kubindex**, avec tous
+  les kubes du jeu par catégorie (viser un kube au laser le repère ; l'avoir dans l'inventaire le récupère, avec le nombre de
+  fois où il a été posé, cassé et fabriqué, les recettes qui le donnent et celles qui l'utilisent) ; **Espace**, avec les types
+  de planète et de comète explorés et les anomalies croisées ; et **Recettes**, découvertes en récupérant un de leurs kubes.
+  Une notification en haut à droite annonce les nouveautés et les nouvelles fiches sont marquées jusqu'à ce qu'on les
+  regarde. Elle s'ouvre instantanément. En créatif, tout est connu ; dans le tutoriel, elle s'ouvre après la fabrication
+  du blindage.
+- **Comètes** (ajout du portage) : de petits mondes qui passent un moment dans les systèmes solaires (à chaque tranche de
+  2 heures, un système a 1 chance sur 6). Scanner une comète, c'est y atterrir, sans utiliser de licence. Le temps d'amarrage
+  est compté (de 1:30 à 15:00 selon la vitesse du vaisseau ; il ne s'écoule qu'au sol) et, une fois écoulé, on revient au
+  vaisseau. Au décollage, elle est perdue. La comète calcinée a un sol de roche de cratère, des débris calcinés, des filons
+  d'etherium avec des météorites d'etherium et de la lave, sans eau.
+- Plus de blocages à l'apparition du menu de démarrage, sur les écrans de chargement, en arrivant sur une planète ni au
+  chargement du vaisseau-mère (avant, jusqu'à près d'une seconde, et environ 6 s à la première visite du vaisseau-mère).
+- Tomber dans le sable mouvant : en le touchant, on prend le choc de la chute, comme sur le sol, et le sable arrête la chute
+  (changement du portage : dans l'original, les dégâts arrivaient à la fin, pour toute la chute).
+- Un bloc cassé dans la zone du synthétiseur ou dans le hangar tombe toujours, même s'il ne tombe ailleurs qu'avec de la
+  chance ; un bloc tombé enterré sous des blocs posés ressort par le côté au lieu de finir sur le toit du vaisseau
+  (changements du portage).
+- Hors de la planète principale, l'ordinateur de bord ne propose plus « Piloter le vaisseau » (avant, il s'affichait puis
+  refusait).
+- Les félicitations de la fin du tutoriel disparaissent au décollage et durent 12 s (16 avant) : elles ne reviennent plus sur
+  la planète suivante, suivies de « voici ta planète principale ».
+- Éditeur de Kubes : en français, l'aide dit de nouveau « enregistrer » pour Ctrl+S.
+- **Éditeur de Kubes** (ajout du portage) : dans le menu de démarrage, sous Nouvelle partie. On dessine les faces d'un bloc
+  pixel par pixel dans une des formes que le jeu sait déjà dessiner (cube, cube à 6 faces, boîte, porte, plante, panneau,
+  colonne...), on le voit tourner en 3D et on l'enregistre en fichier `.kube` dans le dossier `kubes` des données du jeu pour
+  nous l'envoyer. On peut partir de n'importe quel bloc du jeu.
+- L'ordinateur du synthétiseur marche aussi avec un bloc en main et au clic droit (changement du portage).
+- Deux clics rapides posent les deux blocs (changement du portage : l'original ne posait pas le second avant 0,47 s).
+- Pendant le tutoriel, le synthétiseur ne fabrique que de l'aluminium et du blindage : on ne peut plus gaspiller l'aluminium
+  dans une autre recette et rester bloqué.
+- Le tutoriel affiche la flèche verte vers la planète de l'atterrissage d'urgence.
+- En ouvrant l'ordinateur de bord ou le menu pause, le pointeur va au centre de la fenêtre.
+- La fenêtre du jeu s'ouvre directement à sa taille et avec son titre (avant, elle apparaissait petite un instant).
+- Les hautes herbes rouges ne lâchent plus de morceaux blancs en cassant.
 - Le sol sous des blocs partiels collés (p. ex. quatre lingots de fer ou d'aluminium dans le vaisseau) n'est plus noir
   (changement du portage : dans l'original ces blocs ne laissent pas passer la lumière ; murs et plafonds inchangés).
 - Éditeur de Kubes : un kube nommé comme un nom réservé de Windows (con, aux, nul...) peut maintenant être enregistré.
-- De **Cornor923** (merci !, PR 64-78) :
-  - **Licences d'exploration ESCorp** (ajout du port ; dans l'original, le serveur les gérait) : en aventure, scanner une
-    planète utilise une licence, 4 en tout (1 principale et 3 d'exploration) ; illimité en créatif. La première planète
-    scannée est la principale (avec le tutoriel, la sienne). **Le vaisseau ne se pilote qu'au-dessus de la planète
-    principale** : ailleurs, l'ordinateur de bord ne propose pas « Piloter le vaisseau ». Là, « Licences d'exploration » les
-    montre et permet de changer de planète principale
-    (gratuit la première fois, puis 1000 crédits et 24 heures réelles entre deux changements) ; sur la carte, « Abandonner »
-    libère la licence d'une planète. Les anciennes parties donnent une licence aux planètes visitées et celle de départ est la principale.
-  - Le volume des Options s'applique enfin aux sons (à 0, plus rien).
-  - Une cascade derrière du verre se voit ; la caméra n'entre plus dans le bloc du dessus en montant une cascade.
-  - On pose un bloc sur les hautes herbes (elles sont écrasées) et l'aperçu de pose n'apparaît que là où l'on peut poser.
-  - Les blocs lâchés ne tremblent plus au sol ; les herbes donnent leur propre herbe.
-  - La neige ne couvre les blocs que sur la planète enneigée et à ciel ouvert.
-  - Le brouillard dépend de la distance et ne change plus en tournant la caméra.
-  - L'ordinateur de bord, la boutique, les contrats et les licences ne mettent plus le jeu en pause (on continue à guérir dans le vaisseau).
-  - Le robot marchand ne saute plus avec le vaisseau dans un système ; ouvrir la carte ne ferme plus le jeu sur un PC lent.
-  - Boutons de l'ordinateur de bord sans les notes entre parenthèses.
-  - Les blocs partiels à côté d'un néon sont de nouveau éclairés ; le vaisseau reste visible en passant le bord du monde.
+- **Licences d'exploration ESCorp** (ajout du port ; dans l'original, le serveur les gérait) : en aventure, scanner une
+  planète utilise une licence, 4 en tout (1 principale et 3 d'exploration) ; illimité en créatif. La première planète
+  scannée est la principale (avec le tutoriel, la sienne). **Le vaisseau ne se pilote qu'au-dessus de la planète
+  principale** : ailleurs, l'ordinateur de bord ne propose pas « Piloter le vaisseau ». Là, « Licences d'exploration » les
+  montre et permet de changer de planète principale
+  (gratuit la première fois, puis 1000 crédits et 24 heures réelles entre deux changements) ; sur la carte, « Abandonner »
+  libère la licence d'une planète. Les anciennes parties donnent une licence aux planètes visitées et celle de départ est la principale.
+- Le volume des Options s'applique enfin aux sons (à 0, plus rien).
+- Une cascade derrière du verre se voit ; la caméra n'entre plus dans le bloc du dessus en montant une cascade.
+- On pose un bloc sur les hautes herbes (elles sont écrasées) et l'aperçu de pose n'apparaît que là où l'on peut poser.
+- Les blocs lâchés ne tremblent plus au sol ; les herbes donnent leur propre herbe.
+- La neige ne couvre les blocs que sur la planète enneigée et à ciel ouvert.
+- Le brouillard dépend de la distance et ne change plus en tournant la caméra.
+- L'ordinateur de bord, la boutique, les contrats et les licences ne mettent plus le jeu en pause (on continue à guérir dans le vaisseau).
+- Le robot marchand ne saute plus avec le vaisseau dans un système ; ouvrir la carte ne ferme plus le jeu sur un PC lent.
+- Boutons de l'ordinateur de bord sans les notes entre parenthèses.
+- Les blocs partiels à côté d'un néon sont de nouveau éclairés ; le vaisseau reste visible en passant le bord du monde.
 
 ## v0.6 — pre-release
 - Dépôt : les fichiers qui servaient seulement à compiler la version Flash (`client*.hxml`, `build.bat`/`build.sh`, les SWF de

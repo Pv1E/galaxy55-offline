@@ -85,7 +85,8 @@ A player got it running on Linux this way; we have not tested it.
 
 - `game/` the game: menus (`GalaxyApp`, `Ui`), languages (`Lang`), settings (`Settings`), saves (`SaveData`), planet, light and meshing (`World`),
   block models (`Models`), sky and fog (`Sky`), snow (`Snow`), player, digging and placing (`GameView`), inventory (`Inv`, `InvBar`, `Palette`),
-  effects and drops (`Fx`, `Drops`) and the ship (`Ship`, `ShipData`).
+  effects and drops (`Fx`, `Drops`), the ship (`Ship`, `ShipData`), comets (`Comets`, `CometGenerator`) and the ESCorp
+  database (`Kubindex`, `KubData`, `DatabasePanel` and the `Kub*` views).
 - `explore/` the star map (`Explorer`, with the merchant robot and the GPS arrows). Flowing water is in `game/WorldProcess.hx`.
 - `shim/` `flash.*` compatibility layer so the original generators compile in HashLink.
 - `headless/` verification programs: worlds are identical to the Flash ones (Adler-32 hash, water and blocks); they also read the ship and the saves.
@@ -118,7 +119,7 @@ A player got it running on Linux this way; we have not tested it.
 - The landing light beam follows any change in the column under the ship and starts on top of low blocks such as plates (the
   original only moved it when a block was broken there); you return to the ship only standing at its base, not from higher up.
 - Piloting the ship over the planet is an addition of this port (the original always left it at the same spot on each planet):
-  from the on-board computer, only on playable planets (not in the mothership, the hangar or during the tutorial). It always
+  from the on-board computer, only on playable planets (not in the mothership, the hangar, on comets or during the tutorial; in adventure, only over the main planet). It always
   stays at the same height, costs nothing, uses a camera behind and above it and lighter fog while it lasts; the light beam
   shows where it will stay (it fades out at full speed and comes back when going slowly, stopping or landing). It speeds up and slows down smoothly, turns to face where it goes and banks in turns; when you
   leave it, it returns to its usual heading before landing (its blocks, chests and synthesizers do not rotate). The spot is saved per planet; if you never pilot it, the ship lands where it always did.
@@ -134,4 +135,12 @@ A player got it running on Linux this way; we have not tested it.
   sand stops the fall; when leaving it from below, the fall counts from the way out. In the original it only slowed time
   down: the speed kept growing inside and the damage came at the end, that of the whole fall. As in the original, the sand
   takes life while your eyes are in it and, from inside, looking down aims at nothing.
+- The ESCorp database (on-board computer) is an addition of this port: the Kubindex with every kube, the planet and comet
+  types, the anomalies and the recipes, filled in as you play. The mark for new entries is an icon from Mush (`recent.png`,
+  Motion Twin, CC BY-NC-SA 4.0).
+- Comets are an addition of this port: 96x96 worlds that visit systems for a while (a fixed draw per system and 2-hour slot,
+  not the server). They use no license and the docking time depends on the ship's speed.
+- In the synthesizer area and in the hangar, whatever is broken always drops (port change: in the original, what only drops
+  by chance was often lost when taken back from there). A drop buried under placed blocks comes out by the side; in the
+  original it rose through them and, in the ship, ended on the roof.
 - What is missing is in `TODO.md`, bugs in `BUGS.md` and ideas for later in `IDEAS.en.md` (repository root).

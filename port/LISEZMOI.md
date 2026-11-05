@@ -87,8 +87,9 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
 
 - `game/` le jeu : menus (`GalaxyApp`, `Ui`), langues (`Lang`), réglages (`Settings`), sauvegardes (`SaveData`), planète, lumière et
   maillage (`World`), écoulement de l'eau (`WorldProcess`), modèles de blocs (`Models`), ciel et brouillard (`Sky`), neige (`Snow`),
-  joueur, creuser et poser (`GameView`), inventaire (`Inv`, `InvBar`, `Palette`), effets et objets tombés (`Fx`, `Drops`) et le
-  vaisseau (`Ship`, `ShipData`).
+  joueur, creuser et poser (`GameView`), inventaire (`Inv`, `InvBar`, `Palette`), effets et objets tombés (`Fx`, `Drops`), le
+  vaisseau (`Ship`, `ShipData`), les comètes (`Comets`, `CometGenerator`) et la base de données ESCorp (`Kubindex`, `KubData`,
+  `DatabasePanel` et les vues `Kub*`).
 - `explore/` la carte stellaire (`Explorer`, avec le robot marchand et les flèches GPS).
 - `shim/` couche de compatibilité `flash.*` pour que les générateurs d'origine compilent en HashLink.
 - `headless/` programmes de vérification : les mondes sont identiques à ceux de Flash (empreinte Adler-32, eau et blocs) ; ils lisent aussi le vaisseau et les sauvegardes.
@@ -124,8 +125,8 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
   les plaques (l'original ne le bougeait qu'en cassant un bloc à cet endroit) ; on ne retourne au vaisseau que debout sur sa
   base, pas de plus haut.
 - Piloter le vaisseau au-dessus de la planète est un ajout de ce portage (l'original le laissait toujours au même endroit de
-  chaque planète) : depuis l'ordinateur de bord, seulement sur les planètes jouables (pas dans le vaisseau-mère, le hangar ni
-  pendant le tutoriel). Il reste toujours à la même hauteur, sans coût, avec une caméra derrière et au-dessus et un brouillard
+  chaque planète) : depuis l'ordinateur de bord, seulement sur les planètes jouables (pas dans le vaisseau-mère, le hangar, les comètes ni
+  pendant le tutoriel ; en aventure, seulement au-dessus de la planète principale). Il reste toujours à la même hauteur, sans coût, avec une caméra derrière et au-dessus et un brouillard
   plus léger pendant ce temps ; le rayon de lumière montre où il restera (il s'efface à pleine vitesse et revient en allant
   doucement, à l'arrêt et à l'atterrissage). Il accélère et freine en douceur, se tourne vers où il
   va et s'incline dans les virages ; quand on le laisse, il reprend son orientation habituelle avant d'atterrir (ses blocs,
@@ -144,4 +145,13 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
   faisait que ralentir le temps : la vitesse continuait d'augmenter dedans et les dégâts arrivaient à la fin, ceux de toute la
   chute. Comme dans l'original, le sable fait perdre de la vie quand les yeux sont dedans et, de l'intérieur, on ne vise rien
   en regardant vers le bas.
+- La base de données ESCorp (ordinateur de bord) est un ajout de ce portage : le Kubindex avec tous les kubes, les types de
+  planète et de comète, les anomalies et les recettes, qui se remplissent en jouant. La marque des nouveautés est une icône de
+  Mush (`recent.png`, Motion Twin, CC BY-NC-SA 4.0).
+- Les comètes sont un ajout de ce portage : des mondes de 96x96 qui passent un moment dans les systèmes (un tirage fixe par
+  système et par tranche de 2 heures, pas le serveur). Elles n'utilisent pas de licence et le temps d'amarrage dépend de la
+  vitesse du vaisseau.
+- Dans la zone du synthétiseur et dans le hangar, ce qu'on casse tombe toujours (changement du portage : dans l'original, ce qui
+  ne tombe qu'avec de la chance était souvent perdu quand on le reprenait là). Un bloc tombé enterré sous des blocs posés
+  ressort par le côté ; dans l'original, il montait à travers eux et, dans le vaisseau, finissait sur le toit.
 - Ce qui manque est dans `TODO.fr.md`, les bugs dans `BUGS.fr.md` et les idées pour plus tard dans `IDEAS.fr.md` (racine du dépôt).

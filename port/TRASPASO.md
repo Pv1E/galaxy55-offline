@@ -179,6 +179,35 @@ usa una plataforma propia a z=99 y apunta a 0,2 (pasa en otoño, Marte y Luna). 
 `tuto goin` (dentro de la celda del objetivo) para pisar el rayo: llega al paso 7. `tuto_bandeau` comprobado con un
 settings.json `{ "lang" : "es", "showHelp" : false }` en los datos de prueba: sin la ayuda de teclas el recuadro del tutorial
 sube bajo el inventario. Ojo: "lang" tiene que ser texto; con un número la lectura se corta y se ignora el resto del archivo.
+## PR 87-94 de Cornor923 integrados (2026-11-05)
+Fusionados en orden 87 a 91, 93, 94 y por último 92. El 92 (Base de datos ESCorp) iba sobre el 90 (cometas): la base de datos
+lista los tipos de cometa. Tres conflictos, todos resueltos conservando las dos partes:
+- `port/RESUMEN.md` entre el 88 y el 91: cada uno añade su entrada al final de "Estado actual"; van una tras otra.
+- `port/game/GalaxyApp.hx` entre el 88 (`pilotOffered`, `computerPilot`, `showComputer`) y el 92 (`computerDatabase`,
+  `computerTrade`): los dos bloques seguidos.
+- `port/game/World.hx` entre el 93 (`lighting`, `lightSteps`, `lightTime`) y el 92 (`anomalies()`): la luz primero.
+Los dos del 92 se resolvieron en su rama, fusionando `main` en ella. El 94 entra sin conflicto. Compila en SDL con todo. DirectX no
+se ha compilado aquí: en el PC de Cornor el hldx portátil es más antiguo que heaps (`dx.Window` sin `NO_ACTIVATE` en
+`hxd/Window.hl.hx`), y pasa igual con `main` sin los PR.
+Cada PR se comprobó por separado sobre `main` con sus guiones (ver su descripción): `licencias`, `licencias_creativo` (88);
+`tuto_despegue` (89); `cometa`, `cometa_terreno`, `hangar`, `vuelta_nave` (90); `arena_movediza`, `creativo_caida` (91);
+los cinco `kubindex*` (92); `mother`, `hangar`, `vuelta_nave` y `port/headless` (93); `recuperar_zona`,
+`suelto_enterrado`, `drop_rest` (94).
+Añadidos del port: 90 (cometas) y 92 (Base de datos ESCorp). Cambios del port respecto al original: 88 (Pilotar la nave ya no
+sale fuera del planeta principal), 91 (caer en la arena movediza es como aterrizar; el daño dentro y que desde dentro no se apunte
+mirando abajo se quedan como el original, a propósito) y 94 (en la zona del sintetizador y en el hangar todo se suelta; el suelto
+enterrado sale por un lado).
+A tener en cuenta:
+- `res/kubindex.json` tiene que ir junto a los demás recursos: `package.ps1` ya lo copia; un script de compilación propio que
+  copie `res/` a mano tiene que añadirlo (sin él la base de datos sale vacía).
+- El icono de "nuevo" del 92 es `img/icons/ui/recent.png` de Mush (WebGamesArchives de Motion Twin, CC BY-NC-SA 4.0), sin
+  modificar, acreditado en `NOTICE` e incluido en el .hl con `-resource`.
+- Partidas antiguas: sin `kub` empiezan con la base de datos vacía (los kubes de la nave ya conocidos) y tienen cometas igual
+  (no se guarda nada por cometa).
+- `kubindex_tuto`: el último `waitfor planet` (al entrar en el hangar) caduca, pero el paso queda en HANGAR como debe; pasa
+  igual sin el 92 en el fork.
+- `port/headless` (93): comparado con `main` en 7 de los 14 casos (todos los biomas con pasos repartidos y Marte), mismos
+  Adler-32; en el fork de Cornor, los 14.
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;
