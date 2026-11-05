@@ -1569,7 +1569,7 @@ class GameView {
 		// en una zona de sintetizador se excava x4 y sin necesitar cargas (ShipLogic.checkSelect)
 		// cambio del port: en el hangar tambien, a proposito, para editar la nave con comodidad (alli la velocidad y las cargas
 		// no importan). En el original (EditShip) se excava x1 y con las cargas, como en el planeta
-		var inCraft = hangar != null || (s.z >= World.SHIP_Z && ship.inCraft(s.x, s.y, s.z));
+		var inCraft = inCraftZone(s.x, s.y, s.z);
 		var matter = b.matter;
 		var req = b.requiredPower != null ? b.requiredPower : matter.requiredPower;
 		if( req == null ) req = 1;
@@ -1761,12 +1761,19 @@ class GameView {
 	public var onChest : Protocol.BlockInventory -> Void;
 	public var onChestBreak : Protocol.BlockInventory -> Void;
 
+	/** zona de sintetizador de la nave o hangar: alli se excava x4 y sin cargas (mine) y lo que se rompe se recupera siempre */
+	function inCraftZone( x : Int, y : Int, z : Int ) : Bool {
+		return hangar != null || (z >= World.SHIP_Z && ship.inCraft(x, y, z));
+	}
+
 	public function breakBlock( x : Int, y : Int, z : Int, b : Block, isProcess = false ) {
 		shake += 0.05 * Math.random(); // temblor (Game.blockBreak)
 		if( b.hasProp(PContainer) ) breakChest(x, y, z);
 		var get = b.getDrop();
 		if( get != null && !creative ) {
-			var chance = b.getMain().getDropChance();
+			// cambio del port: lo que suelta con probabilidad (BFDropChance: BCoal, BBlackIce, hierbas...) se recupera
+			// siempre en una zona de sintetizador y en el hangar; si no, puesto alli para fabricar o rehacer la nave, se perdia al quitarlo
+			var chance = inCraftZone(x, y, z) ? 100 : b.getMain().getDropChance();
 			for( i in 0...get.count ) {
 				if( Std.random(100) >= chance ) continue;
 				drops.add(x + 0.5, y + 0.5, z + 0.5, get.b);

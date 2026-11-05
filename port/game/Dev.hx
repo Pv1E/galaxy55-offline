@@ -23,6 +23,7 @@ import Common;
  *   drop x y z Bloque [vida] soltar un bloque quieto (vida en segundos, 180)
  *   hand Bloque             poner ese bloque en la casilla elegida (como la paleta creativa)
  *   set x y z Bloque|none   poner o quitar un bloque (como si el jugador lo hubiera hecho); setl = locales de la nave
+ *   breakp x y z            romper un bloque como al jugar (suelta lo suyo); breakl = locales de la nave
  *   activate x y z          activar el bloque de esa celda (puertas, ordenadores); activatel = local; si abre un menu, el guion sigue en el
  *   synth N                 usar el ordenador del sintetizador N
  *   jet 1|0                 mantener Espacio (salto y jetpack)
@@ -303,12 +304,13 @@ class Dev {
 					var b = a[4] == "none" ? null : bk(a[4]);
 					w.setBlock(x, y, z, b);
 					if( z >= sz ) g.ship.craft(x, y, z, b, g);
-				case "setp", "breakp":
-					// setp X Y Z BLOQUE / breakp X Y Z: como al jugar (avisa a Process: agua, lava, hierba, anclas)
-					var x = Std.parseInt(a[1]), y = Std.parseInt(a[2]);
-					var z = StringTools.startsWith(a[3], "top") ? w.topCollide(x, y) + (a[3].length > 3 ? Std.parseInt(a[3].substr(3)) : 0) : Std.parseInt(a[3]);
+				case "setp", "breakp", "breakl":
+					// setp X Y Z BLOQUE / breakp X Y Z: como al jugar (avisa a Process: agua, lava, hierba, anclas); breakl = locales de la nave
+					var l = a[0] == "breakl";
+					var x = Std.parseInt(a[1]) + (l ? sdx : 0), y = Std.parseInt(a[2]) + (l ? sdy : 0);
+					var z = StringTools.startsWith(a[3], "top") ? w.topCollide(x, y) + (a[3].length > 3 ? Std.parseInt(a[3].substr(3)) : 0) : Std.parseInt(a[3]) + (l ? sz : 0);
 					var old = w.block(x, y, z);
-					if( a[0] == "breakp" ) {
+					if( a[0] != "setp" ) {
 						if( old != null ) g.breakBlock(x, y, z, old);
 					} else {
 						var nb = a[4] == "none" ? null : bk(a[4]);
