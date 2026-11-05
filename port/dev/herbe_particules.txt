@@ -1,0 +1,83 @@
+# trozos al romper las hierbas (rompibles en el port, PortRules.BREAKABLE): deben salir con los colores de la planta, sin
+# trozos blancos. Losa de roca z=56 con un muro detras (x=70), ojos en z=58.5; cada bloque en 67,64,57 se rompe (la hierba roja
+# con el excavador y con breakp, los demas con breakp, como al jugar) y se captura durante los trozos
+wait 3
+planet
+wait 30
+filla 58 58 72 70 57 66 none
+filla 58 58 72 70 46 56 BRock
+filla 70 58 70 70 57 62 BRock
+tp 64.5 64.5 57.01 0 0
+wait 5
+set 67 64 57 BAutumnHerbs2
+wait 3
+lookat 67.5 64.5 57.5
+wait 3
+shot herbe_rouge_avant
+mine 67 64 57
+wait 2
+shot herbe_rouge
+wait 8
+shot herbe_rouge2
+wait 40
+set 67 64 57 BAutumnHerbs2
+wait 3
+breakp 67 64 57
+wait 4
+shot herbe_rouge3
+wait 40
+set 67 64 57 BAutumnHerbs1
+wait 3
+breakp 67 64 57
+wait 4
+shot herbe_automne1
+wait 40
+set 67 64 57 BTreeHerbs
+wait 3
+breakp 67 64 57
+wait 4
+shot herbe_arbre
+wait 40
+set 67 64 57 BMoonHerbs1
+wait 3
+breakp 67 64 57
+wait 4
+shot herbe_lune1
+wait 40
+set 67 64 57 BWinterHerb1
+wait 3
+breakp 67 64 57
+wait 4
+shot herbe_hiver1
+wait 40
+set 67 64 57 BMarsHerb1
+wait 3
+breakp 67 64 57
+wait 4
+shot herbe_mars1
+wait 40
+set 67 64 57 BPinkFlower
+wait 3
+breakp 67 64 57
+wait 4
+shot fleur_rose
+wait 40
+set 67 64 57 BRock
+wait 3
+breakp 67 64 57
+wait 4
+shot roche
+wait 40
+# translucidos (BTAlpha): sus trozos deben seguir viendose
+set 67 64 57 BGlass
+wait 3
+breakp 67 64 57
+wait 4
+shot verre
+wait 40
+set 67 64 57 BIce
+wait 3
+breakp 67 64 57
+wait 4
+shot glace
+quit
