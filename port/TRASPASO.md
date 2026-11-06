@@ -232,6 +232,8 @@ Sección "New in v0.7" / "Novedades de la v0.7" / "Nouveautés de la v0.7" en `R
 girando) y `docs/img/pilotar.gif` (vuelo sobre el planeta). Capturas en inglés, sin la ayuda de teclas (settings.json con
 "showHelp": false), hechas con devrun y pasadas a GIF con ffmpeg (12 fps, 640 px, paleta de 128 colores). La vista del cometa
 desde el suelo o dando la vuelta salía oscura y poco clara: por eso la foto es la del mapa.
+`docs/img/biomas.jpg` rehecha (2026-11-06): nevado, Marte, Luna y bosque ácido (bajo los árboles-seta), desde el suelo, sin
+ayuda de teclas, FPS ni nombre del bloque (settings.json con "showHelp": false y "targetName": false), 2x2 a 1280x720.
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;
