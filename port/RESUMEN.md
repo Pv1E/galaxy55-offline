@@ -136,10 +136,12 @@ etiqueta `flash-version` y la rama `flash`, con sus SWF y archivos de compilaci�
     `IconOutline`, la misma aritmética entera que `BitmapData.glowCommon`: 431 de 436 iconos idénticos, los 5 de lava a
     1/255), sin leer de vuelta; los iconos grandes se hacen unos pocos por imagen (`Icons.pump`; los de reserva, `Icons.warm`,
     en la pantalla de carga, con sus tres shaders compilados uno por imagen); las pestañas se guardan mientras está abierta
-    (`Kubindex.version`) y `KubScroll` no dibuja lo que no se ve. Los iconos del inventario usan el mismo contorno. Marca de
-    nuevo: `mush_recent.png` (`img/icons/ui/recent.png` de Mush, WebGamesArchives de Motion Twin, CC BY-NC-SA 4.0, en
-    `NOTICE`; dentro del .hl con `-resource`). Guiones `kubindex`, `kubindex_guardar`, `kubindex_cometa`,
-    `kubindex_anomalias`, `kubindex_tuto`.
+    (`Kubindex.version`) y `KubScroll` no dibuja lo que no se ve. Toda la interfaz dibuja los bloques con `Icons.bitmap`
+    (Base de datos, barra del inventario, paleta, cofre, tienda, contratos, editor de kubes), no hay otra manera: el mismo
+    icono de 256 px con mipmaps, liso a cualquier tamaño de ventana y con los translúcidos bien hechos. Marca de nuevo:
+    `mush_recent.png` (`img/icons/ui/recent.png` de Mush, WebGamesArchives de Motion Twin, CC BY-NC-SA 4.0, en `NOTICE`;
+    dentro del .hl con `-resource`). Guiones `kubindex`, `kubindex_guardar`, `kubindex_cometa`, `kubindex_anomalias`,
+    `kubindex_tuto`, `iconos_lisos`.
   - 93, sin parones: los buffers de cada chunk se crean al construirlo (`World.emitMesh`) y no todos en la primera imagen
     (primera imagen del menú ~740 -> ~110 ms); `ChunkPrim` guarda solo el buffer de floats y sus límites (el GC ya no recorre
     millones de objetos); `bgComputeAlt` guarda la altura de cada columna para sus 11 caminos (110-170 -> ~15 ms); la nave del

@@ -253,8 +253,7 @@ class Shop extends h2d.Object {
 			Theme.rect(g, 1, 1, CELL - 2, CELL - 2, on ? Theme.ACCENT : 0xFFFFFF, on ? 0.3 : 0.06);
 		};
 		draw(false);
-		var bm = new h2d.Bitmap(Icons.get(w.block, atlas), c);
-		bm.setScale(44 / Icons.SIZE);
+		var bm = Icons.bitmap(c, w.block, 44, atlas);
 		bm.x = 6;
 		bm.y = 4;
 		if( empty ) bm.alpha = 0.3;
@@ -289,8 +288,7 @@ class Shop extends h2d.Object {
 		c.y = y;
 		var g = new h2d.Graphics(c);
 		Theme.rect(g, 1, 1, CELL - 2, CELL - 2, 0xFFFFFF, 0.03);
-		var bm = new h2d.Bitmap(Icons.get(b, atlas), c);
-		bm.setScale(44 / Icons.SIZE);
+		var bm = Icons.bitmap(c, b, 44, atlas);
 		bm.x = 6;
 		bm.y = 4;
 		bm.alpha = 0.3;

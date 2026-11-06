@@ -2422,11 +2422,11 @@ class GalaxyApp extends hxd.App {
 			lastStamp = now;
 		}
 		if( dt > 0.1 ) dt = 0.1;
-		// iconos grandes de la Base de datos ESCorp: unos pocos por fotograma (mas con ella abierta); los de reserva, en la pantalla
-		// de carga del planeta y, si faltan, jugando y pasado un rato desde la llegada
+		// iconos grandes de la Base de datos ESCorp y de la paleta: unos pocos por fotograma (mas con una de ellas abierta); los de
+		// reserva, en la pantalla de carga del planeta y, si faltan, jugando y pasado un rato desde la llegada
 		if( warmDelay > 0 && state == Playing ) warmDelay -= dt;
 		var spareIcons = (state == Loading && loadWorld != null) || (state == Playing && warmDelay <= 0);
-		if( IconMesh.Icons.busy(spareIcons) ) IconMesh.Icons.pump(database != null ? 8 : 3, spareIcons);
+		if( IconMesh.Icons.busy(spareIcons) ) IconMesh.Icons.pump(database != null || palette != null ? 8 : 3, spareIcons);
 		if( state != Playing ) {
 			jetBar.visible = false;
 			lifeBar.visible = false;

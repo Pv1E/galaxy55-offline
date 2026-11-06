@@ -113,8 +113,7 @@ class Chest extends h2d.Object {
 		}
 		if( s != null ) {
 			var b = Block.all[s.k];
-			var bm = new h2d.Bitmap(Icons.get(b, atlas), c);
-			bm.setScale(48 / Icons.SIZE);
+			var bm = Icons.bitmap(c, b, 48, atlas);
 			bm.x = 6;
 			bm.y = 3;
 			Theme.text(c, "" + s.n, 1.2, s.n >= b.getMax(maxWeight) ? 0xF08080 : Theme.TEXT, 5, CELL - 20);

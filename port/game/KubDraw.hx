@@ -14,20 +14,12 @@ class KubDraw {
 	/** alto de una linea de receta (con la etiqueta del nivel encima) */
 	public static inline var RECIPE_H = 82;
 
-	static var blank : h2d.Tile;
-
 	/**
 	 * icono de una ficha: normal (recuperada), oscurecido (localizada) o sombra negra (desconocida). Si el icono grande aun no
-	 * esta hecho, la casilla queda vacia hasta que lo esta (Icons.pump, unos pocos por fotograma)
+	 * esta hecho, la casilla queda vacia hasta que lo esta (Icons.bitmap)
 	 */
 	public static function icon( parent : h2d.Object, e : Block, st : KubState, size : Float, atlas : h3d.mat.Texture ) : h2d.Bitmap {
-		// icono grande con mipmaps, dibujado liso: a 90 px y con el nearest de h2d salia pixelado al reducirlo o agrandarlo
-		var t = Icons.hiresNow(e);
-		if( t == null && blank == null ) blank = h2d.Tile.fromColor(0, Icons.HIRES, Icons.HIRES, 0);
-		var bm = new h2d.Bitmap(t != null ? t : blank, parent);
-		if( t == null ) Icons.hiresLater(e, atlas, function(t) bm.tile = t);
-		bm.smooth = true;
-		bm.setScale(size / Icons.HIRES);
+		var bm = Icons.bitmap(parent, e, size, atlas);
 		switch( st ) {
 			case Got:
 			case Seen: bm.color.set(0.3, 0.3, 0.36, 1);
