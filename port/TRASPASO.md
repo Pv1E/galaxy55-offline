@@ -234,6 +234,9 @@ girando) y `docs/img/pilotar.gif` (vuelo sobre el planeta). Capturas en inglés,
 desde el suelo o dando la vuelta salía oscura y poco clara: por eso la foto es la del mapa.
 `docs/img/biomas.jpg` rehecha (2026-11-06): nevado, Marte, Luna y bosque ácido (bajo los árboles-seta), desde el suelo, sin
 ayuda de teclas, FPS ni nombre del bloque (settings.json con "showHelp": false y "targetName": false), 2x2 a 1280x720.
+Notas de la release v0.7 rehechas con el texto largo de Cornor (en inglés, comprobado contra el código: licencias, 1000
+créditos y 24 h, abandonar, categorías del Kubindex, cometas), formato limpio, cómo jugar, créditos y traducción ES/FR, en
+`port/RELEASE.md`; Pvie guarda el cambio en la página de la release.
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;
