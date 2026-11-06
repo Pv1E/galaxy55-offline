@@ -6,3 +6,7 @@ Add the full license text (e.g. GitHub "Add file > Create new file > LICENSE" an
 
 "New" marker of the ESCorp database (src/G55/fla/client/gfx/mush_recent.png): icon recent.png from Mush,
 (c) Motion Twin, CC BY-NC-SA 4.0, https://github.com/motion-twin/WebGamesArchives (Mush/www/img/icons/ui/recent.png), unmodified.
+
+Kube blocks (BKube* in src/G55/com/DataGen.hx, rows 40 and 41 of src/G55/fla/client/gfx/texture.png, port/kubes/*.kube):
+the 77 kubes of Kube, (c) Motion Twin, CC BY-NC-SA 4.0, https://github.com/motion-twin/WebGamesArchives (Muxxu/Kube:
+textures from client/gfx.swf, names from client2/client.xml and client2/blocks.ods), textures scaled from 16x16 to 32x32.

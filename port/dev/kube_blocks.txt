@@ -1,0 +1,353 @@
+# Kubes de Kube (Motion Twin, 2010) como bloques enteros: los 77 en una cuadricula sobre el planeta (11 x 7, en el orden de
+# BlockKind), de dia y bajo un techo (luz de la lava, las gemas y la luz), en la paleta del modo creativo y en la mano.
+# Al final, un planeta con mas de 255 bloques distintos (World.hasRoom):
+# el que ya no cabe no se pone ni se gasta. Capturas port/out/kubeblocks_*.png
+wait 3
+setlang fr
+planet
+wait 30
+filla 38 38 66 60 46 56 BRock
+filla 38 38 66 60 57 80 none
+wait 10
+set 42 42 57 BKubeFixed
+set 44 42 57 BKubeWater
+set 46 42 57 BKubeSoilTree
+set 48 42 57 BKubeSoilTree1
+set 50 42 57 BKubeSoilTree2
+set 52 42 57 BKubeAutumnTree
+set 54 42 57 BKubeAutumnTree1
+set 56 42 57 BKubeAutumnTree2
+set 58 42 57 BKubeHighTree
+set 60 42 57 BKubeHighTree1
+set 62 42 57 BKubeHighTree2
+set 42 44 57 BKubeHighTree3
+set 44 44 57 BKubeClouds
+set 46 44 57 BKubeClouds1
+set 48 44 57 BKubeClouds2
+set 50 44 57 BKubeSphereTree
+set 52 44 57 BKubeSphereTree1
+set 54 44 57 BKubeLargeTree
+set 56 44 57 BKubeLargeTree1
+set 58 44 57 BKubeLargeTree2
+set 60 44 57 BKubeSnowSapin
+set 62 44 57 BKubeSnowSapin1
+set 42 46 57 BKubeSnowSapin2
+set 44 46 57 BKubeJungle
+set 46 46 57 BKubeJungle1
+set 48 46 57 BKubeJungle2
+set 50 46 57 BKubeJungle3
+set 52 46 57 BKubeCaverns
+set 54 46 57 BKubeCaverns1
+set 56 46 57 BKubeCaverns2
+set 58 46 57 BKubeField
+set 60 46 57 BKubeField1
+set 62 46 57 BKubeField2
+set 42 48 57 BKubeSwamp
+set 44 48 57 BKubeSwamp1
+set 46 48 57 BKubeSwamp2
+set 48 48 57 BKubeSwamp3
+set 50 48 57 BKubeSoilPeaks
+set 52 48 57 BKubeSoilPeaks1
+set 54 48 57 BKubePilarPlain
+set 56 48 57 BKubePilarPlain1
+set 58 48 57 BKubePilarPlain2
+set 60 48 57 BKubeFlowerPlain
+set 62 48 57 BKubeFlowerPlain1
+set 42 50 57 BKubeFlowerPlain2
+set 44 50 57 BKubeFlowerPlain3
+set 46 50 57 BKubeSavana
+set 48 50 57 BKubeSavana1
+set 50 50 57 BKubeSavana2
+set 52 50 57 BKubeSavana3
+set 54 50 57 BKubeDesert
+set 56 50 57 BKubeDesert1
+set 58 50 57 BKubeFruit
+set 60 50 57 BKubeLava
+set 62 50 57 BKubeDolpart
+set 42 52 57 BKubeDolmen
+set 44 52 57 BKubeFlying
+set 46 52 57 BKubeFlying1
+set 48 52 57 BKubeFlying2
+set 50 52 57 BKubeKoala
+set 52 52 57 BKubeInvisible
+set 54 52 57 BKubeAmethyste
+set 56 52 57 BKubeEmeraude
+set 58 52 57 BKubeRubis
+set 60 52 57 BKubeSaphir
+set 62 52 57 BKubeFog
+set 42 54 57 BKubeShade
+set 44 54 57 BKubeLight
+set 46 54 57 BKubeGold
+set 48 54 57 BKubeMessage
+set 50 54 57 BKubeTeleport
+set 52 54 57 BKubeJump
+set 54 54 57 BKubeChest
+set 56 54 57 BKubeMulticol
+set 58 54 57 BKubeMtwin
+set 60 54 57 BKubeCrate
+set 62 54 57 BKubeNoel
+wait 20
+tp 52.5 64.5 63 0 0
+lookat 52.5 48.5 57
+wait 10
+shot kubeblocks_dia
+# de cerca: hojas y hierbas recortadas, gemas, niebla y sombra translucidas, el agua de Kube y el koala al derecho
+tp 52.5 59.5 60 0 0
+lookat 52.5 52.5 57.5
+wait 10
+shot kubeblocks_cerca
+tp 46.5 46.5 60 0 0
+lookat 50.5 42.5 57.5
+wait 10
+shot kubeblocks_cerca2
+# poner un kube con la mano: el koala encima del hormigon (42 42 57)
+slot 1
+hand BKubeKoala
+tp 44.5 44.5 58 0 0
+lookat 42.5 42.5 58
+wait 2
+print select
+key place
+wait 10
+unkey
+print block 42 42 58
+# bajo un techo: solo la luz de los kubes que la dan (lava, gemas, luz)
+filla 38 38 66 60 61 61 BRock
+filla 38 38 38 60 57 60 BRock
+filla 66 38 66 60 57 60 BRock
+filla 38 38 66 38 57 60 BRock
+filla 38 60 66 60 57 60 BRock
+wait 40
+tp 52.5 58.5 59.5 0 0
+lookat 52.5 48.5 57
+wait 10
+shot kubeblocks_techo
+# planeta lleno: todos los bloques de Galaxy 55 (sin liquidos, lava, cascadas, bomba ni bonus) en el aire, en z = 100; con
+# los 77 kubes pasan de 255 y los ultimos no caben. BMotherBlack (el ultimo) no se pone y sigue en el inventario
+set 100 100 100 BBedrock
+set 101 100 100 BSoil
+set 102 100 100 BSoilCover
+set 103 100 100 BRock
+set 104 100 100 BWood
+set 105 100 100 BGreenLeaves
+set 106 100 100 BYellowCrystalLight
+set 107 100 100 BAutumnHerbs1
+set 108 100 100 BAutumnHerbs2
+set 109 100 100 BPinkFlower
+set 110 100 100 BChampiLight
+set 111 100 100 BAutumnStraw
+set 112 100 100 BVines
+set 113 100 100 BVinesY
+set 114 100 100 BTreeHerbs
+set 100 101 100 BCactus
+set 101 101 100 BLamp
+set 102 101 100 BYellowCrystalDense
+set 103 101 100 BYellowCharge
+set 104 101 100 BBackPack
+set 105 101 100 BWoodPlank
+set 106 101 100 BBrokenRock
+set 107 101 100 BHardRock
+set 108 101 100 BMinAluminium
+set 109 101 100 BCactusBase
+set 110 101 100 BCactusFlower
+set 111 101 100 BBlueCrystalLight
+set 112 101 100 BBlueCrystalDense
+set 113 101 100 BBlueCharge
+set 114 101 100 BRockWall
+set 100 102 100 BWoodWindow
+set 101 102 100 BWoodWindowY
+set 102 102 100 BWoodPlate
+set 103 102 100 BVineColumn
+set 104 102 100 BRockWallSquare
+set 105 102 100 BTest
+set 106 102 100 BHardRockColumn
+set 107 102 100 BWoodColumn
+set 108 102 100 BHardRockWall
+set 109 102 100 BWoodScrew
+set 110 102 100 BLeavesCurtain
+set 111 102 100 BLeavesCurtainY
+set 112 102 100 BRawRed
+set 113 102 100 BShedWall
+set 114 102 100 BShedGround
+set 100 103 100 BShedLight
+set 101 103 100 BShipHull
+set 102 103 100 BShipEngine
+set 103 103 100 BShipGlass
+set 104 103 100 BShipDoor
+set 105 103 100 BShipDoorY
+set 106 103 100 BShipDoorOpen
+set 107 103 100 BShipDoorYOpen
+set 108 103 100 BShipPlate
+set 109 103 100 BShipWire
+set 110 103 100 BShipComputer
+set 111 103 100 BShipTubes
+set 112 103 100 BShipGlass2
+set 113 103 100 BShipEntry
+set 114 103 100 BCrafter
+set 100 104 100 BCrafterComputer
+set 101 104 100 BShipLight
+set 102 104 100 BShedGroundArrow
+set 103 104 100 BShedWallColumn
+set 104 104 100 BShedGlass
+set 105 104 100 BShedWallLight
+set 106 104 100 BAluminium
+set 107 104 100 BGlass
+set 108 104 100 BLight
+set 109 104 100 BPurpleLeaves
+set 110 104 100 BBrownLeaves
+set 111 104 100 BPinkLeaves
+set 112 104 100 BMoonSoil
+set 113 104 100 BMoonSoilCover
+set 114 104 100 BMoonRock
+set 100 105 100 BMoonSand
+set 101 105 100 BMoonLight
+set 102 105 100 BMoonLightDead
+set 103 105 100 BMoonLightColumn
+set 104 105 100 BMoonRockColumn
+set 105 105 100 BMoonBrokenRock
+set 106 105 100 BStainEmpty
+set 107 105 100 BStainPurple
+set 108 105 100 BStainRed
+set 109 105 100 BRaw
+set 110 105 100 BRawPurple
+set 111 105 100 BMoonHerbs1
+set 112 105 100 BMoonHerbs2
+set 113 105 100 BAcidWood
+set 114 105 100 BAcidWoodHole
+set 100 106 100 BAcidWoodBubble
+set 101 106 100 BAcidSoil
+set 102 106 100 BAcidSoilCover
+set 103 106 100 BAcidRock
+set 104 106 100 BAcidLeaves
+set 105 106 100 BAcidLeavesBubble
+set 106 106 100 BAcidLeaves2
+set 107 106 100 BAcidLeaves2Bubble
+set 108 106 100 BAcidMush
+set 109 106 100 BAcidFruit
+set 110 106 100 BAcidTreeSap
+set 111 106 100 BFreezer
+set 112 106 100 BIce
+set 113 106 100 BYellowPlant
+set 114 106 100 BBluePlant
+set 100 107 100 BWinterSoil
+set 101 107 100 BWinterSoilCover
+set 102 107 100 BWinterRock
+set 103 107 100 BWinterBrokenRock
+set 104 107 100 BWinterHidden
+set 105 107 100 BWinterFlowerDeleted
+set 106 107 100 BWinterLeaves
+set 107 107 100 BWinterLeavesCover
+set 108 107 100 BWinterHerb1
+set 109 107 100 BWinterHerb2
+set 110 107 100 BWinterHerb3
+set 111 107 100 BWinterWood
+set 112 107 100 BBlackIce
+set 113 107 100 BBlackIceLight
+set 114 107 100 BIceStalactite1
+set 100 108 100 BIceStalactite2
+set 101 108 100 BBlackLight
+set 102 108 100 BMarsSoil
+set 103 108 100 BMarsSoil2
+set 104 108 100 BMarsRock
+set 105 108 100 BMarsCraterRock
+set 106 108 100 BMarsBlueRock
+set 107 108 100 BMarsHardRock
+set 108 108 100 BMarsRockFossil
+set 109 108 100 BMarsQuickSand
+set 110 108 100 BMarsCactus
+set 111 108 100 BMarsCactusFossil
+set 112 108 100 BMarsCactusFlower
+set 113 108 100 BPinkCharge
+set 114 108 100 BMarsHerb1
+set 100 109 100 BMarsHerb2
+set 101 109 100 BMarsHerb3
+set 102 109 100 BAlienRock
+set 103 109 100 BBigMushTrunk
+set 104 109 100 BBigMushHead
+set 105 109 100 BJumper
+set 106 109 100 BChest
+set 107 109 100 BAlienTreasure
+set 108 109 100 BCamera
+set 109 109 100 BMush
+set 110 109 100 BCoral1
+set 111 109 100 BCoral2
+set 112 109 100 BFrozenRock
+set 113 109 100 BCoal
+set 114 109 100 BCoalHot
+set 100 110 100 BPlantSoil
+set 101 110 100 BHighHerb1
+set 102 110 100 BHighHerb2
+set 103 110 100 BHighHerb3
+set 104 110 100 BHighHerb4
+set 105 110 100 BHighHerb5
+set 106 110 100 BHighHerb6
+set 107 110 100 BFreezerPlant
+set 108 110 100 BMiningGenerator
+set 109 110 100 BStainWhite
+set 110 110 100 BRawWhite
+set 111 110 100 BStainOrange
+set 112 110 100 BRawOrange
+set 113 110 100 BStainGreen
+set 114 110 100 BRawGreen
+set 100 111 100 BMarsWall
+set 101 111 100 BWinterWall
+set 102 111 100 BAcidWall
+set 103 111 100 BPlantRock
+set 104 111 100 BAcidHerb1
+set 105 111 100 BAcidHerb2
+set 106 111 100 BAcidHerbCeil
+set 107 111 100 BHealPlant
+set 108 111 100 BYellowCeil
+set 109 111 100 BCavePlantCeil
+set 110 111 100 BMinIron
+set 111 111 100 BIron
+set 112 111 100 BIronFence
+set 113 111 100 BIronFenceY
+set 114 111 100 BIronLight
+set 100 112 100 BShipGlassBlack
+set 101 112 100 BShiningWoodPlank
+set 102 112 100 BHealBox
+set 103 112 100 BCircuit
+set 104 112 100 BDeadRock
+set 105 112 100 BDeadSoil
+set 106 112 100 BDeadSwamp
+set 107 112 100 BDeadTree
+set 108 112 100 BDarkLeaves
+set 109 112 100 BMotherHull
+set 110 112 100 BMotherPanel
+set 111 112 100 BMotherDark
+set 112 112 100 BMotherField
+set 113 112 100 BMotherYellow
+set 114 112 100 BMotherBlack
+wait 10
+print block 100 100 100
+print block 114 112 100
+hand BMotherBlack
+print inv
+tp 44.5 44.5 58 0 0
+lookat 42.5 42.5 59
+wait 2
+print select
+key place
+wait 10
+unkey
+print block 42 42 59
+print inv
+# la paleta del modo creativo: los kubes van al final, en las paginas 2 y 3; y el koala en la mano
+creative
+palette 1
+wait 5
+print palette
+shot kubeblocks_paleta2
+palette 1
+wait 5
+print palette
+shot kubeblocks_paleta3
+tap esc
+wait 5
+print palette
+hand BKubeKoala
+wait 5
+print inv
+shot kubeblocks_mano
+quit

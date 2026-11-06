@@ -925,6 +925,18 @@ class World {
 		return id > 255 ? 0 : id;
 	}
 
+	/**
+	 * Cabe el bloque en la celda z (la nave tiene su propio mundo): cada celda guarda su id local en un byte, asi que un mundo
+	 * solo tiene 255 bloques distintos. Con los kubes de Kube hay mas en el juego; sin esto, el que no cabe se pondria como aire.
+	 */
+	public function hasRoom( b : Block, z : Int ) : Bool {
+		if( z >= SHIP_Z && ship != null ) return ship.hasRoom(b, z - SHIP_Z);
+		if( b == null ) return true;
+		// gen.alloc da de alta el bloque aunque no quepa (localId lo pone entonces como aire)
+		var id = gen.hblocks.get(Type.enumIndex(b.k));
+		return id != null ? id <= 255 : gen.blocks.length <= 255;
+	}
+
 	function applySaved() {
 		// el mar va antes que los cambios: las capas quitadas son del terreno generado y lo puesto despues se queda
 		if( seaBlock != null ) {

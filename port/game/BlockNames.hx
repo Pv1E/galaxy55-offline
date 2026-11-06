@@ -67,6 +67,28 @@ class BlockNames {
 		"BDeadRock" => "Dead Rock", "BDeadSoil" => "Dead Soil", "BDeadSwamp" => "Dead Swamp", "BDeadTree" => "Dead Tree", "BDarkLeaves" => "Dark Leaves",
 		"BMotherHull" => "Mothership Hull", "BMotherPanel" => "Mothership Panel", "BMotherDark" => "Dark Mothership Hull",
 		"BMotherField" => "Hangar Force Field", "BMotherYellow" => "Yellow Plating", "BMotherBlack" => "Black Plating",
+		// kubes de Kube (Motion Twin, 2010): los que se llamarian igual que un bloque de Galaxy 55 (Water, Lava, Cactus, Rock, Pink
+		// Leaves, Dark Leaves) cambian de nombre para no confundirse con el
+		"BKubeFixed" => "Concrete", "BKubeWater" => "Kube Water", "BKubeSoilTree" => "Brown Earth", "BKubeSoilTree1" => "Birch Wood",
+		"BKubeSoilTree2" => "Birch Leaves", "BKubeAutumnTree" => "Autumn Earth", "BKubeAutumnTree1" => "Autumn Wood",
+		"BKubeAutumnTree2" => "Autumn Leaves", "BKubeHighTree" => "Dark Earth", "BKubeHighTree1" => "Dark Wood",
+		"BKubeHighTree2" => "Gloomy Leaves", "BKubeHighTree3" => "Dark Grass", "BKubeClouds" => "Blue Earth", "BKubeClouds1" => "Cloud Heart",
+		"BKubeClouds2" => "Cloud", "BKubeSphereTree" => "Light Wood", "BKubeSphereTree1" => "Rosy Leaves", "BKubeLargeTree" => "Roots",
+		"BKubeLargeTree1" => "Giant Wood", "BKubeLargeTree2" => "Giant Leaves", "BKubeSnowSapin" => "Snowy Earth",
+		"BKubeSnowSapin1" => "Fir Wood", "BKubeSnowSapin2" => "Snowy Leaves", "BKubeJungle" => "Jungle", "BKubeJungle1" => "Dark Vines",
+		"BKubeJungle2" => "Light Vines", "BKubeJungle3" => "Rotten Vines", "BKubeCaverns" => "Wall", "BKubeCaverns1" => "Boulder",
+		"BKubeCaverns2" => "Pillar", "BKubeField" => "Meadow", "BKubeField1" => "Light Grass", "BKubeField2" => "Grass", "BKubeSwamp" => "Swamp",
+		"BKubeSwamp1" => "Swamp Wood", "BKubeSwamp2" => "Swamp Leaves", "BKubeSwamp3" => "Mud", "BKubeSoilPeaks" => "Cold Rock",
+		"BKubeSoilPeaks1" => "Volcanic Rock", "BKubePilarPlain" => "Ashes", "BKubePilarPlain1" => "Sandstone",
+		"BKubePilarPlain2" => "Ancient Totem", "BKubeFlowerPlain" => "Pasture", "BKubeFlowerPlain1" => "White Flower",
+		"BKubeFlowerPlain2" => "Pink Flower", "BKubeFlowerPlain3" => "Stonehenge", "BKubeSavana" => "Savanna", "BKubeSavana1" => "Dry Shrub",
+		"BKubeSavana2" => "Zebra", "BKubeSavana3" => "Elephant", "BKubeDesert" => "Sand", "BKubeDesert1" => "Kube Cactus",
+		"BKubeFruit" => "Acorn", "BKubeLava" => "Kube Lava", "BKubeDolpart" => "Gloom", "BKubeDolmen" => "Dolmen", "BKubeFlying" => "Meka",
+		"BKubeFlying1" => "Metal", "BKubeFlying2" => "Steel", "BKubeKoala" => "Koala", "BKubeInvisible" => "Invisible",
+		"BKubeAmethyste" => "Amethyst", "BKubeEmeraude" => "Emerald", "BKubeRubis" => "Ruby", "BKubeSaphir" => "Sapphire", "BKubeFog" => "Fog",
+		"BKubeShade" => "Shade", "BKubeLight" => "Light", "BKubeGold" => "Gold", "BKubeMessage" => "Forum", "BKubeTeleport" => "Teleport",
+		"BKubeJump" => "Spring", "BKubeChest" => "Chest", "BKubeMulticol" => "Rubix", "BKubeMtwin" => "Motion Twin", "BKubeCrate" => "Crate",
+		"BKubeNoel" => "Christmas Kube",
 	];
 
 	/** espanol: lo que falta en NamesGen.ES (bloques anadidos despues) y alguna correccion */
@@ -84,6 +106,28 @@ class BlockNames {
 		"BDarkLeaves" => "Hojas oscuras",
 		"BMotherHull" => "Blindaje de la nodriza", "BMotherPanel" => "Panel de la nodriza", "BMotherDark" => "Blindaje oscuro de la nodriza",
 		"BMotherField" => "Campo de fuerza del hangar", "BMotherYellow" => "Blindaje amarillo", "BMotherBlack" => "Blindaje negro",
+		// kubes de Kube (Motion Twin, 2010): Agua, Lava, Cactus y Hojas oscuras cambian de nombre, si no compartirian ficha en el
+		// Kubindex con los de Galaxy 55 (entry junta los que se llaman igual en espanol)
+		"BKubeFixed" => "Hormigón", "BKubeWater" => "Agua de Kube", "BKubeSoilTree" => "Tierra parda", "BKubeSoilTree1" => "Madera de abedul",
+		"BKubeSoilTree2" => "Hojas de abedul", "BKubeAutumnTree" => "Tierra otoñal", "BKubeAutumnTree1" => "Madera otoñal",
+		"BKubeAutumnTree2" => "Hojas otoñales", "BKubeHighTree" => "Tierra oscura", "BKubeHighTree1" => "Madera oscura",
+		"BKubeHighTree2" => "Hojas sombrías", "BKubeHighTree3" => "Hierba oscura", "BKubeClouds" => "Tierra azul",
+		"BKubeClouds1" => "Corazón de nube", "BKubeClouds2" => "Nube", "BKubeSphereTree" => "Madera clara", "BKubeSphereTree1" => "Hojas rosas",
+		"BKubeLargeTree" => "Raíces", "BKubeLargeTree1" => "Madera gigante", "BKubeLargeTree2" => "Hojas gigantes",
+		"BKubeSnowSapin" => "Tierra nevada", "BKubeSnowSapin1" => "Madera de abeto", "BKubeSnowSapin2" => "Hojas nevadas",
+		"BKubeJungle" => "Jungla", "BKubeJungle1" => "Lianas oscuras", "BKubeJungle2" => "Lianas claras", "BKubeJungle3" => "Lianas podridas",
+		"BKubeCaverns" => "Muro", "BKubeCaverns1" => "Peñasco", "BKubeCaverns2" => "Pilar", "BKubeField" => "Pradera",
+		"BKubeField1" => "Hierba clara", "BKubeField2" => "Hierba", "BKubeSwamp" => "Pantano", "BKubeSwamp1" => "Madera de pantano",
+		"BKubeSwamp2" => "Hojas de pantano", "BKubeSwamp3" => "Barro", "BKubeSoilPeaks" => "Roca fría", "BKubeSoilPeaks1" => "Roca volcánica",
+		"BKubePilarPlain" => "Cenizas", "BKubePilarPlain1" => "Arenisca", "BKubePilarPlain2" => "Tótem antiguo", "BKubeFlowerPlain" => "Pastos",
+		"BKubeFlowerPlain1" => "Flor blanca", "BKubeFlowerPlain2" => "Flor rosa", "BKubeFlowerPlain3" => "Stonehenge", "BKubeSavana" => "Sabana",
+		"BKubeSavana1" => "Arbusto seco", "BKubeSavana2" => "Cebra", "BKubeSavana3" => "Elefante", "BKubeDesert" => "Arena",
+		"BKubeDesert1" => "Cactus de Kube", "BKubeFruit" => "Bellota", "BKubeLava" => "Lava de Kube", "BKubeDolpart" => "Penumbra",
+		"BKubeDolmen" => "Dolmen", "BKubeFlying" => "Meka", "BKubeFlying1" => "Metal", "BKubeFlying2" => "Acero", "BKubeKoala" => "Koala",
+		"BKubeInvisible" => "Invisible", "BKubeAmethyste" => "Amatista", "BKubeEmeraude" => "Esmeralda", "BKubeRubis" => "Rubí",
+		"BKubeSaphir" => "Zafiro", "BKubeFog" => "Niebla", "BKubeShade" => "Sombra", "BKubeLight" => "Luz", "BKubeGold" => "Oro",
+		"BKubeMessage" => "Foro", "BKubeTeleport" => "Teletransporte", "BKubeJump" => "Muelle", "BKubeChest" => "Cofre",
+		"BKubeMulticol" => "Rubix", "BKubeMtwin" => "Motion Twin", "BKubeCrate" => "Caja", "BKubeNoel" => "Kube de Navidad",
 	];
 
 	/** frances: los bloques anadidos despues y algun cambio (BChest: en DataGen "Cantine de l'EScorp") */
