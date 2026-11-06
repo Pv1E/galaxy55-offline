@@ -24,6 +24,7 @@
 - Las felicitaciones del final del tutorial se van al despegar y duran 12 s (antes 16): ya no vuelven en el planeta
   siguiente, seguidas de "este es tu planeta principal".
 - Editor de kubes: en francés, la ayuda vuelve a decir "enregistrer" para Ctrl+S.
+- Con la base de datos ESCorp abierta ya no se ve la ayuda de las teclas detrás de sus pestañas.
 - **Editor de kubes** (añadido del port): en el menú de inicio, debajo de Nueva partida. Se dibujan las caras de un bloque
   píxel a píxel en una de las formas que ya dibuja el juego (cubo, cubo de 6 caras, caja, puerta, planta, panel, columna...),
   se ve girar en 3D y se guarda como archivo `.kube` en la carpeta `kubes` de los datos del juego para enviárnoslo. Se puede

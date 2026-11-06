@@ -1982,6 +1982,8 @@ class GalaxyApp extends hxd.App {
 		Tutorial.databaseOpened(game.info);
 		paletteOpen = true;
 		captureMouse(false);
+		// la base de datos es translucida: la ayuda de las teclas del juego (hud) se veia detras de sus pestanas
+		hud.visible = false;
 	}
 
 	/** segundos de juego tras llegar al planeta antes de seguir con los iconos de reserva que falten (no se suman a la llegada) */
@@ -2004,6 +2006,7 @@ class GalaxyApp extends hxd.App {
 		database = null;
 		paletteOpen = false;
 		if( game != null && state == Playing ) {
+			hud.visible = true;
 			captureMouse(true);
 			game.releaseAction();
 		}

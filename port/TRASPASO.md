@@ -208,6 +208,17 @@ A tener en cuenta:
   igual sin el 92 en el fork.
 - `port/headless` (93): comparado con `main` en 7 de los 14 casos (todos los biomas con pasos repartidos y Marte), mismos
   Adler-32; en el fork de Cornor, los 14.
+
+## Comprobación de los PR 87-95 en el PC de Pvie (2026-11-06)
+Cornor los fusionó él mismo en `main` (49be008). Aquí: compilan SDL, **DX** y headless; los 8 mundos de `port/headless` dan las
+mismas sumas que antes de los PR (generador repartido en trabajos, mismo orden); las partidas guardadas con baf96ac cargan
+(`load` con `--load`); `kubindex.json` en `package.ps1`; `BICometCinder` al final de `BiomeKind`, sin bloques nuevos. Pasan sus
+13 guiones nuevos y 25 de los de siempre (sintetizador, colocar, tutorial, menús, mapa, hangar, pilotar, kubes, luz). Notas:
+`kubindex_guardar` difiere antes/después de recargar solo porque `kub forget` borra los kubes de la nave y al recargar
+`Kubindex.shipKnown` los vuelve a poner (como en una partida normal); en una prueba sin idioma elegido (sin settings.json) los
+nombres son los del original y la carga rosa sale "-": en el juego la primera vez se elige idioma y no pasa.
+Arreglado aquí: con la base de datos abierta, la ayuda de las teclas (hud) se veía detrás de sus pestañas (el panel es
+translúcido); `openDatabase` la oculta y `closeDatabase` la vuelve a mostrar.
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;
