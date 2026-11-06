@@ -30,6 +30,28 @@ class WaterDepthBias extends hxsl.Shader {
 	};
 }
 
+/**
+	Textura que corre por su casilla del atlas (BFScroll, anadido del port), como el agua y la lava de Kube (Level.updateTextures):
+	4 veces por segundo y a saltos de 2 pixeles (uno de sus texturas de 16), hacia abajo en los lados. speed: pixeles por segundo.
+	Cada fragmento vuelve a su casilla con fract, por eso va sin mipmaps: con ellos, donde la textura da la vuelta se elegiria
+	el nivel mas pequeno y saldria una raya.
+**/
+class TileScroll extends hxsl.Shader {
+	static var SRC = {
+		@global var global : {
+			var time : Float;
+		};
+		var calculatedUV : Vec2;
+		@param var speed : Float;
+		function fragment() {
+			var shift = floor(floor(global.time * 4.0) * 0.25 * speed * 0.5) / 16.0;
+			var c = calculatedUV * 64.0;
+			var tile = floor(c);
+			calculatedUV = (tile + vec2(c.x - tile.x, fract(c.y - tile.y - shift))) / 64.0;
+		}
+	};
+}
+
 /** Geometria acumulada de un chunk para un material. */
 class MeshBuf {
 	public var pts = new Array<h3d.col.Point>();
@@ -1719,8 +1741,13 @@ class World {
 	static inline var LAYER_ALPHA_DEPTH = -2;
 	static inline var LAYER_ALPHA = -1;
 
-	function emitMesh( m : MeshBuf, kind : Int ) {
+	function emitMesh( m : MeshBuf, kind : Int, scroll = 0. ) {
 		if( m.pts.length == 0 ) return;
+		var ts = null;
+		if( scroll != 0 ) {
+			ts = new TileScroll();
+			ts.speed = scroll;
+		}
 		var poly = new ChunkPrim(m.pts, m.idx);
 		poly.addNormals(); // DirectX exige la entrada 'normal' del shader aunque no se use (OpenGL la descarta)
 		poly.uvs = m.uvs;
@@ -1729,12 +1756,13 @@ class World {
 		// primer dibujo, los de todo el planeta en la misma imagen (~280 buffers y 350-730 ms al aparecer el menu o el planeta)
 		poly.alloc(h3d.Engine.getCurrent());
 		// con mipmaps como el original (DefShader, TransShader, WaterShader1); el hielo y el cristal sin ellos (AlphaShader1)
-		var mat = h3d.mat.Material.create(kind == 3 || Atlas.mipped == null ? atlas : Atlas.mipped);
+		var mat = h3d.mat.Material.create(kind == 3 || ts != null || Atlas.mipped == null ? atlas : Atlas.mipped);
 		mat.shadows = false;
 		mat.mainPass.enableLights = false;
 		mat.mainPass.culling = None;
 		mat.mainPass.addShader(new h3d.shader.VertexColor());
 		mat.mainPass.addShader(sky.fog);
+		if( ts != null ) mat.mainPass.addShader(ts);
 		if( kind == 1 ) {
 			// bloques con alfa (hojas): se descartan los pixeles transparentes
 			mat.textureShader.killAlpha = true;
@@ -1773,6 +1801,7 @@ class World {
 			cut.mainPass.culling = Back;
 			cut.mainPass.addShader(new h3d.shader.VertexColor());
 			cut.mainPass.addShader(sky.fog);
+			if( ts != null ) cut.mainPass.addShader(ts);
 			cut.textureShader.killAlpha = true;
 			cut.textureShader.killAlphaThreshold = 0.9;
 			meshes.push(new h3d.scene.Mesh(poly, cut, root));
@@ -1788,6 +1817,7 @@ class World {
 			depth.mainPass.culling = Back;
 			depth.mainPass.addShader(new h3d.shader.VertexColor());
 			depth.mainPass.addShader(sky.fog);
+			if( ts != null ) depth.mainPass.addShader(ts);
 			depth.textureShader.killAlpha = true;
 			depth.textureShader.killAlphaThreshold = 0.25;
 			depth.mainPass.setPassName("alpha");
@@ -1850,11 +1880,32 @@ class World {
 		}
 	}
 
+	/** BFScroll de cada bloque (0 = textura quieta), por Block.index */
+	static var scrolls : Array<Float>;
+
+	static function scrollOf( b : Block ) : Float {
+		if( scrolls == null )
+			scrolls = [for( x in Block.all ) {
+				var s = 0.;
+				if( x != null ) for( f in x.flags ) switch( f ) { case BFScroll(v): s = v; default: }
+				s;
+			}];
+		return scrolls[b.index];
+	}
+
 	function buildChunk( cx : Int, cy : Int ) {
 		var solidBuf = new MeshBuf();
 		var alphaBuf = new MeshBuf();
 		var waterBuf = new MeshBuf();
 		var blendBuf = new MeshBuf();
+		// caras de los bloques con BFScroll: un material por tipo y velocidad (TileScroll)
+		var scrollBufs = new Array<{ kind : Int, speed : Float, buf : MeshBuf }>();
+		function scrollBuf( kind : Int, speed : Float ) : MeshBuf {
+			for( s in scrollBufs ) if( s.kind == kind && s.speed == speed ) return s.buf;
+			var buf = new MeshBuf();
+			scrollBufs.push({ kind : kind, speed : speed, buf : buf });
+			return buf;
+		}
 		// si el trozo ya existia (edicion), se quitan sus mallas antiguas
 		var cid = cx + cy * (size >> 4);
 		var old = chunkMeshes[cid];
@@ -1899,6 +1950,8 @@ class World {
 						addLiquid(blendBuf, b, 2, x, y, z, openCascade, su, sd, sx, sy, neg);
 					case BTFull, BTAlpha, BTTransp:
 						var m = b.type == BTFull ? solidBuf : (b.type == BTAlpha ? blendBuf : alphaBuf);
+						var sp = scrollOf(b);
+						if( sp != 0 ) m = scrollBuf(b.type == BTFull ? 0 : (b.type == BTAlpha ? 3 : 1), sp);
 						var al = b.type == BTAlpha;
 						if( al ? openAlphaNear(x, y, z + 1) : open(x, y, z + 1) ) addQuadL(m, [fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1], b.tu, su, neg, 0, 0, 1, x, y, z);
 						if( al ? openAlphaNear(x, y, z - 1) : open(x, y, z - 1) ) addQuadL(m, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz], b.td, sd, neg, 0, 0, -1, x, y, z);
@@ -1941,5 +1994,6 @@ class World {
 		emitMesh(alphaBuf, 1);
 		emitMesh(waterBuf, 2);
 		emitMesh(blendBuf, 3);
+		for( s in scrollBufs ) emitMesh(s.buf, s.kind, s.speed);
 	}
 }

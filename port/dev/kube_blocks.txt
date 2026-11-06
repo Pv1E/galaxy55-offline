@@ -1,5 +1,6 @@
 # Kubes de Kube (Motion Twin, 2010) como bloques enteros: los 77 en una cuadricula sobre el planeta (11 x 7, en el orden de
-# BlockKind), de dia y bajo un techo (luz de la lava, las gemas y la luz), en la paleta del modo creativo y en la mano.
+# BlockKind), de dia y bajo un techo (luz de la lava, las gemas y la luz), la lava y el agua
+# que corren, en la paleta del modo creativo y en la mano.
 # Al final, un planeta con mas de 255 bloques distintos (World.hasRoom):
 # el que ya no cabe no se pone ni se gasta. Capturas port/out/kubeblocks_*.png
 wait 3
@@ -100,6 +101,20 @@ tp 46.5 46.5 60 0 0
 lookat 50.5 42.5 57.5
 wait 10
 shot kubeblocks_cerca2
+# la lava y el agua de Kube corren por su casilla (BFScroll, World.TileScroll), hacia abajo en los lados: dos capturas de
+# cada una con un segundo entre medias
+tp 61.5 51.5 57 0 0
+lookat 60.5 50.5 57.5
+wait 5
+shot kubeblocks_lava1
+wait 60
+shot kubeblocks_lava2
+tp 45.5 43.5 57 0 0
+lookat 44.5 42.5 57.5
+wait 5
+shot kubeblocks_agua1
+wait 60
+shot kubeblocks_agua2
 # poner un kube con la mano: el koala encima del hormigon (42 42 57)
 slot 1
 hand BKubeKoala

@@ -320,7 +320,7 @@ class Block {
 					b.props.set(PTrack);
 				case BFContainer(_):
 					b.props.set(PContainer);
-				case BFAlpha(_), BFColor(_), BFDamage(_), BFSlippy, BFHeal(_), BFJump(_), BFNoOptimize:
+				case BFAlpha(_), BFColor(_), BFDamage(_), BFSlippy, BFHeal(_), BFJump(_), BFNoOptimize, BFScroll(_):
 					// nothing
 				}
 		}

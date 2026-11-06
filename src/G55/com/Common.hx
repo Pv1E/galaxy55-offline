@@ -397,6 +397,8 @@ enum BlockFlag {
 	BFTrack( t : TriggerEffect, dist : Int );
 	BFNoOptimize;
 	BFContainer( size : Int );
+	// anadido del port: la textura corre por su casilla, como el agua y la lava de Kube (pixeles de la casilla por segundo, ver World.TileScroll)
+	BFScroll( speed : Float );
 }
 
 typedef BlockData = {
