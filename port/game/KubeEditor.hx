@@ -242,7 +242,6 @@ class KubeEditor extends Screen {
 	var scrollTarget = [0., 0.];
 	var gameBlocks : Array<Block>;
 	var mine : Array<{ path : String, name : String, thumb : h2d.Tile }>;
-	var iconQueue = new Array<{ b : Block, bmp : h2d.Bitmap }>();
 
 	/** arrastre en curso (barras, vista previa): recibe el raton en coordenadas de la zona W x H */
 	var drag : Float -> Float -> Void;
@@ -1113,7 +1112,7 @@ class KubeEditor extends Screen {
 		scrollList(0);
 	}
 
-	/** una casilla por bloque del juego, una sola vez: los iconos se pintan unos pocos por imagen (update) y se quedan */
+	/** una casilla por bloque del juego, una sola vez: los iconos que falten se pintan unos pocos por imagen (Icons.pump) y se quedan */
 	function buildGameList() {
 		for( i in 0...gameBlocks.length ) {
 			var b = gameBlocks[i];
@@ -1121,11 +1120,7 @@ class KubeEditor extends Screen {
 			cell.setPosition((i % COLS) * CELL, Std.int(i / COLS) * CELL);
 			var g = new h2d.Graphics(cell);
 			Theme.rect(g, 1, 1, CELL - 2, CELL - 2, 0xFFFFFF, 0.05);
-			var bmp = new h2d.Bitmap(null, cell);
-			bmp.visible = false;
-			bmp.setScale(48 / Icons.SIZE);
-			bmp.setPosition(4, 4);
-			iconQueue.push({ b : b, bmp : bmp });
+			Icons.bitmap(cell, b, 48, atlas).setPosition(4, 4);
 			var it = new h2d.Interactive(CELL - 2, CELL - 2, cell);
 			it.propagateEvents = true;
 			it.onOver = function(_) {
@@ -1166,7 +1161,9 @@ class KubeEditor extends Screen {
 			var g = new h2d.Graphics(r);
 			Theme.rect(g, 1, 1, COLS * CELL - 2, CELL - 2, current ? Theme.ACCENT : 0xFFFFFF, current ? 0.2 : 0.05);
 			if( thumb != null ) {
+				// lisa, como los iconos de los bloques (Icons.bitmap): 64 px reducidos con el nearest de h2d salian pixelados
 				var bmp = new h2d.Bitmap(thumb, r);
+				bmp.smooth = true;
 				bmp.setScale(48 / thumb.width);
 				bmp.setPosition(4, 4);
 			}
@@ -1354,13 +1351,6 @@ class KubeEditor extends Screen {
 			nameInput.blur();
 
 		updateList(dt);
-		// iconos de la lista: unos pocos por imagen (cada uno se pinta en 3D)
-		for( _ in 0...6 ) {
-			var q = iconQueue.shift();
-			if( q == null ) break;
-			q.bmp.tile = Icons.get(q.b, atlas);
-			q.bmp.visible = true;
-		}
 		if( pendingTime > 0 ) pendingTime -= dt;
 		if( msgTime > 0 && (msgTime -= dt) <= 0 ) {
 			msgText.visible = false;

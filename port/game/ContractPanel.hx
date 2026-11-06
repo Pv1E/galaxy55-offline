@@ -83,8 +83,7 @@ class ContractPanel extends h2d.Object {
 		Theme.rect(g, 0, 0, w, ROW - 10, 0xFFFFFF, 0.06);
 		var done = Contracts.isDone(info, i);
 		var have = Contracts.have(inv, c.block);
-		var bm = new h2d.Bitmap(Icons.get(c.block, atlas), r);
-		bm.setScale(64 / Icons.SIZE);
+		var bm = Icons.bitmap(r, c.block, 64, atlas);
 		bm.x = 10;
 		bm.y = 9;
 		if( done ) bm.alpha = 0.4;

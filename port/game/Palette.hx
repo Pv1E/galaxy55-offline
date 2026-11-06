@@ -99,8 +99,8 @@ class Palette extends h2d.Object {
 			var g = new h2d.Graphics(cell);
 			cellBgs.push(g);
 			Theme.rect(g, 1, 1, CELL - 2, CELL - 2, 0xFFFFFF, 0.06);
-			var bm = new h2d.Bitmap(Icons.get(b, atlas), cell);
-			bm.setScale(48 / Icons.SIZE);
+			// como en la Base de datos ESCorp: liso y con los translucidos (cristal, hielo, agua, gemas de Kube) bien hechos
+			var bm = Icons.bitmap(cell, b, 48, atlas);
 			bm.x = 4;
 			bm.y = 4;
 			var it = new h2d.Interactive(CELL - 2, CELL - 2, cell);
