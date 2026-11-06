@@ -82,8 +82,9 @@ class InvBar extends h2d.Object {
 			var s = inv.inv.t[i - 1];
 			if( s == null ) continue;
 			var b = Block.all[s.k];
-			var bm = new h2d.Bitmap(Icons.get(b, atlas), slot);
-			bm.setScale(45 / Icons.SIZE);
+			// liso a cualquier tamano de ventana (el de 90 px, con el nearest de h2d, salia pixelado en una pequena); hecho ya, sin
+			// casilla vacia ni un fotograma
+			var bm = Icons.bitmap(slot, b, 45, atlas, true);
 			// el icono (45 px) se centra sobre el rombo (40 px): el centro de la base del cubo cae en (20, 30)
 			bm.x = -2.5;
 			if( i == changed && !first ) { bump = i; bumpTime = 0.45; }

@@ -147,15 +147,18 @@ class IconMesh {
 	}
 }
 
-/** Iconos 3D de los bloques para el inventario (Render.renderBlock del original: vista isometrica). */
+/**
+ * Iconos 3D de los bloques (Render.renderBlock del original: vista isometrica). Toda la interfaz los dibuja con bitmap (inventario,
+ * paleta, cofre, tienda, contratos, editor de kubes, Base de datos ESCorp): el mismo icono liso y los translucidos bien hechos
+ */
 class Icons {
 
-	static var cache = new Map<Int, h2d.Tile>();
 	static var hiresCache = new Map<Int, h2d.Tile>();
 	static var scene : h3d.scene.Scene;
-	public static inline var SIZE = 90;
-	/** iconos grandes (Base de datos ESCorp): 256 px con mipmaps, para dibujarlos lisos a cualquier tamano */
-	public static inline var HIRES = 256;
+	/** el icono del original (45 px) por dos: el contorno se calcula en proporcion */
+	static inline var SIZE = 90;
+	/** tamano de los iconos: 256 px con mipmaps, para dibujarlos lisos a cualquier tamano */
+	static inline var HIRES = 256;
 
 	/**
 	 * Iconos grandes por hacer (anadido del port): hacer los 167 de golpe al abrir la Base de datos ESCorp la congelaba varios
@@ -171,22 +174,11 @@ class Icons {
 	static var sumFx : h3d.pass.ScreenFx<IconAlphaSum>;
 	static var outlineFx : h3d.pass.ScreenFx<IconOutline>;
 
-	public static function get( b : Block, atlas : h3d.mat.Texture ) : h2d.Tile {
-		var t = cache.get(b.index);
-		if( t != null ) return t;
-		var tex = new h3d.mat.Texture(SIZE, SIZE, [Target]);
-		tex.filter = Linear;
-		render(b, atlas, tex);
-		t = h2d.Tile.fromTexture(tex);
-		cache.set(b.index, t);
-		return t;
-	}
-
 	/**
-	 * Icono de HIRES px con mipmaps (anadido del port, Base de datos ESCorp). Dibujado con smooth = true se reduce o se agranda
-	 * sin los pixeles desiguales de get() (90 px estirados con el filtro nearest de h2d). Lo hace ya; hiresLater espera su turno.
+	 * Icono de HIRES px con mipmaps (anadido del port). Dibujado con smooth = true se reduce o se agranda sin los pixeles
+	 * desiguales del de 90 px que se usaba antes (estirado con el filtro nearest de h2d). Lo hace ya; hiresLater espera su turno.
 	 */
-	public static function hires( b : Block, atlas : h3d.mat.Texture ) : h2d.Tile {
+	static function hires( b : Block, atlas : h3d.mat.Texture ) : h2d.Tile {
 		var t = hiresCache.get(b.index);
 		if( t != null ) return t;
 		asked.remove(b);
@@ -206,13 +198,8 @@ class Icons {
 		return t;
 	}
 
-	/** el icono grande de b si ya esta hecho; si no, null */
-	public static function hiresNow( b : Block ) : h2d.Tile {
-		return hiresCache.get(b.index);
-	}
-
 	/** pide el icono grande de b para verlo: f lo recibe en cuanto este hecho (enseguida si ya lo estaba) */
-	public static function hiresLater( b : Block, atlas : h3d.mat.Texture, f : h2d.Tile -> Void ) {
+	static function hiresLater( b : Block, atlas : h3d.mat.Texture, f : h2d.Tile -> Void ) {
 		var t = hiresCache.get(b.index);
 		if( t != null ) {
 			f(t);
@@ -223,6 +210,23 @@ class Icons {
 		if( w == null ) waiting.set(b.index, w = []);
 		w.push(f);
 		if( spare.remove(b) || asked.indexOf(b) < 0 ) asked.push(b);
+	}
+
+	static var blank : h2d.Tile;
+
+	/**
+	 * Icono de b de size px en parent, la unica manera de dibujar un bloque en la interfaz: el grande con mipmaps, dibujado liso
+	 * (a 90 px y con el nearest de h2d salia pixelado al reducirlo o agrandarlo) y con los translucidos bien hechos. now: se hace
+	 * ya si falta; si no, la casilla queda vacia hasta que lo esta (pump, unos pocos por fotograma)
+	 */
+	public static function bitmap( parent : h2d.Object, b : Block, size : Float, atlas : h3d.mat.Texture, now = false ) : h2d.Bitmap {
+		var t = now ? hires(b, atlas) : hiresCache.get(b.index);
+		if( t == null && blank == null ) blank = h2d.Tile.fromColor(0, HIRES, HIRES, 0);
+		var bm = new h2d.Bitmap(t != null ? t : blank, parent);
+		if( t == null ) hiresLater(b, atlas, function(t) bm.tile = t);
+		bm.smooth = true;
+		bm.setScale(size / HIRES);
+		return bm;
 	}
 
 	/** iconos grandes de reserva (los de la Base de datos ESCorp, antes de abrirla): pump los hace despues de los pedidos */
@@ -314,9 +318,9 @@ class Icons {
 			engine.popTarget();
 			return;
 		}
-		// Render.renderBlock: contorno negro, GlowFilter(0x0, 1, 2, 2, 1) sobre el icono de 45 px; aqui es de 90 px:
-		// 5 en lugar de 4 porque la caja del shim solo esta centrada con un tamano impar (a otro tamano, lo mismo en proporcion)
-		var blur = size == SIZE ? 5 : (Std.int(5 * size / SIZE) | 1);
+		// Render.renderBlock: contorno negro, GlowFilter(0x0, 1, 2, 2, 1) sobre el icono de 45 px; a 90 px seria 5 en lugar de 4
+		// porque la caja del shim solo esta centrada con un tamano impar; a HIRES, lo mismo en proporcion (15)
+		var blur = Std.int(5 * size / SIZE) | 1;
 		if( sumFx == null ) {
 			sumFx = new h3d.pass.ScreenFx(new IconAlphaSum());
 			outlineFx = new h3d.pass.ScreenFx(new IconOutline());
@@ -334,19 +338,19 @@ class Icons {
 		s.size = size;
 		s.radius = blur >> 1;
 		s.blur = blur;
-		s.translucent = size != SIZE && (b.type == BTAlpha || b.type == BTWater) ? 1 : 0;
+		s.translucent = b.type == BTAlpha || b.type == BTWater ? 1 : 0;
 		engine.pushTarget(tex);
 		outlineFx.render();
 		engine.popTarget();
 		if( Sys.args().indexOf("--dumpicons") >= 0 )
-			sys.io.File.saveBytes("port/out/icon_" + b.k + (size == SIZE ? "" : "_" + size) + ".png", tex.capturePixels().toPNG());
+			sys.io.File.saveBytes("port/out/icon_" + b.k + ".png", tex.capturePixels().toPNG());
 	}
 
 	/** dibuja el bloque, sin contorno, en tex (false si no tiene malla) */
 	static function draw( b : Block, atlas : h3d.mat.Texture, tex : h3d.mat.Texture ) : Bool {
-		// iconos grandes (Base de datos ESCorp) de bloques translucidos: alfa bien acumulado y sin el contorno por dentro (IconOutline)
-		var translucent = tex.width != SIZE && (b.type == BTAlpha || b.type == BTWater);
-		// los bloques translucidos dibujan sus 6 caras: se ve a traves el cubo entero (en los grandes, las de atras primero)
+		// bloques translucidos: alfa bien acumulado y sin el contorno por dentro (IconOutline)
+		var translucent = b.type == BTAlpha || b.type == BTWater;
+		// los bloques translucidos dibujan sus 6 caras: se ve a traves el cubo entero (las de atras primero)
 		var poly = IconMesh.polygon(b, b.type == BTAlpha, 1.0, translucent);
 		if( poly == null ) return false;
 		// IconShader del original: tshade = shade < 1 ? shade * shade : shade (las caras de los lados, mas oscuras que en el mundo)
@@ -363,17 +367,15 @@ class Icons {
 		mat.mainPass.enableLights = false;
 		mat.mainPass.culling = None;
 		mat.mainPass.addShader(new h3d.shader.VertexColor());
-		if( b.type == BTAlpha || b.type == BTWater ) {
-			// cristal, hielo, agua: se ven translucidos, no solo sus marcos (el original los dibuja con alfa)
+		if( translucent ) {
+			// cristal, hielo, agua: se ven translucidos, no solo sus marcos (el original los dibuja con alfa). El blend Alpha de
+			// Heaps usa SrcAlpha tambien para el alfa: sobre el fondo vacio queda a * a (casi invisible) y el color premultiplicado
+			// (oscuro). Aqui el alfa se suma como debe (One, OneMinusSrcAlpha) y el color se despremultiplica en IconOutline; sin
+			// escribir profundidad y con las caras de atras dibujadas antes que las de delante
 			mat.blendMode = Alpha;
-			if( translucent ) {
-				// el blend Alpha de Heaps usa SrcAlpha tambien para el alfa: sobre el fondo vacio queda a * a (casi invisible) y
-				// el color premultiplicado (oscuro). Aqui el alfa se suma como debe (One, OneMinusSrcAlpha) y el color se
-				// despremultiplica en IconOutline; sin escribir profundidad y con las caras de atras dibujadas antes que las de delante
-				mat.mainPass.blendAlphaSrc = One;
-				mat.mainPass.blendAlphaDst = OneMinusSrcAlpha;
-				mat.mainPass.depthWrite = false;
-			}
+			mat.mainPass.blendAlphaSrc = One;
+			mat.mainPass.blendAlphaDst = OneMinusSrcAlpha;
+			mat.mainPass.depthWrite = false;
 		} else {
 			mat.textureShader.killAlpha = true;
 			mat.textureShader.killAlphaThreshold = 0.5;
