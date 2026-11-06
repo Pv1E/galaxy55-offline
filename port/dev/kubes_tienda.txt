@@ -1,0 +1,18 @@
+# los kubes (de Kube o del editor) no estan en el robot comerciante: print wares no lista ningun BKube y, en la tienda,
+# el kube del inventario sale apagado (el robot no lo compra) y el hierro no. Captura port/out/kubes_tienda.png
+wait 3
+setlang fr
+planet
+wait 30
+slot 1
+hand BKubeGold
+slot 2
+hand BIron
+wait 5
+print wares
+shop
+wait 5
+shot kubes_tienda
+close
+wait 5
+quit
