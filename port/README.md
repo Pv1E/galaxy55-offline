@@ -8,7 +8,7 @@ bugs, see `BUGS.md` in the repository root); the original Flash game, with its b
 ## Play
 
 Build it (see below) and double-click `jugar.bat`, or download the portable zip from the
-[release](../../../releases/tag/v0.6). The start menu offers Continue (the list of saved games: play, rename or delete), New game, Kube editor (port addition: draw new blocks and save them as `.kube` files in the `kubes` folder of the game data), Options and Quit.
+[release](../../../releases/tag/v0.7). The start menu offers Continue (the list of saved games: play, rename or delete), New game, Kube editor (port addition: draw new blocks and save them as `.kube` files in the `kubes` folder of the game data), Options and Quit.
 In New game you choose name, seed and mode: **Adventure** (as in the original, with an empty inventory) or **Creative** (our addition, with biome and size).
 Saved games and settings go to `%APPDATA%\Galaxy55\` (change it with the `GALAXY55_DATA` environment variable), and screenshots (F2) to its `screenshots` folder.
 The save format may change between versions: do not count on today's saves working forever.

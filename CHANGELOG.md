@@ -2,7 +2,7 @@
 
 [English: `CHANGELOG.en.md`](CHANGELOG.en.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
-## Sin publicar
+## v0.7 — pre-release
 - **Base de datos ESCorp** (añadido del port), en el ordenador de a bordo, con tres pestañas: el **Kubindex**, con todos los
   kubes del juego por categorías (apuntar uno con el láser lo localiza; tenerlo en el inventario lo recupera, con las veces
   que se ha puesto, roto y fabricado, las recetas que lo dan y las que lo usan); **Espacio**, con los tipos de planeta y de

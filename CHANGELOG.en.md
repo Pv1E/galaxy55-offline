@@ -2,7 +2,7 @@
 
 [Español: `CHANGELOG.md`](CHANGELOG.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
-## Unreleased
+## v0.7 — pre-release
 - **ESCorp database** (port addition), on the on-board computer, with three tabs: the **Kubindex**, with every kube of the
   game by category (pointing the laser at one spots it; having it in the inventory collects it, with how many times it was
   placed, broken and crafted, the recipes that make it and the ones that use it); **Space**, with the planet and comet types

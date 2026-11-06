@@ -8,7 +8,7 @@ connus, voir `BUGS.fr.md` à la racine du dépôt) ; le jeu Flash d'origine, ave
 ## Jouer
 
 Compile-le (voir plus bas) et double-clique sur `jugar.bat`, ou télécharge le zip portable depuis la
-[release](../../../releases/tag/v0.6). Le menu de démarrage propose Continuer (la liste des parties : jouer, renommer ou supprimer), Nouvelle partie, Éditeur de Kubes (ajout du portage : dessiner de nouveaux blocs et les enregistrer en `.kube` dans le dossier `kubes` des données), Options et Quitter.
+[release](../../../releases/tag/v0.7). Le menu de démarrage propose Continuer (la liste des parties : jouer, renommer ou supprimer), Nouvelle partie, Éditeur de Kubes (ajout du portage : dessiner de nouveaux blocs et les enregistrer en `.kube` dans le dossier `kubes` des données), Options et Quitter.
 Dans Nouvelle partie, tu choisis le nom, la graine et le mode : **Aventure** (comme dans l'original, inventaire vide) ou **Créatif** (notre ajout, avec biome et taille).
 Les parties et les réglages sont enregistrés dans `%APPDATA%\Galaxy55\` (modifiable avec la variable d'environnement `GALAXY55_DATA`), et les captures d'écran (F2) dans son dossier `screenshots`.
 Le format des sauvegardes peut changer d'une version à l'autre : ne compte pas sur le fait que les parties d'aujourd'hui fonctionnent toujours.

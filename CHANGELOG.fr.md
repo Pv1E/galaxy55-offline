@@ -2,7 +2,7 @@
 
 [Español : `CHANGELOG.md`](CHANGELOG.md) · [English: `CHANGELOG.en.md`](CHANGELOG.en.md)
 
-## Non publié
+## v0.7 — pre-release
 - **Base de données ESCorp** (ajout du portage), dans l'ordinateur de bord, avec trois onglets : le **Kubindex**, avec tous
   les kubes du jeu par catégorie (viser un kube au laser le repère ; l'avoir dans l'inventaire le récupère, avec le nombre de
   fois où il a été posé, cassé et fabriqué, les recettes qui le donnent et celles qui l'utilisent) ; **Espace**, avec les types

@@ -219,6 +219,13 @@ mismas sumas que antes de los PR (generador repartido en trabajos, mismo orden);
 nombres son los del original y la carga rosa sale "-": en el juego la primera vez se elige idioma y no pasa.
 Arreglado aquí: con la base de datos abierta, la ayuda de las teclas (hud) se veía detrás de sus pestañas (el panel es
 translúcido); `openDatabase` la oculta y `closeDatabase` la vuelve a mostrar.
+## v0.7 preparada (2026-11-06)
+Changelogs ES/EN/FR y ERRORES/BUGS pasan de "Sin publicar" a v0.7; enlaces de los README a `releases/tag/v0.7`; menú
+"v0.7 · port nativo"; notas en `port/RELEASE.md` (3 idiomas). Zips con `package.ps1 -Version 0.7 -HashLink
+..\tools-portable\hashlink\hashlink-1.16.0-win` en `port/out/release` (Windows 8,4 MB, Linux/macOS 3,0 MB, los dos con
+`res/kubindex.json`). Probado el de Windows descomprimido en una carpeta vacía: OpenGL y DirectX crean partida, cargan el
+planeta y leen la base de datos (164 fichas). Falta: etiqueta `v0.7`, subir y que Pvie cree la release (pre-release) con los
+dos zips.
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;
