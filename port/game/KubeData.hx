@@ -30,6 +30,11 @@ class KubeData {
 	/** nombre del png de cada cara dentro del .kube (y su indice en la tira de la vista previa) */
 	public static var FACES = ["side", "up", "down", "front", "back", "left", "right", "open"];
 	static inline var FORMAT = 1;
+	/** prefijo de los kubes en BlockKind: los 77 de Kube y los que se anaden desde el editor (kindName) */
+	static inline var KIND_PREFIX = "BKube";
+
+	/** el bloque es un kube (de Kube o del editor), no un bloque de Galaxy 55 */
+	public static function isKube( k : BlockKind ) : Bool return StringTools.startsWith(Std.string(k), KIND_PREFIX);
 
 	/** las formas del juego: las de los bloques de DataGen y los modelos de Models.hx que el original tenia sin usar */
 	public static var SHAPES : Array<KubeShape> = [
@@ -420,7 +425,7 @@ class KubeData {
 
 	/** BKube + el nombre en CamelCase: "Néon bleu" -> BKubeNeonBleu */
 	public function kindName() : String {
-		return "BKube" + [for( p in slug(name).split("-") ) p.charAt(0).toUpperCase() + p.substr(1)].join("");
+		return KIND_PREFIX + [for( p in slug(name).split("-") ) p.charAt(0).toUpperCase() + p.substr(1)].join("");
 	}
 
 	/**

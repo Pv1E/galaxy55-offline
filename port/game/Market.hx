@@ -87,6 +87,8 @@ class Market {
 			byKey = new Map();
 			for( b in Block.all ) {
 				if( b.index <= 0 || b.basePrice == null || b.basePrice <= 0 || b.type == BTInvisible ) continue;
+				// los kubes no son mercancia de la ESCorp: el robot no los vende ni los compra
+				if( KubeData.isKube(b.k) ) continue;
 				var base = PRICES.exists(Std.string(b.k)) ? PRICES.get(Std.string(b.k)) : b.basePrice;
 				var w : Ware = b.charge != null
 					? { key : "c" + Type.enumIndex(b.charge), block : b, charge : b.charge, base : base }
