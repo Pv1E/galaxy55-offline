@@ -226,6 +226,12 @@ Changelogs ES/EN/FR y ERRORES/BUGS pasan de "Sin publicar" a v0.7; enlaces de lo
 `res/kubindex.json`). Probado el de Windows descomprimido en una carpeta vacía: OpenGL y DirectX crean partida, cargan el
 planeta y leen la base de datos (164 fichas). Falta: etiqueta `v0.7`, subir y que Pvie cree la release (pre-release) con los
 dos zips.
+## README con la v0.7 (2026-11-06)
+Sección "New in v0.7" / "Novedades de la v0.7" / "Nouveautés de la v0.7" en `README.md`, con `docs/img/base-datos.jpg`
+(Kubindex), `docs/img/cometa.jpg` (ventana del cometa en el mapa), `docs/img/editor-kubes.gif` (editor con el motor espacial
+girando) y `docs/img/pilotar.gif` (vuelo sobre el planeta). Capturas en inglés, sin la ayuda de teclas (settings.json con
+"showHelp": false), hechas con devrun y pasadas a GIF con ffmpeg (12 fps, 640 px, paleta de 128 colores). La vista del cometa
+desde el suelo o dando la vuelta salía oscura y poco clara: por eso la foto es la del mapa.
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;
