@@ -383,7 +383,8 @@ class DataGen {
 		{ id : 58, schema : [CSBase(BIron,2),CSSingle(BAluminium)], out : BCircuit, count : null },
 		{ id : 59, schema : [CSBase(BCircuit,2)], out : BCamera, count : null },
 		{ id : 60, schema : [CSSingle(BRock),CSSingle(BRock)], out : BRockColumn, count : 2 },
-		{ id : 61, schema : [CSBase(BHardRock,2),CSBase(BHardRock,2)], out : BHardRockWallSquare, count : 2 }
+		{ id : 61, schema : [CSBase(BHardRock,2),CSBase(BHardRock,2)], out : BHardRockWallSquare, count : 2 },
+		{ id : 62, schema : [CSBase(BIron,2),CSBase(BIron,2)], out : BChest, count : null }
 	];
 
 }
