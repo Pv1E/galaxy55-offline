@@ -64,7 +64,7 @@ class Market {
 		set(35, "BMinIron BMinAluminium BYellowCrystalDense BBlueCrystalDense BBlackIceLight BBlackLight");
 		set(60, "BYellowCrystalLight BBlueCrystalLight BLava");
 		// construccion (fabricado)
-		set(12, "BWoodPlank BWoodPlate BWoodColumn BWoodWindow BRockWall BRockWallSquare BHardRockColumn BHardRockWall BMoonRockColumn BMoonLightColumn BVineColumn BMarsWall BWinterWall BAcidWall");
+		set(12, "BWoodPlank BWoodPlate BWoodColumn BWoodWindow BRockWall BRockWallSquare BRockColumn BHardRockColumn BHardRockWall BHardRockWallSquare BMoonRockColumn BMoonLightColumn BVineColumn BMarsWall BWinterWall BAcidWall");
 		set(25, "BStainEmpty BStainPurple BStainRed BStainWhite BStainOrange BStainGreen BShiningWoodPlank BWoodScrew BGlass");
 		set(50, "BIron BAluminium BIronFence BLight BLamp BIronLight BJumper BCascadeSource BFreezer");
 		// nave y aparatos

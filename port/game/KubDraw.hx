@@ -90,8 +90,12 @@ class KubDraw {
 		g.lineTo(x + ARROW_W - 10, ay + 8);
 		g.endFill();
 		x += ARROW_W;
-		item(parent, Block.get(r.out), r.count == null ? 1 : r.count, "", info, atlas, x, 16, onPick, box);
-		return x + ITEM_W;
+		// sus resultados uno tras otro (el ojo de Grozarb da dos: lumine y planchas)
+		for( o in Data.craftOutputs(r) ) {
+			item(parent, Block.get(o.k), o.n, "", info, atlas, x, 16, onPick, box);
+			x += ITEM_W;
+		}
+		return x;
 	}
 
 	/** un ingrediente o el resultado (b: el bloque de la receta); las cargas se ven siempre, y se pinchan una vez recuperadas */

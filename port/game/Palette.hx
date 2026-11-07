@@ -33,9 +33,12 @@ class Palette extends h2d.Object {
 	public function new( parent : h2d.Object, atlas : h3d.mat.Texture ) {
 		super(parent);
 		this.atlas = atlas;
+		// los kubes van despues de los bloques de Galaxy 55, tambien de los anadidos tras ellos (colonne en rosh...)
+		var kubes = [];
 		for( b in Block.all )
 			if( b.index > 0 && b.basePrice != null && b.charge == null && b.type != BTInvisible )
-				blocks.push(b);
+				(KubeData.isKube(b.k) ? kubes : blocks).push(b);
+		for( b in kubes ) blocks.push(b);
 		// el agua de cada planeta no se vendia; en creativo se puede poner (fluye como en Minecraft)
 		for( k in [BWater, BDarkWater, BAcidWater, BWinterWater] )
 			blocks.push(Block.get(k));
