@@ -661,7 +661,7 @@ class GalaxyApp extends hxd.App {
 			row.onAction = function( a ) switch( SaveRow.ACTIONS[a] ) {
 				case "rename": askRename(s, inf);
 				case "delete": askDelete(s, inf);
-				default: startGame(inf);
+				default: playSave(s, inf);
 			};
 		}
 		s.layout();
@@ -694,6 +694,34 @@ class GalaxyApp extends hxd.App {
 		s.top = top < max ? top : max < 0 ? 0 : max;
 		s.setFocus(at < s.rows.length ? at : s.rows.length - 1);
 	}
+
+	/**
+	 * Jugar una partida de la lista (anadido del port). Si tiene bloques que esta version no conoce (UnknownBlocks: la guardo una
+	 * version mas reciente; cargarla tal cual fallaba), antes se pregunta. No: la partida se queda como estaba. Si: se copia
+	 * (saves/backups), se borran esos bloques, se guarda asi y se carga, con un aviso de lo borrado y de donde esta la copia.
+	 */
+	function playSave( parent : Screen, info : SaveInfo ) {
+		var r = UnknownBlocks.count(info);
+		if( UnknownBlocks.total(r) == 0 ) {
+			startGame(info);
+			return;
+		}
+		askConfirm(parent, Lang.t("unknown.ask").split("%n%").join("" + UnknownBlocks.total(r)), Lang.t("unknown.warn"), Theme.DANGER, function() {
+			var copy = UnknownBlocks.backup(info.id);
+			if( copy == null ) {
+				showToast(Lang.t("unknown.nocopy"), 5);
+				return;
+			}
+			var done = UnknownBlocks.clear(info);
+			SaveData.write(info, null, false);
+			var sep = Sys.systemName() == "Windows" ? "\\" : "/";
+			var shown = [haxe.io.Path.withoutDirectory(Settings.dir()), "saves", UnknownBlocks.BACKUPS, haxe.io.Path.withoutDirectory(copy)].join(sep);
+			loadToast = Lang.t("unknown.done").split("%where%").join(UnknownBlocks.where(done)).split("%path%").join(shown);
+			startGame(info);
+		});
+	}
+	/** aviso que se muestra al terminar de cargar la partida (playSave) */
+	var loadToast : String;
 
 	/** ventana para cambiar el nombre de una partida (solo el nombre: SaveData.rename); Intro en el campo acepta */
 	function askRename( parent : LoadScreen, info : SaveInfo ) {
@@ -1774,6 +1802,10 @@ class GalaxyApp extends hxd.App {
 			// partida en el espacio: el planeta solo se carga para hacer las imagenes de la nave; luego se abre el mapa
 			shipFrames = game.ship.captureFrames(engine, s3d);
 			leaveGame();
+			if( loadToast != null ) {
+				mapToast = loadToast;
+				loadToast = null;
+			}
 			toSpace(loadInfo);
 			return;
 		}
@@ -1799,6 +1831,10 @@ class GalaxyApp extends hxd.App {
 		hud.visible = true;
 		autosaveTimer = 0;
 		captureMouse(true);
+		if( loadToast != null ) {
+			showToast(loadToast, 10);
+			loadToast = null;
+		}
 		if( loadInfo.px < 0 && loadInfo.hangar != true && loadInfo.mothership != true ) {
 			// partida nueva: se crea el archivo enseguida para que aparezca en la lista
 			saveGame(false);
@@ -2328,6 +2364,9 @@ class GalaxyApp extends hxd.App {
 		var d = SaveData.dir();
 		for( f in sys.FileSystem.readDirectory(d) )
 			if( StringTools.endsWith(f, ".json") || StringTools.endsWith(f, ".png") ) sys.FileSystem.deleteFile(d + "/" + f);
+		// y las copias de las partidas con bloques desconocidos (UnknownBlocks.backup)
+		var b = d + "/" + UnknownBlocks.BACKUPS;
+		if( sys.FileSystem.exists(b) ) for( f in sys.FileSystem.readDirectory(b) ) sys.FileSystem.deleteFile(b + "/" + f);
 		makeDemoSaves(n);
 		Sys.println("devsaves: " + n + " partidas de ejemplo en " + d);
 	}

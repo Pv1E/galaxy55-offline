@@ -1,0 +1,92 @@
+# Partidas con bloques que esta version no conoce (UnknownBlocks: las guardo una version con mas bloques y cargarlas fallaba en
+# InvBar). Al jugarla desde la lista se pregunta: No la deja como estaba; Si la copia en saves/backups, borra esos bloques (las
+# celdas pasan a aire, las casillas se vacian), la guarda y la carga con un aviso de lo borrado y de donde esta la copia.
+# Necesita port/out/testdata/desconocidos/<id>.json (y su .png): una copia de una partida asi, por ejemplo una de la rama de
+# Grey Haven (bloques 296 y 297). La otra la hace unknownsave con bloques desconocidos en cada sitio. Mira los desconocidos_*.png
+wait 3
+devsaves 0
+# fabricada desde la partida de prueba (antes de ir al menu, que la necesita en curso)
+unknownsave Todos los sitios
+menu
+waitfor menu
+savecopy port/out/testdata/desconocidos/20261107_214850_764.json
+screen load
+wait 3
+print unknown
+print menu
+# Intro en la primera fila (la copia): la ventana, con el foco en No; en ingles y en espanol, Esc = No
+setlang en
+screen load
+wait 3
+tap enter
+wait 3
+print menu
+shot desconocidos_ventana_en
+tap esc
+wait 2
+setlang es
+screen load
+wait 3
+tap enter
+wait 3
+shot desconocidos_ventana_es
+tap esc
+wait 2
+# en frances, Intro en No: vuelve a la lista y nada cambia (mismo md5, ninguna copia)
+setlang fr
+screen load
+wait 3
+tap enter
+wait 3
+print menu
+shot desconocidos_ventana_fr
+tap enter
+wait 3
+print menu
+print unknown
+# otra vez y Si (abajo, como en Borrar): la copia existe (con el md5 de antes), la partida se carga sin esos bloques y sale el aviso
+tap enter
+wait 3
+tap down
+wait 2
+print menu
+tap enter
+waitfor planet
+wait 20
+print inv
+print unknown
+shot desconocidos_aviso
+wait 120
+shot desconocidos_aviso_tarde
+# la fabricada (tercera fila: la copia se guardo al ir al menu, despues la de prueba): Si y se carga
+menu
+waitfor menu
+screen load
+wait 3
+tap down
+tap down
+wait 2
+print menu
+tap enter
+wait 3
+print menu
+shot desconocidos_todos
+tap down
+wait 2
+tap enter
+waitfor planet
+wait 20
+print inv
+print ship
+print unknown
+shot desconocidos_todos_aviso
+# la partida limpia ya no pregunta
+menu
+waitfor menu
+screen load
+wait 3
+tap enter
+waitfor planet
+wait 5
+print menu
+quit
