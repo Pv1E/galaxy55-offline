@@ -1,0 +1,155 @@
+# contratos en curso (anadido del port): con parte de los bloques se dan los que haya y el contrato queda en curso arriba del
+# panel; ocupa una linea del tablero (el tablero ofrece una menos), sigue tras el cambio de periodo, se le dan mas bloques y
+# con el ultimo se cobra entera la recompensa (su linea queda "Entregado" si el tablero sigue siendo el suyo). Con 3 en curso
+# el tablero esta lleno. Abandonar pide confirmacion (No lo deja como estaba; Si lo quita: los bloques se pierden, no se cobra
+# y la linea queda "Abandonado" hasta el cambio de tablero). Teclado: abajo (Dar), Intro, abajo (Abandonar), Intro, abajo (Si),
+# Intro. Se guarda y se recarga; una partida de antes (contracts old) se sigue leyendo. Unos 2 minutos: -Timeout 240
+# Tableros: 1000000 = BWood x48 +216, BChampiLight x12 +126, BAcidWood x48 +216; 1000001 = BSoil x64 +192, BAcidWall x12 +156,
+# BLamp x6 +225; 1000002 = BWinterSoil x64 +192, BLamp x6 +225, BMinIron x12 +366
+wait 3
+contracts empty
+contracts slot 1000000
+ship
+wait 10
+print credits
+print contracts
+# sin bloques no se da nada
+deliver 0
+# con 20 de 48 bloques la linea 0 ofrece "Dar 20"; el don parcial la pone en curso (arriba) y el tablero ofrece las lineas 1 y 2
+contracts fill 0 20
+contracts
+wait 5
+shot contrats_dar
+deliver 0
+contracts close
+print contracts
+print inv
+# en curso sin bloques: rechazado; con 10 mas: 30 / 48, sin cobrar aun
+deliver a 0
+contracts fill a 0 10
+deliver a 0
+print credits
+# la linea 0 ya no se ofrece: rechazada aunque haya bloques (quedan 5 en el inventario)
+contracts fill 0 5
+deliver 0
+contracts
+wait 5
+print contracts
+shot contrats_encurso
+# cambio de periodo: el contrato en curso sigue; el tablero nuevo solo ofrece 2 lineas (la 2 queda oculta)
+contracts slot 1000001
+wait 3
+print contracts
+shot contrats_periodo
+# dos dones parciales mas (lineas 0 y 1 del tablero nuevo): 3 en curso, tablero lleno
+contracts fill 0 10
+deliver 0
+contracts fill 1 3
+deliver 1
+wait 3
+print contracts
+shot contrats_lleno
+# los textos en frances y en ingles (el panel se rehace al abrirlo): tablero lleno y confirmacion (No)
+setlang fr
+contracts close
+contracts
+wait 5
+shot contrats_lleno_fr
+contracts abandon 2
+wait 3
+shot contrats_confirmar_fr
+button 0
+wait 2
+setlang en
+contracts close
+contracts
+wait 5
+shot contrats_lleno_en
+contracts abandon 2
+wait 3
+shot contrats_confirmar_en
+button 0
+wait 2
+setlang es
+contracts close
+contracts
+wait 3
+# terminar el del periodo anterior (faltan 18; hay 23): se cobran 216 y vuelve a ofrecerse la linea 2
+contracts fill a 0
+deliver a 0
+print credits
+print inv
+print contracts
+# terminar el de la linea 0 del periodo actual: +192 y su linea queda Entregado
+contracts fill a 0
+deliver a 0
+wait 3
+print credits
+print contracts
+shot contrats_terminado
+# abandonar con el panel: pide confirmacion; No lo deja en curso
+contracts abandon 0
+wait 3
+print menu
+print contracts
+shot contrats_confirmar
+button 0
+wait 3
+print contracts
+# Si: se quita sin cobrar; la linea 1 queda Abandonado (los 3 bloques dados se pierden)
+contracts abandon 0
+wait 3
+button 1
+wait 3
+print credits
+print contracts
+shot contrats_abandonado
+# con el teclado: don parcial a la linea 2 (4 de 6); abajo (Dar 1) e Intro: 5 / 6; abajo (Abandonar) e Intro abren la
+# confirmacion; abajo (Si) e Intro lo abandonan
+contracts fill 2 4
+deliver 2
+contracts fill a 0 1
+wait 2
+tap down
+wait 2
+print contracts
+tap enter
+wait 3
+print contracts
+tap down
+wait 2
+print contracts
+shot contrats_foco
+tap enter
+wait 3
+print menu
+print contracts
+tap down
+wait 2
+tap enter
+wait 3
+print credits
+print contracts
+# guardar y recargar: un contrato en curso (linea 0 del periodo 1000002, 7 de 64) y la linea 2 entregada siguen ahi
+contracts slot 1000002
+wait 3
+contracts fill 0 7
+deliver 0
+contracts fill 2
+deliver 2
+print contracts
+contracts close
+savegame
+reload
+waitfor ready
+wait 10
+print contracts
+# partida de antes de los contratos en curso: se lee sin ellos (la linea 2 entregada se conserva y la 0 se ofrece otra vez)
+contracts old
+savegame
+reload
+waitfor ready
+wait 10
+print contracts
+contracts slot -1
+quit

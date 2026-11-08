@@ -92,7 +92,7 @@ typedef SaveInfo = {
 	@:optional var credits : Int;
 	/** precios y existencias del robot comerciante (Market) */
 	@:optional var market : Market.MarketInfo;
-	/** contratos de la ESCorp entregados en el periodo actual (Contracts) */
+	/** contratos de la ESCorp: lineas entregadas y abandonadas en el periodo actual, y contratos en curso (Contracts) */
 	@:optional var contracts : Contracts.ContractsInfo;
 	/** nave editada en el hangar (zlib en base64); null = la de serie */
 	@:optional var shipData : String;
@@ -186,10 +186,19 @@ class SaveData {
 		}
 	}
 
+	/** contratos de la ESCorp; las partidas antiguas no tienen ni abandonados ni contratos en curso, y un contrato en curso
+	    mal formado o de un bloque que ya no existe se salta */
 	static function readContracts( o : Dynamic ) : Contracts.ContractsInfo {
 		try {
 			if( o == null || o.slot == null ) return null;
-			return { slot : Std.int(o.slot), done : [for( v in (o.done : Array<Dynamic>) ) Std.int(v)] };
+			var active : Array<Contracts.ActiveContract> = [];
+			if( o.active != null )
+				for( a in (o.active : Array<Dynamic>) ) {
+					if( a == null || a.block == null || Contracts.kindOf(Std.string(a.block)) == null || a.n == null || a.reward == null ) continue;
+					active.push({ block : Std.string(a.block), n : Std.int(a.n), reward : Std.int(a.reward), given : a.given != null ? Std.int(a.given) : 0,
+						slot : a.slot != null ? Std.int(a.slot) : 0, index : a.index != null ? Std.int(a.index) : -1 });
+				}
+			return { slot : Std.int(o.slot), done : o.done != null ? ints(o.done) : [], abandoned : o.abandoned != null ? ints(o.abandoned) : [], active : active };
 		} catch( e : Dynamic ) {
 			return null;
 		}
