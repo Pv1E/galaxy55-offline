@@ -14,6 +14,7 @@ wait 5
 print credits
 buy BMinIron 5
 buy BIron 5
+buy BCrafterComputer 1
 sell BMinIron 3
 sell BCoal 3
 print credits

@@ -83,8 +83,8 @@ class Market {
 	/**
 	 * Lo que el robot compra pero no vende (cambio del port): se le puede vender al precio de PRICES, pero no comprarselo.
 	 * Son las variantes (tierra cubierta, roca lunar rota), lo que en el Kubindex solo sale en anomalias, lo que pide
-	 * cargas rosas (fosiles, roca antigua), las columnas, la nave blindada (queda el aluminio para fabricarla) y otras
-	 * cosas raras que hay que ir a buscar.
+	 * cargas rosas (fosiles, roca antigua), las columnas, toda la nave y sus aparatos (queda el aluminio para fabricar el
+	 * blindaje) y otras cosas raras que hay que ir a buscar.
 	 */
 	static var NOT_SOLD = [
 		// suelo y roca
@@ -101,8 +101,9 @@ class Market {
 		"BWoodColumn", "BHardRockColumn", "BMoonRockColumn", "BVineColumn", "BStainEmpty", "BStainRed", "BWoodScrew",
 		"BIronFence", "BIronLight", "BJumper", "BCascadeSource",
 		// nave y aparatos
-		"BShipPlate", "BShipWire", "BShipTubes", "BShipGlass2", "BShipGlassBlack", "BShipHull", "BShipGlass", "BShipDoor",
-		"BCircuit", "BCamera", "BHealBox", "BMiningGenerator", "BArtiBomb", "BAlienTreasure",
+		"BShipPlate", "BShipWire", "BShipTubes", "BShipGlass2", "BShipGlassBlack", "BShipLight", "BShipHull", "BShipGlass", "BShipDoor",
+		"BCircuit", "BCamera", "BHealBox", "BShipEngine", "BCrafter", "BMiningGenerator", "BArtiBomb",
+		"BShipComputer", "BCrafterComputer", "BShipEntry", "BAlienTreasure",
 		// blindajes de la nodriza (precio de los datos)
 		"BMotherYellow", "BMotherBlack",
 	];
