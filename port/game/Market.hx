@@ -81,8 +81,9 @@ class Market {
 		set(80, "BShipPlate BShipWire BShipTubes BShipGlass2 BShipGlassBlack BShipLight");
 		set(100, "BShipHull BShipGlass");
 		set(150, "BShipDoor BCircuit BCamera BHealBox");
-		set(400, "BShipEngine BCrafter BMiningGenerator BArtiBomb BChest");
+		set(400, "BCrafter BMiningGenerator BArtiBomb BChest");
 		set(900, "BShipComputer BCrafterComputer BShipEntry BAlienTreasure");
+		set(1000, "BShipEngine");
 		// cargas
 		set(20, "BYellowCharge");
 		set(40, "BBlueCharge");
