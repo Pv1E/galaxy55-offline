@@ -970,9 +970,10 @@ class Dev {
 				+ " panel=" + (app.database == null ? "cerrado" : "pestana " + app.database.tab) + " tuto=" + (info.tuto == null ? "-" : "" + info.tuto.step)
 				+ " avisos=" + app.kubNotify.devInfo());
 		case "kuborder":
-			// orden de la base de datos: las fichas (por familia y nombre) y los resultados de las recetas
+			// orden de la base de datos: las fichas, las de la categoria Fabricados y los resultados de las recetas
 			var d = KubData.get();
 			Sys.println("fichas: " + [for( e in d.sortEntries(d.entries.copy()) ) e.getName()].join(", "));
+			Sys.println("fabricados: " + [for( e in d.sortEntries([for( e in d.entries ) if( d.has(e, CCraft) ) e], true) ) e.getName()].join(", "));
 			Sys.println("recetas: " + [for( r in d.sortRecipes(Data.CRAFT.copy()) ) Block.get(r.out).getName()].join(", "));
 		case "kubdata":
 			// fichas del Kubindex con sus sitios y categorias (para revisar kubindex.json)

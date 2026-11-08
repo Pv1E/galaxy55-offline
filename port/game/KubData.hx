@@ -179,9 +179,11 @@ class KubData {
 	 * Fichas en el orden de la base de datos. Primero las de los planetas, por planeta (el primero de PLANETS donde salen) y,
 	 * dentro, como en la pestana Espacio (terrainRank); luego las de las cometas y las que solo dan las anomalias. Despues lo
 	 * fabricado, en el orden de sus recetas, y al final lo especial (nave, nave nodriza) y los kubes, en el orden de los datos.
+	 * byRecipe (categoria Fabricados): todo lo que se fabrica va en el orden de sus recetas, tambien lo que sale en un planeta
+	 * (el tronco de lunimeuse con la piedra, tras las planchas).
 	 */
-	public function sortEntries( list : Array<Block> ) : Array<Block> {
-		var keys = [for( e in list ) e.index => entryKey(e)];
+	public function sortEntries( list : Array<Block>, byRecipe = false ) : Array<Block> {
+		var keys = [for( e in list ) e.index => entryKey(e, byRecipe)];
 		list.sort(function(a, b) {
 			var d = keys.get(a.index) - keys.get(b.index);
 			return d != 0 ? (d < 0 ? -1 : 1) : a.index - b.index;
@@ -189,23 +191,26 @@ class KubData {
 		return list;
 	}
 
-	function entryKey( e : Block ) : Float {
+	function entryKey( e : Block, byRecipe : Bool ) : Float {
 		if( KubeData.isKube(e.k) ) return 5 * GROUP + e.index;
 		if( special.exists(e.index) ) return 4 * GROUP + e.index;
+		var made = recipesMaking(e);
+		if( byRecipe && made.length > 0 ) return 3 * GROUP + firstRecipeKey(made);
 		var p = placeOf(e);
 		var planet = firstIn(PLANETS, p.biomes);
 		if( planet >= 0 ) return planet * SUB + terrainRank(e);
 		var comet = firstIn(Comets.KINDS, p.comets);
 		if( comet >= 0 ) return GROUP + comet * SUB + terrainRank(e);
-		var made = recipesMaking(e);
-		if( made.length > 0 ) {
-			var k = Math.POSITIVE_INFINITY;
-			for( r in made ) k = Math.min(k, recipeKey(r));
-			return 3 * GROUP + k;
-		}
+		if( made.length > 0 ) return 3 * GROUP + firstRecipeKey(made);
 		var anomaly = firstIn([for( a in anomalies ) a.id], p.anomalies);
 		if( anomaly >= 0 ) return 2 * GROUP + anomaly * SUB + terrainRank(e);
 		return 4 * GROUP + e.index;
+	}
+
+	function firstRecipeKey( list : Array<CraftRule> ) : Float {
+		var k = Math.POSITIVE_INFINITY;
+		for( r in list ) k = Math.min(k, recipeKey(r));
+		return k;
 	}
 
 	/** posicion en order del primero que esta en list (-1 si ninguno) */
