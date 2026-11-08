@@ -1001,7 +1001,8 @@ class Dev {
 		case "hangar":
 			Sys.println("hangar: " + (g.hangar == null ? "no" : "valida=" + g.hangarValid + " error=" + g.hangar.error + " velocidad=" + g.hangar.speed) + " mensaje=" + g.message);
 		case "wares":
-			for( m in Market.wares ) Sys.println("ware " + m.block.k + " " + m.base);
+			// "solo-compra": el robot lo compra pero no lo vende (Market.NOT_SOLD)
+			for( m in Market.wares ) Sys.println("ware " + m.block.k + " " + m.base + (m.onSale ? "" : " solo-compra"));
 		case "inv":
 			Sys.println("inv: " + [for( s in g.inv.inv.t ) s == null ? "-" : Block.all[s.k].k + "x" + s.n].join(" ") + "  casilla=" + g.inv.blockIndex);
 		case "pos":

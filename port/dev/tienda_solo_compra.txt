@@ -1,0 +1,24 @@
+# robot comerciante: lo que solo compra (Market.NOT_SOLD) no esta en su parte de la tienda; comprarlo no hace nada y
+# venderlo si. BWinterFlowerDeleted (bloque borrado) no sale en print wares. Captura port/out/tienda_solo_compra.png
+wait 3
+setlang fr
+planet
+wait 30
+licenses credits 1000
+give BMinIron 10
+give BCoal 10
+wait 5
+print wares
+shop
+wait 5
+print credits
+buy BMinIron 5
+buy BIron 5
+sell BMinIron 3
+sell BCoal 3
+print credits
+wait 5
+shot tienda_solo_compra
+close
+wait 5
+quit
