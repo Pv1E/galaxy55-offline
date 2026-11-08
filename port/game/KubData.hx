@@ -64,6 +64,18 @@ class KubData {
 	var isEntry = new Map<Int, Bool>();
 	var makes = new Map<Int, Array<CraftRule>>();
 	var usedIn = new Map<Int, Array<CraftRule>>();
+	/** familia de cada ficha (su posicion en kubindex.json families), para el orden de la base de datos */
+	var family = new Map<Int, Int>();
+	var familyIds : Array<String> = [];
+
+	/** familias de lo que no esta en ninguna: lo que se fabrica va con la construccion, lo demas con los aparatos */
+	static inline var CRAFTED_FAMILY = "build";
+	static inline var OTHER_FAMILY = "device";
+	/** letras con acento y su letra sin el, para ordenar por nombre (si no, la E con acento iria despues de la z) */
+	static var ACCENTS = [
+		"àáâä" => "a", "ÀÁÂÄ" => "a", "éèêë" => "e", "ÉÈÊË" => "e", "íìîï" => "i", "ÍÌÎÏ" => "i", "óòôö" => "o", "ÓÒÔÖ" => "o",
+		"úùûü" => "u", "ÚÙÛÜ" => "u", "çÇ" => "c", "ñÑ" => "n",
+	];
 
 	function new( path : String ) {
 		var o : Dynamic = try haxe.Json.parse(sys.io.File.getContent(path)) catch( e : Dynamic ) {
@@ -111,6 +123,18 @@ class KubData {
 				var e = b == null ? null : entryOf(b);
 				if( e != null ) special.set(e.index, true);
 			}
+		if( o.families != null ) {
+			var fams : Array<Dynamic> = o.families;
+			for( i in 0...fams.length ) {
+				familyIds.push(Std.string(fams[i].id));
+				for( f in (fams[i].blocks : Array<Dynamic>) ) {
+					var b = try Block.get(Type.createEnum(BlockKind, Std.string(f))) catch( e : Dynamic ) null;
+					var e = b == null ? null : entryOf(b);
+					if( e == null ) Sys.stderr().writeString(path + ": " + f + " no es una ficha del Kubindex\n");
+					else family.set(e.index, i);
+				}
+			}
+		}
 		for( r in Data.CRAFT ) {
 			add(makes, entryOf(Block.get(r.out)), r);
 			for( e in recipeBlocks(r, false) ) add(usedIn, e, r);
@@ -176,6 +200,60 @@ class KubData {
 	public function recipesUsing( e : Block ) : Array<CraftRule> {
 		var l = usedIn.get(e.index);
 		return l == null ? [] : l;
+	}
+
+	/** fichas en el orden de la base de datos: por familia (kubindex.json families, los kubes al final) y, dentro, por nombre */
+	public function sortEntries( list : Array<Block> ) : Array<Block> {
+		var keys = [for( e in list ) e.index => nameKey(e.getName())];
+		list.sort(function(a, b) {
+			var d = familyRank(a) - familyRank(b);
+			if( d != 0 ) return d;
+			var c = Reflect.compare(keys.get(a.index), keys.get(b.index));
+			return c != 0 ? c : a.index - b.index;
+		});
+		return list;
+	}
+
+	/** recetas en el orden de la base de datos: por la familia de su resultado (las cargas tras los aparatos) y su nombre */
+	public function sortRecipes( list : Array<CraftRule> ) : Array<CraftRule> {
+		var rank = [for( r in list ) r.id => recipeRank(r)];
+		var keys = [for( r in list ) r.id => nameKey(Block.get(r.out).getName())];
+		list.sort(function(a, b) {
+			var d = rank.get(a.id) - rank.get(b.id);
+			if( d != 0 ) return d < 0 ? -1 : 1;
+			var c = Reflect.compare(keys.get(a.id), keys.get(b.id));
+			return c != 0 ? c : a.id - b.id;
+		});
+		return list;
+	}
+
+	function recipeRank( r : CraftRule ) : Float {
+		var o = Block.get(r.out);
+		if( o.charge != null ) return familyRank(null, OTHER_FAMILY) + 0.5;
+		var e = entryOf(o);
+		return e == null ? familyIds.length + 2 : familyRank(e);
+	}
+
+	/**
+	 * Posicion de la familia de una ficha (o de la familia id). La que no esta en ninguna: los kubes al final, lo que se fabrica
+	 * con la construccion y lo demas con los aparatos.
+	 */
+	function familyRank( e : Block, ?id : String ) : Int {
+		if( e != null ) {
+			var f = family.get(e.index);
+			if( f != null ) return f;
+			if( KubeData.isKube(e.k) ) return familyIds.length + 1;
+			id = recipesMaking(e).length > 0 ? CRAFTED_FAMILY : OTHER_FAMILY;
+		}
+		var i = familyIds.indexOf(id);
+		return i >= 0 ? i : familyIds.length;
+	}
+
+	/** nombre en minusculas y sin acentos, para ordenar */
+	static function nameKey( s : String ) : String {
+		for( from => to in ACCENTS )
+			for( i in 0...from.length ) s = s.split(from.charAt(i)).join(to);
+		return s.toLowerCase();
 	}
 
 	/** fichas de una receta: sus ingredientes y, con out, el resultado */

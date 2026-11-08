@@ -1,0 +1,26 @@
+# orden de la base de datos ESCorp: fichas por familias (tierras, rocas, minerales, hielos, madera, follaje, plantas,
+# materiales, construccion, nave, aparatos, nave nodriza, kubes) y dentro por nombre sin acentos; recetas por la familia de su
+# resultado (las cargas tras los aparatos). print kuborder lo da en texto; capturas de la cuadricula y de las recetas. Tambien
+# en ingles: el nombre cambia, las familias no. -Extra "--lang=fr"
+wait 3
+planet
+wait 20
+kub all
+print kuborder
+kub
+wait 10
+shot kub_orden_todos
+kub nav 0 8
+wait 5
+shot kub_orden_todos2
+kub page 4
+wait 10
+shot kub_orden_fabricados
+kub tab 2
+wait 10
+shot kub_orden_recetas
+kub close
+wait 5
+setlang en
+print kuborder
+quit

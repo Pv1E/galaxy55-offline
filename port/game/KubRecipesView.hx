@@ -16,7 +16,7 @@ class KubRecipesView extends KubView {
 	override function refresh() {
 		removeChildren();
 		var info = panel.info;
-		var known = [for( r in Data.CRAFT ) if( Kubindex.recipeKnown(info, r) ) r];
+		var known = KubData.get().sortRecipes([for( r in Data.CRAFT ) if( Kubindex.recipeKnown(info, r) ) r]);
 		Theme.text(this, KubText.get("rc.count").split("%n%").join("" + known.length).split("%t%").join("" + Data.CRAFT.length), 1.6, Theme.TEXT, 0, 0);
 		list = new KubScroll(this, DatabasePanel.CW, DatabasePanel.CH - 34);
 		list.y = 34;

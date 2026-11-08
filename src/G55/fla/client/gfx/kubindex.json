@@ -1,5 +1,5 @@
 {
- "_doc": "Base de datos ESCorp (KubData): las cargas no son fichas. Sitios de cada bloque del mundo (constructor de BlockKind; las variantes y la roca rota cuentan para su ficha): un bioma de planeta, un tipo de cometa (Comets.KINDS) o a:<anomalia>. Anomalia con biomes null = en todos los planetas.",
+ "_doc": "Base de datos ESCorp (KubData): las cargas no son fichas. Sitios de cada bloque del mundo (constructor de BlockKind; las variantes y la roca rota cuentan para su ficha): un bioma de planeta, un tipo de cometa (Comets.KINDS) o a:<anomalia>. Anomalia con biomes null = en todos los planetas. families: orden de las fichas en la base de datos (familias en este orden, alfabetico dentro de cada una; lo que no esta en ninguna va con la construccion si se fabrica y si no con los aparatos; los kubes al final). Las recetas siguen la familia de su resultado.",
  "hidden": [
   "BTest",
   "BTreeHerbs",
@@ -311,6 +311,232 @@
  ],
  "special": [
   "BShipEngine"
+ ],
+ "families": [
+  {
+   "id": "soil",
+   "blocks": [
+    "BSoil",
+    "BMoonSoil",
+    "BAcidSoil",
+    "BWinterSoil",
+    "BMarsSoil",
+    "BMarsSoil2",
+    "BMoonSand",
+    "BMarsQuickSand",
+    "BPlantSoil"
+   ]
+  },
+  {
+   "id": "rock",
+   "blocks": [
+    "BRock",
+    "BHardRock",
+    "BMoonRock",
+    "BMoonRockColumn",
+    "BAcidRock",
+    "BWinterRock",
+    "BMarsRock",
+    "BMarsHardRock",
+    "BMarsCraterRock",
+    "BLavaRock",
+    "BFrozenRock",
+    "BAlienRock",
+    "BPlantRock",
+    "BCoal",
+    "BCoalHot"
+   ]
+  },
+  {
+   "id": "ore",
+   "blocks": [
+    "BMinAluminium",
+    "BMinIron",
+    "BYellowCrystalDense",
+    "BYellowCrystalLight",
+    "BYellowCeil",
+    "BBlueCrystalDense",
+    "BBlueCrystalLight",
+    "BMarsBlueRock",
+    "BBlackIceLight",
+    "BMarsRockFossil",
+    "BMarsCactusFossil",
+    "BBonusSmall",
+    "BBonusMedium",
+    "BBonusLarge"
+   ]
+  },
+  {
+   "id": "ice",
+   "blocks": [
+    "BIce",
+    "BBlackIce",
+    "BLava",
+    "BCascadeSource"
+   ]
+  },
+  {
+   "id": "wood",
+   "blocks": [
+    "BWood",
+    "BAcidWood",
+    "BAcidWoodHole",
+    "BAcidWoodBubble",
+    "BAcidTreeSap",
+    "BWinterWood",
+    "BMoonLightColumn"
+   ]
+  },
+  {
+   "id": "leaves",
+   "blocks": [
+    "BGreenLeaves",
+    "BPurpleLeaves",
+    "BBrownLeaves",
+    "BPinkLeaves",
+    "BAcidLeaves",
+    "BAcidLeavesBubble",
+    "BAcidLeaves2",
+    "BAcidLeaves2Bubble",
+    "BWinterLeaves"
+   ]
+  },
+  {
+   "id": "plant",
+   "blocks": [
+    "BAutumnHerbs1",
+    "BAutumnHerbs2",
+    "BPinkFlower",
+    "BChampiLight",
+    "BAutumnStraw",
+    "BVines",
+    "BCactus",
+    "BCactusBase",
+    "BCactusFlower",
+    "BMoonLight",
+    "BMoonLightDead",
+    "BStainEmpty",
+    "BStainPurple",
+    "BStainRed",
+    "BStainWhite",
+    "BStainOrange",
+    "BStainGreen",
+    "BMoonHerbs1",
+    "BMoonHerbs2",
+    "BAcidMush",
+    "BAcidFruit",
+    "BYellowPlant",
+    "BBluePlant",
+    "BWinterHerb1",
+    "BWinterHerb2",
+    "BWinterHerb3",
+    "BMarsCactus",
+    "BMarsCactusFlower",
+    "BMarsHerb1",
+    "BMarsHerb2",
+    "BMarsHerb3",
+    "BBigMushTrunk",
+    "BBigMushHead",
+    "BMush",
+    "BCoral1",
+    "BCoral2",
+    "BHighHerb1",
+    "BHighHerb2",
+    "BHighHerb3",
+    "BHighHerb4",
+    "BHighHerb5",
+    "BHighHerb6",
+    "BFreezerPlant",
+    "BAcidHerb1",
+    "BAcidHerb2",
+    "BAcidHerbCeil",
+    "BHealPlant",
+    "BCavePlantCeil"
+   ]
+  },
+  {
+   "id": "material",
+   "blocks": [
+    "BWoodPlank",
+    "BShiningWoodPlank",
+    "BAluminium",
+    "BIron",
+    "BGlass",
+    "BLight",
+    "BRaw",
+    "BRawRed",
+    "BRawPurple",
+    "BRawWhite",
+    "BRawOrange",
+    "BRawGreen"
+   ]
+  },
+  {
+   "id": "build",
+   "blocks": [
+    "BRockWall",
+    "BHardRockWall",
+    "BRockWallSquare",
+    "BHardRockColumn",
+    "BWoodColumn",
+    "BVineColumn",
+    "BWoodWindow",
+    "BWoodPlate",
+    "BWoodScrew",
+    "BLeavesCurtain",
+    "BMarsWall",
+    "BWinterWall",
+    "BAcidWall",
+    "BIronFence",
+    "BLamp",
+    "BIronLight",
+    "BBlackLight"
+   ]
+  },
+  {
+   "id": "ship",
+   "blocks": [
+    "BShipHull",
+    "BShipEngine",
+    "BShipGlass",
+    "BShipGlass2",
+    "BShipGlassBlack",
+    "BShipDoor",
+    "BShipPlate",
+    "BShipWire",
+    "BShipComputer",
+    "BShipTubes",
+    "BShipEntry",
+    "BShipLight",
+    "BCrafter",
+    "BCrafterComputer"
+   ]
+  },
+  {
+   "id": "device",
+   "blocks": [
+    "BFreezer",
+    "BMiningGenerator",
+    "BJumper",
+    "BHealBox",
+    "BCircuit",
+    "BCamera",
+    "BChest",
+    "BArtiBomb",
+    "BAlienTreasure"
+   ]
+  },
+  {
+   "id": "mother",
+   "blocks": [
+    "BMotherHull",
+    "BMotherPanel",
+    "BMotherDark",
+    "BMotherField",
+    "BMotherYellow",
+    "BMotherBlack"
+   ]
+  }
  ],
  "places": {
   "BRock": [

@@ -55,7 +55,7 @@ import Common;
  *                           categoria, flechas; kub forget|visit|see Bloque|got Bloque|break Bloque|load RUTA olvidan todo,
  *                           exploran el planeta, identifican, recuperan o rompen un bloque como al jugar, o leen otro kubindex.json;
  *                           kub anomaly ID cruza una anomalia, kub goanomaly N lleva junto a la N del planeta, kub all lo da todo
- *                           por recuperado; print kub|kubdata
+ *                           por recuperado; print kub|kubdata|kuborder (orden de las fichas y las recetas)
  *   savegame                guardar la partida (como F5, sin aviso)
  *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
  *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
@@ -969,6 +969,11 @@ class Dev {
 				+ " descubiertas=" + [for( r in Data.CRAFT ) if( Kubindex.recipeKnown(info, r) ) r].length + "/" + Data.CRAFT.length
 				+ " panel=" + (app.database == null ? "cerrado" : "pestana " + app.database.tab) + " tuto=" + (info.tuto == null ? "-" : "" + info.tuto.step)
 				+ " avisos=" + app.kubNotify.devInfo());
+		case "kuborder":
+			// orden de la base de datos: las fichas (por familia y nombre) y los resultados de las recetas
+			var d = KubData.get();
+			Sys.println("fichas: " + [for( e in d.sortEntries(d.entries.copy()) ) e.getName()].join(", "));
+			Sys.println("recetas: " + [for( r in d.sortRecipes(Data.CRAFT.copy()) ) Block.get(r.out).getName()].join(", "));
 		case "kubdata":
 			// fichas del Kubindex con sus sitios y categorias (para revisar kubindex.json)
 			var d = KubData.get();
