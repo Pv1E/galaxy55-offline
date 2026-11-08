@@ -97,8 +97,8 @@ class Market {
 		// tintes en bruto y minerales
 		"BRawRed", "BRawPurple", "BRawWhite", "BRawOrange", "BRawGreen", "BMarsRockFossil", "BMarsCactusFossil", "BCoalHot",
 		"BMinIron", "BBlackIceLight", "BBlackLight", "BLava",
-		// construccion
-		"BWoodColumn", "BHardRockColumn", "BMoonRockColumn", "BVineColumn", "BStainEmpty", "BStainRed",
+		// construccion (BRockColumn, la columna de roca, la anade la PR de las recetas: hasta entonces no hace nada)
+		"BWoodColumn", "BRockColumn", "BHardRockColumn", "BMoonRockColumn", "BVineColumn", "BStainEmpty", "BStainRed",
 		"BIronFence", "BIronLight", "BJumper", "BCascadeSource",
 		// nave y aparatos
 		"BShipPlate", "BShipWire", "BShipTubes", "BShipGlass2", "BShipGlassBlack", "BShipLight", "BShipHull", "BShipGlass", "BShipDoor",
