@@ -325,6 +325,8 @@ enum BlockKind {
 	// anadidos del port, al final para no mover los numeros guardados en las partidas
 	BRockColumn;
 	BHardRockWallSquare;
+	BAcidWallSquare;
+	BWinterWallSquare;
 }
 
 enum BlockModel {

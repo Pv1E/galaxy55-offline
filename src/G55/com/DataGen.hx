@@ -299,7 +299,9 @@ class DataGen {
 		{ id : BKubeCrate, type : BTFull, texture : [51,41], texUp : [52,41], texDown : [53,41], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Caisse", basePrice : 100 },
 		{ id : BKubeNoel, type : BTFull, texture : [54,41], texUp : [55,41], texDown : [56,41], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Kube de Noël", basePrice : 100 },
 		{ id : BRockColumn, type : BTModel, texture : [1,42], texUp : [2,42], texDown : [2,42], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.9, weight : null, flags : [BFModel(MBigColumn),BFMagnet(UpDown)], matter : BRock, name : "Colonne en rosh", basePrice : 100 },
-		{ id : BHardRockWallSquare, type : BTFull, texture : [0,42], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 1.0, weight : null, flags : [], matter : BHardRock, name : "Carrelage en rouge'rosh", basePrice : 100 }
+		{ id : BHardRockWallSquare, type : BTFull, texture : [0,42], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 1.0, weight : null, flags : [], matter : BHardRock, name : "Carrelage en rouge'rosh", basePrice : 100 },
+		{ id : BAcidWallSquare, type : BTFull, texture : [3,42], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.8, weight : null, flags : [], matter : BRock, name : "Carrelage de roche douce", basePrice : 100 },
+		{ id : BWinterWallSquare, type : BTFull, texture : [4,42], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.8, weight : null, flags : [], matter : BRock, name : "Carrelage du frimas", basePrice : 100 }
 	];
 
 	public static var BIOMES : Array<BiomeData> = [
@@ -379,12 +381,14 @@ class DataGen {
 		{ id : 54, schema : [CSSingle(BIron),CSSingle(BHealPlant)], out : BHealBox, count : null },
 		{ id : 55, schema : [CSSingle(BMarsSoil)], out : BGlass, count : 2 },
 		{ id : 56, schema : [CSSingle(BAcidTreeSap)], out : BLight, count : null },
-		{ id : 57, schema : [CSSingle(BMoonRock),CSSingle(BMoonRock)], out : BMoonLightColumn, count : 2 },
+		{ id : 57, schema : [CSSingle(BMoonLightDead),CSSingle(BMoonLightDead)], out : BMoonLightColumn, count : 2 },
 		{ id : 58, schema : [CSBase(BIron,2),CSSingle(BAluminium)], out : BCircuit, count : null },
 		{ id : 59, schema : [CSBase(BCircuit,2)], out : BCamera, count : null },
 		{ id : 60, schema : [CSSingle(BRock),CSSingle(BRock)], out : BRockColumn, count : 2 },
 		{ id : 61, schema : [CSBase(BHardRock,2),CSBase(BHardRock,2)], out : BHardRockWallSquare, count : 2 },
-		{ id : 62, schema : [CSBase(BIron,2),CSBase(BIron,2)], out : BChest, count : null }
+		{ id : 62, schema : [CSBase(BIron,2),CSBase(BIron,2)], out : BChest, count : null },
+		{ id : 63, schema : [CSBase(BAcidRock,2),CSBase(BAcidRock,2)], out : BAcidWallSquare, count : 2 },
+		{ id : 64, schema : [CSBase(BWinterRock,2),CSBase(BWinterRock,2)], out : BWinterWallSquare, count : 2 }
 	];
 
 }
