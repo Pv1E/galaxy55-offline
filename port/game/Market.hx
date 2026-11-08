@@ -66,13 +66,21 @@ class Market {
 		set(20, "BRaw BRawRed BRawPurple BRawWhite BRawOrange BRawGreen BMarsRockFossil BMarsCactusFossil BCoalHot");
 		set(35, "BMinIron BMinAluminium BYellowCrystalDense BBlueCrystalDense BBlackIceLight BBlackLight");
 		set(60, "BLava");
-		// construccion (fabricado)
-		set(12, "BWoodPlank BWoodPlate BWoodColumn BWoodWindow BRockWall BRockWallSquare BHardRockColumn BHardRockWall BMoonRockColumn BMoonLightColumn BVineColumn BMarsWall BWinterWall BAcidWall");
-		set(25, "BStainEmpty BStainPurple BStainRed BStainWhite BStainOrange BStainGreen BShiningWoodPlank BWoodScrew BGlass");
-		set(50, "BIron BAluminium BIronFence BLight BLamp BIronLight BJumper BCascadeSource BFreezer");
+		// construccion (fabricado). Lo que sale de una receta con ingredientes que vende el robot no se revende por mas de lo
+		// que cuestan esos ingredientes (si no, comprar, fabricar y revender da dinero): un bois (6) da 4 planchas, un
+		// phosphomousse (15) 2 luminas, un sable 2 vidrios, un aluminio un blindaje...
+		set(3, "BWoodPlank BWoodPlate BWoodColumn");
+		set(4, "BGlass");
+		set(6, "BWoodWindow");
+		set(12, "BRockWall BRockWallSquare BHardRockColumn BHardRockWall BMoonRockColumn BMoonLightColumn BVineColumn BMarsWall BWinterWall BAcidWall BLight BLamp");
+		set(15, "BShiningWoodPlank");
+		set(22, "BIronLight");
+		set(25, "BStainEmpty BStainPurple BStainRed BStainWhite BStainOrange BStainGreen BWoodScrew");
+		set(50, "BIron BAluminium BIronFence BJumper BCascadeSource BFreezer");
 		// nave y aparatos
 		set(80, "BShipPlate BShipWire BShipTubes BShipGlass2 BShipGlassBlack BShipLight");
-		set(150, "BShipHull BShipGlass BShipDoor BCircuit BCamera BHealBox");
+		set(100, "BShipHull BShipGlass");
+		set(150, "BShipDoor BCircuit BCamera BHealBox");
 		set(400, "BShipEngine BCrafter BMiningGenerator BArtiBomb BChest");
 		set(900, "BShipComputer BCrafterComputer BShipEntry BAlienTreasure");
 		// cargas
@@ -116,6 +124,8 @@ class Market {
 		// construccion (BRockColumn, la columna de roca, la anade la PR de las recetas: hasta entonces no hace nada)
 		"BWoodColumn", "BRockColumn", "BHardRockColumn", "BMoonRockColumn", "BMoonLightColumn", "BVineColumn", "BStainEmpty",
 		"BStainRed", "BGlass", "BIronFence", "BLight", "BIronLight", "BJumper", "BCascadeSource",
+		// el contrato de muros de rouge'rosh paga las cargas azules que cuesta picar la roca: comprados hechos, daba dinero
+		"BHardRockWall",
 		// nave y aparatos
 		"BShipPlate", "BShipWire", "BShipTubes", "BShipGlass2", "BShipGlassBlack", "BShipLight", "BShipHull", "BShipGlass", "BShipDoor",
 		"BCircuit", "BCamera", "BHealBox", "BMiningGenerator", "BArtiBomb", "BAlienTreasure",
