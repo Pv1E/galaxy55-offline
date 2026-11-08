@@ -1,0 +1,79 @@
+# Anomalia Invisible (anadido del port, como los Invisibles de Kube): 4x4x4 Cofres de Kube envueltos en Kubes invisibles,
+# flotando sobre el terreno. Los Kubes invisibles y lo que los toca pintan el cielo de detras; a traves de la vitre blindee
+# teintee o de la glace noire se ven como bajo una luz negra (aristas azules). Pasar por debajo identifica la anomalia.
+# uso: devrun.ps1 -Script port/dev/anomalia_invisible.txt -Extra "--lang=fr --seed=30"
+# semilla 30, otono, tamano 1: el cubo va de 112,2,54 a 117,7,59 (centro 115,5; debajo, el suelo llega a 43 y alrededor baja a 36)
+wait 3
+kub forget
+print kub
+# desde abajo, contra el cielo: no se ve (y se identifica: aviso arriba a la derecha)
+tp 119.5 10.5 top
+lookat 115 5 57
+wait 40
+shot invisible_dessous
+print kub
+# desde arriba, con el suelo detras: un cubo de cielo
+set 115 13 73 BRock
+tp 115.5 13.15 74
+lookat 115.5 5.5 56
+wait 20
+shot invisible_dessus
+# a traves de la vitre blindee teintee (un suelo de 3x3 entre la camara y el cubo)
+set 114 10 71 BShipGlassBlack
+set 115 10 71 BShipGlassBlack
+set 116 10 71 BShipGlassBlack
+set 114 11 71 BShipGlassBlack
+set 115 11 71 BShipGlassBlack
+set 116 11 71 BShipGlassBlack
+set 114 12 71 BShipGlassBlack
+set 115 12 71 BShipGlassBlack
+set 116 12 71 BShipGlassBlack
+wait 20
+shot invisible_vitre
+# a traves de la glace noire
+set 114 10 71 BBlackIce
+set 115 10 71 BBlackIce
+set 116 10 71 BBlackIce
+set 114 11 71 BBlackIce
+set 115 11 71 BBlackIce
+set 116 11 71 BBlackIce
+set 114 12 71 BBlackIce
+set 115 12 71 BBlackIce
+set 116 12 71 BBlackIce
+wait 20
+shot invisible_glace
+set 114 10 71 none
+set 115 10 71 none
+set 116 10 71 none
+set 114 11 71 none
+set 115 11 71 none
+set 116 11 71 none
+set 114 12 71 none
+set 115 12 71 none
+set 116 12 71 none
+# un hueco de 2x2 arriba: los cofres que ya no tocan ningun Kube invisible se ven
+set 114 4 59 none
+set 115 4 59 none
+set 114 5 59 none
+set 115 5 59 none
+wait 20
+shot invisible_ouvert
+# Base de datos ESCorp
+kub got BKubeInvisible
+kub got BKubeChest
+kub
+wait 3
+kub pick BKubeInvisible
+wait 2
+shot invisible_kub_ficha
+kub page 2
+wait 2
+shot invisible_kub_cat
+kub tab 1
+wait 2
+kub nav 0 27
+wait 2
+shot invisible_kub_espacio
+kub close
+print kub
+quit

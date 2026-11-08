@@ -389,10 +389,74 @@ class World {
 		return bytes.get(((x + y * size) << ZBITS) | z);
 	}
 
-	/** true si la cara contra este voxel se ve (aire o bloque que deja pasar la luz) */
+	/**
+	 * true si la cara contra este voxel se ve (aire o bloque que deja pasar la luz). Cambio del port: el Kube invisible tapa como
+	 * un bloque lleno (lo que lo toca no tiene caras contra el; las suyas se pintan como el cielo)
+	 */
 	inline function open( x : Int, y : Int, z : Int ) : Bool {
 		var id = voxel(x, y, z);
-		return id == 0 || tagOf(id) != BTFull;
+		return id == 0 || (tagOf(id) != BTFull && id != invisId);
+	}
+
+	// ---------------------------------------------------------------- Kube invisible (anadido del port)
+
+	/**
+	 * Kube invisible, como en Kube: se ve el cielo a traves de el aunque haya bloques detras, y vuelve invisibles los bloques que
+	 * lo tocan (sus 6 vecinos), asi lo que encierra no se ve desde fuera. Sus caras y las de esos bloques van a una malla aparte
+	 * (INV_*) que se dibuja tres veces en la pasada "alpha", antes del agua:
+	 * - LAYER_INVIS: el cielo de esa direccion (Sky.invisSky), escribiendo la profundidad, asi tapa todo lo de detras, y el bit
+	 *   STENCIL_INVIS donde queda delante;
+	 * - LAYER_INVIS_MARK: las caras de la vitre blindee teintee y de la glace noire marcan STENCIL_REVEAL donde estan delante de
+	 *   lo que haya (solo el stencil);
+	 * - LAYER_INVIS_REVEAL: con los dos bits, el bloque como bajo una luz negra (Sky.invisReveal); el cristal se pinta despues
+	 *   encima, como siempre.
+	 * El agua y las cascadas no se vuelven invisibles, ni el cristal tintado ni la glace noire (son el filtro que los deja ver).
+	 */
+	var invisId = -1;
+	/** por id local: INV_NORMAL, INV_KUBE (el Kube invisible), INV_IMMUNE (no se vuelve invisible) o INV_REVEAL (ademas, lo revela) */
+	var invisRole : Array<Int> = [];
+	static inline var INV_NORMAL = 0;
+	static inline var INV_KUBE = 1;
+	static inline var INV_IMMUNE = 2;
+	static inline var INV_REVEAL = 3;
+	static inline var LAYER_INVIS = -7;
+	static inline var LAYER_INVIS_MARK = -6;
+	static inline var LAYER_INVIS_REVEAL = -5;
+	static inline var STENCIL_INVIS = 1;
+	static inline var STENCIL_REVEAL = 2;
+	static inline var INVIS_KILL_ALPHA = 0.05;
+
+	static function invisRoleOf( b : Block ) : Int {
+		if( b == null ) return INV_NORMAL;
+		return switch( b.k ) {
+		case BKubeInvisible: INV_KUBE;
+		case BShipGlassBlack, BBlackIce: INV_REVEAL;
+		default: b.type == BTWater || b.hasFlag(BFLiquid) ? INV_IMMUNE : INV_NORMAL;
+		}
+	}
+
+	/** el bloque de esta celda toca un Kube invisible */
+	inline function touchesInvis( x : Int, y : Int, z : Int ) : Bool {
+		return voxel(x - 1, y, z) == invisId || voxel(x + 1, y, z) == invisId || voxel(x, y - 1, z) == invisId
+			|| voxel(x, y + 1, z) == invisId || voxel(x, y, z - 1) == invisId || voxel(x, y, z + 1) == invisId;
+	}
+
+	/** cara del Kube invisible: contra todo lo que no sea un bloque lleno u otro Kube invisible (tambien el cristal y el agua) */
+	inline function openInvis( x : Int, y : Int, z : Int ) : Bool {
+		var id = voxel(x, y, z);
+		return id == 0 || (tagOf(id) != BTFull && id != invisId);
+	}
+
+	/** hay algun Kube invisible en el trozo o a un bloque de el (si no, el trozo se hace como siempre) */
+	function chunkNearInvis( cx : Int, cy : Int ) : Bool {
+		if( invisId < 0 ) return false;
+		for( y in cy * CSIZE - 1...(cy + 1) * CSIZE + 1 )
+			for( x in cx * CSIZE - 1...(cx + 1) * CSIZE + 1 ) {
+				var col = (wrapC(x) + wrapC(y) * size) << ZBITS;
+				for( z in 0...HEIGHT )
+					if( bytes.get(col | z) == invisId ) return true;
+			}
+		return false;
 	}
 
 	/** true si alguna de las 6 celdas vecinas es un bloque que da luz (BFLight: neon, lamparas...) */
@@ -927,6 +991,9 @@ class World {
 		while( lightIdx.length <= id ) lightIdx.push(-1);
 		var b = gen.blocks[id];
 		idTag[id] = b == null ? 0 : Type.enumIndex(b.type);
+		while( invisRole.length <= id ) invisRole.push(INV_NORMAL);
+		invisRole[id] = invisRoleOf(b);
+		if( invisRole[id] == INV_KUBE ) invisId = id;
 		lightIdx[id] = -1;
 		if( b != null && b.special != null )
 			switch( b.special ) {
@@ -1755,6 +1822,10 @@ class World {
 		// sus buffers se crean y se suben ya, con el trozo (en la carga, dentro del tiempo de cada paso): si no, se hacian en el
 		// primer dibujo, los de todo el planeta en la misma imagen (~280 buffers y 350-730 ms al aparecer el menu o el planeta)
 		poly.alloc(h3d.Engine.getCurrent());
+		if( kind >= 4 ) {
+			emitInvisible(poly, kind == 5);
+			return;
+		}
 		// con mipmaps como el original (DefShader, TransShader, WaterShader1); el hielo y el cristal sin ellos (AlphaShader1)
 		var mat = h3d.mat.Material.create(kind == 3 || ts != null || Atlas.mipped == null ? atlas : Atlas.mipped);
 		mat.shadows = false;
@@ -1804,10 +1875,7 @@ class World {
 			if( ts != null ) cut.mainPass.addShader(ts);
 			cut.textureShader.killAlpha = true;
 			cut.textureShader.killAlphaThreshold = 0.9;
-			meshes.push(new h3d.scene.Mesh(poly, cut, root));
-			if( curList != null ) curList.push(meshes.length - 1);
-			meshCx.push(curCx);
-			meshCy.push(curCy);
+			addChunkMesh(poly, cut);
 			// profundidad de la cara translucida mas cercana (AlphaShader0 del original), antes del color: mismos shaders de
 			// vertices que el color, para que la profundidad coincida. El hielo tiene alfa >= 0.28 en toda su textura; el cristal
 			// es casi todo < 0.25 y no la escribe, asi lo que hay detras de un cristal se sigue viendo
@@ -1823,15 +1891,71 @@ class World {
 			depth.mainPass.setPassName("alpha");
 			depth.mainPass.setColorMask(false, false, false, false);
 			depth.mainPass.layer = LAYER_ALPHA_DEPTH;
-			meshes.push(new h3d.scene.Mesh(poly, depth, root));
-			if( curList != null ) curList.push(meshes.length - 1);
-			meshCx.push(curCx);
-			meshCy.push(curCy);
+			addChunkMesh(poly, depth);
 		}
+		addChunkMesh(poly, mat);
+	}
+
+	function addChunkMesh( poly : ChunkPrim, mat : h3d.mat.Material ) {
 		meshes.push(new h3d.scene.Mesh(poly, mat, root));
 		if( curList != null ) curList.push(meshes.length - 1);
 		meshCx.push(curCx);
 		meshCy.push(curCy);
+	}
+
+	/** material de una de las pasadas del Kube invisible (ver INV_*): con la curvatura de FogShader y su propio stencil */
+	function invisMaterial( tex : h3d.mat.Texture, layer : Int ) : h3d.mat.Material {
+		var mat = h3d.mat.Material.create(tex);
+		mat.shadows = false;
+		var p = mat.mainPass;
+		p.enableLights = false;
+		p.setPassName("alpha");
+		p.layer = layer;
+		p.depthTest = LessEqual;
+		p.addShader(sky.fog);
+		p.stencil = new h3d.mat.Stencil();
+		return mat;
+	}
+
+	/**
+	 * Mallas del Kube invisible (anadido del port, ver INV_*): las caras que pintan el cielo y despues, donde un cristal que lo
+	 * revela queda delante, su aspecto bajo la luz negra; o (mark) las caras de esos cristales, que solo marcan el stencil.
+	 */
+	function emitInvisible( poly : ChunkPrim, mark : Bool ) {
+		if( mark ) {
+			var mk = invisMaterial(atlas, LAYER_INVIS_MARK);
+			// como sus pasadas normales de BTAlpha: solo la cara de delante
+			mk.mainPass.culling = Back;
+			mk.mainPass.depthWrite = false;
+			mk.mainPass.setColorMask(false, false, false, false);
+			mk.mainPass.stencil.setFunc(Always, STENCIL_REVEAL, 0xFF, STENCIL_REVEAL);
+			mk.mainPass.stencil.setOp(Keep, Keep, Replace);
+			addChunkMesh(poly, mk);
+			return;
+		}
+		var tex = Atlas.mipped == null ? atlas : Atlas.mipped;
+		// el cielo: opaco, escribe la profundidad (tapa lo de detras) y STENCIL_INVIS; solo se descartan los huecos de verdad (hojas,
+		// plantas): la casilla del propio Kube invisible tiene alfa 0.25 en el atlas (BFAlpha, Atlas.scaleTile)
+		var sk = invisMaterial(tex, LAYER_INVIS);
+		sk.mainPass.culling = None;
+		sk.mainPass.depthWrite = true;
+		sk.textureShader.killAlpha = true;
+		sk.textureShader.killAlphaThreshold = INVIS_KILL_ALPHA;
+		sk.mainPass.addShader(sky.invisSky);
+		sk.mainPass.stencil.setFunc(Always, STENCIL_INVIS, 0xFF, STENCIL_INVIS);
+		sk.mainPass.stencil.setOp(Keep, Keep, Replace);
+		addChunkMesh(poly, sk);
+		// visto a traves del cristal tintado o de la glace noire: solo donde estan los dos bits
+		var rv = invisMaterial(tex, LAYER_INVIS_REVEAL);
+		rv.mainPass.culling = None;
+		rv.mainPass.depthWrite = false;
+		rv.textureShader.killAlpha = true;
+		rv.textureShader.killAlphaThreshold = INVIS_KILL_ALPHA;
+		sky.invisReveal.tex = tex;
+		rv.mainPass.addShader(sky.invisReveal);
+		rv.mainPass.stencil.setFunc(Equal, STENCIL_INVIS | STENCIL_REVEAL, STENCIL_INVIS | STENCIL_REVEAL, 0);
+		rv.mainPass.stencil.setOp(Keep, Keep, Keep);
+		addChunkMesh(poly, rv);
 	}
 
 	/**
@@ -1898,6 +2022,10 @@ class World {
 		var alphaBuf = new MeshBuf();
 		var waterBuf = new MeshBuf();
 		var blendBuf = new MeshBuf();
+		// Kube invisible: caras que pintan el cielo, y caras de los cristales que lo revelan (emitInvisible)
+		var invisBuf = new MeshBuf();
+		var markBuf = new MeshBuf();
+		var near = chunkNearInvis(cx, cy);
 		// caras de los bloques con BFScroll: un material por tipo y velocidad (TileScroll)
 		var scrollBufs = new Array<{ kind : Int, speed : Float, buf : MeshBuf }>();
 		function scrollBuf( kind : Int, speed : Float ) : MeshBuf {
@@ -1941,6 +2069,10 @@ class World {
 					var sx = Math.sqrt(b.shadeX), sy = Math.sqrt(b.shadeY);
 					var fx = x, fy = y, fz = z;
 					var neg = b.hasFlag(BFNoShade);
+					var role = invisRole[id];
+					// el Kube invisible y lo que lo toca se pintan como el cielo (salvo el agua y los cristales que lo revelan)
+					var hid = near && (role == INV_KUBE || (role == INV_NORMAL && touchesInvis(x, y, z)));
+					var detail = hid ? invisBuf : alphaBuf;
 					switch( b.type ) {
 					case BTWater:
 						// Builder.hx del original: cada cara contra un vecino que no es lleno ni agua (isTransparentNot(p, BTWater))
@@ -1952,15 +2084,28 @@ class World {
 						var m = b.type == BTFull ? solidBuf : (b.type == BTAlpha ? blendBuf : alphaBuf);
 						var sp = scrollOf(b);
 						if( sp != 0 ) m = scrollBuf(b.type == BTFull ? 0 : (b.type == BTAlpha ? 3 : 1), sp);
+						if( hid ) m = invisBuf;
 						var al = b.type == BTAlpha;
-						if( al ? openAlphaNear(x, y, z + 1) : open(x, y, z + 1) ) addQuadL(m, [fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1], b.tu, su, neg, 0, 0, 1, x, y, z);
-						if( al ? openAlphaNear(x, y, z - 1) : open(x, y, z - 1) ) addQuadL(m, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz], b.td, sd, neg, 0, 0, -1, x, y, z);
-						if( al ? openAlphaNear(x - 1, y, z) : open(x - 1, y, z) ) addQuadL(m, [fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1], b.tlr, sx, neg, -1, 0, 0, x, y, z);
-						if( al ? openAlphaNear(x + 1, y, z) : open(x + 1, y, z) ) addQuadL(m, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1], b.tlr, sx, neg, 1, 0, 0, x, y, z);
-						if( al ? openAlphaNear(x, y - 1, z) : open(x, y - 1, z) ) addQuadL(m, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1], b.tlr, sy, neg, 0, -1, 0, x, y, z);
-						if( al ? openAlphaNear(x, y + 1, z) : open(x, y + 1, z) ) addQuadL(m, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1], b.tlr, sy, neg, 0, 1, 0, x, y, z);
+						var kube = role == INV_KUBE;
+						var oU = kube ? openInvis(x, y, z + 1) : al ? openAlphaNear(x, y, z + 1) : open(x, y, z + 1);
+						var oD = kube ? openInvis(x, y, z - 1) : al ? openAlphaNear(x, y, z - 1) : open(x, y, z - 1);
+						var oW = kube ? openInvis(x - 1, y, z) : al ? openAlphaNear(x - 1, y, z) : open(x - 1, y, z);
+						var oE = kube ? openInvis(x + 1, y, z) : al ? openAlphaNear(x + 1, y, z) : open(x + 1, y, z);
+						var oS = kube ? openInvis(x, y - 1, z) : al ? openAlphaNear(x, y - 1, z) : open(x, y - 1, z);
+						var oN = kube ? openInvis(x, y + 1, z) : al ? openAlphaNear(x, y + 1, z) : open(x, y + 1, z);
+						// la vitre teintee y la glace noire tambien marcan donde dejan ver los Kubes invisibles (emitInvisible)
+						var reps = role == INV_REVEAL ? 2 : 1;
+						for( r in 0...reps ) {
+							if( r == 1 ) m = markBuf;
+							if( oU ) addQuadL(m, [fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1], b.tu, su, neg, 0, 0, 1, x, y, z);
+							if( oD ) addQuadL(m, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz], b.td, sd, neg, 0, 0, -1, x, y, z);
+							if( oW ) addQuadL(m, [fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1], b.tlr, sx, neg, -1, 0, 0, x, y, z);
+							if( oE ) addQuadL(m, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1], b.tlr, sx, neg, 1, 0, 0, x, y, z);
+							if( oS ) addQuadL(m, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1], b.tlr, sy, neg, 0, -1, 0, x, y, z);
+							if( oN ) addQuadL(m, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1], b.tlr, sy, neg, 0, 1, 0, x, y, z);
+						}
 					case BTModel, BTModel2Side, BTSprite:
-						addModel(alphaBuf, b, fx, fy, fz);
+						addModel(detail, b, fx, fy, fz);
 					case BTReduced:
 						if( b.size != null ) {
 							// igual que el original: las caras de un bloque parcial se ven si no tapan todo el lado o si el vecino es transparente.
@@ -1971,21 +2116,21 @@ class World {
 							var s = b.size;
 							var x1 = fx + s.x1, y1 = fy + s.y1, z1 = fz + s.z1, x2 = fx + s.x2, y2 = fy + s.y2, z2 = fz + s.z2;
 							redB = [x1, y1, x2, y2, z2];
-							if( s.z2 < 1 || open(x, y, z + 1) ) { redFace = 0; addQuadL(alphaBuf, [x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2], b.tu, su, neg, 0, 0, 1, x, y, z, lamp, [fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1]); }
-							if( s.z1 > 0 || open(x, y, z - 1) ) { redFace = 1; addQuadL(alphaBuf, [x1, y2, z1, x2, y2, z1, x2, y1, z1, x1, y1, z1], b.td, sd, neg, 0, 0, -1, x, y, z, lamp, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz]); }
-							if( s.x1 > 0 || open(x - 1, y, z) ) { redFace = 2; addQuadL(alphaBuf, [x1, y2, z1, x1, y1, z1, x1, y1, z2, x1, y2, z2], b.tlr, sx, neg, -1, 0, 0, x, y, z, lamp, [fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1]); }
-							if( s.x2 < 1 || open(x + 1, y, z) ) { redFace = 3; addQuadL(alphaBuf, [x2, y1, z1, x2, y2, z1, x2, y2, z2, x2, y1, z2], b.tlr, sx, neg, 1, 0, 0, x, y, z, lamp, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1]); }
-							if( s.y1 > 0 || open(x, y - 1, z) ) { redFace = 4; addQuadL(alphaBuf, [x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2], b.tlr, sy, neg, 0, -1, 0, x, y, z, lamp, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1]); }
-							if( s.y2 < 1 || open(x, y + 1, z) ) { redFace = 5; addQuadL(alphaBuf, [x2, y2, z1, x1, y2, z1, x1, y2, z2, x2, y2, z2], b.tlr, sy, neg, 0, 1, 0, x, y, z, lamp, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1]); }
+							if( s.z2 < 1 || open(x, y, z + 1) ) { redFace = 0; addQuadL(detail, [x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2], b.tu, su, neg, 0, 0, 1, x, y, z, lamp, [fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1]); }
+							if( s.z1 > 0 || open(x, y, z - 1) ) { redFace = 1; addQuadL(detail, [x1, y2, z1, x2, y2, z1, x2, y1, z1, x1, y1, z1], b.td, sd, neg, 0, 0, -1, x, y, z, lamp, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz]); }
+							if( s.x1 > 0 || open(x - 1, y, z) ) { redFace = 2; addQuadL(detail, [x1, y2, z1, x1, y1, z1, x1, y1, z2, x1, y2, z2], b.tlr, sx, neg, -1, 0, 0, x, y, z, lamp, [fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1]); }
+							if( s.x2 < 1 || open(x + 1, y, z) ) { redFace = 3; addQuadL(detail, [x2, y1, z1, x2, y2, z1, x2, y2, z2, x2, y1, z2], b.tlr, sx, neg, 1, 0, 0, x, y, z, lamp, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1]); }
+							if( s.y1 > 0 || open(x, y - 1, z) ) { redFace = 4; addQuadL(detail, [x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2], b.tlr, sy, neg, 0, -1, 0, x, y, z, lamp, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1]); }
+							if( s.y2 < 1 || open(x, y + 1, z) ) { redFace = 5; addQuadL(detail, [x2, y2, z1, x1, y2, z1, x1, y2, z2, x2, y2, z2], b.tlr, sy, neg, 0, 1, 0, x, y, z, lamp, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1]); }
 						}
 					case BTExtended:
 						// caras con texturas distintas empaquetadas de a 12 bits (BFTextures)
-						if( open(x, y, z + 1) ) addQuadL(alphaBuf, [fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1], b.tu & 0xFFF, su, neg, 0, 0, 1, x, y, z);
-						if( open(x, y, z - 1) ) addQuadL(alphaBuf, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz], b.td & 0xFFF, sd, neg, 0, 0, -1, x, y, z);
-						if( open(x - 1, y, z) ) addQuadL(alphaBuf, [fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1], b.tlr & 0xFFF, sx, neg, -1, 0, 0, x, y, z);
-						if( open(x + 1, y, z) ) addQuadL(alphaBuf, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1], b.tlr >> 12, sx, neg, 1, 0, 0, x, y, z);
-						if( open(x, y - 1, z) ) addQuadL(alphaBuf, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1], b.tu >> 12, sy, neg, 0, -1, 0, x, y, z);
-						if( open(x, y + 1, z) ) addQuadL(alphaBuf, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1], b.td >> 12, sy, neg, 0, 1, 0, x, y, z);
+						if( open(x, y, z + 1) ) addQuadL(detail, [fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1], b.tu & 0xFFF, su, neg, 0, 0, 1, x, y, z);
+						if( open(x, y, z - 1) ) addQuadL(detail, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz], b.td & 0xFFF, sd, neg, 0, 0, -1, x, y, z);
+						if( open(x - 1, y, z) ) addQuadL(detail, [fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1], b.tlr & 0xFFF, sx, neg, -1, 0, 0, x, y, z);
+						if( open(x + 1, y, z) ) addQuadL(detail, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1], b.tlr >> 12, sx, neg, 1, 0, 0, x, y, z);
+						if( open(x, y - 1, z) ) addQuadL(detail, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1], b.tu >> 12, sy, neg, 0, -1, 0, x, y, z);
+						if( open(x, y + 1, z) ) addQuadL(detail, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1], b.td >> 12, sy, neg, 0, 1, 0, x, y, z);
 					default:
 					}
 				}
@@ -1995,5 +2140,7 @@ class World {
 		emitMesh(waterBuf, 2);
 		emitMesh(blendBuf, 3);
 		for( s in scrollBufs ) emitMesh(s.buf, s.kind, s.speed);
+		emitMesh(invisBuf, 4);
+		emitMesh(markBuf, 5);
 	}
 }
