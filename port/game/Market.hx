@@ -83,8 +83,8 @@ class Market {
 	/**
 	 * Lo que el robot compra pero no vende (cambio del port): se le puede vender al precio de PRICES, pero no comprarselo.
 	 * Son las variantes (tierra cubierta, roca lunar rota), lo que en el Kubindex solo sale en anomalias, lo que pide
-	 * cargas rosas (fosiles, roca antigua), las columnas, toda la nave y sus aparatos (queda el aluminio para fabricar el
-	 * blindaje) y otras cosas raras que hay que ir a buscar.
+	 * cargas rosas (fosiles, roca antigua), las columnas, las piezas de la nave (queda el aluminio para fabricarlas) y
+	 * otras cosas raras que hay que ir a buscar. Lo especial (aparatos de la nave, nodriza) ni se compra: ver get_wares.
 	 */
 	static var NOT_SOLD = [
 		// suelo y roca
@@ -98,14 +98,11 @@ class Market {
 		"BRawRed", "BRawPurple", "BRawWhite", "BRawOrange", "BRawGreen", "BMarsRockFossil", "BMarsCactusFossil", "BCoalHot",
 		"BMinIron", "BBlackIceLight", "BBlackLight", "BLava",
 		// construccion
-		"BWoodColumn", "BHardRockColumn", "BMoonRockColumn", "BVineColumn", "BStainEmpty", "BStainRed", "BWoodScrew",
+		"BWoodColumn", "BHardRockColumn", "BMoonRockColumn", "BVineColumn", "BStainEmpty", "BStainRed",
 		"BIronFence", "BIronLight", "BJumper", "BCascadeSource",
 		// nave y aparatos
 		"BShipPlate", "BShipWire", "BShipTubes", "BShipGlass2", "BShipGlassBlack", "BShipLight", "BShipHull", "BShipGlass", "BShipDoor",
-		"BCircuit", "BCamera", "BHealBox", "BShipEngine", "BCrafter", "BMiningGenerator", "BArtiBomb",
-		"BShipComputer", "BCrafterComputer", "BShipEntry", "BAlienTreasure",
-		// blindajes de la nodriza (precio de los datos)
-		"BMotherYellow", "BMotherBlack",
+		"BCircuit", "BCamera", "BHealBox", "BMiningGenerator", "BArtiBomb", "BAlienTreasure",
 	];
 
 	public static var wares(get, null) : Array<Ware>;
@@ -123,6 +120,10 @@ class Market {
 				if( KubeData.isKube(b.k) ) continue;
 				// bloque borrado del original ("A REMPLACER" en los datos, sin nombre): tampoco
 				if( b.k == BWinterFlowerDeleted ) continue;
+				// ni lo que la base de datos ESCorp tiene por especial (no sale en ningun sitio ni se fabrica: los aparatos de la
+				// nave, la nodriza): el robot no lo vende ni lo compra
+				var e = KubData.get().entryOf(b);
+				if( e != null && KubData.get().has(e, CSpecial) ) continue;
 				var base = PRICES.exists(Std.string(b.k)) ? PRICES.get(Std.string(b.k)) : b.basePrice;
 				var onSale = NOT_SOLD.indexOf(Std.string(b.k)) < 0;
 				var w : Ware = b.charge != null
