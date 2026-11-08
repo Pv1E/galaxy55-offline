@@ -143,7 +143,7 @@ class BlockNames {
 		"BBonusSmall" => "Petit cristal bonus", "BBonusMedium" => "Cristal bonus", "BBonusLarge" => "Gros cristal bonus", "BBonusCharge" => "Charge bonus",
 		"BDeadRock" => "Roche morte", "BDeadSoil" => "Terre morte", "BDeadSwamp" => "Marais mort", "BDeadTree" => "Arbre mort",
 		"BDarkLeaves" => "Feuillage sombre",
-		"BChest" => "Conteneur EScorp",
+		"BChest" => "Conteneur ESCorp",
 	];
 
 	static var cache : Array<Array<Names.NameData>> = [];
