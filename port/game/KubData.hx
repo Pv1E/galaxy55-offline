@@ -179,29 +179,6 @@ class KubData {
 	/** fichas que piden esa carga para minarlas */
 	public function chargeNeeded( c : Block ) : Array<Block> return [for( e in entries ) if( chargeFor(e) == c.charge ) e];
 
-	public function placeOf( e : Block ) : KubPlace {
-		var p = places.get(e.index);
-		if( p == null ) places.set(e.index, p = { biomes : [], anomalies : [], comets : [] });
-		return p;
-	}
-
-	public function anomaly( id : String ) : KubAnomaly {
-		for( a in anomalies ) if( a.id == id ) return a;
-		return null;
-	}
-
-	/** recetas que fabrican la ficha */
-	public function recipesMaking( e : Block ) : Array<CraftRule> {
-		var l = makes.get(e.index);
-		return l == null ? [] : l;
-	}
-
-	/** recetas que la usan */
-	public function recipesUsing( e : Block ) : Array<CraftRule> {
-		var l = usedIn.get(e.index);
-		return l == null ? [] : l;
-	}
-
 	/** fichas en el orden de la base de datos: por familia (kubindex.json families, los kubes al final) y, dentro, por nombre */
 	public function sortEntries( list : Array<Block> ) : Array<Block> {
 		var keys = [for( e in list ) e.index => nameKey(e.getName())];
@@ -254,6 +231,29 @@ class KubData {
 		for( from => to in ACCENTS )
 			for( i in 0...from.length ) s = s.split(from.charAt(i)).join(to);
 		return s.toLowerCase();
+	}
+
+	public function placeOf( e : Block ) : KubPlace {
+		var p = places.get(e.index);
+		if( p == null ) places.set(e.index, p = { biomes : [], anomalies : [], comets : [] });
+		return p;
+	}
+
+	public function anomaly( id : String ) : KubAnomaly {
+		for( a in anomalies ) if( a.id == id ) return a;
+		return null;
+	}
+
+	/** recetas que fabrican la ficha */
+	public function recipesMaking( e : Block ) : Array<CraftRule> {
+		var l = makes.get(e.index);
+		return l == null ? [] : l;
+	}
+
+	/** recetas que la usan */
+	public function recipesUsing( e : Block ) : Array<CraftRule> {
+		var l = usedIn.get(e.index);
+		return l == null ? [] : l;
 	}
 
 	/** fichas de una receta: sus ingredientes y, con out, el resultado */
