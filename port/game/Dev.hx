@@ -717,7 +717,7 @@ class Dev {
 						k.got = [for( e in d.entries.concat(d.charges) ) Type.enumConstructor(e.k)];
 						k.seen = [];
 						k.fresh = [];
-						var types : Array<String> = @:privateAccess KubPlanetsView.PLANETS;
+						var types : Array<String> = KubData.PLANETS;
 						k.planets = [for( i in 0...types.length ) { id : -1 - i, b : types[i] }];
 						k.comets = [for( i in 0...Comets.KINDS.length ) { sys : -1, slot : i, b : Comets.KINDS[i] }];
 						k.anomalies = [for( a in d.anomalies ) a.id];

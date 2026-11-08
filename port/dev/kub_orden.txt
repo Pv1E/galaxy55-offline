@@ -1,7 +1,8 @@
-# orden de la base de datos ESCorp: fichas por familias (tierras, rocas, minerales, hielos, madera, follaje, plantas,
-# materiales, construccion, nave, aparatos, nave nodriza, kubes) y dentro por nombre sin acentos; recetas por la familia de su
-# resultado (las cargas tras los aparatos). print kuborder lo da en texto; capturas de la cuadricula y de las recetas. Tambien
-# en ingles: el nombre cambia, las familias no. -Extra "--lang=fr"
+# orden de la base de datos ESCorp: fichas por planeta (el primero de la pestana Espacio donde salen) y dentro como en
+# esa pestana (tierra, roca, madera, follaje, plantas...), luego cometas, anomalias, lo fabricado en el orden de sus recetas,
+# lo especial (nave, nave nodriza) y los kubes en el orden de los datos. Recetas por grupos: madera, piedra, nave, vidrio y
+# luz, agregados, hierro y aparatos, cargas. print kuborder lo da en texto; capturas de la cuadricula y de las recetas.
+# -Extra "--lang=fr"
 wait 3
 planet
 wait 20

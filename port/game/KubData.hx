@@ -64,18 +64,17 @@ class KubData {
 	var isEntry = new Map<Int, Bool>();
 	var makes = new Map<Int, Array<CraftRule>>();
 	var usedIn = new Map<Int, Array<CraftRule>>();
-	/** familia de cada ficha (su posicion en kubindex.json families), para el orden de la base de datos */
-	var family = new Map<Int, Int>();
-	var familyIds : Array<String> = [];
+	/** posicion de cada resultado en kubindex.json recipeOrder (madera, piedra, nave...), para el orden de las recetas */
+	var outOrder = new Map<Int, Int>();
+	var recipeKeys = new Map<Int, Float>();
 
-	/** familias de lo que no esta en ninguna: lo que se fabrica va con la construccion, lo demas con los aparatos */
-	static inline var CRAFTED_FAMILY = "build";
-	static inline var OTHER_FAMILY = "device";
-	/** letras con acento y su letra sin el, para ordenar por nombre (si no, la E con acento iria despues de la z) */
-	static var ACCENTS = [
-		"àáâä" => "a", "ÀÁÂÄ" => "a", "éèêë" => "e", "ÉÈÊË" => "e", "íìîï" => "i", "ÍÌÎÏ" => "i", "óòôö" => "o", "ÓÒÔÖ" => "o",
-		"úùûü" => "u", "ÚÙÛÜ" => "u", "çÇ" => "c", "ñÑ" => "n",
-	];
+	/** planetas en el orden de la pestana Espacio, que tambien ordena las fichas */
+	public static var PLANETS = ["BIAutumn", "BIMoon", "BIMars", "BIWinterPeaks", "BIAcidForest"];
+	/** grupos del orden de las fichas (planetas, cometas, anomalias, fabricado, especial, kubes) y sitio dentro de cada uno */
+	static inline var GROUP = 1000000.;
+	static inline var SUB = 10000.;
+	/** recetas cuyo resultado no esta en recipeOrder ni comparte primer ingrediente con otra: al final */
+	static inline var UNLISTED = 100000.;
 
 	function new( path : String ) {
 		var o : Dynamic = try haxe.Json.parse(sys.io.File.getContent(path)) catch( e : Dynamic ) {
@@ -123,17 +122,14 @@ class KubData {
 				var e = b == null ? null : entryOf(b);
 				if( e != null ) special.set(e.index, true);
 			}
-		if( o.families != null ) {
-			var fams : Array<Dynamic> = o.families;
-			for( i in 0...fams.length ) {
-				familyIds.push(Std.string(fams[i].id));
-				for( f in (fams[i].blocks : Array<Dynamic>) ) {
+		if( o.recipeOrder != null ) {
+			var n = 0;
+			for( g in (o.recipeOrder : Array<Dynamic>) )
+				for( f in (g.out : Array<Dynamic>) ) {
 					var b = try Block.get(Type.createEnum(BlockKind, Std.string(f))) catch( e : Dynamic ) null;
-					var e = b == null ? null : entryOf(b);
-					if( e == null ) Sys.stderr().writeString(path + ": " + f + " no es una ficha del Kubindex\n");
-					else family.set(e.index, i);
+					if( b == null ) Sys.stderr().writeString(path + ": recipeOrder: " + f + " no es un bloque\n");
+					else outOrder.set(b.index, n++);
 				}
-			}
 		}
 		for( r in Data.CRAFT ) {
 			add(makes, entryOf(Block.get(r.out)), r);
@@ -179,58 +175,78 @@ class KubData {
 	/** fichas que piden esa carga para minarlas */
 	public function chargeNeeded( c : Block ) : Array<Block> return [for( e in entries ) if( chargeFor(e) == c.charge ) e];
 
-	/** fichas en el orden de la base de datos: por familia (kubindex.json families, los kubes al final) y, dentro, por nombre */
+	/**
+	 * Fichas en el orden de la base de datos. Primero las de los planetas, por planeta (el primero de PLANETS donde salen) y,
+	 * dentro, como en la pestana Espacio (terrainRank); luego las de las cometas y las que solo dan las anomalias. Despues lo
+	 * fabricado, en el orden de sus recetas, y al final lo especial (nave, nave nodriza) y los kubes, en el orden de los datos.
+	 */
 	public function sortEntries( list : Array<Block> ) : Array<Block> {
-		var keys = [for( e in list ) e.index => nameKey(e.getName())];
+		var keys = [for( e in list ) e.index => entryKey(e)];
 		list.sort(function(a, b) {
-			var d = familyRank(a) - familyRank(b);
-			if( d != 0 ) return d;
-			var c = Reflect.compare(keys.get(a.index), keys.get(b.index));
-			return c != 0 ? c : a.index - b.index;
+			var d = keys.get(a.index) - keys.get(b.index);
+			return d != 0 ? (d < 0 ? -1 : 1) : a.index - b.index;
 		});
 		return list;
 	}
 
-	/** recetas en el orden de la base de datos: por la familia de su resultado (las cargas tras los aparatos) y su nombre */
+	function entryKey( e : Block ) : Float {
+		if( KubeData.isKube(e.k) ) return 5 * GROUP + e.index;
+		if( special.exists(e.index) ) return 4 * GROUP + e.index;
+		var p = placeOf(e);
+		var planet = firstIn(PLANETS, p.biomes);
+		if( planet >= 0 ) return planet * SUB + terrainRank(e);
+		var comet = firstIn(Comets.KINDS, p.comets);
+		if( comet >= 0 ) return GROUP + comet * SUB + terrainRank(e);
+		var made = recipesMaking(e);
+		if( made.length > 0 ) {
+			var k = Math.POSITIVE_INFINITY;
+			for( r in made ) k = Math.min(k, recipeKey(r));
+			return 3 * GROUP + k;
+		}
+		var anomaly = firstIn([for( a in anomalies ) a.id], p.anomalies);
+		if( anomaly >= 0 ) return 2 * GROUP + anomaly * SUB + terrainRank(e);
+		return 4 * GROUP + e.index;
+	}
+
+	/** posicion en order del primero que esta en list (-1 si ninguno) */
+	static function firstIn( order : Array<String>, list : Array<String> ) : Int {
+		for( i in 0...order.length ) if( list.indexOf(order[i]) >= 0 ) return i;
+		return -1;
+	}
+
+	/** recetas en el orden de la base de datos (recipeKey) y, con el mismo resultado, por numero */
 	public function sortRecipes( list : Array<CraftRule> ) : Array<CraftRule> {
-		var rank = [for( r in list ) r.id => recipeRank(r)];
-		var keys = [for( r in list ) r.id => nameKey(Block.get(r.out).getName())];
 		list.sort(function(a, b) {
-			var d = rank.get(a.id) - rank.get(b.id);
-			if( d != 0 ) return d < 0 ? -1 : 1;
-			var c = Reflect.compare(keys.get(a.id), keys.get(b.id));
-			return c != 0 ? c : a.id - b.id;
+			var d = recipeKey(a) - recipeKey(b);
+			return d != 0 ? (d < 0 ? -1 : 1) : a.id - b.id;
 		});
 		return list;
-	}
-
-	function recipeRank( r : CraftRule ) : Float {
-		var o = Block.get(r.out);
-		if( o.charge != null ) return familyRank(null, OTHER_FAMILY) + 0.5;
-		var e = entryOf(o);
-		return e == null ? familyIds.length + 2 : familyRank(e);
 	}
 
 	/**
-	 * Posicion de la familia de una ficha (o de la familia id). La que no esta en ninguna: los kubes al final, lo que se fabrica
-	 * con la construccion y lo demas con los aparatos.
+	 * Clave de orden de una receta: el sitio de su resultado en kubindex.json recipeOrder (madera, piedra, nave, vidrio y luz,
+	 * agregados, hierro y aparatos, cargas). Un resultado que no esta en la lista va tras las recetas con su mismo primer
+	 * ingrediente (un bloque de rosh nuevo, tras los de rosh) y, si no hay ninguna, al final.
 	 */
-	function familyRank( e : Block, ?id : String ) : Int {
-		if( e != null ) {
-			var f = family.get(e.index);
-			if( f != null ) return f;
-			if( KubeData.isKube(e.k) ) return familyIds.length + 1;
-			id = recipesMaking(e).length > 0 ? CRAFTED_FAMILY : OTHER_FAMILY;
+	function recipeKey( r : CraftRule ) : Float {
+		var k = recipeKeys.get(r.id);
+		if( k != null ) return k;
+		var o = outOrder.get(Block.get(r.out).index);
+		if( o != null ) k = o;
+		else {
+			var first = schemaKind(r.schema[0]), last = -1;
+			for( q in Data.CRAFT ) {
+				var qo = outOrder.get(Block.get(q.out).index);
+				if( qo != null && schemaKind(q.schema[0]) == first && qo > last ) last = qo;
+			}
+			k = last >= 0 ? last + 0.5 : UNLISTED + r.id;
 		}
-		var i = familyIds.indexOf(id);
-		return i >= 0 ? i : familyIds.length;
+		recipeKeys.set(r.id, k);
+		return k;
 	}
 
-	/** nombre en minusculas y sin acentos, para ordenar */
-	static function nameKey( s : String ) : String {
-		for( from => to in ACCENTS )
-			for( i in 0...from.length ) s = s.split(from.charAt(i)).join(to);
-		return s.toLowerCase();
+	static function schemaKind( s : CraftSchema ) : BlockKind {
+		return switch( s ) { case CSSingle(b), CSBase(b, _), CSLine(b, _): b; }
 	}
 
 	public function placeOf( e : Block ) : KubPlace {
