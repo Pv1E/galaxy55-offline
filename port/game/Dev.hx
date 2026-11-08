@@ -47,6 +47,8 @@ import Common;
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
  *   mine x y z              excavar ese bloque con el excavador y decir cuanto tarda (y con que potencia)
  *   print inv|pos|zones|drops|loose|chest|msg|shake|fade|block x y z|blockl x y z|around x y z r|select|ship|map [z]|palette|time|power|life|fov|sky|menu
+ *   fadelog on|off          fundido de color de pantalla imagen por imagen, tal como lo pinta el HUD (opacidad y color); off
+ *                           dice cuantas veces subio (destellos) y cuantas como mucho en un segundo (WCAG 2.3.1: 3)
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
  *   contracts [close]       abrir y cerrar los contratos de la ESCorp; contracts slot N impone el periodo (-1 = la hora real);
  *                           contracts fill i da los bloques del contrato i; deliver i lo entrega; print contracts;
@@ -113,6 +115,9 @@ class Dev {
 	var untilLeft = 0;
 	var loadShot : String;
 	var loadShotWait = 0;
+	/** orden fadelog: imagenes vistas, ultima opacidad y color pintados, opacidad mas baja y color desde la ultima subida,
+	    cuando subio (playSeconds) y el maximo de opacidad */
+	var fadeLog : { frames : Int, t0 : Float, a : Float, col : Int, low : Float, riseCol : Int, rises : Array<Float>, steps : Array<Float>, max : Float };
 
 	public function new( path : String ) {
 		lines = sys.io.File.getContent(path).split("\n").map(StringTools.trim).filter(function(l) return l != "" && l.charAt(0) != "#");
@@ -182,6 +187,7 @@ class Dev {
 
 	/** una orden por actualizacion; devuelve true al terminar */
 	public function tick( app : GalaxyApp, g : GameView ) : Bool {
+		if( fadeLog != null && g != null ) logFade(app, g);
 		if( tapKey >= 0 ) {
 			keyEvent(false, tapKey);
 			tapKey = -1;
@@ -623,6 +629,12 @@ class Dev {
 						win.event(e);
 					}
 				case "creative": @:privateAccess g.creative = true;
+				case "fadelog":
+					if( a[1] == "on" ) fadeLog = { frames : 0, t0 : g.playSeconds, a : 0., col : 0, low : 0., riseCol : 0, rises : [], steps : [], max : 0. };
+					else if( fadeLog != null ) {
+						fadeSummary(g);
+						fadeLog = null;
+					}
 				case "maxfps": Settings.maxFps = Std.parseInt(a[1]);
 				case "fps": Sys.println("fps " + Std.int(hxd.Timer.fps()));
 				case "helptext": Settings.showHelp = a[1] == "1"; // helptext 0|1: opcion de ayuda en pantalla
@@ -837,6 +849,60 @@ class Dev {
 		Sys.println("formulario: bioma " + biome.choices[biome.index] + " (" + biome.index + "), semilla " + seed.input.text);
 		create.activate();
 		Sys.println("partida creada: " + app.loadInfo.name + " bioma " + app.loadInfo.biome + " semilla " + app.loadInfo.seed);
+	}
+
+	static function r3( v : Float ) return Math.round(v * 1000) / 1000;
+
+	/**
+	 * Orden fadelog, en cada imagen: opacidad y color del fundido tal como los pinta el HUD (GalaxyApp.hurtRect). Una subida
+	 * es un destello que empieza: la opacidad sube 0.1 sobre la mas baja desde la subida anterior, o el color cambia a la
+	 * vista (0.1 en un canal de la pantalla). Ademas se apunta cada imagen en que la opacidad sube algo o el color cambia:
+	 * entre dos de ellas el fundido solo baja o se queda, asi que la pantalla no puede destellar mas veces que esas.
+	 */
+	function logFade( app : GalaxyApp, g : GameView ) {
+		var L = fadeLog;
+		var r = @:privateAccess app.hurtRect;
+		var a = r.visible ? r.alpha : 0.;
+		var c = r.color;
+		var col = a > 0 ? (Math.round(c.r * 255) << 16) | (Math.round(c.g * 255) << 8) | Math.round(c.b * 255) : 0;
+		L.frames++;
+		if( a < L.low ) L.low = a;
+		inline function ch( v : Int, s : Int ) return ((v >> s) & 0xFF) / 255;
+		var dc = 0.;
+		if( a > 0 && L.a > 0 )
+			for( s in [0, 8, 16] ) dc = Math.max(dc, Math.abs(ch(col, s) - ch(L.riseCol, s)) * Math.min(a, L.a));
+		var rise = a - L.low >= 0.1 || dc >= 0.1;
+		if( rise ) {
+			L.rises.push(g.playSeconds);
+			L.low = a;
+			L.riseCol = col;
+		}
+		var step = a > L.a + 0.001 || (a > 0 && L.a > 0 && col != L.col);
+		if( step ) L.steps.push(g.playSeconds);
+		if( a > L.max ) L.max = a;
+		if( a > 0 || L.a > 0 )
+			Sys.println("fundido img " + L.frames + " t=" + r3(g.playSeconds - L.t0) + " opacidad " + r3(a) + " color " + StringTools.hex(col, 6)
+				+ (rise ? "  SUBE" : step ? "  (sube algo)" : ""));
+		L.a = a;
+		L.col = col;
+	}
+
+	/** fadelog off: subidas en total y como mucho en un segundo cualquiera */
+	function fadeSummary( g : GameView ) {
+		var L = fadeLog;
+		function perSecond( ts : Array<Float> ) {
+			var best = 0, j = 0;
+			for( i in 0...ts.length ) {
+				while( ts[i] - ts[j] > 1 ) j++;
+				if( i - j + 1 > best ) best = i - j + 1;
+			}
+			return best;
+		}
+		var secs = g.playSeconds - L.t0;
+		Sys.println("fadelog: " + L.frames + " imagenes en " + r3(secs) + " s (" + Math.round(L.frames / secs) + " por segundo), opacidad maxima " + r3(L.max));
+		Sys.println("fadelog: destellos (sube 0.1 o cambia de color) " + L.rises.length + ", como mucho " + perSecond(L.rises) + " en un segundo (WCAG 2.3.1: 3)");
+		Sys.println("fadelog: imagenes en que sube algo o cambia de color " + L.steps.length + ", como mucho " + perSecond(L.steps) + " en un segundo");
+		Sys.println("fadelog: destellos a los " + [for( t in L.rises ) r3(t - L.t0)].join(" ") + " s");
 	}
 
 	function print( a : Array<String>, g : GameView, app : GalaxyApp ) {

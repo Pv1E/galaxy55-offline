@@ -1,0 +1,247 @@
+# fundido de pantalla de la bomba antigua y epilepsia (WCAG 2.3.1: no mas de 3 destellos por segundo, ningun rojo saturado
+# que parpadee). fadelog apunta, imagen por imagen, la opacidad y el color que pinta el HUD; fadelog off cuenta los destellos
+# (la opacidad sube 0.1 o el color cambia a la vista) y cuantos caben como mucho en un segundo.
+# Suelo de roca madre de z=46 a 56 en x 44..84, y 52..76: las explosiones no lo rompen, el jugador no cae al crater y las
+# bombas se pueden volver a poner en el mismo sitio.
+wait 3
+maxfps 60
+planet
+wait 30
+filla 44 52 84 76 46 56 BBedrock
+filla 44 52 84 76 57 75 none
+tp 64.5 69.5 57.01 0 0
+wait 20
+# 1) una bomba sola a 5.5 bloques (89 de dano): el fundido se nota (rosado, de 0.95 a 0 en 2.5 s), con temblor
+life 100
+set 64 64 57 BArtiBomb
+lookat 64.5 64.5 57.5
+wait 10
+fadelog on
+activate 64 64 57
+vitals
+print shake
+wait 1
+shot bombflash_1_sola
+wait 30
+shot bombflash_1_sola_30img
+print fade
+wait 60
+shot bombflash_1_sola_90img
+print fade
+wait 80
+fadelog off
+print fade
+# 2) cadena junto al jugador, sin creativo: muere con la primera o la segunda (vuelta a la nave: bloqueo, ojos que bajan);
+#    las demas bombas de la cadena no tocan el fundido de la muerte y se vuelve a la nave al acabar
+life 100
+tp 64.5 64.5 57.01 0 0
+lookat 64.5 70.5 57.5
+set 58 59 57 BArtiBomb
+set 61 59 57 BArtiBomb
+set 64 59 57 BArtiBomb
+set 67 59 57 BArtiBomb
+set 70 59 57 BArtiBomb
+set 58 62 57 BArtiBomb
+set 61 62 57 BArtiBomb
+set 64 62 57 BArtiBomb
+set 67 62 57 BArtiBomb
+set 70 62 57 BArtiBomb
+wait 10
+fadelog on
+activate 58 59 57
+vitals
+print fade
+wait 10
+vitals
+print fade
+wait 60
+print fade
+print pos
+wait 120
+print fade
+vitals
+fadelog off
+print pos
+planet
+wait 30
+# 3) creativo (sin dano, con fundido): cadena de 20 bombas alrededor del jugador, de 2.5 a 8.5 bloques, una por imagen;
+#    en el original el color pasaba de rojo a blanco y vuelta en cada imagen
+creative
+filla 44 52 84 76 57 75 none
+tp 64.5 64.5 57.01 0 0
+lookat 64.5 70.5 57.5
+set 58 59 57 BArtiBomb
+set 61 59 57 BArtiBomb
+set 64 59 57 BArtiBomb
+set 67 59 57 BArtiBomb
+set 70 59 57 BArtiBomb
+set 58 62 57 BArtiBomb
+set 61 62 57 BArtiBomb
+set 64 62 57 BArtiBomb
+set 67 62 57 BArtiBomb
+set 70 62 57 BArtiBomb
+set 58 67 57 BArtiBomb
+set 61 67 57 BArtiBomb
+set 64 67 57 BArtiBomb
+set 67 67 57 BArtiBomb
+set 70 67 57 BArtiBomb
+set 58 70 57 BArtiBomb
+set 61 70 57 BArtiBomb
+set 64 70 57 BArtiBomb
+set 67 70 57 BArtiBomb
+set 70 70 57 BArtiBomb
+wait 10
+print around 64 64 57 8
+fadelog on
+activate 58 59 57
+wait 6
+shot bombflash_3_cadena
+print around 64 64 57 8
+wait 30
+print around 64 64 57 8
+print fade
+wait 200
+fadelog off
+# 4) a mano, una tras otra (sin cadena: solo hay una bomba a la vez), alternando una cerca (roja, a 2.5) y una lejos (casi
+#    blanca, a 7.5): cada 4, cada 12 y cada 25 imagenes (fadelog dice cuantas imagenes por segundo van)
+fadelog on
+set 64 62 57 BArtiBomb
+activate 64 62 57
+wait 4
+set 64 57 57 BArtiBomb
+activate 64 57 57
+wait 4
+set 64 62 57 BArtiBomb
+activate 64 62 57
+wait 4
+set 64 57 57 BArtiBomb
+activate 64 57 57
+wait 4
+set 64 62 57 BArtiBomb
+activate 64 62 57
+wait 4
+set 64 57 57 BArtiBomb
+activate 64 57 57
+wait 4
+set 64 62 57 BArtiBomb
+activate 64 62 57
+wait 4
+set 64 57 57 BArtiBomb
+activate 64 57 57
+wait 4
+set 64 62 57 BArtiBomb
+activate 64 62 57
+wait 4
+set 64 57 57 BArtiBomb
+activate 64 57 57
+wait 4
+set 64 62 57 BArtiBomb
+activate 64 62 57
+wait 4
+set 64 57 57 BArtiBomb
+activate 64 57 57
+wait 4
+set 64 62 57 BArtiBomb
+activate 64 62 57
+wait 4
+set 64 57 57 BArtiBomb
+activate 64 57 57
+wait 4
+set 64 62 57 BArtiBomb
+activate 64 62 57
+wait 4
+set 64 57 57 BArtiBomb
+activate 64 57 57
+wait 200
+fadelog off
+fadelog on
+set 64 62 57 BArtiBomb
+activate 64 62 57
+wait 12
+set 64 57 57 BArtiBomb
+activate 64 57 57
+wait 12
+set 64 62 57 BArtiBomb
+activate 64 62 57
+wait 12
+set 64 57 57 BArtiBomb
+activate 64 57 57
+wait 12
+set 64 62 57 BArtiBomb
+activate 64 62 57
+wait 12
+set 64 57 57 BArtiBomb
+activate 64 57 57
+wait 12
+set 64 62 57 BArtiBomb
+activate 64 62 57
+wait 12
+set 64 57 57 BArtiBomb
+activate 64 57 57
+wait 12
+set 64 62 57 BArtiBomb
+activate 64 62 57
+wait 12
+set 64 57 57 BArtiBomb
+activate 64 57 57
+wait 200
+fadelog off
+fadelog on
+set 64 62 57 BArtiBomb
+activate 64 62 57
+wait 25
+set 64 57 57 BArtiBomb
+activate 64 57 57
+wait 25
+set 64 62 57 BArtiBomb
+activate 64 62 57
+wait 25
+set 64 57 57 BArtiBomb
+activate 64 57 57
+wait 25
+set 64 62 57 BArtiBomb
+activate 64 62 57
+wait 25
+set 64 57 57 BArtiBomb
+activate 64 57 57
+wait 25
+set 64 62 57 BArtiBomb
+activate 64 62 57
+wait 25
+set 64 57 57 BArtiBomb
+activate 64 57 57
+wait 200
+fadelog off
+# 5) lava (cambio del port: la bomba que alcanza explota): la misma cadena de 20, con lava junto a las cuatro esquinas a la vez
+filla 44 52 84 76 57 75 none
+set 58 59 57 BArtiBomb
+set 61 59 57 BArtiBomb
+set 64 59 57 BArtiBomb
+set 67 59 57 BArtiBomb
+set 70 59 57 BArtiBomb
+set 58 62 57 BArtiBomb
+set 61 62 57 BArtiBomb
+set 64 62 57 BArtiBomb
+set 67 62 57 BArtiBomb
+set 70 62 57 BArtiBomb
+set 58 67 57 BArtiBomb
+set 61 67 57 BArtiBomb
+set 64 67 57 BArtiBomb
+set 67 67 57 BArtiBomb
+set 70 67 57 BArtiBomb
+set 58 70 57 BArtiBomb
+set 61 70 57 BArtiBomb
+set 64 70 57 BArtiBomb
+set 67 70 57 BArtiBomb
+set 70 70 57 BArtiBomb
+wait 10
+fadelog on
+setp 57 59 57 BLava
+setp 71 59 57 BLava
+setp 57 70 57 BLava
+setp 71 70 57 BLava
+wait 60
+print around 64 64 57 8
+wait 200
+fadelog off
+quit

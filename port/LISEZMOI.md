@@ -118,6 +118,9 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
   une vérification l'empêchait de se déclencher. L'explosion laisse la roche mère (couche 0) en place (l'original l'enlevait
   aussi), la bombe n'explose pas dans le hangar et elle projette 8 éclats par bloc au lieu de 75 pour que le jeu ne se
   fige pas.
+- Le fondu d'écran de la bombe antique ne clignote plus (changement du port, pour les personnes épileptiques) : dans une
+  chaîne ou avec plusieurs bombes à la suite, il se prolonge au lieu de repartir et ne remonte qu'une fois par seconde au
+  plus (l'original flashait en rouge et blanc à chaque bombe).
 - Les textures lointaines utilisent des mipmaps comme l'original, mais les plantes ne s'effacent pas avec la distance et chaque
   bloc lointain garde sa couleur (dans l'original, les plantes fines disparaissaient de loin et, plus loin encore, les textures
   voisines se mélangeaient).
