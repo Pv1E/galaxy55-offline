@@ -249,14 +249,14 @@ class DetailsGenerator extends BiomeGenerator {
 	
 	/** anadido del port: p de la anomalia Invisible (~1 planeta normal de cada INVISIBLE_P, como la p de addDetails) */
 	static inline var INVISIBLE_P = 8;
-	/** su cubo: lado exterior (capa de Kubes invisibles alrededor de los cofres) y altura minima y maxima sobre lo que haya debajo */
-	static inline var INVISIBLE_SIZE = 6;
+	/** su cubo: lado exterior (2x2x2 cofres y una capa de Kubes invisibles alrededor) y altura minima y maxima sobre lo que haya debajo */
+	static inline var INVISIBLE_SIZE = 4;
 	static inline var INVISIBLE_GAP_MIN = 10;
 	static inline var INVISIBLE_GAP_MAX = 20;
 	
 	/**
-	 * Anadido del port: anomalia Invisible, como los Invisibles de Kube. Un cubo de 4x4x4 Cofres de Kube envuelto en una capa de
-	 * Kubes invisibles, flotando sobre el terreno (World los dibuja como el cielo que habria detras).
+	 * Anadido del port: anomalia Invisible, como los Invisibles de Kube. Un cubo de 4x4x4: 8 Cofres de Kube en el centro envueltos
+	 * en una capa de Kubes invisibles, flotando sobre el terreno (World dibuja los Kubes invisibles como el cielo de detras).
 	 * Va despues de todo lo demas y con su propio generador aleatorio: no toca la serie de rnd ni genStep, asi los planetas que
 	 * no la tienen salen igual que antes y en los que si, solo cambian las celdas del cubo (las partidas guardadas siguen valiendo).
 	 */

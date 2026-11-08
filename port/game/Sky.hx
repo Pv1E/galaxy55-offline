@@ -74,8 +74,8 @@ class StarShader extends hxsl.Shader {
 }
 
 /**
-	Kube invisible (anadido del port): sus caras y las de los bloques que lo tocan pintan el cielo que se veria en esa direccion
-	(el degradado y las estrellas, como el fondo) y tapan lo que hay detras. Va despues de FogShader, que da la curvatura y el
+	Kube invisible (anadido del port): sus caras pintan el cielo que se veria en esa direccion (el degradado y las estrellas,
+	como el fondo) y tapan lo que hay detras. Va despues de FogShader, que da la curvatura y el
 	rayo de vista (fogDelta: de la camara al punto ya bajado por la curvatura, el mismo rayo que el pixel de la pantalla).
 **/
 class InvisibleSkyShader extends hxsl.Shader {
