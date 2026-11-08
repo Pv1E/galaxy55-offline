@@ -108,6 +108,9 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
 - La bomba exótica hace explotar también las bombas que alcanza, una por fotograma: el original tenía el código, pero una
   comprobación hacía que nunca se disparara. La explosión deja la roca madre (capa 0) en su sitio (el original también la
   quitaba), la bomba no explota en el hangar y suelta 8 trozos por bloque en vez de 75 para que el juego no se congele.
+- El fundido de pantalla de la bomba exótica ya no parpadea (cambio del port, por las personas con epilepsia): en una cadena
+  o con varias bombas seguidas se alarga en vez de volver a empezar y sube otra vez como mucho una vez por segundo (el
+  original destellaba en rojo y blanco con cada bomba).
 - Las texturas lejanas usan mipmaps como el original, pero las plantas no se borran con la distancia y cada bloque lejano
   conserva su color (en el original las plantas finas desaparecían de lejos y, más lejos aún, se mezclaban texturas vecinas).
 - El haz de luz del aterrizaje sigue cualquier cambio en la columna bajo la nave y empieza encima de los bloques bajos como las
