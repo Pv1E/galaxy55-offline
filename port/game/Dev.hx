@@ -1003,6 +1003,9 @@ class Dev {
 		case "wares":
 			// "solo-compra": el robot lo compra pero no lo vende (Market.NOT_SOLD)
 			for( m in Market.wares ) Sys.println("ware " + m.block.k + " " + m.base + (m.onSale ? "" : " solo-compra"));
+		case "shelf":
+			// lo que vende el robot, en el orden de su parte de la tienda
+			Sys.println("shelf: " + [for( m in Market.shelf ) Std.string(m.block.k)].join(" "));
 		case "inv":
 			Sys.println("inv: " + [for( s in g.inv.inv.t ) s == null ? "-" : Block.all[s.k].k + "x" + s.n].join(" ") + "  casilla=" + g.inv.blockIndex);
 		case "pos":

@@ -118,15 +118,18 @@ class Market {
 		// plantas
 		"BHighHerb1", "BHighHerb2", "BHighHerb3", "BHighHerb4", "BHighHerb5", "BHighHerb6", "BAcidHerb1", "BAcidHerb2", "BAcidHerbCeil",
 		"BCavePlantCeil", "BMush", "BBigMushTrunk", "BBigMushHead", "BCoral1", "BCoral2", "BVines",
-		"BPinkFlower", "BAcidMush", "BLeavesCurtain", "BHealPlant", "BBlackIce",
+		"BPinkFlower", "BAcidMush", "BLeavesCurtain", "BFreezerPlant", "BHealPlant", "BBlackIce",
 		// tintes en bruto y minerales
 		"BRawRed", "BRawPurple", "BRawWhite", "BRawOrange", "BRawGreen", "BMarsRockFossil", "BMarsCactusFossil", "BCoalHot",
 		"BMinIron", "BMinAluminium", "BYellowCrystalDense", "BBlueCrystalDense", "BBlackIceLight", "BBlackLight", "BLava",
-		// construccion (BRockColumn, la columna de roca, la anade la PR de las recetas: hasta entonces no hace nada)
-		"BWoodColumn", "BRockColumn", "BHardRockColumn", "BMoonRockColumn", "BMoonLightColumn", "BVineColumn", "BStainEmpty",
-		"BStainRed", "BGlass", "BIronFence", "BLight", "BIronLight", "BJumper", "BCascadeSource",
-		// el contrato de muros de rouge'rosh paga las cargas azules que cuesta picar la roca: comprados hechos, daba dinero
-		"BHardRockWall",
+		// construccion (BRockColumn y los zocalos de rouge'rosh, roca blanda y escarcha los anade la PR de las recetas: hasta
+		// entonces no hacen nada)
+		"BWoodPlate", "BWoodWindow", "BWoodColumn", "BRockColumn", "BHardRockColumn", "BMoonRockColumn", "BMoonLightColumn",
+		"BVineColumn", "BStainEmpty", "BStainRed", "BGlass", "BIronFence", "BLight", "BIronLight", "BJumper", "BCascadeSource",
+		// muros y zocalos: se fabrican con la roca (el contrato de muros de rouge'rosh, ademas, paga las cargas azules que
+		// cuesta picarla: comprados hechos, daba dinero)
+		"BRockWall", "BHardRockWall", "BMarsWall", "BWinterWall", "BAcidWall",
+		"BRockWallSquare", "BHardRockWallSquare", "BAcidWallSquare", "BWinterWallSquare",
 		// nave y aparatos
 		"BShipPlate", "BShipWire", "BShipTubes", "BShipGlass2", "BShipGlassBlack", "BShipLight", "BShipHull", "BShipGlass", "BShipDoor",
 		"BCircuit", "BCamera", "BHealBox", "BMiningGenerator", "BArtiBomb", "BAlienTreasure",
@@ -165,9 +168,33 @@ class Market {
 		return wares;
 	}
 
+	/**
+	 * Orden de la parte del robot: el de los bloques, salvo estos, que van justo despues (after) o justo antes de `ref`:
+	 * las dos cargas juntas, el hierro tras el aluminio, la cantina antes del motor.
+	 */
+	static var SHELF_MOVES : Array<{ k : String, ref : String, after : Bool }> = [
+		{ k : "BBlueCharge", ref : "BYellowCharge", after : true },
+		{ k : "BIron", ref : "BAluminium", after : true },
+		{ k : "BChest", ref : "BShipEngine", after : false },
+	];
+
 	static function get_shelf() {
-		if( shelf == null ) shelf = [for( w in get_wares() ) if( w.onSale ) w];
+		if( shelf == null ) {
+			shelf = [for( w in get_wares() ) if( w.onSale ) w];
+			for( m in SHELF_MOVES ) {
+				var i = shelfIndex(m.k);
+				if( i < 0 || shelfIndex(m.ref) < 0 ) continue;
+				var w = shelf.splice(i, 1)[0];
+				var j = shelfIndex(m.ref);
+				shelf.insert(m.after ? j + 1 : j, w);
+			}
+		}
 		return shelf;
+	}
+
+	static function shelfIndex( k : String ) : Int {
+		for( i in 0...shelf.length ) if( Std.string(shelf[i].block.k) == k ) return i;
+		return -1;
 	}
 
 	public static function ware( key : String ) : Ware {

@@ -1,6 +1,7 @@
 # robot comerciante: lo que solo compra (Market.NOT_SOLD) no esta en su parte de la tienda; comprarlo no hace nada y
 # venderlo si. Ni NOT_TRADED (bloque borrado, citronox viejo, fragmentos de eterio) ni lo especial del Kubindex
 # (sintetizador, teletransportador...) salen en print wares, salvo el motor espacial y la cantina, que se venden.
+# print shelf: las dos cargas juntas, el hierro tras el aluminio, la cantina antes del motor.
 # Captura port/out/tienda_solo_compra.png
 wait 3
 setlang fr
@@ -11,6 +12,7 @@ give BMinIron 10
 give BCoal 10
 wait 5
 print wares
+print shelf
 shop
 wait 5
 print credits
