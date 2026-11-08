@@ -50,7 +50,8 @@ class Market {
 
 	/**
 	 * Precios propios del port (cambio respecto al original): en los datos casi todo vale 100. Se agrupan por lo comun
-	 * que es cada bloque; lo que no aparece aqui conserva su precio de los datos.
+	 * que es cada bloque; lo que no aparece aqui conserva su precio de los datos, y lo que aparece es mercancia aunque los
+	 * datos no le den precio (la cantina).
 	 */
 	static var PRICES : Map<String, Int> = {
 		var m = new Map();
@@ -64,7 +65,7 @@ class Market {
 		// tintes en bruto y minerales
 		set(20, "BRaw BRawRed BRawPurple BRawWhite BRawOrange BRawGreen BMarsRockFossil BMarsCactusFossil BCoalHot");
 		set(35, "BMinIron BMinAluminium BYellowCrystalDense BBlueCrystalDense BBlackIceLight BBlackLight");
-		set(60, "BYellowCrystalLight BBlueCrystalLight BLava");
+		set(60, "BLava");
 		// construccion (fabricado)
 		set(12, "BWoodPlank BWoodPlate BWoodColumn BWoodWindow BRockWall BRockWallSquare BHardRockColumn BHardRockWall BMoonRockColumn BMoonLightColumn BVineColumn BMarsWall BWinterWall BAcidWall");
 		set(25, "BStainEmpty BStainPurple BStainRed BStainWhite BStainOrange BStainGreen BShiningWoodPlank BWoodScrew BGlass");
@@ -72,19 +73,34 @@ class Market {
 		// nave y aparatos
 		set(80, "BShipPlate BShipWire BShipTubes BShipGlass2 BShipGlassBlack BShipLight");
 		set(150, "BShipHull BShipGlass BShipDoor BCircuit BCamera BHealBox");
-		set(400, "BShipEngine BCrafter BMiningGenerator BArtiBomb");
+		set(400, "BShipEngine BCrafter BMiningGenerator BArtiBomb BChest");
 		set(900, "BShipComputer BCrafterComputer BShipEntry BAlienTreasure");
 		// cargas
+		set(20, "BYellowCharge");
 		set(40, "BBlueCharge");
-		set(120, "BYellowCharge");
 		m;
 	};
 
 	/**
+	 * Lo que el robot ni vende ni compra aunque tenga precio (cambio del port). Lo especial del Kubindex tampoco, salvo
+	 * SPECIAL_TRADED: ver get_wares.
+	 */
+	static var NOT_TRADED = [
+		// bloque borrado del original ("A REMPLACER" en los datos, sin nombre)
+		"BWinterFlowerDeleted",
+		// cristales que sueltan cargas al romperlos: se encuentran, no se comercian
+		"BYellowCrystalLight", "BBlueCrystalLight",
+	];
+
+	/** lo especial del Kubindex que el robot si vende y compra: el motor espacial y la cantina */
+	static var SPECIAL_TRADED = ["BShipEngine", "BChest"];
+
+	/**
 	 * Lo que el robot compra pero no vende (cambio del port): se le puede vender al precio de PRICES, pero no comprarselo.
 	 * Son las variantes (tierra cubierta, roca lunar rota), lo que en el Kubindex solo sale en anomalias, lo que pide
-	 * cargas rosas (fosiles, roca antigua), las columnas, las piezas de la nave (queda el aluminio para fabricarlas) y
-	 * otras cosas raras que hay que ir a buscar. Lo especial (aparatos de la nave, nodriza) ni se compra: ver get_wares.
+	 * cargas rosas (fosiles, roca antigua), las columnas, las piezas de la nave (queda el aluminio para fabricarlas), los
+	 * minerales y cristales que se encuentran (bauxita, citronox, eterio azul), lo que se fabrica con lo que se encuentra
+	 * (vidrio, lumina) y otras cosas raras que hay que ir a buscar.
 	 */
 	static var NOT_SOLD = [
 		// suelo y roca
@@ -92,14 +108,14 @@ class Market {
 		"BMarsHardRock", "BFrozenRock", "BLavaRock", "BAcidWater", "BCoal",
 		// plantas
 		"BHighHerb1", "BHighHerb2", "BHighHerb3", "BHighHerb4", "BHighHerb5", "BHighHerb6", "BAcidHerb1", "BAcidHerb2", "BAcidHerbCeil",
-		"BCavePlantCeil", "BMush", "BBigMushTrunk", "BBigMushHead", "BCoral1", "BCoral2",
-		"BAcidMush", "BLeavesCurtain", "BHealPlant", "BBlackIce",
+		"BCavePlantCeil", "BMush", "BBigMushTrunk", "BBigMushHead", "BCoral1", "BCoral2", "BVines",
+		"BPinkFlower", "BAcidMush", "BLeavesCurtain", "BHealPlant", "BBlackIce",
 		// tintes en bruto y minerales
 		"BRawRed", "BRawPurple", "BRawWhite", "BRawOrange", "BRawGreen", "BMarsRockFossil", "BMarsCactusFossil", "BCoalHot",
-		"BMinIron", "BBlackIceLight", "BBlackLight", "BLava",
+		"BMinIron", "BMinAluminium", "BYellowCrystalDense", "BBlueCrystalDense", "BBlackIceLight", "BBlackLight", "BLava",
 		// construccion (BRockColumn, la columna de roca, la anade la PR de las recetas: hasta entonces no hace nada)
-		"BWoodColumn", "BRockColumn", "BHardRockColumn", "BMoonRockColumn", "BVineColumn", "BStainEmpty", "BStainRed",
-		"BIronFence", "BIronLight", "BJumper", "BCascadeSource",
+		"BWoodColumn", "BRockColumn", "BHardRockColumn", "BMoonRockColumn", "BMoonLightColumn", "BVineColumn", "BStainEmpty",
+		"BStainRed", "BGlass", "BIronFence", "BLight", "BIronLight", "BJumper", "BCascadeSource",
 		// nave y aparatos
 		"BShipPlate", "BShipWire", "BShipTubes", "BShipGlass2", "BShipGlassBlack", "BShipLight", "BShipHull", "BShipGlass", "BShipDoor",
 		"BCircuit", "BCamera", "BHealBox", "BMiningGenerator", "BArtiBomb", "BAlienTreasure",
@@ -115,17 +131,18 @@ class Market {
 			wares = [];
 			byKey = new Map();
 			for( b in Block.all ) {
-				if( b.index <= 0 || b.basePrice == null || b.basePrice <= 0 || b.type == BTInvisible ) continue;
+				var key = Std.string(b.k);
+				// precio del port o, si no lo tiene, el de los datos; sin ninguno no es mercancia
+				var base : Null<Int> = PRICES.exists(key) ? PRICES.get(key) : b.basePrice;
+				if( b.index <= 0 || base == null || base <= 0 || b.type == BTInvisible ) continue;
 				// los kubes no son mercancia de la ESCorp: el robot no los vende ni los compra
 				if( KubeData.isKube(b.k) ) continue;
-				// bloque borrado del original ("A REMPLACER" en los datos, sin nombre): tampoco
-				if( b.k == BWinterFlowerDeleted ) continue;
+				if( NOT_TRADED.indexOf(key) >= 0 ) continue;
 				// ni lo que la base de datos ESCorp tiene por especial (no sale en ningun sitio ni se fabrica: los aparatos de la
-				// nave, la nodriza): el robot no lo vende ni lo compra
+				// nave, la nodriza), salvo SPECIAL_TRADED
 				var e = KubData.get().entryOf(b);
-				if( e != null && KubData.get().has(e, CSpecial) ) continue;
-				var base = PRICES.exists(Std.string(b.k)) ? PRICES.get(Std.string(b.k)) : b.basePrice;
-				var onSale = NOT_SOLD.indexOf(Std.string(b.k)) < 0;
+				if( e != null && KubData.get().has(e, CSpecial) && SPECIAL_TRADED.indexOf(key) < 0 ) continue;
+				var onSale = NOT_SOLD.indexOf(key) < 0;
 				var w : Ware = b.charge != null
 					? { key : "c" + Type.enumIndex(b.charge), block : b, charge : b.charge, base : base, onSale : onSale }
 					: { key : "b" + b.index, block : b, charge : null, base : base, onSale : onSale };
