@@ -24,12 +24,14 @@ typedef Ware = {
 	/** carga (null = bloque) */
 	var charge : Null<ChargeKind>;
 	var base : Int;
+	/** el robot lo vende (false = solo lo compra, ver Market.NOT_SOLD) */
+	var onSale : Bool;
 }
 
 /**
  * Comercio dinamico con el robot comerciante (anadido del port; el original tenia una tienda web con precios fijos).
  * Pensado para que nadie se frustre ni pueda perjudicar a otro jugador:
- * - El robot NUNCA se queda sin nada: siempre se puede comprar.
+ * - El robot NUNCA se queda sin nada: lo que vende siempre se puede comprar. Algunas cosas solo las compra (NOT_SOLD).
  * - Comprar cuesta el precio base. Cada REF unidades compradas suben `bought` en 1 y el precio un 50 %, con tope del
  *   doble (MAX_BUY). En multijugador `bought` lo comparte el sector: lo peor que hace otro es encarecer algo un rato.
  * - Vender da la mitad del precio base. Cada REF unidades vendidas suben `sold` en 1 y bajan lo que te paga un 30 %;
@@ -48,7 +50,8 @@ class Market {
 
 	/**
 	 * Precios propios del port (cambio respecto al original): en los datos casi todo vale 100. Se agrupan por lo comun
-	 * que es cada bloque; lo que no aparece aqui conserva su precio de los datos.
+	 * que es cada bloque; lo que no aparece aqui conserva su precio de los datos, y lo que aparece es mercancia aunque los
+	 * datos no le den precio (la cantina).
 	 */
 	static var PRICES : Map<String, Int> = {
 		var m = new Map();
@@ -62,24 +65,80 @@ class Market {
 		// tintes en bruto y minerales
 		set(20, "BRaw BRawRed BRawPurple BRawWhite BRawOrange BRawGreen BMarsRockFossil BMarsCactusFossil BCoalHot");
 		set(35, "BMinIron BMinAluminium BYellowCrystalDense BBlueCrystalDense BBlackIceLight BBlackLight");
-		set(60, "BYellowCrystalLight BBlueCrystalLight BLava");
-		// construccion (fabricado). La columna de roca sale 2 por 2 roshs (4): a 12 se revendia por mas de lo que cuestan
+		set(60, "BLava");
+		// construccion (fabricado). Lo que sale de una receta con ingredientes que vende el robot no se revende por mas de lo
+		// que cuestan esos ingredientes (si no, comprar, fabricar y revender da dinero): un bois (6) da 4 planchas, un
+		// phosphomousse (15) 2 luminas, un sable 2 vidrios, un aluminio un blindaje...
+		set(3, "BWoodPlank BWoodPlate BWoodColumn");
+		set(4, "BGlass");
+		set(6, "BWoodWindow");
+		// la columna de roca sale 2 por 2 roshs (4): a 12 se revendia por mas de lo que cuestan
 		set(8, "BRockColumn");
-		set(12, "BWoodPlank BWoodPlate BWoodColumn BWoodWindow BRockWall BRockWallSquare BHardRockColumn BHardRockWall BHardRockWallSquare BMoonRockColumn BMoonLightColumn BVineColumn BMarsWall BWinterWall BWinterWallSquare BAcidWall BAcidWallSquare");
-		set(25, "BStainEmpty BStainPurple BStainRed BStainWhite BStainOrange BStainGreen BShiningWoodPlank BWoodScrew BGlass");
-		set(50, "BIron BAluminium BIronFence BLight BLamp BIronLight BJumper BCascadeSource BFreezer");
+		set(12, "BRockWall BRockWallSquare BHardRockColumn BHardRockWall BHardRockWallSquare BMoonRockColumn BMoonLightColumn BVineColumn BMarsWall BWinterWall BWinterWallSquare BAcidWall BAcidWallSquare BLight BLamp");
+		set(15, "BShiningWoodPlank");
+		set(22, "BIronLight");
+		set(25, "BStainEmpty BStainPurple BStainRed BStainWhite BStainOrange BStainGreen BWoodScrew");
+		set(50, "BIron BAluminium BIronFence BJumper BCascadeSource BFreezer");
 		// nave y aparatos
 		set(80, "BShipPlate BShipWire BShipTubes BShipGlass2 BShipGlassBlack BShipLight");
-		set(150, "BShipHull BShipGlass BShipDoor BCircuit BCamera BHealBox");
-		set(400, "BShipEngine BCrafter BMiningGenerator BArtiBomb");
+		set(100, "BShipHull BShipGlass");
+		set(150, "BShipDoor BCircuit BCamera BHealBox");
+		set(400, "BCrafter BMiningGenerator BArtiBomb BChest");
 		set(900, "BShipComputer BCrafterComputer BShipEntry BAlienTreasure");
+		set(1000, "BShipEngine");
 		// cargas
+		set(20, "BYellowCharge");
 		set(40, "BBlueCharge");
-		set(120, "BYellowCharge");
 		m;
 	};
 
+	/**
+	 * Lo que el robot ni vende ni compra aunque tenga precio (cambio del port). Lo especial del Kubindex tampoco, salvo
+	 * SPECIAL_TRADED: ver get_wares.
+	 */
+	static var NOT_TRADED = [
+		// bloque borrado del original ("A REMPLACER" en los datos, sin nombre)
+		"BWinterFlowerDeleted",
+		// cristales que sueltan cargas al romperlos: se encuentran, no se comercian
+		"BYellowCrystalLight", "BBlueCrystalLight",
+	];
+
+	/** lo especial del Kubindex que el robot si vende y compra: el motor espacial y la cantina */
+	static var SPECIAL_TRADED = ["BShipEngine", "BChest"];
+
+	/**
+	 * Lo que el robot compra pero no vende (cambio del port): se le puede vender al precio de PRICES, pero no comprarselo.
+	 * Son las variantes (tierra cubierta, roca lunar rota), lo que en el Kubindex solo sale en anomalias, lo que pide
+	 * cargas rosas (fosiles, roca antigua), las columnas, las piezas de la nave (queda el aluminio para fabricarlas), los
+	 * minerales y cristales que se encuentran (bauxita, citronox, eterio azul), lo que se fabrica con lo que se encuentra
+	 * (vidrio, lumina) y otras cosas raras que hay que ir a buscar.
+	 */
+	static var NOT_SOLD = [
+		// suelo y roca
+		"BSoilCover", "BMoonSoilCover", "BMoonBrokenRock", "BPlantSoil", "BPlantRock", "BAlienRock",
+		"BMarsHardRock", "BFrozenRock", "BLavaRock", "BAcidWater", "BCoal",
+		// plantas
+		"BHighHerb1", "BHighHerb2", "BHighHerb3", "BHighHerb4", "BHighHerb5", "BHighHerb6", "BAcidHerb1", "BAcidHerb2", "BAcidHerbCeil",
+		"BCavePlantCeil", "BMush", "BBigMushTrunk", "BBigMushHead", "BCoral1", "BCoral2", "BVines",
+		"BPinkFlower", "BAcidMush", "BLeavesCurtain", "BFreezerPlant", "BHealPlant", "BBlackIce",
+		// tintes en bruto y minerales
+		"BRawRed", "BRawPurple", "BRawWhite", "BRawOrange", "BRawGreen", "BMarsRockFossil", "BMarsCactusFossil", "BCoalHot",
+		"BMinIron", "BMinAluminium", "BYellowCrystalDense", "BBlueCrystalDense", "BBlackIceLight", "BBlackLight", "BLava",
+		// construccion
+		"BWoodPlate", "BWoodWindow", "BWoodColumn", "BRockColumn", "BHardRockColumn", "BMoonRockColumn", "BMoonLightColumn",
+		"BVineColumn", "BStainEmpty", "BStainRed", "BGlass", "BIronFence", "BLight", "BIronLight", "BJumper", "BCascadeSource",
+		// muros y zocalos: se fabrican con la roca (el contrato de muros de rouge'rosh, ademas, paga las cargas azules que
+		// cuesta picarla: comprados hechos, daba dinero)
+		"BRockWall", "BHardRockWall", "BMarsWall", "BWinterWall", "BAcidWall",
+		"BRockWallSquare", "BHardRockWallSquare", "BAcidWallSquare", "BWinterWallSquare",
+		// nave y aparatos
+		"BShipPlate", "BShipWire", "BShipTubes", "BShipGlass2", "BShipGlassBlack", "BShipLight", "BShipHull", "BShipGlass", "BShipDoor",
+		"BCircuit", "BCamera", "BHealBox", "BMiningGenerator", "BArtiBomb", "BAlienTreasure",
+	];
+
 	public static var wares(get, null) : Array<Ware>;
+	/** lo que vende el robot (la parte derecha de la tienda): las mercancias menos NOT_SOLD */
+	public static var shelf(get, null) : Array<Ware>;
 	static var byKey : Map<String, Ware>;
 
 	static function get_wares() {
@@ -87,19 +146,56 @@ class Market {
 			wares = [];
 			byKey = new Map();
 			for( b in Block.all ) {
-				if( b.index <= 0 || b.basePrice == null || b.basePrice <= 0 || b.type == BTInvisible ) continue;
+				var key = Std.string(b.k);
+				// precio del port o, si no lo tiene, el de los datos; sin ninguno no es mercancia
+				var base : Null<Int> = PRICES.exists(key) ? PRICES.get(key) : b.basePrice;
+				if( b.index <= 0 || base == null || base <= 0 || b.type == BTInvisible ) continue;
 				// los kubes no son mercancia de la ESCorp: el robot no los vende ni los compra
 				if( KubeData.isKube(b.k) ) continue;
-				var base = PRICES.exists(Std.string(b.k)) ? PRICES.get(Std.string(b.k)) : b.basePrice;
+				if( NOT_TRADED.indexOf(key) >= 0 ) continue;
+				// ni lo que la base de datos ESCorp tiene por especial (no sale en ningun sitio ni se fabrica: los aparatos de la
+				// nave, la nodriza), salvo SPECIAL_TRADED
+				var e = KubData.get().entryOf(b);
+				if( e != null && KubData.get().has(e, CSpecial) && SPECIAL_TRADED.indexOf(key) < 0 ) continue;
+				var onSale = NOT_SOLD.indexOf(key) < 0;
 				var w : Ware = b.charge != null
-					? { key : "c" + Type.enumIndex(b.charge), block : b, charge : b.charge, base : base }
-					: { key : "b" + b.index, block : b, charge : null, base : base };
+					? { key : "c" + Type.enumIndex(b.charge), block : b, charge : b.charge, base : base, onSale : onSale }
+					: { key : "b" + b.index, block : b, charge : null, base : base, onSale : onSale };
 				if( byKey.exists(w.key) ) continue;
 				wares.push(w);
 				byKey.set(w.key, w);
 			}
 		}
 		return wares;
+	}
+
+	/**
+	 * Orden de la parte del robot: el de los bloques, salvo estos, que van justo despues (after) o justo antes de `ref`:
+	 * las dos cargas juntas, el hierro tras el aluminio, la cantina antes del motor.
+	 */
+	static var SHELF_MOVES : Array<{ k : String, ref : String, after : Bool }> = [
+		{ k : "BBlueCharge", ref : "BYellowCharge", after : true },
+		{ k : "BIron", ref : "BAluminium", after : true },
+		{ k : "BChest", ref : "BShipEngine", after : false },
+	];
+
+	static function get_shelf() {
+		if( shelf == null ) {
+			shelf = [for( w in get_wares() ) if( w.onSale ) w];
+			for( m in SHELF_MOVES ) {
+				var i = shelfIndex(m.k);
+				if( i < 0 || shelfIndex(m.ref) < 0 ) continue;
+				var w = shelf.splice(i, 1)[0];
+				var j = shelfIndex(m.ref);
+				shelf.insert(m.after ? j + 1 : j, w);
+			}
+		}
+		return shelf;
+	}
+
+	static function shelfIndex( k : String ) : Int {
+		for( i in 0...shelf.length ) if( Std.string(shelf[i].block.k) == k ) return i;
+		return -1;
 	}
 
 	public static function ware( key : String ) : Ware {
@@ -172,6 +268,7 @@ class Market {
 
 	/** compra `n` unidades (o las que se puedan pagar); devuelve cuantas y lo que costaron */
 	public function buy( w : Ware, n : Int, credits : Int ) : { n : Int, cost : Int } {
+		if( !w.onSale ) return { n : 0, cost : 0 };
 		var it = item(w);
 		var done = 0, cost = 0;
 		while( done < n ) {

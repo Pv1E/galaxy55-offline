@@ -187,7 +187,7 @@ class Shop extends h2d.Object {
 			setInfo("");
 	}
 
-	function pages() return Std.int((Market.wares.length + RCOLS * RROWS - 1) / (RCOLS * RROWS));
+	function pages() return Std.int((Market.shelf.length + RCOLS * RROWS - 1) / (RCOLS * RROWS));
 
 	public function scroll( delta : Float ) {
 		page += delta > 0 ? 1 : -1;
@@ -232,8 +232,8 @@ class Shop extends h2d.Object {
 		var per = RCOLS * RROWS;
 		for( i in 0...per ) {
 			var wi = page * per + i;
-			if( wi >= Market.wares.length ) break;
-			var w = Market.wares[wi];
+			if( wi >= Market.shelf.length ) break;
+			var w = Market.shelf[wi];
 			var x = (i % RCOLS) * CELL, y = Std.int(i / RCOLS) * (CELL + 18);
 			cell(right, x, y, w, -1, market.buyPrice(w), false);
 			cells[1].push({ x : x, y : y, w : w, sell : false, name : null });
@@ -309,7 +309,8 @@ class Shop extends h2d.Object {
 		var w = hover;
 		var name = w.block.getName();
 		var sp = market.sellPrice(w);
-		setInfo(name, Lang.t("shop.buy") + " " + market.buyPrice(w) + "   "
+		// lo que el robot solo compra: sin precio de compra
+		setInfo(name, (w.onSale ? Lang.t("shop.buy") + " " + market.buyPrice(w) + "   " : "")
 			+ (sp > 0 ? Lang.t("shop.sell") + " " + sp : Lang.t("shop.full")));
 	}
 

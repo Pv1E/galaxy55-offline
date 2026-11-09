@@ -1,0 +1,35 @@
+# robot comerciante: lo que solo compra (Market.NOT_SOLD) no esta en su parte de la tienda; comprarlo no hace nada y
+# venderlo si. Ni NOT_TRADED (bloque borrado, citronox viejo, fragmentos de eterio) ni lo especial del Kubindex
+# (sintetizador, teletransportador...) salen en print wares, salvo el motor espacial y la cantina, que se venden.
+# print shelf: las dos cargas juntas, el hierro tras el aluminio, la cantina antes del motor.
+# Captura port/out/tienda_solo_compra.png
+wait 3
+setlang fr
+planet
+wait 30
+licenses credits 2000
+give BMinIron 10
+give BCoal 10
+wait 5
+print wares
+print shelf
+shop
+wait 5
+print credits
+buy BMinIron 5
+buy BYellowCrystalDense 5
+buy BIron 5
+buy BShipLight 1
+# el inventario de prueba esta lleno: vender todo el carbon deja una casilla para el motor
+sell BCoal 10
+buy BShipEngine 1
+buy BChest 1
+buy c0 10
+sell BMinIron 3
+sell c0 10
+print credits
+wait 5
+shot tienda_solo_compra
+close
+wait 5
+quit
