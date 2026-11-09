@@ -73,6 +73,12 @@ import Common;
  *   print tuto              paso del tutorial, objetivos marcados, sus bloques en el planeta y el texto (tambien en el mapa)
  *   menu                    Menu principal (guarda la partida, como desde la pausa); el guion sigue en los menus de inicio
  *   devsaves N              borra las partidas de la carpeta de datos de prueba y crea N de ejemplo (solo con GALAXY55_DATA)
+ *   savecopy RUTA           copia la partida RUTA (.json y su .png) a la carpeta de datos de prueba, la primera de la lista
+ *                           (solo con GALAXY55_DATA)
+ *   unknownsave NOMBRE      guarda aparte una copia de la partida en curso con bloques que esta version no conoce (UnknownBlocks) en
+ *                           cada sitio que guarda numeros de bloque: inventario, cantina, terreno, nave, nave del hangar, planeta
+ *                           visitado y precios del robot (como una partida de una version con mas bloques); la primera de la lista
+ *   print unknown           bloques desconocidos de cada partida (UnknownBlocks), md5 de su .json y copias de saves/backups
  *   tap TECLA               pulsar y soltar una tecla: up down left right enter esc tab space pgup pgdown o una letra
  *   type TEXTO              escribir el resto de la linea en el campo de texto en el que se esta escribiendo
  *   wheel N                 rueda del raton (N > 0 = hacia abajo), donde lo dejo la ultima orden mouse
@@ -129,6 +135,90 @@ class Dev {
 	}
 
 	static function f( s : String ) return Std.parseFloat(s);
+
+	/** savecopy: copia una partida (.json y su .png) a la carpeta de datos de prueba, con la fecha de ahora (la primera de la lista) */
+	static function saveCopy( path : String ) {
+		var data = Sys.getEnv("GALAXY55_DATA");
+		if( data == null || data == "" ) {
+			Sys.println("savecopy: solo con GALAXY55_DATA (devrun.ps1)");
+			return;
+		}
+		if( !sys.FileSystem.exists(path) ) {
+			Sys.println("savecopy: no existe " + path);
+			return;
+		}
+		var id = haxe.io.Path.withoutExtension(haxe.io.Path.withoutDirectory(path));
+		var o : Dynamic = haxe.Json.parse(sys.io.File.getContent(path));
+		o.id = id;
+		o.saved = Date.now().getTime();
+		sys.io.File.saveContent(SaveData.jsonPath(id), haxe.Json.stringify(o, null, "  "));
+		var png = haxe.io.Path.withoutExtension(path) + ".png";
+		if( sys.FileSystem.exists(png) ) sys.io.File.copy(png, SaveData.thumbPath(id));
+		Sys.println("savecopy: " + id + " '" + o.name + "'");
+	}
+
+	/** unknownsave: la partida en curso, guardada aparte con bloques que esta version no conoce en cada sitio (UnknownBlocks) */
+	static function unknownSave( g : GameView, name : String ) {
+		if( g == null ) {
+			Sys.println("unknownsave: no hay partida en curso");
+			return;
+		}
+		var info : SaveData.SaveInfo = haxe.Json.parse(haxe.Json.stringify(g.toInfo()));
+		// el primer numero de bloque que esta version no conoce
+		var u = Block.all.length;
+		info.id = SaveData.newId();
+		info.name = name;
+		info.saved = Date.now().getTime();
+		while( info.inv.t.length < 2 ) info.inv.t.push(null);
+		info.inv.t[0] = { k : u, n : 64 };
+		info.inv.t[1] = { k : u + 1, n : 10 };
+		if( info.chests == null ) info.chests = [];
+		info.chests.push({ key : "p0:1,1,1", t : [{ k : u + 2, n : 5 }, null, null, null] });
+		// terreno: delante del jugador, una celda y la de encima con nivel de agua (bits altos: World.applySaved)
+		var s = g.world.size;
+		inline function cell( x : Int, y : Int, z : Int, size : Int ) return ((((x % size) + size) % size + (((y % size) + size) % size) * size) << World.ZBITS) | z;
+		var x = Std.int(g.px + Math.cos(g.yaw) * 3), y = Std.int(g.py + Math.sin(g.yaw) * 3), z = Std.int(g.pz) + 1;
+		info.edits = info.edits.concat([cell(x, y, z, s), u, cell(x, y, z + 1, s), (u + 1) | (3 << 16)]);
+		// nave: un cambio a bordo y una celda de la nave del hangar (la primera que no hace falta para jugar)
+		info.shipEdits = (info.shipEdits != null ? info.shipEdits : []).concat([cell(10, 10, 5, Const.SIZE), u + 2]);
+		var raw = haxe.zip.Uncompress.run(Hangar.currentShip(info));
+		var p = 3;
+		while( p + 1 < raw.length ) {
+			var id = raw.get(p) | (raw.get(p + 1) << 8);
+			if( id != 0 && id < u && !Block.all[id].k.match(BShipEntry | BShipComputer | BCrafter | BCrafterComputer) ) break;
+			p += 2;
+		}
+		raw.set(p, (u + 1) & 0xFF);
+		raw.set(p + 1, (u + 1) >> 8);
+		info.shipData = haxe.crypto.Base64.encode(haxe.zip.Compress.run(raw, 9));
+		// un planeta ya visitado y los precios del robot (la partida de prueba, creativa, aun no tiene universo ni robot: se crean)
+		if( info.uni == null )
+			info.uni = { seed : info.seed, planetId : 0, pos : [2, 0], start : { seed : info.seed, biome : info.biome, size : info.sizeChunks }, planets : [],
+				licenses : [0], main : 0, mainChanges : 0, abandoned : [], gone : [] };
+		if( info.uni.planets.length == 0 ) info.uni.planets.push({ id : 1, edits : [] });
+		info.uni.planets[0].edits = info.uni.planets[0].edits.concat([cell(1, 1, 60, 128), u]);
+		if( info.market == null ) info.market = Market.create();
+		info.market.items.push({ key : "b" + u, bought : 1., sold : 0. });
+		SaveData.write(info, null, false);
+		Sys.println("unknownsave: " + info.id + " '" + name + "' " + UnknownBlocks.where(UnknownBlocks.count(info)) + " numeros " + UnknownBlocks.count(info).ids.join(","));
+	}
+
+	/** print unknown: bloques desconocidos de cada partida, md5 de su .json y copias hechas antes de borrarlos */
+	static function unknownInfo() : String {
+		var out = [];
+		var md5 = function(p : String) return haxe.crypto.Md5.make(sys.io.File.getBytes(p)).toHex();
+		for( i in SaveData.list() ) {
+			var r = UnknownBlocks.count(i);
+			var prices = i.market == null ? 0 : [for( it in i.market.items ) if( it.key.charAt(0) == "b" && Std.parseInt(it.key.substr(1)) >= Block.all.length ) it].length;
+			out.push("'" + i.name + "' " + i.id + " desconocidos=" + UnknownBlocks.total(r) + " (" + UnknownBlocks.where(r) + ") numeros=" + r.ids.join(",")
+				+ " precios=" + prices + " md5=" + md5(SaveData.jsonPath(i.id)));
+		}
+		var dir = SaveData.dir() + "/" + UnknownBlocks.BACKUPS;
+		var copies = sys.FileSystem.exists(dir) ? sys.FileSystem.readDirectory(dir) : [];
+		copies.sort(Reflect.compare);
+		return out.length + " partidas:\n  " + out.join("\n  ") + "\ncopias en " + UnknownBlocks.BACKUPS + ": "
+			+ (copies.length == 0 ? "ninguna" : [for( c in copies ) c + (StringTools.endsWith(c, ".json") ? " md5=" + md5(dir + "/" + c) : "")].join(", "));
+	}
 
 	/** codigo de una tecla de press, release y tap: un nombre o una letra */
 	static function keyCode( n : String ) : Int {
@@ -581,6 +671,8 @@ class Dev {
 					@:privateAccess app.toMainMenu();
 					inMenu = true;
 				case "devsaves": app.devSaves(Std.parseInt(a[1]));
+				case "savecopy": saveCopy(a[1]);
+				case "unknownsave": unknownSave(g, l.substr(l.indexOf(" ") + 1));
 				case "trace": trace = true;
 				case "shop": app.openShop();
 				case "screen": @:privateAccess app.show(a[1]);
@@ -916,6 +1008,10 @@ class Dev {
 		}
 		if( a[1] == "saves" ) {
 			Sys.println(app.devSavesInfo());
+			return;
+		}
+		if( a[1] == "unknown" ) {
+			Sys.println(unknownInfo());
 			return;
 		}
 		if( a[1] == "mouse" ) {
