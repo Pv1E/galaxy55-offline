@@ -29,7 +29,7 @@ Ce sont celles du jeu original (le déplacement et la physique sont copiés de `
 | Choisir une case | 1–0 ou molette de la souris ; Tab = laser de minage (main vide) |
 | Jeter la pile choisie | R ou Suppr |
 | Activer (ordinateur de bord, portes, bombe antique) | viser, appuyer et relâcher. En maintenant jusqu'à ce que le bloc casse, on le creuse : c'est ainsi qu'on ramasse une bombe antique sans la faire exploser (il faut la charge rose, comme pour la roche antique). L'ordinateur du synthétiseur marche aussi avec un bloc en main et au clic droit (changement du portage) |
-| Conteneur EScorp (coffre) | viser, appuyer et relâcher. Le jeu continue : clic prend et pose (Maj la moitié, Ctrl un ; ou flèches et Entrée, ou croix et A), glisser hors de la fenêtre fait regarder et s'éloigner le ferme (Échap et B aussi) |
+| Conteneur ESCorp (coffre) | viser, appuyer et relâcher. Le jeu continue : clic prend et pose (Maj la moitié, Ctrl un ; ou flèches et Entrée, ou croix et A), glisser hors de la fenêtre fait regarder et s'éloigner le ferme (Échap et B aussi) |
 | Retourner au vaisseau | Maj+K, ou entrer dans le rayon de lumière d'atterrissage |
 | Piloter le vaisseau (ajout du portage) | ordinateur de bord > Piloter le vaisseau : WASD ou stick gauche le déplacent au-dessus de la planète, la souris ou le stick droit tournent la caméra, E, Échap, B ou Start le laissent où il est (il freine, se redresse et atterrit tout seul) |
 | Créatif : palette de blocs | I (clic = mettre le bloc dans la case choisie, molette = page) |
@@ -99,7 +99,7 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
 - La neige du biome d'hiver est un ajout du port : l'original ne l'a pas.
 - Le mode créatif et sa palette sont un ajout du port.
 - Le menu de l'ordinateur de bord a son propre style, comme dans la version Flash (l'original était une page web).
-- La fenêtre du conteneur EScorp montre aussi ton inventaire, se ferme aussi avec Échap, B ou Fermer et se manie au clavier
+- La fenêtre du conteneur ESCorp montre aussi ton inventaire, se ferme aussi avec Échap, B ou Fermer et se manie au clavier
   et à la manette (tant qu'elle est ouverte, les flèches déplacent sa sélection et pas le joueur). Son contenu est gardé dans
   la partie (dans l'original, sur le serveur) et tombe au sol quand on le casse.
 - La boutique du robot marchand (dans l'original, c'était un panneau web), son vaisseau sur la carte stellaire et la flèche
@@ -118,6 +118,9 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
   une vérification l'empêchait de se déclencher. L'explosion laisse la roche mère (couche 0) en place (l'original l'enlevait
   aussi), la bombe n'explose pas dans le hangar et elle projette 8 éclats par bloc au lieu de 75 pour que le jeu ne se
   fige pas.
+- Le fondu d'écran de la bombe antique ne clignote plus (changement du port, pour les personnes épileptiques) : dans une
+  chaîne ou avec plusieurs bombes à la suite, il se prolonge au lieu de repartir et ne remonte qu'une fois par seconde au
+  plus (l'original flashait en rouge et blanc à chaque bombe).
 - Les textures lointaines utilisent des mipmaps comme l'original, mais les plantes ne s'effacent pas avec la distance et chaque
   bloc lointain garde sa couleur (dans l'original, les plantes fines disparaissaient de loin et, plus loin encore, les textures
   voisines se mélangeaient).

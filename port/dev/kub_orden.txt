@@ -1,0 +1,27 @@
+# orden de la base de datos ESCorp: fichas por planeta (el primero de la pestana Espacio donde salen) y dentro como en
+# esa pestana (tierra, roca, madera, follaje, plantas...), luego cometas, anomalias, lo fabricado en el orden de sus recetas,
+# lo especial (nave, nave nodriza) y los kubes en el orden de los datos. Recetas por grupos: madera, piedra, nave, vidrio y
+# luz, agregados, hierro y aparatos, cargas. print kuborder lo da en texto; capturas de la cuadricula y de las recetas.
+# -Extra "--lang=fr"
+wait 3
+planet
+wait 20
+kub all
+print kuborder
+kub
+wait 10
+shot kub_orden_todos
+kub nav 0 8
+wait 5
+shot kub_orden_todos2
+kub page 4
+wait 10
+shot kub_orden_fabricados
+kub tab 2
+wait 10
+shot kub_orden_recetas
+kub close
+wait 5
+setlang en
+print kuborder
+quit

@@ -1,0 +1,32 @@
+# Base de datos ESCorp con fichas nuevas: su casilla lleva la marca de lo nuevo (KubDraw.fresh, mush_recent.png metida en el .hl
+# con -resource). A game_dx.hxml le faltaba esa linea: en la version DirectX el juego se cerraba al abrir la base de datos
+# ("Resource not found 'mush_recent.png'", sin capturar). Se abre como el jugador, desde el ordenador de a bordo con el teclado
+# (las teclas las procesa el juego, fuera del try de cada orden del guion: sin la marca, el proceso se cierra y no sale "abierta").
+# Esperado: "kub: ... panel=pestana 0" y las capturas con las marcas. Version DirectX: haxe port\game_dx.hxml y galaxy55_dx.hl.
+wait 3
+ship
+wait 10
+kub got BCoal
+kub got BMarsRock
+print kub
+computer
+wait 5
+# Despegar, Pilotar la nave, Modificar la nave, Base de datos ESCorp
+tap down
+wait 3
+tap down
+wait 3
+tap down
+wait 3
+print menu
+tap enter
+wait 10
+print kub
+shot kub_nuevo
+kub pick BCoal
+wait 5
+print kub
+shot kub_nuevo_ficha
+kub close
+wait 3
+quit

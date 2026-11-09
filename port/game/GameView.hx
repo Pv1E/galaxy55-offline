@@ -16,6 +16,9 @@ typedef Select = {
 	var power : Float;
 }
 
+/** fundido de color de pantalla (GameView.fadeFX) */
+typedef FadeFX = { t : Float, col : Int, speed : Float, alpha : Null<Float -> Float>, done : Void -> Void, lock : Bool, dz : Float };
+
 /**
 	Una partida en curso: el jugador en primera persona sobre un World.
 
@@ -126,7 +129,7 @@ class GameView {
 	/** fundido de color de pantalla (Game.fadeFX): golpe en rojo, curacion en azul, muerte en rojo y Mayus+K en blanco hasta
 	    volver a la nave. t va de 0 a 1 (+ tmod * speed / 200); alpha(t) da la opacidad (null = t); lock: sin controles mientras dura;
 	    dz: cuanto bajan los ojos al acabar (negativo: suben) */
-	public var fadeFX : { t : Float, col : Int, speed : Float, alpha : Null<Float -> Float>, done : Void -> Void, lock : Bool, dz : Float };
+	public var fadeFX : FadeFX;
 
 	public inline function onGround() return standingBlock != null;
 	var s3d : h3d.scene.Scene;
@@ -1314,9 +1317,44 @@ class GameView {
 	}
 
 	/**
+	 * Cambio del port (epilepsia, WCAG 2.3.1: no mas de 3 destellos por segundo): fundido de la bomba antigua. En el original
+	 * cada explosion empezaba otro fundido casi opaco, rojo cerca y blanco lejos, con un parpadeo al azar en cada imagen; en
+	 * una cadena (una bomba por imagen) la pantalla pasaba de rojo a blanco y vuelta en cada imagen. Ahora no
+	 * parpadea, y una explosion con el fundido de otra en curso no lo relanza: lo alarga desde la opacidad que tiene, con el
+	 * mismo color (2.5 s mas de bajada, sin subir). Solo vuelve a subir si hace BOMB_FLASH_GAP que subio, y entonces se
+	 * queda con el color mas rojo de los dos: como mucho un destello por segundo, sea cual sea el numero de bombas.
+	 */
+	static inline var BOMB_FLASH_GAP = 1.;
+	/** opacidad al subir: la media del parpadeo del original (0.9 a 1) */
+	static inline var BOMB_FLASH_PEAK = 0.95;
+	/** fundido de la ultima explosion (es fadeFX mientras dura) y cuando subio por ultima vez (playSeconds) */
+	var bombFade : FadeFX;
+	var bombFlashTime = -1000.;
+
+	/** prev: el fundido de bomba en curso antes del golpe de esta explosion (null si no lo habia) */
+	function bombFlash( pow : Float, prev : FadeFX ) {
+		// tras hit(): el fundido de antes, el del golpe o el de la muerte, del que se conservan el bloqueo, los ojos (dz) y
+		// la vuelta a la nave del final
+		var cur = fadeFX;
+		var gb = Std.int(255 * (1 - (pow < 0 ? 0 : pow)));
+		var col = 0xFF0000 | (gb << 8) | gb, peak = BOMB_FLASH_PEAK;
+		// sin fundido de bomba en curso, la ultima subida fue hace 2.5 s o mas (lo que dura, y cada explosion lo alarga): sube
+		var rise = prev == null || playSeconds - bombFlashTime >= BOMB_FLASH_GAP;
+		if( rise ) {
+			bombFlashTime = playSeconds;
+			if( prev != null && (prev.col & 0xFF) < gb ) col = prev.col;
+		} else {
+			peak = prev.alpha(prev.t);
+			col = prev.col;
+		}
+		bombFade = fadeFX = { t : 0., col : col, speed : 2.5, alpha : t -> peak * (1 - t),
+			lock : cur != null && cur.lock, dz : cur != null ? cur.dz : 0., done : cur != null ? cur.done : function() {} };
+	}
+
+	/**
 	 * Process.onActivate (BArtiBomb): dano de 20 (en el borde) a 150 (en el centro), temblor a 1, fundido de blanco (en el
-	 * borde) a rojo (en el centro), y vacia una esfera de radio 8 sin soltar nada. Al activarla se explota; si se excava
-	 * hasta el final se recoge, como cualquier bloque (Game.checkToggle / checkAction).
+	 * borde) a rojo (en el centro; ver bombFlash), y vacia una esfera de radio 8 sin soltar nada. Al activarla se explota; si
+	 * se excava hasta el final se recoge, como cualquier bloque (Game.checkToggle / checkAction).
 	 */
 	function explodeBomb( x : Int, y : Int, z : Int ) {
 		var ray = 8;
@@ -1325,12 +1363,11 @@ class GameView {
 		var dmg = Math.ceil(130 * pow) + 20;
 		// fuera de su alcance (solo en cadena) ni golpe ni fundido: con el dano negativo el original curaria
 		if( dmg > 0 ) {
+			var prev = fadeFX != null && fadeFX == bombFade ? fadeFX : null;
+			// cambio del port: si ya se esta volviendo a la nave (muerto), el fundido de la muerte sigue sin relanzarse
+			var dying = fadeFX != null && fadeFX.lock;
 			hit(dmg);
-			// conserva el final del fundido anterior (morir: volver a la nave)
-			var old = fadeFX;
-			var gb = Std.int(255 * (1 - (pow < 0 ? 0 : pow)));
-			fadeFX = { t : 0., col : 0xFF0000 | (gb << 8) | gb, speed : 2.5, alpha : t -> (Math.random() * 0.1 + 0.9) * (1 - t),
-				lock : old != null && old.lock, dz : old != null ? old.dz : 0., done : old != null ? old.done : function() {} };
+			if( !dying ) bombFlash(pow, prev);
 		}
 		shake = 1;
 		for( dx in -ray...ray )

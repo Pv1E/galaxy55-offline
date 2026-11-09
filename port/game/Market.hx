@@ -72,7 +72,9 @@ class Market {
 		set(3, "BWoodPlank BWoodPlate BWoodColumn");
 		set(4, "BGlass");
 		set(6, "BWoodWindow");
-		set(12, "BRockWall BRockWallSquare BHardRockColumn BHardRockWall BMoonRockColumn BMoonLightColumn BVineColumn BMarsWall BWinterWall BAcidWall BLight BLamp");
+		// la columna de roca sale 2 por 2 roshs (4): a 12 se revendia por mas de lo que cuestan
+		set(8, "BRockColumn");
+		set(12, "BRockWall BRockWallSquare BHardRockColumn BHardRockWall BHardRockWallSquare BMoonRockColumn BMoonLightColumn BVineColumn BMarsWall BWinterWall BWinterWallSquare BAcidWall BAcidWallSquare BLight BLamp");
 		set(15, "BShiningWoodPlank");
 		set(22, "BIronLight");
 		set(25, "BStainEmpty BStainPurple BStainRed BStainWhite BStainOrange BStainGreen BWoodScrew");
@@ -122,8 +124,7 @@ class Market {
 		// tintes en bruto y minerales
 		"BRawRed", "BRawPurple", "BRawWhite", "BRawOrange", "BRawGreen", "BMarsRockFossil", "BMarsCactusFossil", "BCoalHot",
 		"BMinIron", "BMinAluminium", "BYellowCrystalDense", "BBlueCrystalDense", "BBlackIceLight", "BBlackLight", "BLava",
-		// construccion (BRockColumn y los zocalos de rouge'rosh, roca blanda y escarcha los anade la PR de las recetas: hasta
-		// entonces no hacen nada)
+		// construccion
 		"BWoodPlate", "BWoodWindow", "BWoodColumn", "BRockColumn", "BHardRockColumn", "BMoonRockColumn", "BMoonLightColumn",
 		"BVineColumn", "BStainEmpty", "BStainRed", "BGlass", "BIronFence", "BLight", "BIronLight", "BJumper", "BCascadeSource",
 		// muros y zocalos: se fabrican con la roca (el contrato de muros de rouge'rosh, ademas, paga las cargas azules que

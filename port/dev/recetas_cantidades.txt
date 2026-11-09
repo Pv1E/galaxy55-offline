@@ -1,0 +1,186 @@
+# cantidades de las recetas: 8 fer = un conteneur EScorp, un bois = 4 planches, l'oeil de Grozarb = 2 lumine + 2 planches (dos resultados), 2 rosh = 2
+# colonnes en rosh, 8 rouge'rosh / roches douces / roches du frimas = 2 carrelages, 2 lunimeuses mortes = 2 troncs de lunimeuse, 4 planches = 4 dalles.
+# Cada receta se pone en la zona (si el inventario no tiene esos bloques se gasta la zona): print msg dice lo que da, print drops
+# lo que suelta el ordenador y print inv lo recogido. Despues la Base de datos ESCorp: la ficha del ojo de Grozarb (receta con sus
+# dos resultados), la del carrelage en rouge'rosh y la pestana Recetas. Capturas port/out/recetas_*.png. -Extra "--lang=fr"
+wait 3
+ship
+wait 10
+tpl 62.5 63.5 3.0 3.14 -0.45
+wait 5
+print inv
+# 8 fer (deux couches de 2x2) -> conteneur EScorp; el inventario tiene fer: se gasta ese y la zona queda, se vacia a mano
+setl 59 62 3 BIron
+setl 60 62 3 BIron
+setl 59 63 3 BIron
+setl 60 63 3 BIron
+setl 59 62 4 BIron
+setl 60 62 4 BIron
+setl 59 63 4 BIron
+setl 60 63 4 BIron
+wait 5
+print msg
+shot recetas_zona_conteneur
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 60 62 3 none
+setl 59 63 3 none
+setl 60 63 3 none
+setl 59 62 4 none
+setl 60 62 4 none
+setl 59 63 4 none
+setl 60 63 4 none
+wait 5
+# 1 bois -> 4 planches
+setl 59 62 3 BWood
+wait 5
+print msg
+shot recetas_zona_bois
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+# oeil de Grozarb -> 2 lumine + 2 planches
+setl 59 62 3 BAcidWoodBubble
+wait 5
+print msg
+shot recetas_zona_oeil
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+# 2 rosh l'un sur l'autre -> 2 colonnes en rosh
+setl 59 62 3 BRock
+setl 59 62 4 BRock
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+# 8 rouge'rosh (deux couches de 2x2) -> 2 carrelages en rouge'rosh
+setl 59 62 3 BHardRock
+setl 60 62 3 BHardRock
+setl 59 63 3 BHardRock
+setl 60 63 3 BHardRock
+setl 59 62 4 BHardRock
+setl 60 62 4 BHardRock
+setl 59 63 4 BHardRock
+setl 60 63 4 BHardRock
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+# 8 roches douces (deux couches de 2x2) -> 2 carrelages de roche douce
+setl 59 62 3 BAcidRock
+setl 60 62 3 BAcidRock
+setl 59 63 3 BAcidRock
+setl 60 63 3 BAcidRock
+setl 59 62 4 BAcidRock
+setl 60 62 4 BAcidRock
+setl 59 63 4 BAcidRock
+setl 60 63 4 BAcidRock
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+# 8 roches du frimas (deux couches de 2x2) -> 2 carrelages du frimas
+setl 59 62 3 BWinterRock
+setl 60 62 3 BWinterRock
+setl 59 63 3 BWinterRock
+setl 60 63 3 BWinterRock
+setl 59 62 4 BWinterRock
+setl 60 62 4 BWinterRock
+setl 59 63 4 BWinterRock
+setl 60 63 4 BWinterRock
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+# 2 lunimeuses mortes l'une sur l'autre -> 2 troncs de lunimeuse
+setl 59 62 3 BMoonLightDead
+setl 59 62 4 BMoonLightDead
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+# 4 planches en carre -> 4 dalles en bois
+setl 59 62 3 BWoodPlank
+setl 60 62 3 BWoodPlank
+setl 59 63 3 BWoodPlank
+setl 60 63 3 BWoodPlank
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+# los bloques nuevos puestos en la nave: la colonne en rosh y, en la fila de atras, los tres carrelages nuevos
+setl 59 62 3 BRockColumn
+setl 59 62 4 BRockColumn
+setl 59 63 3 BHardRockWallSquare
+setl 59 63 4 BAcidWallSquare
+setl 60 63 4 BWinterWallSquare
+wait 10
+shot recetas_bloques_nuevos
+setl 59 62 3 none
+setl 59 62 4 none
+setl 59 63 3 none
+setl 59 63 4 none
+setl 60 63 4 none
+wait 5
+# Base de datos ESCorp
+kub all
+kub
+wait 10
+kub pick BAcidWoodBubble
+wait 10
+shot recetas_kub_oeil
+kub pick BHardRockWallSquare
+wait 10
+shot recetas_kub_carrelage
+kub pick BAcidWallSquare
+wait 10
+shot recetas_kub_carrelage_douce
+kub pick BWinterWallSquare
+wait 10
+shot recetas_kub_carrelage_frimas
+kub pick BRockColumn
+wait 10
+shot recetas_kub_colonne
+kub pick BChest
+wait 10
+shot recetas_kub_conteneur
+kub tab 2
+wait 10
+shot recetas_kub_recetas
+kub close
+wait 5
+# paleta del modo creativo: los dos bloques nuevos tras los de Galaxy 55, antes de los kubes
+creative
+palette 1
+wait 5
+shot recetas_paleta
+close
+wait 5
+quit

@@ -11,6 +11,7 @@
 -lib hlopenal
 -lib hldx
 -D haxe3
+-resource src/G55/fla/client/gfx/mush_recent.png@mush_recent.png
 -main GalaxyApp
 -hl port/out/galaxy55_dx.hl
 -D hl-ver=1.16.0
