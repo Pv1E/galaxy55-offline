@@ -63,8 +63,9 @@ class Market {
 		set(20, "BRaw BRawRed BRawPurple BRawWhite BRawOrange BRawGreen BMarsRockFossil BMarsCactusFossil BCoalHot");
 		set(35, "BMinIron BMinAluminium BYellowCrystalDense BBlueCrystalDense BBlackIceLight BBlackLight");
 		set(60, "BYellowCrystalLight BBlueCrystalLight BLava");
-		// construccion (fabricado)
-		set(12, "BWoodPlank BWoodPlate BWoodColumn BWoodWindow BRockWall BRockWallSquare BHardRockColumn BHardRockWall BMoonRockColumn BMoonLightColumn BVineColumn BMarsWall BWinterWall BAcidWall");
+		// construccion (fabricado). La columna de roca sale 2 por 2 roshs (4): a 12 se revendia por mas de lo que cuestan
+		set(8, "BRockColumn");
+		set(12, "BWoodPlank BWoodPlate BWoodColumn BWoodWindow BRockWall BRockWallSquare BHardRockColumn BHardRockWall BHardRockWallSquare BMoonRockColumn BMoonLightColumn BVineColumn BMarsWall BWinterWall BWinterWallSquare BAcidWall BAcidWallSquare");
 		set(25, "BStainEmpty BStainPurple BStainRed BStainWhite BStainOrange BStainGreen BShiningWoodPlank BWoodScrew BGlass");
 		set(50, "BIron BAluminium BIronFence BLight BLamp BIronLight BJumper BCascadeSource BFreezer");
 		// nave y aparatos

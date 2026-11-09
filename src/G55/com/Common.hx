@@ -322,6 +322,11 @@ enum BlockKind {
 	BKubeMtwin;
 	BKubeCrate;
 	BKubeNoel;
+	// anadidos del port, al final para no mover los numeros guardados en las partidas
+	BRockColumn;
+	BHardRockWallSquare;
+	BAcidWallSquare;
+	BWinterWallSquare;
 }
 
 enum BlockModel {
@@ -479,6 +484,9 @@ typedef CraftRule = {
 	var schema : Array<CraftSchema>;
 	var out : BlockKind;
 	var count : Null<Int>;
+	/** segundo resultado (anadido del port: el ojo de Grozarb da lumine y planchas) y cuantos da; null = ninguno */
+	@:optional var extra : Null<BlockKind>;
+	@:optional var extraCount : Null<Int>;
 }
 
 class Data {
@@ -521,6 +529,13 @@ class Data {
 			if( r.count == null ) r.count = 1;
 		c.sort(function(r1, r2) return r1.id - r2.id);
 		c;
+	}
+
+	/** lo que da una receta: su resultado y, si lo tiene, el segundo (extra), con cuantos de cada uno */
+	public static function craftOutputs( r : CraftRule ) : Array<{ k : BlockKind, n : Int }> {
+		var l = [{ k : r.out, n : r.count == null ? 1 : r.count }];
+		if( r.extra != null ) l.push({ k : r.extra, n : r.extraCount == null ? 1 : r.extraCount });
+		return l;
 	}
 }
 

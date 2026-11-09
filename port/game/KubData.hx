@@ -112,7 +112,7 @@ class KubData {
 				if( e != null ) special.set(e.index, true);
 			}
 		for( r in Data.CRAFT ) {
-			add(makes, entryOf(Block.get(r.out)), r);
+			for( o in Data.craftOutputs(r) ) add(makes, entryOf(Block.get(o.k)), r);
 			for( e in recipeBlocks(r, false) ) add(usedIn, e, r);
 		}
 	}
@@ -178,16 +178,26 @@ class KubData {
 		return l == null ? [] : l;
 	}
 
-	/** fichas de una receta: sus ingredientes y, con out, el resultado */
+	/** fichas de una receta: sus ingredientes y, con out, sus resultados */
 	public function recipeBlocks( r : CraftRule, out = true ) : Array<Block> {
 		var l = [];
 		for( s in r.schema ) {
 			var e = entryOf(Block.get(switch( s ) { case CSSingle(b), CSBase(b, _), CSLine(b, _): b; }));
 			if( e != null && l.indexOf(e) < 0 ) l.push(e);
 		}
-		var o = entryOf(Block.get(r.out));
-		if( out && o != null && l.indexOf(o) < 0 ) l.push(o);
+		if( out )
+			for( k in Data.craftOutputs(r) ) {
+				var o = entryOf(Block.get(k.k));
+				if( o != null && l.indexOf(o) < 0 ) l.push(o);
+			}
 		return l;
+	}
+
+	/** cuantos de la ficha da una vez la receta (0 si no la da) */
+	public function recipeGives( r : CraftRule, e : Block ) : Int {
+		var n = 0;
+		for( o in Data.craftOutputs(r) ) if( entryOf(Block.get(o.k)) == e ) n += o.n;
+		return n;
 	}
 
 	public function has( e : Block, c : KubCat ) : Bool {

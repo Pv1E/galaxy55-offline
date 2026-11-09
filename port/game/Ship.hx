@@ -440,7 +440,7 @@ class Ship {
 		var bl = c.engine.getBlocks(false);
 		for( b in bl ) text.push(b.n + "x " + b.b.getName());
 		if( bl.length > 0 )
-			text.push(" = " + (refused ? TutoText.get("craftonly") : r != null ? (r.count != null && r.count > 1 ? r.count + " x " : "") + Block.get(r.out).getName() : Lang.t("craft.norecipe")));
+			text.push(" = " + (refused ? TutoText.get("craftonly") : r != null ? [for( o in Data.craftOutputs(r) ) (o.n > 1 ? o.n + " x " : "") + Block.get(o.k).getName()].join(" + ") : Lang.t("craft.norecipe")));
 		c.curText = text.length == 0 ? null : text.join("
 ");
 	}
@@ -501,14 +501,13 @@ class Ship {
 					g.removeShipBlock(x, y, z, b.b);
 				}
 		}
-		var out = Block.get(cur.out);
-		var n = cur.count != null ? cur.count : 1;
 		Kubindex.crafted(g.info, cur);
 		var p = outPos(c);
-		for( i in 0...n ) {
-			var d = g.drops.add(p.x, p.y, p.z, out);
-			d.delay = 30;
-		}
+		for( o in Data.craftOutputs(cur) )
+			for( i in 0...o.n ) {
+				var d = g.drops.add(p.x, p.y, p.z, Block.get(o.k));
+				d.delay = 30;
+			}
 	}
 
 	// ---------------------------------------------------------------- imagenes de la nave para el mapa (r3d.Capture)

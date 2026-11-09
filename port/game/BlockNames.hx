@@ -89,6 +89,9 @@ class BlockNames {
 		"BKubeShade" => "Shade", "BKubeLight" => "Light", "BKubeGold" => "Gold", "BKubeMessage" => "Forum", "BKubeTeleport" => "Teleport",
 		"BKubeJump" => "Spring", "BKubeChest" => "Chest", "BKubeMulticol" => "Rubix", "BKubeMtwin" => "Motion Twin", "BKubeCrate" => "Crate",
 		"BKubeNoel" => "Christmas Kube",
+		// anadidos del port, como sus parejas (Rock Tiles, HardRoq Column)
+		"BRockColumn" => "Rock Column", "BHardRockWallSquare" => "HardRoq Tiles",
+		"BAcidWallSquare" => "Soft Rock Tiles", "BWinterWallSquare" => "Frost Tiles",
 	];
 
 	/** espanol: lo que falta en NamesGen.ES (bloques anadidos despues) y alguna correccion */
@@ -128,6 +131,9 @@ class BlockNames {
 		"BKubeSaphir" => "Zafiro", "BKubeFog" => "Niebla", "BKubeShade" => "Sombra", "BKubeLight" => "Luz", "BKubeGold" => "Oro",
 		"BKubeMessage" => "Foro", "BKubeTeleport" => "Teletransporte", "BKubeJump" => "Muelle", "BKubeChest" => "Cofre",
 		"BKubeMulticol" => "Rubix", "BKubeMtwin" => "Motion Twin", "BKubeCrate" => "Caja", "BKubeNoel" => "Kube de Navidad",
+		// anadidos del port, como sus parejas (Zocalo de piedra, Pilar de volcanita)
+		"BRockColumn" => "Pilar de piedra", "BHardRockWallSquare" => "Zócalo de volcanita",
+		"BAcidWallSquare" => "Zócalo de roca ácida", "BWinterWallSquare" => "Zócalo de escarcha",
 	];
 
 	/** frances: los bloques anadidos despues y algun cambio (BChest: en DataGen "Cantine de l'EScorp") */
