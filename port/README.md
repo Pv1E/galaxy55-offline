@@ -102,8 +102,10 @@ A player got it running on Linux this way; we have not tested it.
 - The merchant robot's shop (the original was a web panel), its ship on the star map and the orange GPS arrow pointing to it
   are additions of this port.
 - ESCorp contracts (on-board computer > Contracts) are an addition of this port (in the original they came from the server;
-  only the list of trivial blocks for the base contracts survives). They are edited in `contracts.json`. Starting credits
-  are 200 and arrive at the end of the tutorial (before: 500 from the start).
+  only the list of trivial blocks for the base contracts survives). They are edited in `contracts.json`. With only part of
+  the blocks you give what you have and the contract stays in progress: it no longer expires, takes one line of the board
+  and only goes away once finished or abandoned (with confirmation; the blocks given are lost). Starting credits are 200
+  and arrive at the end of the tutorial (before: 500 from the start).
 - Lava makes the ancient bomb explode (port change): the original broke and dropped it, as water still does.
 - ESCorp exploration licenses are an addition of this port (in the original the server handled them): in adventure you can
   scan 4 planets (1 main and 3 exploration) and the ship can only be piloted over the main one.

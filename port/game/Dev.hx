@@ -51,7 +51,11 @@ import Common;
  *                           dice cuantas veces subio (destellos) y cuantas como mucho en un segundo (WCAG 2.3.1: 3)
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
  *   contracts [close]       abrir y cerrar los contratos de la ESCorp; contracts slot N impone el periodo (-1 = la hora real);
- *                           contracts fill i da los bloques del contrato i; deliver i lo entrega; print contracts;
+ *                           contracts fill i [n] da n bloques (todos) del contrato i del tablero, contracts fill a J [n] los que
+ *                           faltan (o n) al contrato en curso J; deliver i da lo que llevas a la linea i (todo: entregado; parte:
+ *                           queda en curso), deliver a J al contrato en curso J; contracts abandon J lo abandona (con el panel
+ *                           abierto, como su boton: pide confirmacion, button 1 = Si); contracts old los deja como en una
+ *                           partida antigua (sin abandonados ni en curso); contracts empty vacia el inventario; print contracts;
  *                           contracts load RUTA lee otro contracts.json
  *   kub [close|tab N|pick Bloque|page D|nav dx dy]   Base de datos ESCorp (anadido del port): abrirla, cerrarla, pestana, ficha,
  *                           categoria, flechas; kub forget|visit|see Bloque|got Bloque|break Bloque|load RUTA olvidan todo,
@@ -797,8 +801,27 @@ class Dev {
 						var s = Std.parseInt(a[2]);
 						Contracts.devSlot = s < 0 ? null : s;
 					case "fill":
-						var c = Contracts.board(Contracts.slot())[Std.parseInt(a[2])];
-						g.inv.addBlocks(c.block, c.n);
+						// fill i [n]: bloques del contrato i del tablero; fill a J [n]: los que faltan al contrato en curso J
+						if( a[2] == "a" ) {
+							var ac = Contracts.active(g.info)[Std.parseInt(a[3])];
+							g.inv.addBlocks(Contracts.blockOf(ac), a[4] != null ? Std.parseInt(a[4]) : ac.n - ac.given);
+						} else {
+							var c = Contracts.board(Contracts.slot())[Std.parseInt(a[2])];
+							g.inv.addBlocks(c.block, a[3] != null ? Std.parseInt(a[3]) : c.n);
+						}
+					case "abandon":
+						// abandon J: con el panel abierto, su boton Abandonar (confirmacion: button 1 = Si); si no, sin preguntar
+						var ac = Contracts.active(g.info)[Std.parseInt(a[2])];
+						if( app.contracts != null ) app.contracts.askAbandon(ac) else Sys.println("abandon -> " + (ac != null && Contracts.abandon(g.info, ac)));
+					case "empty":
+						// empty: vacia las casillas del inventario (la partida de prueba empieza casi llena), para probar los dones parciales
+						for( k in 0...g.inv.inv.t.length ) g.inv.inv.t[k] = null;
+						g.inv.display();
+					case "old":
+						// old: los contratos como en una partida de antes de los contratos en curso (sin abandonados ni en curso), para
+						// probar que se leen tras savegame y reload
+						var c = Contracts.state(g.info);
+						g.info.contracts = { slot : c.slot, done : c.done };
 					case "load": @:privateAccess Contracts.config = Contracts.load(a[2]);
 					default:
 					}
@@ -859,10 +882,19 @@ class Dev {
 					}
 				case "savegame": @:privateAccess app.saveGame(false); // guardar la partida como F5 (sin aviso)
 				case "deliver":
-					// deliver i: entrega el contrato i (con el panel abierto, como su boton)
-					var i = Std.parseInt(a[1]);
-					var ok = app.contracts != null ? app.contracts.deliver(i) : Contracts.deliver(g.info, g.inv, i);
-					Sys.println("deliver " + i + " -> " + (ok ? "entregado" : "rechazado") + " creditos=" + g.info.credits);
+					// deliver i: da lo que llevas a la linea i del tablero; deliver a J: al contrato en curso J (con el panel abierto, como
+					// su boton)
+					var ok : Bool, what : String;
+					if( a[1] == "a" ) {
+						var ac = Contracts.active(g.info)[Std.parseInt(a[2])];
+						what = "en curso " + a[2];
+						ok = ac != null && (app.contracts != null ? app.contracts.give(ac) : Contracts.give(g.info, g.inv, ac));
+					} else {
+						var i = Std.parseInt(a[1]);
+						what = "" + i;
+						ok = app.contracts != null ? app.contracts.deliver(i) : Contracts.deliver(g.info, g.inv, i);
+					}
+					Sys.println("deliver " + what + " -> " + (ok ? "dado" : "rechazado") + " creditos=" + g.info.credits);
 				case "shopnav": if( app.shop != null ) app.shop.devNav(Std.parseInt(a[1]), Std.parseInt(a[2]), a[3] == "a");
 				case "buy", "sell":
 					// buy CLAVE n / sell CLAVE n (clave de Market: b<bloque> o c<carga>; o el nombre del bloque, p.ej. BWood)
@@ -1113,12 +1145,16 @@ class Dev {
 		case "credits":
 			Sys.println("creditos: " + g.info.credits);
 		case "contracts":
-			// periodo, tablero (bloque, cantidad, recompensa, lo que llevas, entregado), tiempo hasta el siguiente y creditos
-			var board = Contracts.board(Contracts.slot());
+			// periodo, tablero (bloque, cantidad, recompensa, lo que llevas, entregado, abandonado, en curso u oculto por los
+			// contratos en curso), contratos en curso (bloque, dado / pedido, recompensa, periodo y linea de origen), tiempo hasta
+			// el siguiente, creditos y, con el panel abierto, el boton elegido
+			var board = Contracts.board(Contracts.slot()), offered = Contracts.offered(g.info);
 			Sys.println("contratos: periodo " + Contracts.slot() + " | " + [for( i in 0...board.length ) {
 				var c = board[i];
-				i + " " + c.block.k + " x" + c.n + " +" + c.reward + " llevas " + Contracts.have(g.inv, c.block) + (Contracts.isDone(g.info, i) ? " ENTREGADO" : "");
-			}].join(" | ") + " | quedan " + Std.int(Contracts.remaining()) + " s creditos=" + g.info.credits + " panel=" + (app.contracts != null)
+				i + " " + c.block.k + " x" + c.n + " +" + c.reward + " llevas " + Contracts.have(g.inv, c.block) + (Contracts.isDone(g.info, i) ? " ENTREGADO" : "")
+					+ (Contracts.isAbandoned(g.info, i) ? " ABANDONADO" : "") + (Contracts.isActive(g.info, i) ? " EN CURSO" : offered.indexOf(i) < 0 ? " OCULTO" : "");
+			}].join(" | ") + " | en curso: " + [for( ac in Contracts.active(g.info) ) ac.block + " " + ac.given + "/" + ac.n + " +" + ac.reward + " (periodo " + ac.slot + " linea " + ac.index + ")"].join(", ")
+				+ " | quedan " + Std.int(Contracts.remaining()) + " s creditos=" + g.info.credits + " panel=" + (app.contracts == null ? "no" : "si foco " + app.contracts.devFocus() + (app.contracts.paused ? " (confirmando)" : ""))
 				+ " boton=" + (@:privateAccess app.computerContracts == null ? "-" : "" + @:privateAccess app.computerContracts.enabled));
 		case "kub":
 			// Base de datos ESCorp: localizados, recuperados, nuevos, planetas y cometas explorados, recetas fabricadas, estadisticas

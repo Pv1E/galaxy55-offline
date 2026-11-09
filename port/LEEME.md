@@ -96,8 +96,10 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
 - La tienda del robot comerciante (en el original era un panel web), su nave por el mapa de estrellas y la flecha GPS naranja
   que lo señala son un añadido de este port.
 - Los contratos de la ESCorp (ordenador de a bordo > Contratos) son un añadido de este port (en el original los daba el
-  servidor; solo queda la lista de bloques triviales de los contratos de base). Se editan en `contracts.json`. Los créditos
-  de salida son 200 y llegan al acabar el tutorial (antes 500 desde el principio).
+  servidor; solo queda la lista de bloques triviales de los contratos de base). Se editan en `contracts.json`. Con parte de
+  los bloques se dan los que lleves y el contrato queda en curso: ya no caduca, ocupa una línea del tablero y solo se quita
+  terminándolo o abandonándolo (con confirmación; los bloques dados se pierden). Los créditos de salida son 200 y llegan al
+  acabar el tutorial (antes 500 desde el principio).
 - La lava hace explotar la bomba antigua (cambio del port): el original la rompía y la soltaba, como sigue haciendo el agua.
 - Las licencias de exploración de la ESCorp son un añadido de este port (en el original las llevaba el servidor): en aventura
   se escanean 4 planetas (1 principal y 3 de exploración) y la nave solo se pilota sobre el principal.

@@ -105,8 +105,10 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
 - La boutique du robot marchand (dans l'original, c'était un panneau web), son vaisseau sur la carte stellaire et la flèche
   GPS orange qui le désigne sont des ajouts du port.
 - Les contrats ESCorp (ordinateur de bord > Contrats) sont un ajout du port (dans l'original, ils venaient du serveur ; seule
-  reste la liste des blocs triviaux des contrats de base). Ils se modifient dans `contracts.json`. Les crédits de départ sont
-  de 200 et arrivent à la fin du tutoriel (avant : 500 dès le début).
+  reste la liste des blocs triviaux des contrats de base). Ils se modifient dans `contracts.json`. Avec une partie des blocs,
+  on donne ce qu'on a et le contrat reste en cours : il n'expire plus, prend une ligne du tableau et ne part qu'une fois
+  terminé ou abandonné (avec confirmation ; les blocs donnés sont perdus). Les crédits de départ sont de 200 et arrivent à la
+  fin du tutoriel (avant : 500 dès le début).
 - La lave fait exploser la bombe antique (changement du port) : l'original la cassait et la lâchait, comme l'eau le fait toujours.
 - Les licences d'exploration ESCorp sont un ajout du port (dans l'original, le serveur les gérait) : en aventure on scanne
   4 planètes (1 principale et 3 d'exploration) et le vaisseau ne se pilote qu'au-dessus de la principale.

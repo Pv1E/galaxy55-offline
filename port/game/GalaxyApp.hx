@@ -1183,11 +1183,12 @@ class GalaxyApp extends hxd.App {
 		saveGame(false);
 	}
 
-	/** ventana de confirmacion (como askSkip): titulo, aviso (de color col) y No / Si. parent queda inactivo mientras tanto */
-	function askConfirm( parent : Screen, title : String, warn : String, col : Int, onYes : Void -> Void, ?onClose : Void -> Void ) {
+	/** ventana de confirmacion (como askSkip): titulo, aviso (de color col) y No / Si. parent queda inactivo mientras tanto.
+	    host: donde se pone (ui; los paneles que van encima de ui, como los contratos, la ponen en s2d para que se vea) */
+	function askConfirm( parent : Screen, title : String, warn : String, col : Int, onYes : Void -> Void, ?onClose : Void -> Void, ?host : h2d.Object ) {
 		if( modal != null && modal.parent != null ) return;
 		if( parent != null ) parent.active = false;
-		var m = new Screen(ui);
+		var m = new Screen(host != null ? host : ui);
 		var bg = new h2d.Graphics(m);
 		Theme.fullRect(bg, 0x000000, 0.55);
 		Theme.rect(bg, 260, 210, 760, 300, Theme.PANEL, 1);
@@ -2003,8 +2004,18 @@ class GalaxyApp extends hxd.App {
 		if( current != null ) resume();
 		contracts = new ContractPanel(s2d, atlas, game.info, game.inv);
 		contracts.onClose = closeContracts;
+		contracts.onAbandon = askAbandonContract;
 		paletteOpen = true;
 		captureMouse(false);
+	}
+
+	/** boton Abandonar de un contrato en curso: con confirmacion, encima del panel (los bloques ya dados se pierden) */
+	function askAbandonContract( a : Contracts.ActiveContract ) {
+		var p = contracts;
+		if( p == null || (modal != null && modal.parent != null) ) return;
+		p.paused = true;
+		askConfirm(null, Lang.t("contracts.abandon.ask").split("%name%").join(Contracts.blockOf(a).getName()),
+			Lang.t("contracts.abandon.warn").split("%n%").join("" + a.given), Theme.DANGER, function() p.abandon(a), function() p.paused = false, s2d);
 	}
 
 	/** Base de datos ESCorp (DatabasePanel, anadido del port), desde el ordenador de a bordo; en el tutorial es un paso */
@@ -2052,6 +2063,11 @@ class GalaxyApp extends hxd.App {
 		if( contracts == null ) return;
 		contracts.remove();
 		contracts = null;
+		// la confirmacion de abandonar un contrato en curso (askAbandonContract) se va con el panel
+		if( modal != null && modal.parent == s2d ) {
+			modal.remove();
+			modal = null;
+		}
 		paletteOpen = false;
 		if( game != null && state == Playing ) {
 			captureMouse(true);
