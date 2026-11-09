@@ -440,9 +440,15 @@ class Ship {
 		var bl = c.engine.getBlocks(false);
 		for( b in bl ) text.push(b.n + "x " + b.b.getName());
 		if( bl.length > 0 )
-			text.push(" = " + (refused ? TutoText.get("craftonly") : r != null ? [for( o in Data.craftOutputs(r) ) (o.n > 1 ? o.n + " x " : "") + Block.get(o.k).getName()].join(" + ") : Lang.t("craft.norecipe")));
+			text.push(" = " + (refused ? TutoText.get("craftonly") : r != null ? outputText(r) : Lang.t("craft.norecipe")));
 		c.curText = text.length == 0 ? null : text.join("
 ");
+	}
+
+	/** lo que da la receta: "2 x Planches + 2 x Lumine" o, al azar, "Rubis / Saphir / Emeraude / Amethyste (au hasard)" */
+	static function outputText( r : CraftRule ) : String {
+		var l = [for( o in Data.craftOutputs(r) ) (o.n > 1 ? o.n + " x " : "") + Block.get(o.k).getName()];
+		return r.random == null ? l.join(" + ") : Lang.t("craft.random").split("%l%").join(l.join(" / "));
 	}
 
 	/** texto de las recetas cercanas (ShipLogic.checkHero); null si no hay ninguna cerca */
@@ -501,9 +507,11 @@ class Ship {
 					g.removeShipBlock(x, y, z, b.b);
 				}
 		}
-		Kubindex.crafted(g.info, cur);
+		// una receta al azar (Cofre de Kube) se tira aqui, al fabricar: la vista previa solo ensena el Kube misterioso
+		var outs = Data.craftRoll(cur);
+		Kubindex.crafted(g.info, cur, outs);
 		var p = outPos(c);
-		for( o in Data.craftOutputs(cur) )
+		for( o in outs )
 			for( i in 0...o.n ) {
 				var d = g.drops.add(p.x, p.y, p.z, Block.get(o.k));
 				d.delay = 30;

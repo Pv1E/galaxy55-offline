@@ -94,6 +94,7 @@ class KubText {
 		"rc.square" => ["cuadrado %n%×%n%", "%n%×%n% square", "carré %n%×%n%"],
 		"rc.line" => ["línea de %n%", "line of %n%", "ligne de %n%"],
 		"rc.layer" => ["Niv. %n%", "Lvl %n%", "Niv. %n%"],
+		"rc.random" => ["Uno al azar", "One at random", "Un au hasard"],
 	];
 
 	/** texto en el idioma elegido */

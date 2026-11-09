@@ -1,0 +1,362 @@
+# Cofre de Kube en el sintetizador (anadido del port): la vista previa es el Kube misterioso (un "?" sobre las cuatro gemas) y al
+# fabricar sale una gema al azar (Rubis, Saphir, Emeraude o Amethyste, la misma probabilidad). 8 de una misma gema (dos capas de 2x2)
+# dan un Kube Ombre y 8 Kubes Ombre un Kube Teleport. Despues la Base de datos ESCorp: las fichas del cofre, del rubis, de la
+# sombra y del teleport, y la pestana Recetas. Capturas port/out/cofre_*.png. `print roll N` comprueba el reparto en N tiradas.
+# uso: devrun.ps1 -Script port/dev/cofre_kube.txt -Extra "--lang=fr" -Timeout 400
+wait 3
+kub forget
+ship
+wait 10
+tpl 62.5 63.5 3.0 3.14 -0.45
+wait 5
+print inv
+# la partida de prueba empieza con el inventario casi lleno: se vacia para recoger lo fabricado
+contracts empty
+# un Coffre de Kube en la zona: el sintetizador ensena el Kube misterioso; sin cofre en el inventario se gasta el de la zona
+setl 59 62 3 BKubeChest
+wait 10
+print msg
+shot cofre_zona
+# de cerca: el Kube misterioso gira en el ordenador del sintetizador
+tpl 61.5 63.9 3.0
+lookl 61.5 62.5 4.35
+wait 15
+shot cofre_apercu
+tpl 62.5 63.5 3.0 3.14 -0.45
+wait 5
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+print kub
+# la ficha del cofre (aun sin recuperar: nunca paso por el inventario)
+kub
+wait 5
+kub pick BKubeChest
+wait 5
+shot cofre_kub_cofre_aventura
+kub close
+wait 3
+# reparto: 40 cofres del inventario (la zona queda de plantilla)
+setl 59 62 3 BKubeChest
+give BKubeChest 40
+wait 5
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+activatel 61 62 4
+wait 2
+wait 200
+print inv
+print kub
+setl 59 62 3 none
+wait 5
+# 8 BKubeRubis (deux couches de 2x2) -> un Kube Ombre
+give BKubeRubis 8
+setl 59 62 3 BKubeRubis
+setl 60 62 3 BKubeRubis
+setl 59 63 3 BKubeRubis
+setl 60 63 3 BKubeRubis
+setl 59 62 4 BKubeRubis
+setl 60 62 4 BKubeRubis
+setl 59 63 4 BKubeRubis
+setl 60 63 4 BKubeRubis
+wait 5
+print msg
+shot cofre_zona_rubis
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 60 62 3 none
+setl 59 63 3 none
+setl 60 63 3 none
+setl 59 62 4 none
+setl 60 62 4 none
+setl 59 63 4 none
+setl 60 63 4 none
+wait 5
+# 8 BKubeSaphir (deux couches de 2x2) -> un Kube Ombre
+give BKubeSaphir 8
+setl 59 62 3 BKubeSaphir
+setl 60 62 3 BKubeSaphir
+setl 59 63 3 BKubeSaphir
+setl 60 63 3 BKubeSaphir
+setl 59 62 4 BKubeSaphir
+setl 60 62 4 BKubeSaphir
+setl 59 63 4 BKubeSaphir
+setl 60 63 4 BKubeSaphir
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 60 62 3 none
+setl 59 63 3 none
+setl 60 63 3 none
+setl 59 62 4 none
+setl 60 62 4 none
+setl 59 63 4 none
+setl 60 63 4 none
+wait 5
+# 8 BKubeEmeraude (deux couches de 2x2) -> un Kube Ombre
+give BKubeEmeraude 8
+setl 59 62 3 BKubeEmeraude
+setl 60 62 3 BKubeEmeraude
+setl 59 63 3 BKubeEmeraude
+setl 60 63 3 BKubeEmeraude
+setl 59 62 4 BKubeEmeraude
+setl 60 62 4 BKubeEmeraude
+setl 59 63 4 BKubeEmeraude
+setl 60 63 4 BKubeEmeraude
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 60 62 3 none
+setl 59 63 3 none
+setl 60 63 3 none
+setl 59 62 4 none
+setl 60 62 4 none
+setl 59 63 4 none
+setl 60 63 4 none
+wait 5
+# 8 BKubeAmethyste (deux couches de 2x2) -> un Kube Ombre
+give BKubeAmethyste 8
+setl 59 62 3 BKubeAmethyste
+setl 60 62 3 BKubeAmethyste
+setl 59 63 3 BKubeAmethyste
+setl 60 63 3 BKubeAmethyste
+setl 59 62 4 BKubeAmethyste
+setl 60 62 4 BKubeAmethyste
+setl 59 63 4 BKubeAmethyste
+setl 60 63 4 BKubeAmethyste
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 60 62 3 none
+setl 59 63 3 none
+setl 60 63 3 none
+setl 59 62 4 none
+setl 60 62 4 none
+setl 59 63 4 none
+setl 60 63 4 none
+wait 5
+# 8 Kubes Ombre -> un Kube Teleport
+give BKubeShade 8
+setl 59 62 3 BKubeShade
+setl 60 62 3 BKubeShade
+setl 59 63 3 BKubeShade
+setl 60 63 3 BKubeShade
+setl 59 62 4 BKubeShade
+setl 60 62 4 BKubeShade
+setl 59 63 4 BKubeShade
+setl 60 63 4 BKubeShade
+wait 5
+print msg
+shot cofre_zona_ombre
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 60 62 3 none
+setl 59 63 3 none
+setl 60 63 3 none
+setl 59 62 4 none
+setl 60 62 4 none
+setl 59 63 4 none
+setl 60 63 4 none
+wait 5
+# Base de datos ESCorp, en aventura: la ficha del rubis (fabricados por el cofre)
+kub
+wait 5
+kub pick BKubeRubis
+wait 5
+shot cofre_kub_rubis_aventura
+kub close
+savegame
+wait 5
+# la partida guardada conserva lo que dio el cofre (KubStat.r)
+reload
+wait 40
+print kub
+# todo recuperado
+kub all
+kub
+wait 10
+kub pick BKubeChest
+wait 10
+shot cofre_kub_cofre
+kub pick BKubeRubis
+wait 10
+shot cofre_kub_rubis
+kub pick BKubeShade
+wait 10
+shot cofre_kub_ombre
+kub pick BKubeTeleport
+wait 10
+shot cofre_kub_teleport
+kub tab 2
+wait 10
+# hasta el final de la lista: las recetas de kubes van las ultimas (kubindex.json recipeOrder)
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+kub nav 0 1
+wait 10
+shot cofre_kub_recetas
+kub close
+wait 5
+print kuborder
+print kubdata
+print wares
+print roll 100000
+quit

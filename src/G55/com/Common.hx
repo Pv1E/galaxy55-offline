@@ -327,6 +327,9 @@ enum BlockKind {
 	BHardRockWallSquare;
 	BAcidWallSquare;
 	BWinterWallSquare;
+	// lo que ensena el sintetizador antes de fabricar una receta al azar (CraftRule.random): un kube con un "?" sobre las cuatro
+	// gemas. No se puede tener: ni en la paleta, ni en la tienda, ni en la base de datos (kubindex.json hidden)
+	BKubeMystery;
 }
 
 enum BlockModel {
@@ -487,6 +490,11 @@ typedef CraftRule = {
 	/** segundo resultado (anadido del port: el ojo de Grozarb da lumine y planchas) y cuantos da; null = ninguno */
 	@:optional var extra : Null<BlockKind>;
 	@:optional var extraCount : Null<Int>;
+	/**
+	 * resultado al azar (anadido del port: el Cofre de Kube da una de las cuatro gemas): uno de estos, todos con la misma
+	 * probabilidad, count veces; out es solo lo que ensena el sintetizador antes de fabricar (BKubeMystery). null = fijo
+	 */
+	@:optional var random : Null<Array<BlockKind>>;
 }
 
 class Data {
@@ -531,11 +539,21 @@ class Data {
 		c;
 	}
 
-	/** lo que da una receta: su resultado y, si lo tiene, el segundo (extra), con cuantos de cada uno */
+	/**
+	 * lo que da una receta: su resultado y, si lo tiene, el segundo (extra), con cuantos de cada uno. Si es al azar, cada uno
+	 * de los que puede dar (cada vez sale uno solo: craftRoll)
+	 */
 	public static function craftOutputs( r : CraftRule ) : Array<{ k : BlockKind, n : Int }> {
+		if( r.random != null ) return [for( k in r.random ) { k : k, n : r.count == null ? 1 : r.count }];
 		var l = [{ k : r.out, n : r.count == null ? 1 : r.count }];
 		if( r.extra != null ) l.push({ k : r.extra, n : r.extraCount == null ? 1 : r.extraCount });
 		return l;
+	}
+
+	/** lo que sale al fabricar una vez la receta: craftOutputs o, si es al azar, uno de sus resultados */
+	public static function craftRoll( r : CraftRule ) : Array<{ k : BlockKind, n : Int }> {
+		if( r.random == null ) return craftOutputs(r);
+		return [{ k : r.random[Std.random(r.random.length)], n : r.count == null ? 1 : r.count }];
 	}
 }
 

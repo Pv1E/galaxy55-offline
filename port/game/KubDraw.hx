@@ -11,6 +11,8 @@ class KubDraw {
 	public static inline var ITEM_W = 140;
 	public static inline var ITEM_H = 64;
 	static inline var ARROW_W = 28;
+	/** ancho de cada resultado posible de una receta al azar: los cuatro caben donde van dos resultados normales */
+	static inline var CHOICE_W = 70;
 	/** alto de una linea de receta (con la etiqueta del nivel encima) */
 	public static inline var RECIPE_H = 82;
 
@@ -90,6 +92,15 @@ class KubDraw {
 		g.lineTo(x + ARROW_W - 10, ay + 8);
 		g.endFill();
 		x += ARROW_W;
+		// al azar (Cofre de Kube): los que puede dar, en pequeno, bajo "Uno al azar"
+		if( r.random != null ) {
+			Theme.text(parent, KubText.get("rc.random"), 1.05, Theme.DIM, x + 2, 0);
+			for( o in Data.craftOutputs(r) ) {
+				choice(parent, Block.get(o.k), info, atlas, x, 16, onPick, box);
+				x += CHOICE_W;
+			}
+			return x;
+		}
 		// sus resultados uno tras otro (el ojo de Grozarb da dos: lumine y planchas)
 		for( o in Data.craftOutputs(r) ) {
 			item(parent, Block.get(o.k), o.n, "", info, atlas, x, 16, onPick, box);
@@ -126,6 +137,28 @@ class KubDraw {
 		if( st == Unknown && e != null ) fit(Theme.text(o, KubData.get().placeShort(info, e), 1.05, Theme.CYAN, tx, ly), tw);
 		if( e != null && st != Unknown && (!charge || Kubindex.known(info, e)) && onPick != null ) {
 			var it = new h2d.Interactive(ITEM_W - 6, ITEM_H, o);
+			it.onClick = function(_) if( box == null || box.mouseIn() ) onPick(e);
+		}
+	}
+
+	/** uno de los resultados posibles de una receta al azar: su icono y, debajo, su nombre (o "???") */
+	static function choice( parent : h2d.Object, b : Block, info : SaveInfo, atlas : h3d.mat.Texture, x : Float, y : Float,
+			onPick : Block -> Void, box : KubScroll ) {
+		var o = new h2d.Object(parent);
+		o.setPosition(x, y);
+		var g = new h2d.Graphics(o);
+		var e = KubData.get().entryOf(b);
+		var st = e == null ? Unknown : Kubindex.state(info, e);
+		var w = CHOICE_W - 4, size = 36;
+		Theme.rect(g, 0, 0, w, ITEM_H, 0xFFFFFF, st == Unknown ? 0.09 : 0.05);
+		if( e != null ) icon(o, e, st, size, atlas).setPosition(Std.int((w - size) * 0.5), 4);
+		var nm = Theme.text(o, e == null ? "-" : name(info, e), 1.0, st == Got ? Theme.TEXT : st == Seen ? Theme.DIM : Theme.DISABLED);
+		// un nombre largo (Amethyste) se achica un poco antes de recortarlo
+		while( nm.scaleX > 0.85 && nm.calcTextWidth(nm.text) * nm.scaleX > w - 4 ) nm.setScale(nm.scaleX - 0.05);
+		fit(nm, w - 4);
+		nm.setPosition(Std.int((w - nm.calcTextWidth(nm.text) * nm.scaleX) * 0.5), 44);
+		if( e != null && st != Unknown && onPick != null ) {
+			var it = new h2d.Interactive(w, ITEM_H, o);
 			it.onClick = function(_) if( box == null || box.mouseIn() ) onPick(e);
 		}
 	}
