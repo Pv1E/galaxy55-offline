@@ -1,5 +1,5 @@
 {
- "_doc": "Base de datos ESCorp (KubData): las cargas no son fichas. Sitios de cada bloque del mundo (constructor de BlockKind; las variantes y la roca rota cuentan para su ficha): un bioma de planeta, un tipo de cometa (Comets.KINDS) o a:<anomalia>. Anomalia con biomes null = en todos los planetas.",
+ "_doc": "Base de datos ESCorp (KubData): las cargas no son fichas. Sitios de cada bloque del mundo (constructor de BlockKind; las variantes y la roca rota cuentan para su ficha): un bioma de planeta, un tipo de cometa (Comets.KINDS) o a:<anomalia>. Anomalia con biomes null = en todos los planetas. recipeOrder: orden de las recetas en la base de datos, por grupos (madera, piedra, nave, vidrio y luz, agregados, hierro y aparatos, cargas), segun su resultado; un resultado que no esta va tras las recetas con su mismo primer ingrediente.",
  "hidden": [
   "BTest",
   "BTreeHerbs",
@@ -311,6 +311,90 @@
  ],
  "special": [
   "BShipEngine"
+ ],
+ "recipeOrder": [
+  {
+   "id": "wood",
+   "out": [
+    "BWoodPlank",
+    "BShiningWoodPlank",
+    "BWoodColumn",
+    "BWoodPlate",
+    "BWoodWindow",
+    "BLamp",
+    "BLeavesCurtain",
+    "BVineColumn"
+   ]
+  },
+  {
+   "id": "stone",
+   "out": [
+    "BRockWall",
+    "BRockWallSquare",
+    "BHardRockWall",
+    "BHardRockColumn",
+    "BMoonLightColumn",
+    "BWinterWall",
+    "BMarsWall",
+    "BAcidWall"
+   ]
+  },
+  {
+   "id": "ship",
+   "out": [
+    "BAluminium",
+    "BShipHull",
+    "BShipWire",
+    "BShipPlate",
+    "BShipTubes",
+    "BShipDoor",
+    "BShipGlass",
+    "BShipGlassBlack",
+    "BShipGlass2",
+    "BShipLight"
+   ]
+  },
+  {
+   "id": "glasslight",
+   "out": [
+    "BGlass",
+    "BLight",
+    "BBlackLight"
+   ]
+  },
+  {
+   "id": "aggregate",
+   "out": [
+    "BRaw",
+    "BRawRed",
+    "BRawPurple",
+    "BRawWhite",
+    "BRawOrange",
+    "BRawGreen"
+   ]
+  },
+  {
+   "id": "iron",
+   "out": [
+    "BIron",
+    "BIronFence",
+    "BIronLight",
+    "BFreezer",
+    "BMiningGenerator",
+    "BJumper",
+    "BHealBox",
+    "BCircuit",
+    "BCamera",
+    "BChest"
+   ]
+  },
+  {
+   "id": "charge",
+   "out": [
+    "BYellowCharge",
+    "BBlueCharge"
+   ]
+  }
  ],
  "places": {
   "BRock": [

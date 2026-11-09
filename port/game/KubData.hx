@@ -64,6 +64,17 @@ class KubData {
 	var isEntry = new Map<Int, Bool>();
 	var makes = new Map<Int, Array<CraftRule>>();
 	var usedIn = new Map<Int, Array<CraftRule>>();
+	/** posicion de cada resultado en kubindex.json recipeOrder (madera, piedra, nave...), para el orden de las recetas */
+	var outOrder = new Map<Int, Int>();
+	var recipeKeys = new Map<Int, Float>();
+
+	/** planetas en el orden de la pestana Espacio, que tambien ordena las fichas */
+	public static var PLANETS = ["BIAutumn", "BIMoon", "BIMars", "BIWinterPeaks", "BIAcidForest"];
+	/** grupos del orden de las fichas (planetas, cometas, anomalias, fabricado, especial, kubes) y sitio dentro de cada uno */
+	static inline var GROUP = 1000000.;
+	static inline var SUB = 10000.;
+	/** recetas cuyo resultado no esta en recipeOrder ni comparte primer ingrediente con otra: al final */
+	static inline var UNLISTED = 100000.;
 
 	function new( path : String ) {
 		var o : Dynamic = try haxe.Json.parse(sys.io.File.getContent(path)) catch( e : Dynamic ) {
@@ -111,6 +122,15 @@ class KubData {
 				var e = b == null ? null : entryOf(b);
 				if( e != null ) special.set(e.index, true);
 			}
+		if( o.recipeOrder != null ) {
+			var n = 0;
+			for( g in (o.recipeOrder : Array<Dynamic>) )
+				for( f in (g.out : Array<Dynamic>) ) {
+					var b = try Block.get(Type.createEnum(BlockKind, Std.string(f))) catch( e : Dynamic ) null;
+					if( b == null ) Sys.stderr().writeString(path + ": recipeOrder: " + f + " no es un bloque\n");
+					else outOrder.set(b.index, n++);
+				}
+		}
 		for( r in Data.CRAFT ) {
 			for( o in Data.craftOutputs(r) ) add(makes, entryOf(Block.get(o.k)), r);
 			for( e in recipeBlocks(r, false) ) add(usedIn, e, r);
@@ -154,6 +174,85 @@ class KubData {
 
 	/** fichas que piden esa carga para minarlas */
 	public function chargeNeeded( c : Block ) : Array<Block> return [for( e in entries ) if( chargeFor(e) == c.charge ) e];
+
+	/**
+	 * Fichas en el orden de la base de datos. Primero las de los planetas, por planeta (el primero de PLANETS donde salen) y,
+	 * dentro, como en la pestana Espacio (terrainRank); luego las de las cometas y las que solo dan las anomalias. Despues lo
+	 * fabricado, en el orden de sus recetas, y al final lo especial (nave, nave nodriza) y los kubes, en el orden de los datos.
+	 * byRecipe (categoria Fabricados): todo lo que se fabrica va en el orden de sus recetas, tambien lo que sale en un planeta
+	 * (el tronco de lunimeuse con la piedra, tras las planchas).
+	 */
+	public function sortEntries( list : Array<Block>, byRecipe = false ) : Array<Block> {
+		var keys = [for( e in list ) e.index => entryKey(e, byRecipe)];
+		list.sort(function(a, b) {
+			var d = keys.get(a.index) - keys.get(b.index);
+			return d != 0 ? (d < 0 ? -1 : 1) : a.index - b.index;
+		});
+		return list;
+	}
+
+	function entryKey( e : Block, byRecipe : Bool ) : Float {
+		if( KubeData.isKube(e.k) ) return 5 * GROUP + e.index;
+		if( special.exists(e.index) ) return 4 * GROUP + e.index;
+		var made = recipesMaking(e);
+		if( byRecipe && made.length > 0 ) return 3 * GROUP + firstRecipeKey(made);
+		var p = placeOf(e);
+		var planet = firstIn(PLANETS, p.biomes);
+		if( planet >= 0 ) return planet * SUB + terrainRank(e);
+		var comet = firstIn(Comets.KINDS, p.comets);
+		if( comet >= 0 ) return GROUP + comet * SUB + terrainRank(e);
+		if( made.length > 0 ) return 3 * GROUP + firstRecipeKey(made);
+		var anomaly = firstIn([for( a in anomalies ) a.id], p.anomalies);
+		if( anomaly >= 0 ) return 2 * GROUP + anomaly * SUB + terrainRank(e);
+		return 4 * GROUP + e.index;
+	}
+
+	function firstRecipeKey( list : Array<CraftRule> ) : Float {
+		var k = Math.POSITIVE_INFINITY;
+		for( r in list ) k = Math.min(k, recipeKey(r));
+		return k;
+	}
+
+	/** posicion en order del primero que esta en list (-1 si ninguno) */
+	static function firstIn( order : Array<String>, list : Array<String> ) : Int {
+		for( i in 0...order.length ) if( list.indexOf(order[i]) >= 0 ) return i;
+		return -1;
+	}
+
+	/** recetas en el orden de la base de datos (recipeKey) y, con el mismo resultado, por numero */
+	public function sortRecipes( list : Array<CraftRule> ) : Array<CraftRule> {
+		list.sort(function(a, b) {
+			var d = recipeKey(a) - recipeKey(b);
+			return d != 0 ? (d < 0 ? -1 : 1) : a.id - b.id;
+		});
+		return list;
+	}
+
+	/**
+	 * Clave de orden de una receta: el sitio de su resultado en kubindex.json recipeOrder (madera, piedra, nave, vidrio y luz,
+	 * agregados, hierro y aparatos, cargas). Un resultado que no esta en la lista va tras las recetas con su mismo primer
+	 * ingrediente (un bloque de rosh nuevo, tras los de rosh) y, si no hay ninguna, al final.
+	 */
+	function recipeKey( r : CraftRule ) : Float {
+		var k = recipeKeys.get(r.id);
+		if( k != null ) return k;
+		var o = outOrder.get(Block.get(r.out).index);
+		if( o != null ) k = o;
+		else {
+			var first = schemaKind(r.schema[0]), last = -1;
+			for( q in Data.CRAFT ) {
+				var qo = outOrder.get(Block.get(q.out).index);
+				if( qo != null && schemaKind(q.schema[0]) == first && qo > last ) last = qo;
+			}
+			k = last >= 0 ? last + 0.5 : UNLISTED + r.id;
+		}
+		recipeKeys.set(r.id, k);
+		return k;
+	}
+
+	static function schemaKind( s : CraftSchema ) : BlockKind {
+		return switch( s ) { case CSSingle(b), CSBase(b, _), CSLine(b, _): b; }
+	}
 
 	public function placeOf( e : Block ) : KubPlace {
 		var p = places.get(e.index);

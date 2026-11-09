@@ -45,7 +45,7 @@ class KubBlocksView extends KubView {
 		var d = KubData.get();
 		// las cargas solo salen en su categoria
 		if( c == CCharge ) return [for( e in d.charges ) if( Kubindex.known(panel.info, e) ) e];
-		return [for( e in d.entries ) if( Kubindex.known(panel.info, e) && (c == null || d.has(e, c)) ) e];
+		return d.sortEntries([for( e in d.entries ) if( Kubindex.known(panel.info, e) && (c == null || d.has(e, c)) ) e], c == CCraft);
 	}
 
 	function fill() {
