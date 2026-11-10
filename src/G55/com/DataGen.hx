@@ -310,7 +310,8 @@ class DataGen {
 		{ id : BShopCounter, type : BTFull, texture : [0,60], texUp : [1,60], texDown : [1,60], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Comptoir de l'EScorp", basePrice : null },
 		{ id : BShopShelf, type : BTFull, texture : [2,60], texUp : [3,60], texDown : [3,60], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Étagère de l'EScorp", basePrice : null },
 		{ id : BShopAwning, type : BTFull, texture : [4,60], texUp : [5,60], texDown : [6,60], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Auvent de l'EScorp", basePrice : null },
-		{ id : BShopSign, type : BTFull, texture : [7,60], texUp : [8,60], texDown : [8,60], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFLight(12.0)], matter : null, name : "Enseigne de l'EScorp", basePrice : null }
+		{ id : BShopSign, type : BTFull, texture : [7,60], texUp : [8,60], texDown : [8,60], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFLight(12.0)], matter : null, name : "Enseigne de l'EScorp", basePrice : null },
+		{ id : BShopValance, type : BTTransp, texture : [9,60], texUp : [10,60], texDown : [10,60], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Lambrequin de l'EScorp", basePrice : null }
 	];
 
 	public static var BIOMES : Array<BiomeData> = [

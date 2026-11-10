@@ -12,7 +12,8 @@
   "BShopCounter",
   "BShopShelf",
   "BShopAwning",
-  "BShopSign"
+  "BShopSign",
+  "BShopValance"
  ],
  "hiddenBiomes": [
   "BIDeadCity"
