@@ -16,12 +16,7 @@
   "BShopValance",
   "BShopBarrier",
   "BShopPost",
-  "BShopChain",
-  "BShopLantern",
-  "BShopBottles",
-  "BShopPapers",
-  "BShopCoins",
-  "BShopJar"
+  "BShopLantern"
  ],
  "hiddenBiomes": [
   "BIDeadCity"

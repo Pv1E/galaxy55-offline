@@ -346,15 +346,10 @@ enum BlockKind {
 	BShopValance;
 	// pared invisible de la tienda: se choca con ella pero no se ve ni se apunta (BFNoPick: el puntero y el laser la atraviesan)
 	BShopBarrier;
-	// poste fino del toldo (columna de metal con anillos dorados), cadena y farolito que cuelgan dentro de la tienda
+	// poste fino del toldo (columna de metal con anillos dorados) y la luz de los farolitos que cuelgan dentro de la tienda (no se
+	// ve: el farolito y su cadena los dibuja ShopProps, con las botellitas, papeles, monedas y el frasco del mostrador)
 	BShopPost;
-	BShopChain;
 	BShopLantern;
-	// cosas de comerciante sobre el mostrador: botellitas, papeles, monedas y un frasco (se choca con ellas, no se apuntan)
-	BShopBottles;
-	BShopPapers;
-	BShopCoins;
-	BShopJar;
 }
 
 enum BlockModel {

@@ -181,6 +181,8 @@ class GameView {
 			for( r in Mothership.robots ) {
 				var drone = r.k >= 4;
 				robots.push(new Robot(world, atlas, drone ? Robot.DRONE : Robot.MERCHANT, r.x + 0.5, r.y + 0.5, r.z, drone ? 0 : r.k * Math.PI / 2));
+				// las cosas de su tienda con volumen (botellitas, papeles, monedas, frasco, farolitos con cadena)
+				if( !drone ) new ShopProps(world, atlas, r);
 			}
 			return;
 		}
