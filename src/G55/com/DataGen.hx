@@ -302,7 +302,11 @@ class DataGen {
 		{ id : BHardRockWallSquare, type : BTFull, texture : [0,42], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 1.0, weight : null, flags : [], matter : BHardRock, name : "Carrelage en rouge'rosh", basePrice : 100 },
 		{ id : BAcidWallSquare, type : BTFull, texture : [3,42], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.8, weight : null, flags : [], matter : BRock, name : "Carrelage de roche douce", basePrice : 100 },
 		{ id : BWinterWallSquare, type : BTFull, texture : [4,42], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.8, weight : null, flags : [], matter : BRock, name : "Carrelage du frimas", basePrice : 100 },
-		{ id : BKubeMystery, type : BTFull, texture : [62,41], texUp : [63,41], texDown : [63,41], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Kube mystère", basePrice : null }
+		{ id : BKubeMystery, type : BTFull, texture : [62,41], texUp : [63,41], texDown : [63,41], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Kube mystère", basePrice : null },
+		{ id : BShipGlassRed, type : BTAlpha, texture : [54,61], texUp : [], texDown : [], shadeX : 1.6, shadeY : 1.6, shadeUp : 1.6, shadeDown : 1.6, power : 0.5, weight : null, flags : [], matter : BShipHull, name : "Vitre blindée teintée rouge", basePrice : 100 },
+		{ id : BShipGlassBlue, type : BTAlpha, texture : [55,61], texUp : [], texDown : [], shadeX : 1.6, shadeY : 1.6, shadeUp : 1.6, shadeDown : 1.6, power : 0.5, weight : null, flags : [], matter : BShipHull, name : "Vitre blindée teintée bleue", basePrice : 100 },
+		{ id : BShipGlassGreen, type : BTAlpha, texture : [56,61], texUp : [], texDown : [], shadeX : 1.6, shadeY : 1.6, shadeUp : 1.6, shadeDown : 1.6, power : 0.5, weight : null, flags : [], matter : BShipHull, name : "Vitre blindée teintée verte", basePrice : 100 },
+		{ id : BShipGlassPink, type : BTAlpha, texture : [57,61], texUp : [], texDown : [], shadeX : 1.6, shadeY : 1.6, shadeUp : 1.6, shadeDown : 1.6, power : 0.5, weight : null, flags : [], matter : BShipHull, name : "Vitre blindée teintée rose", basePrice : 100 }
 	];
 
 	public static var BIOMES : Array<BiomeData> = [
@@ -395,7 +399,11 @@ class DataGen {
 		{ id : 67, schema : [CSBase(BKubeSaphir,2),CSBase(BKubeSaphir,2)], out : BKubeShade, count : null },
 		{ id : 68, schema : [CSBase(BKubeEmeraude,2),CSBase(BKubeEmeraude,2)], out : BKubeShade, count : null },
 		{ id : 69, schema : [CSBase(BKubeAmethyste,2),CSBase(BKubeAmethyste,2)], out : BKubeShade, count : null },
-		{ id : 70, schema : [CSBase(BKubeShade,2),CSBase(BKubeShade,2)], out : BKubeTeleport, count : null }
+		{ id : 70, schema : [CSBase(BKubeShade,2),CSBase(BKubeShade,2)], out : BKubeTeleport, count : null },
+		{ id : 71, schema : [CSSingle(BShipGlass),CSSingle(BKubeRubis)], out : BShipGlassRed, count : null },
+		{ id : 72, schema : [CSSingle(BShipGlass),CSSingle(BKubeSaphir)], out : BShipGlassBlue, count : null },
+		{ id : 73, schema : [CSSingle(BShipGlass),CSSingle(BKubeEmeraude)], out : BShipGlassGreen, count : null },
+		{ id : 74, schema : [CSSingle(BShipGlass),CSSingle(BKubeAmethyste)], out : BShipGlassPink, count : null }
 	];
 
 }

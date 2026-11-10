@@ -81,7 +81,7 @@ class Market {
 		set(50, "BIron BAluminium BIronFence BJumper BCascadeSource BFreezer");
 		// nave y aparatos
 		set(80, "BShipPlate BShipWire BShipTubes BShipGlass2 BShipGlassBlack BShipLight");
-		set(100, "BShipHull BShipGlass");
+		set(100, "BShipHull BShipGlass BShipGlassRed BShipGlassBlue BShipGlassGreen BShipGlassPink");
 		set(150, "BShipDoor BCircuit BCamera BHealBox");
 		set(400, "BCrafter BMiningGenerator BArtiBomb BChest");
 		set(900, "BShipComputer BCrafterComputer BShipEntry BAlienTreasure");
@@ -133,6 +133,8 @@ class Market {
 		"BRockWallSquare", "BHardRockWallSquare", "BAcidWallSquare", "BWinterWallSquare",
 		// nave y aparatos
 		"BShipPlate", "BShipWire", "BShipTubes", "BShipGlass2", "BShipGlassBlack", "BShipLight", "BShipHull", "BShipGlass", "BShipDoor",
+		// las vitres de gema: la gema sale del Cofre de Kube, que el robot no vende
+		"BShipGlassRed", "BShipGlassBlue", "BShipGlassGreen", "BShipGlassPink",
 		"BCircuit", "BCamera", "BHealBox", "BMiningGenerator", "BArtiBomb", "BAlienTreasure",
 	];
 

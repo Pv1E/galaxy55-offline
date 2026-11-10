@@ -330,6 +330,12 @@ enum BlockKind {
 	// lo que ensena el sintetizador antes de fabricar una receta al azar (CraftRule.random): un kube con un "?" sobre las cuatro
 	// gemas. No se puede tener: ni en la paleta, ni en la tienda, ni en la base de datos (kubindex.json hidden)
 	BKubeMystery;
+	// vitres blindees tenidas con una gema en el sintetizador (vitre blindee y, encima, un rubis, un saphir, una emeraude o una
+	// amethyste): como la tenida (BShipGlassBlack), pero mas claras y sin desvelar lo invisible. Texturas de Atlas.gemGlassTiles
+	BShipGlassRed;
+	BShipGlassBlue;
+	BShipGlassGreen;
+	BShipGlassPink;
 }
 
 enum BlockModel {

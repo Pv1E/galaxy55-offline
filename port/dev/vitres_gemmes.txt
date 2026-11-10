@@ -1,0 +1,127 @@
+# Vitres blindees de gema (anadido del port): en el sintetizador, una vitre blindee (BShipGlass) y encima una gema dan la vitre
+# blindee de su color (rubis rouge, saphir bleue, emeraude verte, amethyste rose). Son de la nave (materia BShipHull), con el
+# estilo de la vitre teintee pero mas claras (Atlas.gemGlassTiles) y, al contrario que ella, no desvelan los kubes invisibles.
+# Capturas port/out/vg_*.png: la zona con la receta, la pared de la nave con las cuatro vitres (a la derecha, tras el
+# sintetizador, la teintee y la blindee para comparar), la misma con kubes invisibles detras y las fichas de la Base de datos ESCorp.
+# uso: devrun.ps1 -Script port/dev/vitres_gemmes.txt -Extra "--lang=fr" -Timeout 300
+wait 3
+kub forget
+ship
+wait 10
+tpl 62.5 63.5 3.0 3.14 -0.45
+wait 5
+# la partida de prueba empieza con el inventario casi lleno: se vacia para recoger lo fabricado
+contracts empty
+# vitre blindee abajo y rubis encima (sin nada en el inventario se gastan las de la zona)
+setl 59 62 3 BShipGlass
+setl 59 62 4 BKubeRubis
+wait 10
+print msg
+shot vg_zona_rubis
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+# vitre blindee abajo y saphir encima (sin nada en el inventario se gastan las de la zona)
+setl 59 62 3 BShipGlass
+setl 59 62 4 BKubeSaphir
+wait 10
+print msg
+shot vg_zona_saphir
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+# vitre blindee abajo y emeraude encima (sin nada en el inventario se gastan las de la zona)
+setl 59 62 3 BShipGlass
+setl 59 62 4 BKubeEmeraude
+wait 10
+print msg
+shot vg_zona_emeraude
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+# vitre blindee abajo y amethyste encima (sin nada en el inventario se gastan las de la zona)
+setl 59 62 3 BShipGlass
+setl 59 62 4 BKubeAmethyste
+wait 10
+print msg
+shot vg_zona_amethyste
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+print kub
+# la gema sola no da nada; al reves (la gema abajo) tampoco
+setl 59 62 3 BKubeRubis
+wait 10
+print msg
+setl 59 62 4 BShipGlass
+wait 10
+print msg
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# la pared de la ventana (y = 61), vista de frente: arriba rouge y bleue, abajo verte y rose; a la derecha, tras el
+# sintetizador, la teintee (arriba) y la blindee (abajo) para comparar
+setl 59 61 4 BShipGlassRed
+setl 60 61 4 BShipGlassBlue
+setl 59 61 3 BShipGlassGreen
+setl 60 61 3 BShipGlassPink
+setl 61 61 4 BShipGlassBlack
+setl 61 61 3 BShipGlass
+print blockl 59 61 4
+print blockl 60 61 3
+tpl 60.5 64.5 3.0 0 0
+lookl 60.5 61 4.1
+wait 10
+shot vg_pared
+tpl 59.3 64.8 3.0 0 0
+lookl 61.5 61 4.0
+wait 5
+shot vg_pared_lado
+tpl 60.5 62.6 3.0 0 0
+lookl 60.5 61 4.0
+wait 5
+shot vg_pared_cerca
+# kubes invisibles justo fuera: solo la teintee los ensena (luz negra); las de gema dejan ver el cielo que pintan, como la blindee
+setl 59 60 3 BKubeInvisible
+setl 60 60 3 BKubeInvisible
+setl 61 60 3 BKubeInvisible
+setl 59 60 4 BKubeInvisible
+setl 60 60 4 BKubeInvisible
+setl 61 60 4 BKubeInvisible
+tpl 60.5 64.5 3.0 0 0
+lookl 60.5 61 4.1
+wait 10
+shot vg_pared_invisibles
+setl 59 60 3 none
+setl 60 60 3 none
+setl 61 60 3 none
+setl 59 60 4 none
+setl 60 60 4 none
+setl 61 60 4 none
+# Base de datos ESCorp, todo recuperado (con sus ingredientes): la ficha de la vitre rouge, la de la vitre blindee (que ahora
+# sirve para las cuatro) y la de la amethyste
+kub all
+kub
+wait 5
+kub pick BShipGlassRed
+wait 5
+shot vg_kub_rouge
+kub pick BShipGlass
+wait 5
+shot vg_kub_blindee
+kub pick BKubeAmethyste
+wait 5
+shot vg_kub_amethyste
+kub close
+wait 3
+print kuborder
+print wares
+quit
