@@ -327,6 +327,12 @@ enum BlockKind {
 	BHardRockWallSquare;
 	BAcidWallSquare;
 	BWinterWallSquare;
+	// vitres blindees tenidas con una gema en el sintetizador (vitre blindee y, encima, un rubis, un saphir, una emeraude o una
+	// amethyste): como la tenida (BShipGlassBlack), pero mas claras y sin desvelar lo invisible. Texturas de Atlas.gemGlassTiles
+	BShipGlassRed;
+	BShipGlassBlue;
+	BShipGlassGreen;
+	BShipGlassPink;
 }
 
 enum BlockModel {

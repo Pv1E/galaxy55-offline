@@ -236,8 +236,49 @@ class Atlas {
 		}
 	}
 
+	/** luminosidad del fondo (0x2D0D4C) y de las vetas (0x8B23D6) del cristal de la vitre teintee */
+	static inline var GLASS_LO = 29.5;
+	static inline var GLASS_HI = 86.;
+	/** opacidad de las vitres de gema respecto a la teintee (mas claras: se ve a traves) y la de sus vetas, antes de esa escala */
+	static inline var GEM_GLASS_ALPHA = 0.75;
+	static inline var GEM_GLASS_STREAK = 230;
+
+	/**
+	 * Vitres blindees de gema (anadido del port): la vitre teintee (marco, brillos y vetas) con el cristal del color de la gema, del
+	 * fondo (lo) a las vetas (hi), y mas transparente. El marco y los brillos blancos, iguales en la vitre blindee, no cambian.
+	 */
+	static function gemGlassTiles( pix : hxd.Pixels ) {
+		inline function tileOf( k : BlockKind ) return Block.get(k).tlr;
+		var tinted = tileOf(BShipGlassBlack), clear = tileOf(BShipGlass);
+		var sx = (tinted & 63) << 5, sy = (tinted >> 6) << 5, cx = (clear & 63) << 5, cy = (clear >> 6) << 5;
+		var gems = [
+			{ dst : tileOf(BShipGlassRed), lo : 0xB0102A, hi : 0xFF6A80 },
+			{ dst : tileOf(BShipGlassBlue), lo : 0x1848C0, hi : 0x7AB0FF },
+			{ dst : tileOf(BShipGlassGreen), lo : 0x109030, hi : 0x70E890 },
+			// rosa y no violeta: que no se confunda con la teintee
+			{ dst : tileOf(BShipGlassPink), lo : 0xE0308C, hi : 0xFF9ACB },
+		];
+		for( t in gems ) {
+			var dx = (t.dst & 63) << 5, dy = (t.dst >> 6) << 5;
+			for( y in 0...32 )
+				for( x in 0...32 ) {
+					var c = pix.getPixel(sx + x, sy + y);
+					if( c == pix.getPixel(cx + x, cy + y) ) {
+						pix.setPixel(dx + x, dy + y, c);
+						continue;
+					}
+					var l = ((c >> 16) & 0xFF) * 0.3 + ((c >> 8) & 0xFF) * 0.59 + (c & 0xFF) * 0.11;
+					var f = Math.max(0, Math.min(1, (l - GLASS_LO) / (GLASS_HI - GLASS_LO)));
+					inline function ch( s : Int ) return Std.int(((t.lo >> s) & 0xFF) * (1 - f) + ((t.hi >> s) & 0xFF) * f);
+					var a = (c >>> 24) + (GEM_GLASS_STREAK - (c >>> 24)) * f;
+					pix.setPixel(dx + x, dy + y, (Std.int(Math.min(255, a * GEM_GLASS_ALPHA)) << 24) | (ch(16) << 16) | (ch(8) << 8) | ch(0));
+				}
+		}
+	}
+
 	static function patch( pix : hxd.Pixels, again = false ) {
 		motherTiles(pix);
+		gemGlassTiles(pix);
 		// el original empieza en 4095, que coincide con el valor "sin textura" (0xFFF) del mallador y dejaba invisible el primer bloque
 		var lastTex = 4094;
 		for( b in Block.all )

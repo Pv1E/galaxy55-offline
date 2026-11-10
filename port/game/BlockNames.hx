@@ -92,6 +92,8 @@ class BlockNames {
 		// anadidos del port, como sus parejas (Rock Tiles, HardRoq Column)
 		"BRockColumn" => "Rock Column", "BHardRockWallSquare" => "HardRoq Tiles",
 		"BAcidWallSquare" => "Soft Rock Tiles", "BWinterWallSquare" => "Frost Tiles",
+		"BShipGlassRed" => "Red Tinted Toughened Glass", "BShipGlassBlue" => "Blue Tinted Toughened Glass",
+		"BShipGlassGreen" => "Green Tinted Toughened Glass", "BShipGlassPink" => "Pink Tinted Toughened Glass",
 	];
 
 	/** espanol: lo que falta en NamesGen.ES (bloques anadidos despues) y alguna correccion */
@@ -134,6 +136,8 @@ class BlockNames {
 		// anadidos del port, como sus parejas (Zocalo de piedra, Pilar de volcanita)
 		"BRockColumn" => "Pilar de piedra", "BHardRockWallSquare" => "Zócalo de volcanita",
 		"BAcidWallSquare" => "Zócalo de roca ácida", "BWinterWallSquare" => "Zócalo de escarcha",
+		"BShipGlassRed" => "Vidrio blindado rojo", "BShipGlassBlue" => "Vidrio blindado azul",
+		"BShipGlassGreen" => "Vidrio blindado verde", "BShipGlassPink" => "Vidrio blindado rosa",
 	];
 
 	/** frances: los bloques anadidos despues y algun cambio (BChest: en DataGen "Cantine de l'EScorp") */

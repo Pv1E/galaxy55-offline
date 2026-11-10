@@ -350,6 +350,10 @@
     "BShipDoor",
     "BShipGlass",
     "BShipGlassBlack",
+    "BShipGlassRed",
+    "BShipGlassBlue",
+    "BShipGlassGreen",
+    "BShipGlassPink",
     "BShipGlass2",
     "BShipLight"
    ]
