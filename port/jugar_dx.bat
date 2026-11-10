@@ -5,6 +5,7 @@ cd /d "%~dp0.."
 if defined HL set "PATH=%HL%;%PATH%"
 where hl >nul 2>nul
 if not errorlevel 1 goto found
+if exist "..\tools-portable\hashlink\hl.exe" set "PATH=%CD%\..\tools-portable\hashlink;%PATH%"
 for /d %%D in ("..\tools-portable\hashlink\*") do set "PATH=%%~fD;%PATH%"
 where hl >nul 2>nul
 if not errorlevel 1 goto found
