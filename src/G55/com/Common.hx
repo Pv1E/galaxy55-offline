@@ -344,6 +344,8 @@ enum BlockKind {
 	BShopAwning;
 	BShopSign;
 	BShopValance;
+	// pared invisible de la tienda: se choca con ella pero no se ve ni se apunta (BFNoPick: el puntero y el laser la atraviesan)
+	BShopBarrier;
 }
 
 enum BlockModel {

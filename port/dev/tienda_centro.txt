@@ -27,4 +27,14 @@ activate 191 204 42
 wait 10
 wait 20
 shot tienda_centro_abierta
+close
+wait 5
+# pared invisible: se camina hacia el mostrador desde delante y se salta; no hay que acabar dentro de la tienda (y < 205)
+tp 191.5 199.5 43 1.5708 0
+wait 10
+press w space
+wait 60
+release w space
+wait 10
+print pos
 quit

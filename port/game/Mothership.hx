@@ -173,7 +173,8 @@ class Mothership {
 	 * con mc2g55.py. Abierta, sin paredes, para que no tape el hangar: un cuadro de 7x7 a la altura del robot con el mostrador
 	 * delante (hacia donde mira el robot, con su ordenador en el centro: GameView.isRobotComputer), a los lados y el estante
 	 * detras; postes en las esquinas, encima un mantel rojo que sobresale un bloque por cada lado con flecos triangulares
-	 * colgando del borde, y el cartel en lo alto.
+	 * colgando del borde, y el cartel en lo alto. Sobre el mostrador y el estante, hasta el mantel, una pared invisible
+	 * (BShopBarrier) para que no se salte adentro; no se apunta, asi el ordenador se sigue usando.
 	 */
 	static function shop( r : { x : Int, y : Int, z : Int, k : Int }, out : Array<ShipData.ShipCell> ) {
 		// delante (fx, fy) y a la derecha (-fy, fx)
@@ -191,6 +192,7 @@ class Mothership {
 				} else if( b == 3 ) put(a, b, 0, a == 0 ? BShipComputer : BShopCounter);
 				else if( b == -3 ) put(a, b, 0, BShopShelf);
 				else if( a == -3 || a == 3 ) put(a, b, 0, BShopCounter);
+				if( !corner && (a == -3 || a == 3 || b == -3 || b == 3) ) for( dz in 1...5 ) put(a, b, dz, BShopBarrier);
 				if( (a == -2 || a == 2) && (b == -2 || b == 2) ) put(a, b, 4, BShipLight);
 			}
 		for( a in -4...5 )
