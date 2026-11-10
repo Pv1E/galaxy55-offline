@@ -1162,11 +1162,24 @@ class Dev {
 			var info = app.curInfo(), k = Kubindex.ensure(info), d = KubData.get();
 			Sys.println("kub: fichas " + d.entries.length + " vistos=" + k.seen.join(",") + " recuperados=" + k.got.join(",") + " nuevos=" + k.fresh.length
 				+ " planetas=" + [for( p in k.planets ) p.id + ":" + p.b].join(",") + " cometas=" + [for( c in k.comets ) c.sys + "/" + c.slot + ":" + c.b].join(",")
-				+ " recetas=" + [for( c in k.crafts ) c.id + "x" + c.n].join(",") + " stats=" + [for( s in k.stats ) s.k + ":" + s.p + "/" + s.b].join(",")
+				+ " recetas=" + [for( c in k.crafts ) c.id + "x" + c.n].join(",") + " stats=" + [for( s in k.stats ) s.k + ":" + s.p + "/" + s.b + (s.r == null ? "" : "/azar" + s.r)].join(",")
 				+ " anomalias=" + k.anomalies.join(",") + (g == null ? "" : " (planeta: " + [for( an in g.world.anomalies() ) an.n + "@" + an.x + "," + an.y + "," + an.z].join(" ") + ")")
 				+ " descubiertas=" + [for( r in Data.CRAFT ) if( Kubindex.recipeKnown(info, r) ) r].length + "/" + Data.CRAFT.length
 				+ " panel=" + (app.database == null ? "cerrado" : "pestana " + app.database.tab) + " tuto=" + (info.tuto == null ? "-" : "" + info.tuto.step)
 				+ " avisos=" + app.kubNotify.devInfo());
+		case "roll":
+			// roll [N]: tira N veces (10000) cada receta al azar (Data.craftRoll) y dice cuantos de cada resultado han salido
+			var n = a.length > 2 ? Std.parseInt(a[2]) : 10000;
+			for( r in Data.CRAFT ) {
+				if( r.random == null ) continue;
+				var got = new Map<String, Int>();
+				for( i in 0...n )
+					for( o in Data.craftRoll(r) ) {
+						var k = Std.string(o.k);
+						got.set(k, (got.exists(k) ? got.get(k) : 0) + o.n);
+					}
+				Sys.println("roll receta " + r.id + " x" + n + ": " + [for( k in r.random ) Std.string(k) + "=" + (got.exists(Std.string(k)) ? got.get(Std.string(k)) : 0)].join(" "));
+			}
 		case "kuborder":
 			// orden de la base de datos: las fichas, las de la categoria Fabricados y los resultados de las recetas
 			var d = KubData.get();

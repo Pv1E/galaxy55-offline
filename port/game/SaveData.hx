@@ -231,7 +231,12 @@ class SaveData {
 			k.seen = strs(o.seen);
 			k.got = strs(o.got);
 			k.fresh = strs(o.fresh);
-			if( o.stats != null ) k.stats = [for( s in (o.stats : Array<Dynamic>) ) { k : Std.string(s.k), p : Std.int(s.p), b : Std.int(s.b) }];
+			if( o.stats != null )
+				k.stats = [for( s in (o.stats : Array<Dynamic>) ) {
+					var st : Kubindex.KubStat = { k : Std.string(s.k), p : Std.int(s.p), b : Std.int(s.b) };
+					if( s.r != null ) st.r = Std.int(s.r);
+					st;
+				}];
 			if( o.planets != null ) k.planets = [for( p in (o.planets : Array<Dynamic>) ) { id : Std.int(p.id), b : Std.string(p.b) }];
 			if( o.comets != null ) k.comets = [for( c in (o.comets : Array<Dynamic>) ) { sys : Std.int(c.sys), slot : Std.int(c.slot), b : Std.string(c.b) }];
 			if( o.crafts != null ) k.crafts = [for( c in (o.crafts : Array<Dynamic>) ) { id : Std.int(c.id), n : Std.int(c.n) }];

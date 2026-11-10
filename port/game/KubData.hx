@@ -292,7 +292,7 @@ class KubData {
 		return l;
 	}
 
-	/** cuantos de la ficha da una vez la receta (0 si no la da) */
+	/** cuantos de la ficha da una vez la receta (0 si no la da; en una al azar, cuantos da cuando sale ella) */
 	public function recipeGives( r : CraftRule, e : Block ) : Int {
 		var n = 0;
 		for( o in Data.craftOutputs(r) ) if( entryOf(Block.get(o.k)) == e ) n += o.n;

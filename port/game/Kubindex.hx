@@ -2,8 +2,11 @@ import Common;
 import Ui;
 import SaveData.SaveInfo;
 
-/** Veces que el jugador ha puesto (p) y roto (b) un kube (nombre del constructor de BlockKind). */
-typedef KubStat = { k : String, p : Int, b : Int };
+/**
+ * Veces que el jugador ha puesto (p) y roto (b) un kube (nombre del constructor de BlockKind) y cuantos le ha dado una receta al
+ * azar (r: no se saben por las veces que se hizo, como los de las demas recetas).
+ */
+typedef KubStat = { k : String, p : Int, b : Int, ?r : Int };
 
 /**
  * Lo que sabe la Base de datos ESCorp de la partida (SaveInfo.kub, anadido del port). Los kubes se guardan con el nombre de su
@@ -137,6 +140,17 @@ class Kubindex {
 		return 0;
 	}
 
+	/**
+	 * cuantos de la ficha han salido del sintetizador: las veces que se hizo cada receta que la da, por lo que da cada vez, y los
+	 * que dieron las recetas al azar
+	 */
+	public static function made( info : SaveInfo, e : Block ) : Int {
+		var d = KubData.get(), n = 0;
+		for( r in d.recipesMaking(e) ) if( r.random == null ) n += craftCount(info, r) * d.recipeGives(r, e);
+		var s = stat(info, e, false);
+		return n + (s == null || s.r == null ? 0 : s.r);
+	}
+
 	public static function isFresh( info : SaveInfo, e : Block ) return !full(info) && ensure(info).fresh.indexOf(key(e)) >= 0;
 
 	/** la ficha se ha mirado en la base de datos */
@@ -219,8 +233,16 @@ class Kubindex {
 		if( e != null ) stat(info, e).p++;
 	}
 
-	public static function crafted( info : SaveInfo, r : CraftRule ) {
+	/** se ha fabricado la receta r y han salido outs (Data.craftRoll): en una al azar se apunta lo que ha salido */
+	public static function crafted( info : SaveInfo, r : CraftRule, ?outs : Array<{ k : BlockKind, n : Int }> ) {
 		if( full(info) || r == null ) return;
+		if( r.random != null && outs != null )
+			for( o in outs ) {
+				var e = KubData.get().entryOf(Block.get(o.k));
+				if( e == null ) continue;
+				var s = stat(info, e);
+				s.r = (s.r == null ? 0 : s.r) + o.n;
+			}
 		for( c in ensure(info).crafts )
 			if( c.id == r.id ) {
 				c.n++;
