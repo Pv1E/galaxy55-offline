@@ -346,6 +346,10 @@ enum BlockKind {
 	BShopValance;
 	// pared invisible de la tienda: se choca con ella pero no se ve ni se apunta (BFNoPick: el puntero y el laser la atraviesan)
 	BShopBarrier;
+	// poste fino del toldo (columna de metal con anillos dorados), cadena y farolito que cuelgan dentro de la tienda
+	BShopPost;
+	BShopChain;
+	BShopLantern;
 }
 
 enum BlockModel {

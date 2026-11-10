@@ -312,7 +312,10 @@ class DataGen {
 		{ id : BShopAwning, type : BTFull, texture : [4,60], texUp : [5,60], texDown : [6,60], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Auvent de l'EScorp", basePrice : null },
 		{ id : BShopSign, type : BTFull, texture : [7,60], texUp : [8,60], texDown : [8,60], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFLight(12.0)], matter : null, name : "Enseigne de l'EScorp", basePrice : null },
 		{ id : BShopValance, type : BTTransp, texture : [9,60], texUp : [10,60], texDown : [10,60], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [], matter : null, name : "Lambrequin de l'EScorp", basePrice : null },
-		{ id : BShopBarrier, type : BTInvisible, texture : [10,60], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFNoPick], matter : null, name : "-", basePrice : null }
+		{ id : BShopBarrier, type : BTInvisible, texture : [10,60], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFNoPick], matter : null, name : "-", basePrice : null },
+		{ id : BShopPost, type : BTModel, texture : [13,60], texUp : [14,60], texDown : [14,60], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFModel(MColumn)], matter : null, name : "Poteau de l'EScorp", basePrice : null },
+		{ id : BShopChain, type : BTModel2Side, texture : [11,60], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFModel(MCross),BFNoCollide], matter : null, name : "Chaîne de l'EScorp", basePrice : null },
+		{ id : BShopLantern, type : BTModel2Side, texture : [12,60], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFModel(MCross),BFNoCollide,BFLight(10.0)], matter : null, name : "Lampion de l'EScorp", basePrice : null }
 	];
 
 	public static var BIOMES : Array<BiomeData> = [

@@ -19,6 +19,8 @@ class Robot {
 	var y : Float;
 	var z : Float;
 	var face : Float;
+	/** hacia donde mira detras del mostrador cuando no hay nadie cerca */
+	var face0 : Float;
 	var t = 0.;
 	var head : h3d.scene.Object;
 	var armL : h3d.scene.Object;
@@ -36,6 +38,7 @@ class Robot {
 		this.y = y;
 		this.z = z;
 		this.face = face;
+		this.face0 = face;
 		t = Math.random() * 10;
 		root = new h3d.scene.Object(world.root);
 		if( kind == DRONE ) buildDrone() else buildMerchant();
@@ -141,10 +144,17 @@ class Robot {
 			return;
 		}
 		root.setPosition(x, y, z + Math.sin(t * 1.8) * 0.06);
-		root.setRotation(0, 0, face);
-		// la cabeza sigue al jugador si esta cerca; si no, mira a un lado y a otro
+		// el cuerpo entero se gira hacia el jugador si esta cerca (la tienda esta abierta por todos lados: se le ve desde detras);
+		// si no, vuelve poco a poco a mirar hacia delante
 		var dx = px - x, dy = py - y;
-		var target = Math.sqrt(dx * dx + dy * dy) < 9 ? Math.atan2(dy, dx) - face : Math.sin(t * 0.4) * 0.6;
+		var near = Math.sqrt(dx * dx + dy * dy) < 9;
+		var turn = (near ? Math.atan2(dy, dx) : face0) - face;
+		while( turn > Math.PI ) turn -= Math.PI * 2;
+		while( turn < -Math.PI ) turn += Math.PI * 2;
+		face += turn * Math.min(1, dt * 2.5);
+		root.setRotation(0, 0, face);
+		// la cabeza va un poco por delante del cuerpo; lejos, mira a un lado y a otro
+		var target = near ? Math.atan2(dy, dx) - face : Math.sin(t * 0.4) * 0.6;
 		while( target > Math.PI ) target -= Math.PI * 2;
 		while( target < -Math.PI ) target += Math.PI * 2;
 		if( target > 1.2 ) target = 1.2 else if( target < -1.2 ) target = -1.2;
