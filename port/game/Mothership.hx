@@ -160,7 +160,40 @@ class Mothership {
 					if( k != 0 ) out.push({ x : ox + x, y : oy + y, z : oz + z, id : k });
 				}
 		spawnAt = { x : ox + sx, y : oy + sy, z : oz + sz };
+		shopCells = new Map();
+		for( r in robots ) if( r.k < 4 ) shop(r, out);
 		return { sx : size, sy : size, sz : oz + h, cells : out, entry : null, crafts : [] };
+	}
+
+	/** celdas de las tiendas (shop): no se guardan en la nave nodriza (sus bloques no caben en un byte) */
+	static var shopCells : Map<Int, Bool>;
+
+	/**
+	 * Tienda del robot comerciante r (anadido del port), hecha aqui y no en mothership.bin, asi no se pierde al volver a generarla
+	 * con mc2g55.py. Abierta, sin paredes, para que no tape el hangar: un cuadro de 7x7 a la altura del robot con el mostrador
+	 * delante (hacia donde mira el robot, con su ordenador en el centro: GameView.isRobotComputer), a los lados y el estante
+	 * detras; postes en las esquinas, un toldo encima y el cartel en lo alto.
+	 */
+	static function shop( r : { x : Int, y : Int, z : Int, k : Int }, out : Array<ShipData.ShipCell> ) {
+		// delante (fx, fy) y a la derecha (-fy, fx)
+		var fx = [1, 0, -1, 0][r.k], fy = [0, 1, 0, -1][r.k];
+		function put( a : Int, b : Int, dz : Int, k : BlockKind ) {
+			var x = r.x + b * fx - a * fy, y = r.y + b * fy + a * fx, z = r.z + dz;
+			shopCells.set(cellKey(x, y, z), true);
+			out.push({ x : x, y : y, z : z, id : Block.get(k).index });
+		}
+		for( a in -3...4 )
+			for( b in -3...4 ) {
+				var corner = (a == -3 || a == 3) && (b == -3 || b == 3);
+				if( corner ) {
+					for( dz in 0...5 ) put(a, b, dz, BIron);
+				} else if( b == 3 ) put(a, b, 0, a == 0 ? BShipComputer : BShopCounter);
+				else if( b == -3 ) put(a, b, 0, BShopShelf);
+				else if( a == -3 || a == 3 ) put(a, b, 0, BShopCounter);
+				put(a, b, 5, BShopAwning);
+				if( (a == -2 || a == 2) && (b == -2 || b == 2) ) put(a, b, 4, BShipLight);
+			}
+		put(0, 0, 6, BShopSign);
 	}
 
 	/** archivo cargado (para guardar lo editado con --editnodriza): ruta, cabecera tal cual, tamano, rejilla original y origen */
@@ -184,7 +217,8 @@ class Mothership {
 				for( x in 0...f.w ) {
 					var wx = f.ox + x, wy = f.oy + y, wz = f.oz + z;
 					var k = 0;
-					if( shipCells != null && shipCells.exists(cellKey(wx, wy, wz)) ) k = f.base.get(i);
+					var key = cellKey(wx, wy, wz);
+					if( (shipCells != null && shipCells.exists(key)) || (shopCells != null && shopCells.exists(key)) ) k = f.base.get(i);
 					else {
 						var b = world.block(wx, wy, wz);
 						if( b != null ) k = b.index < 256 ? b.index : Type.enumIndex(b.k);

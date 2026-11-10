@@ -336,6 +336,12 @@ enum BlockKind {
 	BShipGlassBlue;
 	BShipGlassGreen;
 	BShipGlassPink;
+	// la tienda del robot comerciante de la nave nodriza (Mothership.shop): mostrador, estante con mercancia, toldo y cartel.
+	// Solo de decoracion: no se pueden tener (sin precio y kubindex.json hidden). Casillas [0..8,60] de texture.png
+	BShopCounter;
+	BShopShelf;
+	BShopAwning;
+	BShopSign;
 }
 
 enum BlockModel {

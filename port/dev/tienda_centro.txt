@@ -1,7 +1,8 @@
-# Nave nodriza: el mostrador del robot comerciante esta en el pasillo central del hangar, entre las dos filas de bahias
-# (antes en el morro). Capturas port/out/tienda_centro_*.png: desde junto a la bahia de aparicion y de cerca.
-# Mundo = celda de mothership.bin + (135, 17, 26): el robot (56, 189, 18) queda en (191, 206, 44).
-wait 3
+# Nave nodriza: la tienda del robot comerciante (Mothership.shop), abierta y en el pasillo central del hangar, entre las dos
+# filas de bahias (antes en el morro, cerrada). Capturas port/out/tienda_centro_*.png: desde junto a la bahia de aparicion, de
+# cerca, desde un lado (se ve el hangar a traves) y desde detras. Abre la tienda con el ordenador del mostrador.
+# Mundo = celda de mothership.bin + (135, 18, 24): el robot (56, 189, 18) queda en (191, 207, 42).
+wait 2
 mothership
 waitfor mother
 wait 60
@@ -10,8 +11,20 @@ tp 212.5 190.5 44
 lookat 191.5 206.5 45
 wait 20
 shot tienda_centro_bahia
-tp 191.5 198.5 44 1.5708 -0.1
+tp 191.5 197.5 44 1.5708 -0.1
 wait 20
-print pos
 shot tienda_centro_cerca
+tp 178.5 206.5 44 0 -0.05
+wait 20
+shot tienda_centro_lado
+tp 191.5 218.5 44 -1.5708 -0.05
+wait 20
+shot tienda_centro_detras
+tp 191.5 200.5 44
+lookat 191.5 203.5 44.5
+wait 10
+activate 191 204 42
+wait 10
+wait 20
+shot tienda_centro_abierta
 quit
