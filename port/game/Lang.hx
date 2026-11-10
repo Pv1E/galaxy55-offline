@@ -33,7 +33,6 @@ class Lang {
 		"computer.pilot" => ["Pilotar la nave", "Pilot the ship", "Piloter le vaisseau"],
 		"computer.trade" => ["Comerciar", "Trade", "Commercer"],
 		// anadido del port: hablar con el robot comerciante de la nave nodriza (GalaxyApp.openRobotTalk)
-		"robot.terminal" => ["ESCORP · ROBOT COMERCIANTE · CANAL ABIERTO", "ESCORP · MERCHANT ROBOT · CHANNEL OPEN", "ESCORP · ROBOT MARCHAND · CANAL OUVERT"],
 		"robot.opt.trade" => ["Quiero comerciar.", "I want to trade.", "Je veux commercer."],
 		"robot.opt.chat" => ["¿Qué cuentas?", "What's new?", "Quoi de neuf ?"],
 		"robot.opt.bye" => ["Adiós.", "Goodbye.", "Au revoir."],

@@ -336,20 +336,9 @@ enum BlockKind {
 	BShipGlassBlue;
 	BShipGlassGreen;
 	BShipGlassPink;
-	// la tienda del robot comerciante de la nave nodriza (Mothership.shop): mostrador, estante con mercancia, toldo (un mantel
-	// rojo), cartel y los flecos triangulares que cuelgan del mantel. Solo de decoracion: no se pueden tener (sin precio y
-	// kubindex.json hidden). Casillas [0..10,60] de texture.png
-	BShopCounter;
-	BShopShelf;
-	BShopAwning;
-	BShopSign;
-	BShopValance;
-	// pared invisible de la tienda: se choca con ella pero no se ve ni se apunta (BFNoPick: el puntero y el laser la atraviesan)
+	// pared invisible de la tienda del robot comerciante de la nave nodriza (Mothership.shop): se choca con ella pero no se ve ni
+	// se apunta (BFNoPick: el puntero y el laser la atraviesan). Sin precio y kubindex.json hidden
 	BShopBarrier;
-	// poste fino del toldo (columna de metal con anillos dorados) y la luz de los farolitos que cuelgan dentro de la tienda (no se
-	// ve: el farolito y su cadena los dibuja ShopProps, con las botellitas, papeles, monedas y el frasco del mostrador)
-	BShopPost;
-	BShopLantern;
 }
 
 enum BlockModel {

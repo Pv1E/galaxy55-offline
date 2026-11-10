@@ -94,9 +94,7 @@ class BlockNames {
 		"BAcidWallSquare" => "Soft Rock Tiles", "BWinterWallSquare" => "Frost Tiles",
 		"BKubeMystery" => "Mystery Kube",
 		"BShipGlassRed" => "Red Tinted Toughened Glass", "BShipGlassBlue" => "Blue Tinted Toughened Glass",
-		"BShipGlassGreen" => "Green Tinted Toughened Glass", "BShipGlassPink" => "Pink Tinted Toughened Glass",
-		"BShopCounter" => "ESCorp Counter", "BShopShelf" => "ESCorp Shelf", "BShopAwning" => "ESCorp Awning", "BShopSign" => "ESCorp Sign", "BShopValance" => "ESCorp Valance", "BShopBarrier" => "-",
-		"BShopPost" => "ESCorp Post", "BShopLantern" => "ESCorp Lantern",
+		"BShipGlassGreen" => "Green Tinted Toughened Glass", "BShipGlassPink" => "Pink Tinted Toughened Glass", "BShopBarrier" => "-",
 	];
 
 	/** espanol: lo que falta en NamesGen.ES (bloques anadidos despues) y alguna correccion */
@@ -141,9 +139,7 @@ class BlockNames {
 		"BAcidWallSquare" => "Zócalo de roca ácida", "BWinterWallSquare" => "Zócalo de escarcha",
 		"BKubeMystery" => "Kube misterioso",
 		"BShipGlassRed" => "Vidrio blindado rojo", "BShipGlassBlue" => "Vidrio blindado azul",
-		"BShipGlassGreen" => "Vidrio blindado verde", "BShipGlassPink" => "Vidrio blindado rosa",
-		"BShopCounter" => "Mostrador de ESCorp", "BShopShelf" => "Estante de ESCorp", "BShopAwning" => "Toldo de ESCorp", "BShopSign" => "Cartel de ESCorp", "BShopValance" => "Flecos de ESCorp", "BShopBarrier" => "-",
-		"BShopPost" => "Poste de ESCorp", "BShopLantern" => "Farolito de ESCorp",
+		"BShipGlassGreen" => "Vidrio blindado verde", "BShipGlassPink" => "Vidrio blindado rosa", "BShopBarrier" => "-",
 	];
 
 	/** frances: los bloques anadidos despues y algun cambio (BChest: en DataGen "Cantine de l'EScorp") */

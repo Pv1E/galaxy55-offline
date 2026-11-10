@@ -1,6 +1,6 @@
 import Ui;
 
-/** respuesta del jugador en la terminal del robot: "N. texto", ambar apagado; la elegida, mas clara y con una flecha */
+/** respuesta del jugador en la conversacion con el robot: "N. texto" en una fila como las de Contratos; la elegida, con marco dorado */
 class DialogOption extends Widget {
 
 	var num : Int;
@@ -17,28 +17,32 @@ class DialogOption extends Widget {
 		bg.clear();
 		if( text == null ) return;
 		var on = focused && enabled;
-		if( on ) Theme.rect(bg, 0, 2, w, h - 4, RobotDialog.AMBER, 0.12);
-		label.text = (on ? "> " : "  ") + num + ". " + text;
+		// como las filas de Contratos (ContractPanel): caja clara y, la elegida, con marco dorado
+		Theme.rect(bg, 0, 0, w, h - 4, 0xFFFFFF, 0.06);
+		if( on ) {
+			Theme.rect(bg, 0, 0, w, 3, Theme.ACCENT);
+			Theme.rect(bg, 0, h - 7, w, 3, Theme.ACCENT);
+			Theme.rect(bg, 0, 0, 3, h - 4, Theme.ACCENT);
+			Theme.rect(bg, w - 3, 0, 3, h - 4, Theme.ACCENT);
+		}
+		label.text = num + ". " + text;
 		label.setScale(1.9);
-		label.x = 10;
-		label.textColor = !enabled ? RobotDialog.AMBER_OFF : on ? RobotDialog.AMBER_HI : RobotDialog.AMBER_DIM;
+		label.x = 14;
+		label.textColor = !enabled ? Theme.DISABLED : on ? Theme.TEXT : Theme.DIM;
 		label.y = (h - label.textHeight * label.scaleY) * 0.5;
 	}
 }
 
 /**
- * Conversacion con el robot comerciante de la nave nodriza (anadido del port), como una terminal de la ESCorp abajo de la
- * pantalla: un monitor viejo ambar con lineas de barrido y algo de parpadeo. Arriba, lo que dice el robot, letra a letra con
+ * Conversacion con el robot comerciante de la nave nodriza (anadido del port), en un panel abajo de la pantalla con los colores
+ * de los menus del juego, como la ventana de Contratos (azul oscuro, franja dorada, filas claras y marco dorado en la elegida),
+ * pero sin oscurecer la pantalla para que se vea al robot. Arriba, lo que dice el robot, letra a letra con
  * estatica de radio (sfx robotStatic) mientras se le mueve la cabeza (Robot.talk); debajo, las respuestas numeradas (1-3, raton,
  * flechas o mando). La camara se gira sola hasta mirarlo (GalaxyApp.updateRobotDialog). Charlar le hace decir otra frase y la
  * conversacion sigue; Comerciar abre la tienda y Adios (o Esc) la cierra.
  */
 class RobotDialog extends Screen {
 
-	public static inline var AMBER = 0xFF9A1F;
-	public static inline var AMBER_HI = 0xFFD27A;
-	public static inline var AMBER_DIM = 0xC07A2E;
-	public static inline var AMBER_OFF = 0x5A3A18;
 	/** letras por segundo */
 	static inline var CPS = 36;
 	static inline var CHAT_LINES = 10;
@@ -48,7 +52,6 @@ class RobotDialog extends Screen {
 	public var onBye : Void -> Void;
 
 	var frame : h2d.Graphics;
-	var scan : h2d.Graphics;
 	var line : h2d.Text;
 	var full = "";
 	var shown = 0.;
@@ -70,15 +73,14 @@ class RobotDialog extends Screen {
 		bx = a.x + (a.w - bw) * 0.5;
 		by = a.y + a.h - bh - 30;
 		frame = new h2d.Graphics(this);
-		Theme.rect(frame, bx, by, bw, bh, 0x0B0703, 0.93);
-		Theme.rect(frame, bx, by, bw, 2, AMBER, 0.9);
-		Theme.rect(frame, bx, by + bh - 2, bw, 2, AMBER, 0.9);
-		Theme.rect(frame, bx, by, 2, bh, AMBER, 0.9);
-		Theme.rect(frame, bx + bw - 2, by, 2, bh, AMBER, 0.9);
-		Theme.rect(frame, bx + 16, by + 34, bw - 32, 1, AMBER, 0.35);
-		Theme.rect(frame, bx + 16, by + bh - 128, bw - 32, 1, AMBER, 0.25);
-		Theme.text(this, Lang.t("robot.terminal"), 1.6, AMBER_DIM, bx + 18, by + 8);
-		line = Theme.text(this, "", 2.1, AMBER_HI, bx + 22, by + 46);
+		// como los paneles de los menus (GalaxyApp.drawPanel): fondo azul, franja dorada arriba y una linea clara abajo
+		Theme.rect(frame, bx, by, bw, bh, Theme.PANEL, 0.94);
+		Theme.rect(frame, bx, by, bw, 4, Theme.ACCENT);
+		Theme.rect(frame, bx, by + bh - 1, bw, 1, 0xFFFFFF, 0.1);
+		Theme.rect(frame, bx + 16, by + 52, bw - 32, 1, 0xFFFFFF, 0.08);
+		Theme.rect(frame, bx + 16, by + bh - 128, bw - 32, 1, 0xFFFFFF, 0.08);
+		Theme.text(this, Lang.t("shop.title"), 2.6, Theme.TEXT, bx + 24, by + 14);
+		line = Theme.text(this, "", 2.0, Theme.CYAN, bx + 24, by + 60);
 		line.maxWidth = (bw - 44) / line.scaleX;
 		var labels = [Lang.t("robot.opt.trade"), Lang.t("robot.opt.chat"), Lang.t("robot.opt.bye")];
 		for( i in 0...3 ) {
@@ -91,13 +93,6 @@ class RobotDialog extends Screen {
 		options[1].onActivate = chat;
 		options[2].onActivate = function() if( onBye != null ) onBye();
 		onBack = function() if( onBye != null ) onBye();
-		// lineas de barrido del monitor, por encima de todo
-		scan = new h2d.Graphics(this);
-		var y = by + 2.;
-		while( y < by + bh - 2 ) {
-			Theme.rect(scan, bx + 2, y, bw - 4, 1, 0x000000, 0.22);
-			y += 3;
-		}
 		say(Lang.t("robot.hello" + (Std.random(3) + 1)));
 	}
 
@@ -134,9 +129,6 @@ class RobotDialog extends Screen {
 
 	override function update( dt : Float, pad : hxd.Pad ) {
 		t += dt;
-		// parpadeo leve del monitor
-		frame.alpha = 0.97 + Math.sin(t * 37) * 0.015 + (Std.random(60) == 0 ? -0.08 : 0);
-		scan.y = (t * 6) % 3;
 		if( typing() ) {
 			shown += dt * CPS;
 			if( robot != null ) robot.talk = 0.2;

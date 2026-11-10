@@ -9,14 +9,7 @@
   "BDeadTree",
   "BDarkLeaves",
   "BKubeMystery",
-  "BShopCounter",
-  "BShopShelf",
-  "BShopAwning",
-  "BShopSign",
-  "BShopValance",
-  "BShopBarrier",
-  "BShopPost",
-  "BShopLantern"
+  "BShopBarrier"
  ],
  "hiddenBiomes": [
   "BIDeadCity"

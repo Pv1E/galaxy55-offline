@@ -165,20 +165,8 @@ class Mothership {
 		return { sx : size, sy : size, sz : oz + h, cells : out, entry : null, crafts : [] };
 	}
 
-	/** celdas de las tiendas (shop): no se guardan en la nave nodriza (sus bloques no caben en un byte) */
+	/** celdas de las tiendas (shop): no se guardan en la nave nodriza (la pared invisible no cabe en un byte) */
 	static var shopCells : Map<Int, Bool>;
-
-	/**
-	 * cosas sobre el mostrador de la tienda (ShopProps: 0 botellitas, 1 papeles, 2 monedas, 3 frasco), por (a + 3) * 7 + (b + 3):
-	 * a a la derecha del robot, b hacia delante
-	 */
-	public static var goods : Map<Int, Int> = [
-		(-2 + 3) * 7 + 6 => 0, (2 + 3) * 7 + 6 => 2,
-		0 * 7 + 4 => 1, 0 * 7 + 2 => 3, 6 * 7 + 4 => 3, 6 * 7 + 2 => 0,
-		(-1 + 3) * 7 + 0 => 2, (1 + 3) * 7 + 0 => 1,
-	];
-	/** farolitos colgados del mantel (ShopProps), a los lados y detras del robot (delante no, para que se le vea) */
-	public static var chains = [[-2, 0], [2, 0], [0, -2]];
 
 	/** celda de la tienda del robot r a (a, b): a a su derecha, b hacia delante */
 	public static function shopCell( r : { x : Int, y : Int, z : Int, k : Int }, a : Int, b : Int ) {
@@ -188,11 +176,10 @@ class Mothership {
 
 	/**
 	 * Tienda del robot comerciante r (anadido del port), hecha aqui y no en mothership.bin, asi no se pierde al volver a generarla
-	 * con mc2g55.py. Abierta, sin paredes, para que no tape el hangar: un cuadro de 7x7 a la altura del robot con el mostrador
-	 * todo alrededor (se le habla con un clic: GameView.aimedMerchant) y, por dentro, el estante con la mercancia; postes finos
-	 * en las esquinas, encima un mantel rojo (a 4 de alto) que sobresale un bloque por cada lado con flecos triangulares, cadenas
-	 * con farolitos colgando dentro y el cartel en lo alto. Sobre el mostrador, hasta el mantel, una pared invisible
-	 * (BShopBarrier) para que no se salte adentro; no se apunta, asi se le sigue hablando al robot.
+	 * con mc2g55.py. Solo con bloques del juego y abierta, para que no tape el hangar: un cuadro de 7x7 a la altura del robot con
+	 * el mostrador de blindaje estriado todo alrededor (se le habla con un clic: GameView.aimedMerchant) y una losa baja por
+	 * dentro; columnas de tubos en las esquinas y, encima (a 4 de alto), un techo de casco con neones. Sobre el mostrador, hasta el
+	 * techo, una pared invisible (BShopBarrier) para que no se salte adentro; no se apunta, asi se le sigue hablando al robot.
 	 */
 	static function shop( r : { x : Int, y : Int, z : Int, k : Int }, out : Array<ShipData.ShipCell> ) {
 		function put( a : Int, b : Int, dz : Int, k : BlockKind ) {
@@ -204,26 +191,16 @@ class Mothership {
 		for( a in -3...4 )
 			for( b in -3...4 ) {
 				var ring = Std.int(Math.max(Math.abs(a), Math.abs(b)));
-				var corner = Math.abs(a) == 3 && Math.abs(b) == 3;
 				if( ring == 3 ) {
-					// mostrador con mantel azul todo alrededor; en las esquinas, encima, el poste del toldo. Las cosas de comerciante de
-					// encima (ShopProps) quedan dentro de la pared invisible: se choca con ellas y no se apuntan
-					put(a, b, 0, BShopCounter);
-					for( dz in 1...4 ) put(a, b, dz, corner ? BShopPost : BShopBarrier);
-				} else if( ring == 2 ) {
-					// por dentro del mostrador, el estante con la mercancia (su cara de fuera queda tapada: solo se ve desde dentro)
-					put(a, b, 0, BShopShelf);
-					if( Math.abs(a) == 2 && Math.abs(b) == 2 ) put(a, b, 3, BShipLight);
-				}
+					if( Math.abs(a) == 3 && Math.abs(b) == 3 ) for( dz in 0...4 ) put(a, b, dz, BShipTubes);
+					else {
+						put(a, b, 0, BShipWire);
+						for( dz in 1...4 ) put(a, b, dz, BShopBarrier);
+					}
+				} else if( ring == 2 ) put(a, b, 0, BShipPlate);
+				put(a, b, 4, BShipHull);
+				if( Math.abs(a) == 2 && Math.abs(b) == 2 ) put(a, b, 3, BShipLight);
 			}
-		// la luz de los farolitos (ShopProps los dibuja)
-		for( c in chains ) put(c[0], c[1], 2, BShopLantern);
-		for( a in -4...5 )
-			for( b in -4...5 ) {
-				put(a, b, 4, BShopAwning);
-				if( a == -4 || a == 4 || b == -4 || b == 4 ) put(a, b, 3, BShopValance);
-			}
-		put(0, 0, 5, BShopSign);
 	}
 
 	/** archivo cargado (para guardar lo editado con --editnodriza): ruta, cabecera tal cual, tamano, rejilla original y origen */
