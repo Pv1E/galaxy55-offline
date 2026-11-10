@@ -299,8 +299,6 @@ class GalaxyApp extends hxd.App {
 	/** tutorial de la partida de aventura y lo que se ve de el (objetivo, flecha y aura) */
 	var tutorial = new Tutorial();
 	var guide : TutoGuide;
-	/** globo de dialogo del robot comerciante (Charlar) */
-	var bubble : RobotBubble;
 	/** guardar en cuanto se abre el mapa (partida nueva o tutorial pasado: empiezan en el espacio) y aviso que se muestra entonces */
 	var saveOnMap = false;
 	var mapToast : String;
@@ -428,7 +426,6 @@ class GalaxyApp extends hxd.App {
 		toast.dropShadow = { dx : 2, dy : 2, color : 0, alpha : 0.9 };
 		toast.visible = false;
 		guide = new TutoGuide(s2d);
-		bubble = new RobotBubble(s2d);
 		tutorial.onDone = function() saveGame(false);
 		// Base de datos ESCorp: lo nuevo se avisa arriba a la derecha, con un aviso ligero
 		kubNotify = new KubNotify(s2d, atlas);
@@ -1564,52 +1561,54 @@ class GalaxyApp extends hxd.App {
 		startGame(h);
 	}
 
-	/** ultima frase de Charlar (para no repetirla seguida) */
-	var robotChat = -1;
+	/** conversacion con el robot comerciante abierta (RobotDialog) */
+	var robotDialog : RobotDialog;
 
 	/**
-	 * Hablar con el robot comerciante de la nave nodriza (anadido del port): un panel con lo que dice y las opciones Comerciar
-	 * (la tienda), Charlar (se cierra el panel y el robot dice una frase al azar en un globo a su lado: RobotBubble) y Adios.
-	 * Se rehace cada vez.
+	 * Hablar con el robot comerciante de la nave nodriza (anadido del port): la terminal ambar de la ESCorp abajo de la pantalla
+	 * (RobotDialog), con lo que dice y las respuestas Comerciar, Charlar y Adios. La camara se gira hasta mirarlo
+	 * (updateRobotDialog) y el mundo sigue (el robot se mueve y habla); el jugador no se mueve mientras tanto.
 	 */
 	public function openRobotTalk() {
-		if( state != Playing || game == null || shop != null ) return;
+		if( state != Playing || game == null || shop != null || robotDialog != null ) return;
+		var r = game.merchantRobot();
+		if( r == null ) return;
 		game.stopSounds();
 		state = Paused;
 		captureMouse(false);
 		hud.visible = false; msgText.visible = false;
-		var old = screens.get("robot");
-		if( old != null ) old.remove();
-		var PW = 760, PH = 400;
-		var s = panelFor(PW, PH, Lang.t("shop.title"));
-		var x0 = (W - PW) * 0.5, y0 = (H - PH) * 0.5;
-		var line = Theme.text(s, Lang.t("robot.hello" + (Std.random(3) + 1)), 2.2, Theme.TEXT, x0 + 40, y0 + 92);
-		line.maxWidth = (PW - 80) / line.scaleX;
-		var chatN = 10;
-		bubble.stop();
-		var bx = (W - 460) * 0.5, by = y0 + PH - 210;
-		var trade = new Button(s, Lang.t("computer.trade"));
-		var chat = new Button(s, Lang.t("robot.chat"));
-		var bye = new Button(s, Lang.t("robot.bye"));
-		// en el tutorial no se comercia (como en el ordenador de a bordo)
-		trade.enabled = !Tutorial.active(game.info);
-		s.add(trade, bx, by);
-		s.add(chat, bx, by + 62);
-		s.add(bye, bx, by + 124);
-		trade.onActivate = openShop;
-		chat.onActivate = function() {
-			var i = Std.random(chatN);
-			if( i == robotChat ) i = (i + 1) % chatN;
-			robotChat = i;
-			resume();
-			var r = game.merchantRobot();
-			if( r != null ) bubble.say(r, Lang.t("robot.chat" + (i + 1)));
+		var d = new RobotDialog(ui, r, !Tutorial.active(game.info));
+		d.onTrade = function() {
+			closeRobotTalk();
+			openShop();
 		};
-		bye.onActivate = resume;
-		s.onBack = resume;
-		screens.set("robot", s);
+		d.onBye = closeRobotTalk;
+		robotDialog = d;
+		screens.set("robot", d);
 		show("robot");
 		centerMouse();
+	}
+
+	function closeRobotTalk() {
+		if( robotDialog == null ) return;
+		robotDialog.close();
+		robotDialog = null;
+		screens.remove("robot");
+		if( currentName == "robot" ) resume();
+	}
+
+	/** con la conversacion abierta, la camara se gira despacio hasta mirar la cabeza del robot */
+	function updateRobotDialog( dt : Float ) {
+		if( robotDialog == null || game == null ) return;
+		var h = robotDialog.robot.headPos();
+		var dx = h.x - game.px, dy = h.y - game.py, dz = h.z - 0.35 - (game.pz + game.viewZ);
+		var yaw = Math.atan2(dy, dx), pitch = Math.atan2(dz, Math.sqrt(dx * dx + dy * dy));
+		var d = yaw - game.yaw;
+		while( d > Math.PI ) d -= Math.PI * 2;
+		while( d < -Math.PI ) d += Math.PI * 2;
+		var k = Math.min(1, dt * 5);
+		game.yaw += d * k;
+		game.pitch += (pitch - game.pitch) * k;
 	}
 
 	function openComputer() {
@@ -1912,6 +1911,10 @@ class GalaxyApp extends hxd.App {
 	}
 
 	function resume() {
+		if( robotDialog != null ) {
+			robotDialog.close();
+			robotDialog = null;
+		}
 		current = null;
 		ui.removeChildren();
 		screens = new Map();
@@ -2410,7 +2413,6 @@ class GalaxyApp extends hxd.App {
 		var top = invBar != null && invBar.visible ? 72. : 0.;
 		if( hud.visible && hud.text != "" ) top = Math.max(top, hud.y + hud.textHeight * hud.scaleY + 8);
 		guide.update(dt, info == null ? null : tutorial.text(info, g), g, tutorial.targets(g), s3d.camera, top);
-		bubble.update(dt, state == Playing ? game : null, s3d.camera);
 	}
 
 	/** aviso abajo de la pantalla durante `time` segundos (el ultimo 0,6 s se desvanece) */
@@ -2688,7 +2690,9 @@ class GalaxyApp extends hxd.App {
 			// el ordenador de a bordo no es una pausa (Game.openComputerMenu solo quita actionKeys): el juego sigue, se cura en la
 			// nave y el mundo no se para. Cambio del port: sin ningun control (ni andar ni mirar), el teclado y el raton son del menu
 			// la pantalla de licencias sale del ordenador de a bordo y tampoco para el juego (aviso del PR 77)
-			if( current != null && (currentName == "computer" || currentName == "licenses") ) {
+			// la conversacion con el robot tampoco: el se mueve y habla mientras la camara lo encuadra
+			if( current != null && (currentName == "computer" || currentName == "licenses" || currentName == "robot") ) {
+				if( currentName == "robot" ) updateRobotDialog(dt);
 				game.update(dt, false, pad);
 				if( game == null || state != Paused ) return;
 			}

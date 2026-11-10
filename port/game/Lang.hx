@@ -33,8 +33,10 @@ class Lang {
 		"computer.pilot" => ["Pilotar la nave", "Pilot the ship", "Piloter le vaisseau"],
 		"computer.trade" => ["Comerciar", "Trade", "Commercer"],
 		// anadido del port: hablar con el robot comerciante de la nave nodriza (GalaxyApp.openRobotTalk)
-		"robot.chat" => ["Charlar", "Chat", "Discuter"],
-		"robot.bye" => ["Adiós", "Goodbye", "Au revoir"],
+		"robot.terminal" => ["ESCORP · ROBOT COMERCIANTE · CANAL ABIERTO", "ESCORP · MERCHANT ROBOT · CHANNEL OPEN", "ESCORP · ROBOT MARCHAND · CANAL OUVERT"],
+		"robot.opt.trade" => ["Quiero comerciar.", "I want to trade.", "Je veux commercer."],
+		"robot.opt.chat" => ["¿Qué cuentas?", "What's new?", "Quoi de neuf ?"],
+		"robot.opt.bye" => ["Adiós.", "Goodbye.", "Au revoir."],
 		"robot.hello1" => ["¡Bienvenido a la tienda de la ESCorp! ¿Qué necesitas hoy?", "Welcome to the ESCorp shop! What do you need today?", "Bienvenue à la boutique de l'EScorp ! De quoi as-tu besoin aujourd'hui ?"],
 		"robot.hello2" => ["Ah, un cliente. Mis circuitos se alegran de verte.", "Ah, a customer. My circuits are glad to see you.", "Ah, un client. Mes circuits sont ravis de te voir."],
 		"robot.hello3" => ["Bip bup. Tienda abierta, precios justos... casi siempre.", "Beep boop. Shop open, fair prices... almost always.", "Bip boup. Boutique ouverte, prix honnêtes... presque toujours."],

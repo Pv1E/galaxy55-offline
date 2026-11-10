@@ -1,7 +1,8 @@
 # Nave nodriza: la tienda del robot comerciante (Mothership.shop), abierta y en el pasillo central del hangar, entre las dos
 # filas de bahias (antes en el morro, cerrada). Capturas port/out/tienda_centro_*.png: desde junto a la bahia de aparicion, de
 # cerca, desde un lado (se ve el hangar a traves) y desde detras; y se habla con el robot (tienda_robot_*): saludo, Charlar y
-# Comerciar. Charlar cierra el panel: el robot habla en un globo (escribiendo, con estatica) y luego el globo se va.
+# Comerciar. La charla es una terminal ambar abajo (RobotDialog):
+# el robot escribe con estatica, la camara lo encuadra y las respuestas salen numeradas.
 # Mundo = celda de mothership.bin + (135, 18, 24): el robot (56, 189, 18) queda en (191, 207, 42).
 wait 2
 mothership
@@ -30,8 +31,10 @@ talk
 lookat 191.5 207.5 43.9
 wait 5
 talk
-wait 10
+wait 20
 shot tienda_robot_hola
+wait 120
+shot tienda_robot_opciones
 button 1
 wait 25
 shot tienda_robot_charla
