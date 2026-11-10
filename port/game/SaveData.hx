@@ -100,6 +100,8 @@ typedef SaveInfo = {
 	@:optional var hangar : Bool;
 	/** solo mientras se esta en la nave nodriza (no se guarda) */
 	@:optional var mothership : Bool;
+	/** se guardo estando dentro de la nave nodriza (la partida es la del espacio, acoplada al robot): al cargarla se vuelve a entrar */
+	@:optional var inMother : Bool;
 	/** contenido de las cantinas (cofres): clave "s:x,y,z" en la nave o "p<planeta>:x,y,z" en un planeta */
 	@:optional var chests : Array<{ key : String, t : Protocol.BlockInventory }>;
 	/** tutorial en curso (null: sin tutorial, terminado o pasado) */
@@ -300,6 +302,7 @@ class SaveData {
 					creative : o.creative == true, tutorial : o.tutorial == null ? null : o.tutorial == true, inv : readInv(o.inv), uni : uni, credits : o.credits != null ? Std.int(o.credits) : Market.START_CREDITS, market : readMarket(o.market), contracts : readContracts(o.contracts), chests : readChests(o.chests), shipData : o.shipData,
 					shipEdits : o.shipEdits != null ? [for( v in (o.shipEdits : Array<Dynamic>) ) Std.int(v)] : [], edits : o.edits != null ? [for( v in (o.edits : Array<Dynamic>) ) Std.int(v)] : [],
 					tuto : readTuto(o.tuto), shipAt : readSpot(o.shipAt), comet : readComet(o.comet), kub : readKub(o.kub),
+					inMother : o.inMother == true ? true : null,
 			};
 		} catch( e : Dynamic ) {
 			return null;

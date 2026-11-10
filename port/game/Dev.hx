@@ -617,6 +617,7 @@ class Dev {
 				case "exprobot": app.explorer.devClickRobot();
 				case "exprsys": app.explorer.devClickRobotSystem(); // el sistema abierto mas cercano al robot
 				case "exprinfo": Sys.println(app.explorer.devRobotInfo());
+				case "expdock": @:privateAccess app.dockRobot(); // como acoplarse al robot en el mapa: se entra en la nave nodriza
 				case "exppause": @:privateAccess app.openMapPause(); // Esc en el mapa
 				case "landhome": app.devLandHome(); // aterrizar en el planeta del que despegaste
 				case "reload": app.devReload(); // Menu principal y Continuar con esta partida

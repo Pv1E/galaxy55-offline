@@ -1,0 +1,22 @@
+# Guardar dentro de la nave nodriza y volver a cargar: se aparece otra vez dentro (SaveInfo.inMother), no en el mapa; al salir
+# por el teletransportador se vuelve al mapa, junto al robot. Capturas port/out/nodriza_guardar_*.png
+wait 3
+tuto notuto 4242
+waitfor map 6000
+wait 60
+expdock
+waitfor mother 3000
+wait 30
+print pos
+savegame
+reload
+waitfor ready 6000
+wait 60
+waitfor mother 600
+print pos
+shot nodriza_guardar_cargada
+hangarexit
+waitfor map 6000
+wait 30
+shot nodriza_guardar_salida
+quit

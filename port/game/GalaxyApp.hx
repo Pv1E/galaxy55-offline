@@ -1860,6 +1860,18 @@ class GalaxyApp extends hxd.App {
 				mapToast = loadToast;
 				loadToast = null;
 			}
+			// guardada dentro de la nave nodriza: se vuelve a entrar en ella (como al acoplarse al robot: dockRobot); al salir, al mapa
+			if( loadInfo.inMother == true ) {
+				var info = loadInfo;
+				info.inMother = null;
+				hangarReturn = info;
+				var h : SaveInfo = Reflect.copy(info);
+				h.inv = Inv.copy(info.inv);
+				h.market = Market.copy(info.market);
+				h.mothership = true;
+				startGame(h);
+				return;
+			}
 			toSpace(loadInfo);
 			return;
 		}
@@ -2188,7 +2200,12 @@ class GalaxyApp extends hxd.App {
 		}
 		// en el hangar se guarda la partida tal como estaba al entrar (con el tiempo jugado); en la nodriza, con lo comprado y vendido
 		if( game.info.mothership == true && !GameView.editMother ) syncMothership();
-		var ok = SaveData.write(game.hangar != null || game.info.mothership == true ? returnInfo() : game.toInfo(), captureThumb());
+		var info = game.hangar != null || game.info.mothership == true ? returnInfo() : game.toInfo();
+		// dentro de la nodriza (llegando del mapa): se apunta, para que al cargar se aparezca dentro y no en el mapa
+		var inMother = game.info.mothership == true && !GameView.editMother && info != null && info.uni != null && info.uni.space == true;
+		if( inMother ) info.inMother = true;
+		var ok = SaveData.write(info, captureThumb());
+		if( inMother ) info.inMother = null;
 		// modo de edicion: guardar (Esc, guardar y salir) tambien escribe la nave nodriza
 		if( GameView.editMother && game.info.mothership == true )
 			ok = (try Mothership.save(game.world) catch( e : Dynamic ) false) && ok;
