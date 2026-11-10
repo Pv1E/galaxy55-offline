@@ -12,8 +12,11 @@ class DetailsGenerator extends BiomeGenerator {
 	static inline var CAVE = Generator.CAVE;
 	
 	public static var DETAILS = [];
-	/** anadido del port: anomalias puestas en este planeta (n = su tipo en kubindex.json; Base de datos ESCorp) */
-	public var placed : Array<{ x : Int, y : Int, z : Int, n : String }> = [];
+	/**
+	 * anadido del port: anomalias puestas en este planeta (n = su tipo en kubindex.json; Base de datos ESCorp). h: lo que ocupa por
+	 * encima de z (la anomalia Invisible flota sobre el suelo; las demas no lo ponen)
+	 */
+	public var placed : Array<{ x : Int, y : Int, z : Int, n : String, ?h : Int }> = [];
 	
 	override function addHeightDetails() {
 		// p(X) ~= 1 planete sur X
@@ -240,6 +243,85 @@ class DetailsGenerator extends BiomeGenerator {
 			bonusHerb(x,y,z);
 			n--;
 		}
+	
+		addInvisible();
+	}
+	
+	/** anadido del port: p de la anomalia Invisible (~1 planeta normal de cada INVISIBLE_P, como la p de addDetails) */
+	static inline var INVISIBLE_P = 8;
+	/** su cubo: lado exterior (2x2x2 cofres y una capa de Kubes invisibles alrededor) y altura minima y maxima sobre lo que haya debajo */
+	static inline var INVISIBLE_SIZE = 4;
+	static inline var INVISIBLE_GAP_MIN = 10;
+	static inline var INVISIBLE_GAP_MAX = 20;
+	
+	/**
+	 * Anadido del port: anomalia Invisible, como los Invisibles de Kube. Un cubo de 4x4x4: 8 Cofres de Kube en el centro envueltos
+	 * en una capa de Kubes invisibles, flotando sobre el terreno (World dibuja los Kubes invisibles como el cielo de detras).
+	 * Va despues de todo lo demas y con su propio generador aleatorio: no toca la serie de rnd ni genStep, asi los planetas que
+	 * no la tienen salen igual que antes y en los que si, solo cambian las celdas del cubo (las partidas guardadas siguen valiendo).
+	 */
+	function addInvisible() {
+		var keep = rnd;
+		// semilla mezclada (xorshift, solo operaciones de bits: igual en Flash y en HashLink): con seed * k + c, el primer valor del
+		// LCG de mt.Rand dependia de seed modulo 32 y la anomalia salia en las semillas 24, 56, 88...
+		var h = seed ^ 0x5BD1E995;
+		for( i in 0...3 ) {
+			h ^= h << 13;
+			h ^= h >>> 17;
+			h ^= h << 5;
+		}
+		rnd = new mt.Rand(h & 0x3FFFFFFF);
+		rnd.random(2);
+		var surf = size / 128;
+		for( i in 0...Math.ceil(surf*surf) ) {
+			if( rnd.random(INVISIBLE_P*4) != 0 )
+				continue;
+			var ntry = 1000;
+			while( ntry-- > 0 ) {
+				var x = rnd.random(size);
+				var y = rnd.random(size);
+				var top = detInvisible(x, y);
+				if( top >= 0 ) {
+					var c = INVISIBLE_SIZE >> 1;
+					DETAILS.push( { x:x+c, y:y+c, z:top } );
+					// desde el suelo (lo mas alto debajo) hasta arriba del cubo: se identifica al pasar por debajo o a su lado
+					placed.push({ x : x + c, y : y + c, z : top, n : "invisible", h : invisibleTop - top });
+					break;
+				}
+			}
+		}
+		rnd = keep;
+	}
+	
+	/** altura de arriba del ultimo cubo puesto (detInvisible) */
+	var invisibleTop = 0;
+	
+	/** pone el cubo con su esquina en x,y si cabe; devuelve la altura del suelo justo encima de lo mas alto de debajo, o -1 */
+	function detInvisible(x:Int, y:Int) : Int {
+		var s = INVISIBLE_SIZE;
+		// lo mas alto que haya debajo y alrededor (relieve, arboles, edificios), con un borde de 1: nada lo toca
+		var top = 0;
+		for( dy in -1...s+1 )
+			for( dx in -1...s+1 ) {
+				var z = HEIGHT - 1;
+				while( z > top && get(x+dx, y+dy, z) == EMPTY )
+					z--;
+				if( z > top ) top = z;
+			}
+		var gap = INVISIBLE_GAP_MIN + rnd.random(INVISIBLE_GAP_MAX - INVISIBLE_GAP_MIN + 1);
+		var z0 = top + 1 + gap;
+		if( z0 + s > HEIGHT - 2 )
+			return -1;
+		var inv = alloc(BKubeInvisible);
+		var chest = alloc(BKubeChest);
+		for( dz in 0...s )
+			for( dy in 0...s )
+				for( dx in 0...s ) {
+					var shell = dx == 0 || dy == 0 || dz == 0 || dx == s-1 || dy == s-1 || dz == s-1;
+					set(x+dx, y+dy, z0+dz, shell ? inv : chest);
+				}
+		invisibleTop = z0 + s - 1;
+		return top + 1;
 	}
 	
 	

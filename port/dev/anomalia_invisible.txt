@@ -1,0 +1,81 @@
+# Anomalia Invisible (anadido del port, como los Invisibles de Kube): un cubo de 4x4x4, 8 Cofres de Kube envueltos en Kubes
+# invisibles, flotando sobre el terreno. Los Kubes invisibles pintan el cielo de detras; a traves de la vitre blindee teintee
+# o de la glace noire se ven como bajo una luz negra (aristas azules). Pasar por debajo identifica la anomalia.
+# uso: devrun.ps1 -Script port/dev/anomalia_invisible.txt -Extra "--lang=fr --seed=30"
+# semilla 30, otono, tamano 1: el cubo va de 112,2,51 a 115,5,54, los cofres de 113,3,52 a 114,4,53 (debajo, suelo hasta 40)
+wait 3
+kub forget
+print kub
+# desde abajo, contra el cielo: no se ve (y se identifica: aviso arriba a la derecha)
+tp 119.5 10.5 top
+lookat 114 4 53
+wait 40
+shot invisible_dessous
+print kub
+# desde arriba, con el suelo detras: un cubo de cielo
+set 114 11 69 BRock
+tp 114.5 11.15 70
+lookat 114.5 4.5 53
+wait 20
+shot invisible_dessus
+# a traves de la vitre blindee teintee (un suelo de 3x3 entre la camara y el cubo)
+set 113 8 67 BShipGlassBlack
+set 114 8 67 BShipGlassBlack
+set 115 8 67 BShipGlassBlack
+set 113 9 67 BShipGlassBlack
+set 114 9 67 BShipGlassBlack
+set 115 9 67 BShipGlassBlack
+set 113 10 67 BShipGlassBlack
+set 114 10 67 BShipGlassBlack
+set 115 10 67 BShipGlassBlack
+wait 20
+shot invisible_vitre
+# a traves de la glace noire
+set 113 8 67 BBlackIce
+set 114 8 67 BBlackIce
+set 115 8 67 BBlackIce
+set 113 9 67 BBlackIce
+set 114 9 67 BBlackIce
+set 115 9 67 BBlackIce
+set 113 10 67 BBlackIce
+set 114 10 67 BBlackIce
+set 115 10 67 BBlackIce
+wait 20
+shot invisible_glace
+set 113 8 67 none
+set 114 8 67 none
+set 115 8 67 none
+set 113 9 67 none
+set 114 9 67 none
+set 115 9 67 none
+set 113 10 67 none
+set 114 10 67 none
+set 115 10 67 none
+# un hueco de 2x2 arriba: se ven los cofres de debajo (aunque sigan tocando Kubes invisibles por los lados)
+set 113 3 54 none
+set 114 3 54 none
+set 113 4 54 none
+set 114 4 54 none
+# un bloque pegado al cubo se sigue viendo: la invisibilidad no pasa a lo que toca
+set 116 3 53 BWood
+wait 20
+shot invisible_ouvert
+# Base de datos ESCorp
+kub got BKubeInvisible
+kub got BKubeChest
+kub
+wait 3
+kub pick BKubeInvisible
+wait 2
+shot invisible_kub_ficha
+kub page 2
+wait 2
+shot invisible_kub_cat
+kub tab 1
+wait 2
+kub nav 0 27
+wait 2
+shot invisible_kub_espacio
+kub close
+print kub
+quit

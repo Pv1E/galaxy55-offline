@@ -73,10 +73,75 @@ class StarShader extends hxsl.Shader {
 	};
 }
 
+/**
+	Kube invisible (anadido del port): sus caras pintan el cielo que se veria en esa direccion (el degradado y las estrellas,
+	como el fondo) y tapan lo que hay detras. Va despues de FogShader, que da la curvatura y el
+	rayo de vista (fogDelta: de la camara al punto ya bajado por la curvatura, el mismo rayo que el pixel de la pantalla).
+**/
+class InvisibleSkyShader extends hxsl.Shader {
+	static var SRC = {
+		var pixelColor : Vec4;
+		@var var fogDelta : Vec3;
+		@param var c0 : Vec3;
+		@param var c1 : Vec3;
+		@param var c2 : Vec3;
+		@param var stars : SamplerCube;
+		@param var starAlpha : Float;
+		/** del mundo al cubo de las estrellas (inversa de su giro) */
+		@param var starInv : Mat4;
+
+		function skyAt( e : Float ) : Vec3 {
+			var h = clamp(0.65 - 0.5 * e, 0.0, 1.0);
+			var t = clamp(h * 3.0 - 0.5, 0.0, 2.0);
+			var a = clamp(t, 0.0, 1.0);
+			var b = clamp(t - 1.0, 0.0, 1.0);
+			return mix(mix(c0, c1, a), c2, b);
+		}
+
+		function fragment() {
+			var d = normalize(fogDelta);
+			var col = skyAt(asin(clamp(d.z, -1.0, 1.0)));
+			var s = stars.get((vec4(d, 0.0) * starInv).xyz).r * starAlpha;
+			pixelColor = vec4(mix(col, vec3(1.0, 1.0, 1.0), s), 1.0);
+		}
+	};
+}
+
+/**
+	Kube invisible visto a traves de una vitre blindee teintee o de glace noire (anadido del port), como bajo una luz negra: el
+	bloque oscuro y violeta, lo claro de su textura fluorescente y las aristas de cada cara en azul, latiendo despacio.
+**/
+class InvisibleRevealShader extends hxsl.Shader {
+	static var SRC = {
+		@global var global : { var time : Float; };
+		var calculatedUV : Vec2;
+		var pixelColor : Vec4;
+		/** el atlas de los bloques (la textura sin la niebla que FogShader ya ha mezclado en pixelColor) */
+		@param var tex : Sampler2D;
+
+		function fragment() {
+			var t = tex.get(calculatedUV).rgb;
+			var lum = dot(t, vec3(0.3, 0.59, 0.11));
+			// posicion dentro de la casilla del atlas (0..1 en cada cara de bloque)
+			var l = fract(calculatedUV * 64.0);
+			var m = min(min(l.x, 1.0 - l.x), min(l.y, 1.0 - l.y));
+			var edge = 1.0 - smoothstep(0.02, 0.13, m);
+			var pulse = 0.8 + 0.2 * sin(global.time * 2.4);
+			var base = vec3(0.07, 0.03, 0.2) + vec3(0.3, 0.42, 1.0) * (lum * lum) * 0.9;
+			pixelColor = vec4(base + vec3(0.3, 0.72, 1.0) * edge * 1.3 * pulse, 1.0);
+		}
+	};
+}
+
 /** Cielo de un planeta: degradado, estrellas y parametros de niebla. */
 class Sky {
 
 	public var fog(default, null) : FogShader;
+	/** Kube invisible (anadido del port): el cielo que pintan sus caras y su aspecto a traves del cristal tintado (World) */
+	public var invisSky(default, null) : InvisibleSkyShader;
+	public var invisReveal(default, null) : InvisibleRevealShader;
+	/** cubo negro para invisSky cuando no hay estrellas */
+	var noStars : h3d.mat.Texture;
 	public var root(default, null) : h3d.scene.Object;
 	var cols : Array<Int>;
 	var stars : h3d.scene.Mesh;
@@ -101,17 +166,49 @@ class Sky {
 		root = new h3d.scene.Object(parent);
 
 		fog = new FogShader();
-		fog.c0 = rgb(cols[0]);
-		fog.c1 = rgb(cols[1]);
-		fog.c2 = rgb(cols[2]);
 		var k = 0.01 * bd.fogPower;
 		// niebla mas suave en el menu para dejar ver el relieve lejano
 		fog.fogK = menuFog ? Math.min(k, 0.0065) : k;
 		// como el original: con niebla muy densa las estrellas se desvanecen
 		starAlpha = Math.max(0, 1 - Math.pow(bd.fogPower - 1, 2) / 10);
 
+		invisSky = new InvisibleSkyShader();
+		invisSky.starInv = new h3d.Matrix();
+		invisSky.starInv.identity();
+		invisReveal = new InvisibleRevealShader();
+		skyColors(rgb(cols[0]), rgb(cols[1]), rgb(cols[2]));
 		buildDome();
 		buildStars();
+		updateInvisStars();
+	}
+
+	/** colores del degradado de la niebla, y del cielo que pintan los Kubes invisibles */
+	function skyColors( a : h3d.Vector, b : h3d.Vector, c : h3d.Vector ) {
+		fog.c0 = a;
+		fog.c1 = b;
+		fog.c2 = c;
+		invisSky.c0 = a;
+		invisSky.c1 = b;
+		invisSky.c2 = c;
+	}
+
+	/** las estrellas que pintan los Kubes invisibles: las del cielo mientras se vean, con su giro */
+	function updateInvisStars() {
+		var on = stars != null && stars.visible;
+		if( stars == null && noStars == null ) {
+			noStars = new h3d.mat.Texture(1, 1, [Cube]);
+			var px = hxd.Pixels.alloc(1, 1, RGBA);
+			for( side in 0...6 ) noStars.uploadPixels(px, 0, side);
+			px.dispose();
+		}
+		invisSky.stars = stars != null ? starTex : noStars;
+		invisSky.starAlpha = on ? starAlpha : 0;
+		if( on ) {
+			// las estrellas se giran con starQ (= starRot): del mundo al cubo, la traspuesta
+			var m = invisSky.starInv;
+			m.load(starRot);
+			m.transpose();
+		}
 	}
 
 	/** Mueve el cielo con la camara. */
@@ -131,6 +228,7 @@ class Sky {
 		starY = y;
 		starQ.initRotateMatrix(starRot);
 		stars.setRotationQuat(starQ);
+		updateInvisStars();
 	}
 
 	var liquidCol : Null<Int> = null;
@@ -156,9 +254,7 @@ class Sky {
 	public function setLiquid( col : Null<Int>, power : Float ) {
 		if( col == null ) {
 			if( liquidCol != null ) {
-				fog.c0 = rgb(cols[0]);
-				fog.c1 = rgb(cols[1]);
-				fog.c2 = rgb(cols[2]);
+				skyColors(rgb(cols[0]), rgb(cols[1]), rgb(cols[2]));
 				fog.fogK = dryK;
 				liquidCol = null;
 				liquidSky(null);
@@ -168,9 +264,7 @@ class Sky {
 		if( liquidCol == null ) dryK = fog.fogK;
 		if( col != liquidCol ) liquidSky(col);
 		liquidCol = col;
-		fog.c0 = rgb(col);
-		fog.c1 = rgb(col);
-		fog.c2 = rgb(col);
+		skyColors(rgb(col), rgb(col), rgb(col));
 		fog.fogK = 0.01 * power;
 	}
 
@@ -192,6 +286,7 @@ class Sky {
 			space.visible = col == null;
 			dome.visible = col != null;
 		}
+		updateInvisStars();
 	}
 
 	public function setVisible( v : Bool ) {
@@ -210,6 +305,7 @@ class Sky {
 		// cielo de espacio profundo generado (SpaceSky): sustituye al degradado y a las estrellas de los planetas
 		dome.visible = false;
 		if( stars != null ) stars.visible = false;
+		updateInvisStars();
 		space = new h3d.scene.Object(root);
 		spaceTask = SpaceSky.build(space);
 		shooting = [];
@@ -292,6 +388,7 @@ class Sky {
 			stars.primitive.dispose();
 			starTex.dispose();
 		}
+		if( noStars != null ) noStars.dispose();
 		root.remove();
 	}
 

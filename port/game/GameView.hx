@@ -683,13 +683,17 @@ class GameView {
 	 */
 	var anomalyCheck = 0.;
 
-	/** Base de datos ESCorp: una anomalia queda identificada al pasar cerca de ella (16 bloques; en las cuevas, a su altura) */
+	/**
+	 * Base de datos ESCorp: una anomalia queda identificada al pasar cerca de ella (16 bloques; en las cuevas, a su altura). La
+	 * Invisible, que flota, desde el suelo de debajo hasta su altura (h)
+	 */
 	function updateAnomalies( dt : Float ) {
 		if( (anomalyCheck -= dt) > 0 || hangar != null || info.mothership == true || pz >= World.SHIP_Z ) return;
 		anomalyCheck = 0.5;
 		for( a in world.anomalies() ) {
 			var dx = wrapDist(a.x + 0.5 - px), dy = wrapDist(a.y + 0.5 - py);
-			if( dx * dx + dy * dy <= 16 * 16 && Math.abs(a.z - pz) <= 12 ) Kubindex.encounter(info, a.n);
+			var top = a.z + (a.h == null ? 0 : a.h);
+			if( dx * dx + dy * dy <= 16 * 16 && pz >= a.z - 12 && pz <= top + 12 ) Kubindex.encounter(info, a.n);
 		}
 	}
 

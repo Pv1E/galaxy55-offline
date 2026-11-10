@@ -204,6 +204,15 @@
    "byBlocks": true
   },
   {
+   "id": "invisible",
+   "names": [
+    "Invisible",
+    "Invisible",
+    "Invisible"
+   ],
+   "biomes": null
+  },
+  {
    "id": "cavesphere",
    "names": [
     "Geoda",
@@ -1014,6 +1023,12 @@
    "a:artifact",
    "a:cavesphere",
    "a:caveruins"
+  ],
+  "BKubeInvisible": [
+   "a:invisible"
+  ],
+  "BKubeChest": [
+   "a:invisible"
   ]
  }
 }
