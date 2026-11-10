@@ -326,6 +326,8 @@ class GalaxyApp extends hxd.App {
 		}
 		Theme.init();
 		Settings.load();
+		// tarjeta grafica y driver (anadido del port), para los reportes de fallos de dibujo: gpu.txt junto a las partidas
+		try sys.io.File.saveContent(Settings.dir() + "/gpu.txt", engine.driver.getDriverName(true) + "\n") catch( e : Dynamic ) {}
 		if( shotPath != null ) {
 			for( a in Sys.args() ) if( StringTools.startsWith(a, "--lang=") ) { Settings.lang = a.substr(7); Lang.setCode(Settings.lang); }
 		}
@@ -1814,7 +1816,6 @@ class GalaxyApp extends hxd.App {
 		// Base de datos ESCorp: los kubes de tu nave se conocen y el planeta o la cometa quedan explorados
 		Kubindex.shipKnown(game.info);
 		Kubindex.visit(game.info);
-		warmDelay = 2;
 		game.onComputer = openComputer;
 		game.onCometOver = function() showToast(Lang.t("comet.over"), GameView.COMET_OVER_TOAST);
 		game.onChest = openChest;
@@ -2033,12 +2034,9 @@ class GalaxyApp extends hxd.App {
 		hud.visible = false;
 	}
 
-	/** segundos de juego tras llegar al planeta antes de seguir con los iconos de reserva que falten (no se suman a la llegada) */
-	var warmDelay = 0.;
-
 	/**
-	 * Los iconos grandes de la Base de datos ESCorp se hacen de reserva en la pantalla de carga (Icons.pump, en update): al
-	 * abrirla ya estan. Primero las fichas que ya salen en el Kubindex
+	 * Los iconos grandes de la Base de datos ESCorp se hacen de reserva en la pantalla de carga (Icons.pump, en update), que no
+	 * se acaba hasta tenerlos todos: al abrirla ya estan. Primero las fichas que ya salen en el Kubindex
 	 */
 	function warmIcons( info : SaveInfo ) {
 		if( !Tutorial.databaseAllowed(info) ) return;
@@ -2478,10 +2476,12 @@ class GalaxyApp extends hxd.App {
 		}
 		if( dt > 0.1 ) dt = 0.1;
 		// iconos grandes de la Base de datos ESCorp y de la paleta: unos pocos por fotograma (mas con una de ellas abierta); los de
-		// reserva, en la pantalla de carga del planeta y, si faltan, jugando y pasado un rato desde la llegada
-		if( warmDelay > 0 && state == Playing ) warmDelay -= dt;
-		var spareIcons = (state == Loading && loadWorld != null) || (state == Playing && warmDelay <= 0);
-		if( IconMesh.Icons.busy(spareIcons) ) IconMesh.Icons.pump(database != null || palette != null ? 8 : 3, spareIcons);
+		// reserva, solo en la pantalla de carga del planeta, mas deprisa con el mundo ya hecho. Antes seguian jugando, pasados 2 s
+		// de la llegada, dibujando fuera de pantalla en cada imagen: sospechosos del parpadeo que se ve con algunas tarjetas en
+		// los primeros segundos (el casco, el cielo y el HUD desaparecen a ratos y solo quedan los cristales; video de Pvie)
+		var spareIcons = state == Loading && loadWorld != null;
+		if( IconMesh.Icons.busy(spareIcons) )
+			IconMesh.Icons.pump(database != null || palette != null ? 8 : spareIcons && loadWorld.isReady() ? 30 : 3, spareIcons);
 		if( state != Playing ) {
 			jetBar.visible = false;
 			lifeBar.visible = false;
@@ -2532,7 +2532,7 @@ class GalaxyApp extends hxd.App {
 			if( loadAnimPos > 1 ) loadAnimPos--;
 			drawLoadAnim();
 			if( dev != null ) dev.loadingFrame(this);
-			if( skyDone && loadWorld.isReady() && (loadShip == null || loadShip.isReady()) ) finishLoading();
+			if( skyDone && loadWorld.isReady() && (loadShip == null || loadShip.isReady()) && !IconMesh.Icons.busy(true) ) finishLoading();
 		}
 
 		if( state == Playing && game != null ) {
