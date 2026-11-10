@@ -28,6 +28,13 @@ class Robot {
 	var tip : h3d.scene.Object;
 	var eyes : Array<h3d.scene.Object> = [];
 	var headYaw = 0.;
+	/** segundos que le quedan hablando (RobotBubble lo renueva mientras escribe): mueve la cabeza y los ojos parpadean rapido */
+	public var talk = 0.;
+
+	public function isMerchant() return kind == MERCHANT;
+
+	/** encima de la cabeza, en el mundo (para el globo de dialogo) */
+	public function headPos() return { x : x, y : y, z : z + 1.75 };
 
 	/** (x, y, z): centro de la celda donde esta; face: hacia donde mira (radianes, 0 = +x) */
 	public function new( world : World, atlas : h3d.mat.Texture, kind : Int, x : Float, y : Float, z : Float, face : Float ) {
@@ -159,12 +166,19 @@ class Robot {
 		while( target < -Math.PI ) target += Math.PI * 2;
 		if( target > 1.2 ) target = 1.2 else if( target < -1.2 ) target = -1.2;
 		headYaw += (target - headYaw) * Math.min(1, dt * 4);
-		head.setRotation(0, 0, headYaw);
+		// hablando: asiente y ladea la cabeza un poco, deprisa
+		var nod = 0., tilt = 0.;
+		if( talk > 0 ) {
+			talk -= dt;
+			nod = Math.sin(t * 15) * 0.12 + Math.sin(t * 6.3) * 0.05;
+			tilt = Math.sin(t * 4.1) * 0.08;
+		}
+		head.setRotation(tilt, nod, headYaw + (talk > 0 ? Math.sin(t * 3.2) * 0.12 : 0));
 		// brazos: como si atendiera el mostrador
 		armL.setRotation(0, -0.35 + Math.sin(t * 1.1) * 0.25, 0);
 		armR.setRotation(0, -0.35 + Math.sin(t * 1.1 + 2.0) * 0.25, 0);
 		// ojos que parpadean y antena que destella
-		var blink = (t % 4.0) < 0.12;
+		var blink = talk > 0 ? (t * 10) % 1 < 0.3 : (t % 4.0) < 0.12;
 		for( e in eyes ) e.visible = !blink;
 		tip.visible = (t % 1.5) < 0.9;
 	}

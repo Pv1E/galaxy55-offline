@@ -1994,6 +1994,20 @@ class GameView {
 	/** robots de la nave nodriza (Robot.hx) */
 	var robots : Array<Robot> = [];
 
+	/** el robot comerciante mas cercano al jugador (null si no hay) */
+	public function merchantRobot() : Robot {
+		var best : Robot = null, bd = 1e9;
+		for( r in robots )
+			if( r.isMerchant() ) {
+				var h = r.headPos(), dx = h.x - px, dy = h.y - py, d = dx * dx + dy * dy;
+				if( d < bd ) {
+					bd = d;
+					best = r;
+				}
+			}
+		return best;
+	}
+
 	/** color y opacidad del velo de pantalla dentro de un liquido (Game.getEffects: fades), null fuera */
 	public var liquidFade(default, null) : { a : Float, col : Int } = null;
 	var liquidTime = 0.;

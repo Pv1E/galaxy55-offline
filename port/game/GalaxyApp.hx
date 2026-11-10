@@ -299,6 +299,8 @@ class GalaxyApp extends hxd.App {
 	/** tutorial de la partida de aventura y lo que se ve de el (objetivo, flecha y aura) */
 	var tutorial = new Tutorial();
 	var guide : TutoGuide;
+	/** globo de dialogo del robot comerciante (Charlar) */
+	var bubble : RobotBubble;
 	/** guardar en cuanto se abre el mapa (partida nueva o tutorial pasado: empiezan en el espacio) y aviso que se muestra entonces */
 	var saveOnMap = false;
 	var mapToast : String;
@@ -426,6 +428,7 @@ class GalaxyApp extends hxd.App {
 		toast.dropShadow = { dx : 2, dy : 2, color : 0, alpha : 0.9 };
 		toast.visible = false;
 		guide = new TutoGuide(s2d);
+		bubble = new RobotBubble(s2d);
 		tutorial.onDone = function() saveGame(false);
 		// Base de datos ESCorp: lo nuevo se avisa arriba a la derecha, con un aviso ligero
 		kubNotify = new KubNotify(s2d, atlas);
@@ -1563,8 +1566,12 @@ class GalaxyApp extends hxd.App {
 
 	/**
 	 * Hablar con el robot comerciante de la nave nodriza (anadido del port): un panel con lo que dice y las opciones Comerciar
-	 * (la tienda), Charlar (otra frase al azar: consejos, rumores y bromas) y Adios. Se rehace cada vez.
+	 * (la tienda), Charlar (se cierra el panel y el robot dice una frase al azar en un globo a su lado: RobotBubble) y Adios.
+	 * Se rehace cada vez.
 	 */
+	/** ultima frase de Charlar (para no repetirla seguida) */
+	var robotChat = -1;
+
 	public function openRobotTalk() {
 		if( state != Playing || game == null || shop != null ) return;
 		game.stopSounds();
@@ -1578,7 +1585,8 @@ class GalaxyApp extends hxd.App {
 		var x0 = (W - PW) * 0.5, y0 = (H - PH) * 0.5;
 		var line = Theme.text(s, Lang.t("robot.hello" + (Std.random(3) + 1)), 2.2, Theme.TEXT, x0 + 40, y0 + 92);
 		line.maxWidth = (PW - 80) / line.scaleX;
-		var chatN = 10, last = -1;
+		var chatN = 10;
+		bubble.stop();
 		var bx = (W - 460) * 0.5, by = y0 + PH - 210;
 		var trade = new Button(s, Lang.t("computer.trade"));
 		var chat = new Button(s, Lang.t("robot.chat"));
@@ -1591,9 +1599,11 @@ class GalaxyApp extends hxd.App {
 		trade.onActivate = openShop;
 		chat.onActivate = function() {
 			var i = Std.random(chatN);
-			if( i == last ) i = (i + 1) % chatN;
-			last = i;
-			line.text = Lang.t("robot.chat" + (i + 1));
+			if( i == robotChat ) i = (i + 1) % chatN;
+			robotChat = i;
+			resume();
+			var r = game.merchantRobot();
+			if( r != null ) bubble.say(r, Lang.t("robot.chat" + (i + 1)));
 		};
 		bye.onActivate = resume;
 		s.onBack = resume;
@@ -2379,6 +2389,7 @@ class GalaxyApp extends hxd.App {
 		var top = invBar != null && invBar.visible ? 72. : 0.;
 		if( hud.visible && hud.text != "" ) top = Math.max(top, hud.y + hud.textHeight * hud.scaleY + 8);
 		guide.update(dt, info == null ? null : tutorial.text(info, g), g, tutorial.targets(g), s3d.camera, top);
+		bubble.update(dt, state == Playing ? game : null, s3d.camera);
 	}
 
 	/** aviso abajo de la pantalla durante `time` segundos (el ultimo 0,6 s se desvanece) */

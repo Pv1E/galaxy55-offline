@@ -97,6 +97,7 @@ class BlockNames {
 		"BShipGlassGreen" => "Green Tinted Toughened Glass", "BShipGlassPink" => "Pink Tinted Toughened Glass",
 		"BShopCounter" => "ESCorp Counter", "BShopShelf" => "ESCorp Shelf", "BShopAwning" => "ESCorp Awning", "BShopSign" => "ESCorp Sign", "BShopValance" => "ESCorp Valance", "BShopBarrier" => "-",
 		"BShopPost" => "ESCorp Post", "BShopChain" => "ESCorp Chain", "BShopLantern" => "ESCorp Lantern",
+		"BShopBottles" => "ESCorp Vials", "BShopPapers" => "ESCorp Papers", "BShopCoins" => "ESCorp Coins", "BShopJar" => "ESCorp Jar",
 	];
 
 	/** espanol: lo que falta en NamesGen.ES (bloques anadidos despues) y alguna correccion */
@@ -144,6 +145,7 @@ class BlockNames {
 		"BShipGlassGreen" => "Vidrio blindado verde", "BShipGlassPink" => "Vidrio blindado rosa",
 		"BShopCounter" => "Mostrador de ESCorp", "BShopShelf" => "Estante de ESCorp", "BShopAwning" => "Toldo de ESCorp", "BShopSign" => "Cartel de ESCorp", "BShopValance" => "Flecos de ESCorp", "BShopBarrier" => "-",
 		"BShopPost" => "Poste de ESCorp", "BShopChain" => "Cadena de ESCorp", "BShopLantern" => "Farolito de ESCorp",
+		"BShopBottles" => "Frascos de ESCorp", "BShopPapers" => "Papeles de ESCorp", "BShopCoins" => "Monedas de ESCorp", "BShopJar" => "Tarro de ESCorp",
 	];
 
 	/** frances: los bloques anadidos despues y algun cambio (BChest: en DataGen "Cantine de l'EScorp") */

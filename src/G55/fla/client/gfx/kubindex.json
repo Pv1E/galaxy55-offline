@@ -17,7 +17,11 @@
   "BShopBarrier",
   "BShopPost",
   "BShopChain",
-  "BShopLantern"
+  "BShopLantern",
+  "BShopBottles",
+  "BShopPapers",
+  "BShopCoins",
+  "BShopJar"
  ],
  "hiddenBiomes": [
   "BIDeadCity"

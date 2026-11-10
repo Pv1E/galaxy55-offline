@@ -176,6 +176,13 @@ class Mothership {
 	 * con farolitos colgando dentro y el cartel en lo alto. Sobre el mostrador, hasta el mantel, una pared invisible
 	 * (BShopBarrier) para que no se salte adentro; no se apunta, asi se le sigue hablando al robot.
 	 */
+	/** cosas sobre el mostrador de la tienda, por (a + 3) * 7 + (b + 3): a a la derecha del robot, b hacia delante */
+	static var goods : Map<Int, BlockKind> = [
+		(-2 + 3) * 7 + 6 => BShopBottles, (2 + 3) * 7 + 6 => BShopCoins,
+		0 * 7 + 4 => BShopPapers, 0 * 7 + 2 => BShopJar, 6 * 7 + 4 => BShopJar, 6 * 7 + 2 => BShopBottles,
+		(-1 + 3) * 7 + 0 => BShopCoins, (1 + 3) * 7 + 0 => BShopPapers,
+	];
+
 	static function shop( r : { x : Int, y : Int, z : Int, k : Int }, out : Array<ShipData.ShipCell> ) {
 		// delante (fx, fy) y a la derecha (-fy, fx)
 		var fx = [1, 0, -1, 0][r.k], fy = [0, 1, 0, -1][r.k];
@@ -189,9 +196,11 @@ class Mothership {
 				var ring = Std.int(Math.max(Math.abs(a), Math.abs(b)));
 				var corner = Math.abs(a) == 3 && Math.abs(b) == 3;
 				if( ring == 3 ) {
-					// mostrador con mantel azul todo alrededor; en las esquinas, encima, el poste del toldo
+					// mostrador con mantel azul todo alrededor; en las esquinas, encima, el poste del toldo. Encima del mostrador, cosas
+					// de comerciante (se choca con ellas como con la pared invisible, y tampoco se apuntan)
 					put(a, b, 0, BShopCounter);
-					for( dz in 1...4 ) put(a, b, dz, corner ? BShopPost : BShopBarrier);
+					var item = goods.get((a + 3) * 7 + (b + 3));
+					for( dz in 1...4 ) put(a, b, dz, corner ? BShopPost : (dz == 1 && item != null ? item : BShopBarrier));
 				} else if( ring == 2 ) {
 					// por dentro del mostrador, el estante con la mercancia (su cara de fuera queda tapada: solo se ve desde dentro)
 					put(a, b, 0, BShopShelf);

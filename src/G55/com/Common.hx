@@ -350,6 +350,11 @@ enum BlockKind {
 	BShopPost;
 	BShopChain;
 	BShopLantern;
+	// cosas de comerciante sobre el mostrador: botellitas, papeles, monedas y un frasco (se choca con ellas, no se apuntan)
+	BShopBottles;
+	BShopPapers;
+	BShopCoins;
+	BShopJar;
 }
 
 enum BlockModel {
