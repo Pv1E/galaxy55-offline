@@ -9,7 +9,7 @@ class DialogOption extends Widget {
 	public function new( parent : h2d.Object, num : Int, text : String, w : Int ) {
 		this.num = num;
 		this.text = text;
-		super(parent, w, 34);
+		super(parent, w, 44);
 	}
 
 	override function redraw() {
@@ -18,7 +18,7 @@ class DialogOption extends Widget {
 		if( text == null ) return;
 		var on = focused && enabled;
 		// como las filas de Contratos (ContractPanel): caja clara y, la elegida, con marco dorado
-		Theme.rect(bg, 0, 0, w, h - 4, 0xFFFFFF, 0.06);
+		Theme.rect(bg, 0, 0, w, h - 4, 0xFFFFFF, on ? 0.12 : 0.06);
 		if( on ) {
 			Theme.rect(bg, 0, 0, w, 3, Theme.ACCENT);
 			Theme.rect(bg, 0, h - 7, w, 3, Theme.ACCENT);
@@ -26,9 +26,9 @@ class DialogOption extends Widget {
 			Theme.rect(bg, w - 3, 0, 3, h - 4, Theme.ACCENT);
 		}
 		label.text = num + ". " + text;
-		label.setScale(1.9);
+		label.setScale(2.2);
 		label.x = 14;
-		label.textColor = !enabled ? Theme.DISABLED : on ? Theme.TEXT : Theme.DIM;
+		label.textColor = !enabled ? Theme.DISABLED : on ? Theme.ACCENT : Theme.TEXT;
 		label.y = (h - label.textHeight * label.scaleY) * 0.5;
 	}
 }
@@ -69,7 +69,7 @@ class RobotDialog extends Screen {
 		this.robot = robot;
 		var a = Theme.visibleArea();
 		bw = Math.min(1060, a.w - 80);
-		bh = 250;
+		bh = 290;
 		bx = a.x + (a.w - bw) * 0.5;
 		by = a.y + a.h - bh - 30;
 		frame = new h2d.Graphics(this);
@@ -78,14 +78,14 @@ class RobotDialog extends Screen {
 		Theme.rect(frame, bx, by, bw, 4, Theme.ACCENT);
 		Theme.rect(frame, bx, by + bh - 1, bw, 1, 0xFFFFFF, 0.1);
 		Theme.rect(frame, bx + 16, by + 52, bw - 32, 1, 0xFFFFFF, 0.08);
-		Theme.rect(frame, bx + 16, by + bh - 128, bw - 32, 1, 0xFFFFFF, 0.08);
+		Theme.rect(frame, bx + 16, by + bh - 158, bw - 32, 1, 0xFFFFFF, 0.08);
 		Theme.text(this, Lang.t("shop.title"), 2.6, Theme.TEXT, bx + 24, by + 14);
 		line = Theme.text(this, "", 2.0, Theme.CYAN, bx + 24, by + 60);
 		line.maxWidth = (bw - 44) / line.scaleX;
 		var labels = [Lang.t("robot.opt.trade"), Lang.t("robot.opt.chat"), Lang.t("robot.opt.bye")];
 		for( i in 0...3 ) {
 			var o = new DialogOption(this, i + 1, labels[i], Std.int(bw - 36));
-			add(o, bx + 18, by + bh - 120 + i * 36);
+			add(o, bx + 18, by + bh - 150 + i * 46);
 			options.push(o);
 		}
 		options[0].enabled = canTrade;
