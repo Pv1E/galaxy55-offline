@@ -11,6 +11,7 @@ private class KButton extends h2d.Object {
 	public var onClick : Void -> Void;
 	var bg : h2d.Graphics;
 	var txt : h2d.Text;
+	var it : h2d.Interactive;
 	var over = false;
 
 	public function new( parent : h2d.Object, label : String, w : Int, h = 30, scale = 1.4 ) {
@@ -19,7 +20,7 @@ private class KButton extends h2d.Object {
 		this.h = h;
 		bg = new h2d.Graphics(this);
 		txt = Theme.text(this, label, scale, Theme.TEXT);
-		var it = new h2d.Interactive(w, h, this);
+		it = new h2d.Interactive(w, h, this);
 		it.onOver = function(_) { over = true; redraw(); };
 		it.onOut = function(_) { over = false; redraw(); };
 		it.onClick = function(_) if( enabled && onClick != null ) onClick();
@@ -28,6 +29,12 @@ private class KButton extends h2d.Object {
 
 	public function setLabel( s : String ) {
 		txt.text = s;
+		redraw();
+	}
+
+	public function resize( w : Int ) {
+		this.w = w;
+		it.width = w;
 		redraw();
 	}
 
@@ -140,6 +147,9 @@ class KubeEditor extends Screen {
 	static inline var FILL = 2;
 	static inline var PICKER = 3;
 	static inline var HISTORY = 200;
+	/** pasos del zoom de la vista previa (rueda): 1 = el kube o el mosaico entero en la vista */
+	static var ZOOMS = [0.5, 0.67, 0.8, 1., 1.25, 1.5, 2., 2.5, 3., 4., 5., 6.];
+	static inline var ZOOM1 = 3;
 	/** DB32 (DawnBringer): una paleta clasica de pixel art */
 	static var PALETTE = [0x000000, 0x222034, 0x45283C, 0x663931, 0x8F563B, 0xDF7126, 0xD9A066, 0xEEC39A, 0xFBF236, 0x99E550, 0x6ABE30,
 		0x37946E, 0x4B692F, 0x524B24, 0x323C39, 0x3F3F74, 0x306082, 0x5B6EE1, 0x639BFF, 0x5FCDE4, 0xCBDBFC, 0xFFFFFF, 0x9BADB7, 0x847E87,
@@ -214,6 +224,7 @@ class KubeEditor extends Screen {
 	var boxBars = new Array<h2d.Graphics>();
 	var boxTexts = new Array<h2d.Text>();
 	var doorButton : KButton;
+	var tileButton : KButton;
 	var spinButton : KButton;
 	var deleteButton : KButton;
 	var msgText : h2d.Text;
@@ -224,10 +235,20 @@ class KubeEditor extends Screen {
 	var scene : h3d.scene.Scene;
 	var previewTex : h3d.mat.Texture;
 	var previewMesh : h3d.scene.Mesh;
+	/** contorno de la celda (del mosaico entero si lo hay) */
+	var cellBox : h3d.scene.Graphics;
 	var yaw = -Math.PI / 4;
 	var pitch = 0.53;
 	var spin = true;
 	var doorOpen = false;
+	/** mosaico: n x n x n kubes iguales pegados, para ver como casan sus caras de lado, de arriba y de abajo (1 = el kube solo) */
+	var tiles = 1;
+	var zoomIndex = ZOOM1;
+	/** punto que mira la camara: el centro del mosaico, o el que se acerco con la rueda */
+	var lookAt = new h3d.col.Point(0.5, 0.5, 0.5);
+	var zoomText : h2d.Text;
+	var zoomBack : h2d.Graphics;
+	var previewOver = false;
 
 	// lista de kubes
 	var tab = 0;
@@ -257,12 +278,12 @@ class KubeEditor extends Screen {
 		scene = new h3d.scene.Scene();
 		previewTex = new h3d.mat.Texture(PV, PV, [Target]);
 		previewTex.depthBuffer = new h3d.mat.Texture(PV, PV, [Target], Depth24Stencil8);
-		var cell = new h3d.scene.Graphics(scene);
-		cell.lineStyle(1, Theme.CYAN, 0.35);
+		cellBox = new h3d.scene.Graphics(scene);
+		cellBox.lineStyle(1, Theme.CYAN, 0.35);
 		for( e in [[0, 0, 0, 1, 0, 0], [1, 0, 0, 1, 1, 0], [1, 1, 0, 0, 1, 0], [0, 1, 0, 0, 0, 0], [0, 0, 1, 1, 0, 1], [1, 0, 1, 1, 1, 1],
 			[1, 1, 1, 0, 1, 1], [0, 1, 1, 0, 0, 1], [0, 0, 0, 0, 0, 1], [1, 0, 0, 1, 0, 1], [1, 1, 0, 1, 1, 1], [0, 1, 0, 0, 1, 1]] ) {
-			cell.moveTo(e[0], e[1], e[2]);
-			cell.lineTo(e[3], e[4], e[5]);
+			cellBox.moveTo(e[0], e[1], e[2]);
+			cellBox.lineTo(e[3], e[4], e[5]);
 		}
 
 		build();
@@ -547,12 +568,23 @@ class KubeEditor extends Screen {
 			spinButton.selected = false;
 			var sx = pv.x + e.relX, sy = pv.y + e.relY, y0 = yaw, p0 = pitch;
 			drag = function(mx, my) {
-				yaw = y0 - (mx - sx) * 0.012;
+				// el kube sigue al raton, como si se cogiera: a la derecha, la cara de delante se va a la derecha
+				yaw = y0 + (mx - sx) * 0.012;
 				pitch = Math.max(-1.4, Math.min(1.4, p0 + (my - sy) * 0.012));
 			};
 		};
-		doorButton = new KButton(this, Lang.t("kube.preview.open"), 176, 24, 1.2);
-		doorButton.setPosition(RX, 602);
+		// la rueda acerca o aleja el punto que esta bajo el raton
+		it.onWheel = function(e : hxd.Event) zoomBy(e.wheelDelta > 0 ? -1 : 1, e.relX / PV * 2 - 1, 1 - e.relY / PV * 2);
+		it.onOver = function(_) { previewOver = true; refreshZoomText(); };
+		it.onOut = function(_) { previewOver = false; refreshZoomText(); };
+		zoomBack = new h2d.Graphics(this);
+		zoomText = Theme.text(this, "", 1.1, Theme.TEXT, 0, PVY + PV - 18);
+		// la casilla de la izquierda: el mosaico, que deja sitio al boton de la puerta cuando la forma es una puerta
+		tileButton = new KButton(this, "", 176, 24, 1.2);
+		tileButton.setPosition(RX, 602);
+		tileButton.onClick = function() setTiles(tiles % 3 + 1);
+		doorButton = new KButton(this, Lang.t("kube.preview.open"), 120, 24, 1.2);
+		doorButton.setPosition(RX + 56, 602);
 		doorButton.onClick = function() {
 			doorOpen = !doorOpen;
 			doorButton.selected = doorOpen;
@@ -619,6 +651,7 @@ class KubeEditor extends Screen {
 		shapeInfo.visible = !kube.shape.box;
 		refreshShapeInfo();
 		doorButton.visible = kube.shape.id == "door";
+		refreshTileButton();
 		deleteButton.enabled = kube.file != null;
 		drawBox();
 		drawFaceTabs();
@@ -746,7 +779,8 @@ class KubeEditor extends Screen {
 		if( computeCover() ) refreshStrip();
 		refreshCanvas();
 		var b = kube.previewBlock(doorOpen && kube.shape.id == "door");
-		var poly = IconMesh.polygon(b, true);
+		cellBox.setScale(tiles);
+		var poly = IconMesh.tiled(b, tiles);
 		if( poly == null ) return;
 		// casilla i de la fila 0 del atlas (64 de ancho) -> casilla i de la tira (8 de ancho)
 		var n = KubeData.FACES.length;
@@ -846,17 +880,26 @@ class KubeEditor extends Screen {
 		}
 	}
 
-	function renderPreview() {
-		var cam = scene.camera;
+	/**
+	 * Camara de la vista previa: gira alrededor de lookAt, a una distancia proporcional al mosaico (el mosaico entero ocupa la vista
+	 * como el kube solo). Para acercar se cierra el angulo, asi la camara no entra en el mosaico; para alejar se aleja.
+	 */
+	function setupCamera() {
+		var cam = scene.camera, z = ZOOMS[zoomIndex];
 		cam.orthoBounds = null;
-		cam.fovY = 30;
+		cam.fovY = 2 * Math.atan(Math.tan(15 * Math.PI / 180) / Math.max(1, z)) * 180 / Math.PI;
 		cam.screenRatio = 1;
 		cam.zNear = 0.1;
 		cam.zFar = 50;
-		var d = 3.4;
-		cam.target.set(0.5, 0.5, 0.5);
-		cam.pos.set(0.5 + d * Math.cos(pitch) * Math.cos(yaw), 0.5 + d * Math.cos(pitch) * Math.sin(yaw), 0.5 + d * Math.sin(pitch));
+		var d = 3.4 * tiles / Math.min(1, z);
+		cam.target.set(lookAt.x, lookAt.y, lookAt.z);
+		cam.pos.set(lookAt.x + d * Math.cos(pitch) * Math.cos(yaw), lookAt.y + d * Math.cos(pitch) * Math.sin(yaw), lookAt.z + d * Math.sin(pitch));
 		cam.up.set(0, 0, 1);
+		cam.update();
+	}
+
+	function renderPreview() {
+		setupCamera();
 		var engine = h3d.Engine.getCurrent();
 		engine.pushTarget(previewTex);
 		engine.clear(0xFF101828, 1, 0);
@@ -864,14 +907,82 @@ class KubeEditor extends Screen {
 		engine.popTarget();
 	}
 
-	/** miniatura de la lista "Mis kubes": la vista de los iconos del inventario (desde +x, -y y arriba) */
+	/** mosaico de n x n x n: el zoom se queda, la camara vuelve a mirar al centro */
+	function setTiles( n : Int ) {
+		tiles = n;
+		lookAt.set(n * 0.5, n * 0.5, n * 0.5);
+		refreshTileButton();
+		rebuildPreview();
+	}
+
+	/** "Mosaique 2x2" en la casilla entera; con una puerta, solo "2x2" y el boton de la puerta al lado */
+	function refreshTileButton() {
+		var door = kube.shape.id == "door", n = tiles + "×" + tiles;
+		tileButton.resize(door ? 52 : 176);
+		tileButton.setLabel(door ? n : Lang.t("kube.preview.tile") + "  " + n);
+		tileButton.selected = tiles > 1;
+	}
+
+	/** un paso de zoom (d = +1 acerca); sx, sy: punto de la vista previa (-1..1, y hacia arriba) que se queda en su sitio */
+	function zoomBy( d : Int, sx = 0., sy = 0. ) {
+		var i = Std.int(Math.max(0, Math.min(ZOOMS.length - 1, zoomIndex + d)));
+		if( i == zoomIndex ) return;
+		setupCamera();
+		var before = focusPlane(sx, sy);
+		zoomIndex = i;
+		var c = tiles * 0.5;
+		if( ZOOMS[i] <= 1 )
+			lookAt.set(c, c, c);
+		else {
+			setupCamera();
+			var after = focusPlane(sx, sy);
+			// mover la camara y su punto juntos traslada la vista: el punto de antes vuelve bajo el raton (sin salir del mosaico)
+			inline function clamp( v : Float ) return Math.max(0, Math.min(tiles, v));
+			lookAt.set(clamp(lookAt.x + before.x - after.x), clamp(lookAt.y + before.y - after.y), clamp(lookAt.z + before.z - after.z));
+		}
+		refreshZoomText();
+	}
+
+	/** punto que se ve en sx, sy de la vista previa, en el plano que pasa por lookAt de frente a la camara (setupCamera antes) */
+	function focusPlane( sx : Float, sy : Float ) : h3d.col.Point {
+		var cam = scene.camera;
+		var a = cam.unproject(sx, sy, 0), b = cam.unproject(sx, sy, 1);
+		var nx = cam.pos.x - lookAt.x, ny = cam.pos.y - lookAt.y, nz = cam.pos.z - lookAt.z;
+		var dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
+		var t = (nx * (lookAt.x - a.x) + ny * (lookAt.y - a.y) + nz * (lookAt.z - a.z)) / (nx * dx + ny * dy + nz * dz);
+		return new h3d.col.Point(a.x + dx * t, a.y + dy * t, a.z + dz * t);
+	}
+
+	/** abajo en la vista previa, sobre una banda oscura: la ayuda de la rueda con el raton encima y el zoom si no es el de partida */
+	function refreshZoomText() {
+		var pct = Math.round(ZOOMS[zoomIndex] * 100) + "%";
+		zoomText.text = previewOver ? Lang.t("kube.preview.zoom") + (zoomIndex != ZOOM1 ? "  ·  " + pct : "") : zoomIndex != ZOOM1 ? pct : "";
+		var w = Std.int(zoomText.textWidth * zoomText.scaleX);
+		zoomText.x = Std.int(RX + (RW - w) * 0.5);
+		zoomBack.clear();
+		if( zoomText.text != "" ) Theme.rect(zoomBack, zoomText.x - 6, PVY + PV - 20, w + 12, 20, 0x05070D, 0.75);
+	}
+
+	/** miniatura de la lista "Mis kubes": la vista de los iconos del inventario (desde +x, -y y arriba), del kube solo */
 	function thumbPixels() : hxd.Pixels {
-		var y0 = yaw, p0 = pitch;
+		var y0 = yaw, p0 = pitch, t0 = tiles, z0 = zoomIndex, f0 = lookAt.clone();
 		yaw = -Math.PI / 4;
 		pitch = 0.53;
+		zoomIndex = ZOOM1;
+		lookAt.set(0.5, 0.5, 0.5);
+		if( t0 != 1 ) {
+			tiles = 1;
+			rebuildPreview();
+		}
 		renderPreview();
 		yaw = y0;
 		pitch = p0;
+		zoomIndex = z0;
+		lookAt.load(f0);
+		if( t0 != 1 ) {
+			tiles = t0;
+			rebuildPreview();
+		}
 		var full = previewTex.capturePixels();
 		var out = hxd.Pixels.alloc(64, 64, BGRA);
 		var k = PV / 64;
@@ -1342,6 +1453,8 @@ class KubeEditor extends Screen {
 				if( K.isPressed(K.G) || K.isPressed(K.NUMBER_3) ) setTool(FILL);
 				if( K.isPressed(K.I) || K.isPressed(K.NUMBER_4) ) setTool(PICKER);
 				if( K.isPressed(K.M) ) mirrorButton.onClick();
+				if( K.isPressed(K.NUMPAD_ADD) || K.isPressed(K.QWERTY_EQUALS) ) zoomBy(1);
+				if( K.isPressed(K.NUMPAD_SUB) || K.isPressed(K.QWERTY_MINUS) ) zoomBy(-1);
 				var fs = kube.shape.faces, fi = fs.indexOf(face);
 				if( K.isPressed(K.LEFT) || K.isPressed(K.PGUP) ) selectFace(fs[(fi + fs.length - 1) % fs.length]);
 				if( K.isPressed(K.RIGHT) || K.isPressed(K.PGDOWN) || K.isPressed(K.TAB) ) selectFace(fs[(fi + 1) % fs.length]);
@@ -1372,7 +1485,33 @@ class KubeEditor extends Screen {
 		return "kube '" + kube.name + "' forma " + kube.shape.id + " tipo " + kube.blockType() + " caja " + kube.box.join(",") + " luz "
 			+ kube.light + " traversable " + kube.noCollide + " cara " + KubeData.FACES[face] + " caras " + [for( f in kube.shape.faces ) KubeData.FACES[f]].join("/")
 			+ " pixeles visibles " + used + " cambios " + dirty + " deshacer " + undoStack.length + " archivo " + (kube.file == null ? "-" : new haxe.io.Path(kube.file).file)
-			+ " lista " + (tab == 0 ? gameBlocks.length + " bloques" : mine.length + " kubes");
+			+ " lista " + (tab == 0 ? gameBlocks.length + " bloques" : mine.length + " kubes") + " mosaico " + tiles + " zoom " + ZOOMS[zoomIndex]
+			+ " foco " + [lookAt.x, lookAt.y, lookAt.z].map(v -> Math.round(v * 100) / 100).join(",") + " caras vista " + previewFaces();
+	}
+
+	/** caras de la malla de la vista previa (el mosaico sin las caras de dentro) */
+	function previewFaces() : Int {
+		if( previewMesh == null ) return 0;
+		var poly = Std.downcast(previewMesh.primitive, h3d.prim.Polygon);
+		return poly == null ? 0 : Std.int(poly.points.length / 4);
+	}
+
+	/** dev: mosaico de n x n x n */
+	public function devTiles( n : Int ) setTiles(Std.int(Math.max(1, Math.min(3, n))));
+
+	/** dev: el paso de zoom mas cercano a z, hacia el centro de la vista */
+	public function devZoom( z : Float ) {
+		var best = 0;
+		for( i in 0...ZOOMS.length ) if( Math.abs(ZOOMS[i] - z) < Math.abs(ZOOMS[best] - z) ) best = i;
+		zoomBy(best - zoomIndex);
+	}
+
+	/** dev: vista fija, la de los iconos (sin girar), para comparar capturas */
+	public function devView() {
+		spin = false;
+		spinButton.selected = false;
+		yaw = -Math.PI / 4;
+		pitch = 0.53;
 	}
 
 	/** dev: pinta (o borra con color 0) un rectangulo de la cara actual como un trazo */
