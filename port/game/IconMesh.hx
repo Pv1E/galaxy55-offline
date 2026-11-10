@@ -241,6 +241,13 @@ class Icons {
 		return asked.length > 0 || (withSpare && spare.length > 0);
 	}
 
+	/** orden `print icons` de Dev: los que quedan por hacer (de reserva y pedidos) y los ya hechos */
+	public static function devInfo() : String {
+		var made = 0;
+		for( _ in hiresCache ) made++;
+		return "iconos: reserva " + spare.length + ", pedidos " + asked.length + ", hechos " + made;
+	}
+
 	/** shaders de los iconos ya compilados por pump (warmShaders) */
 	static var warmed = 0;
 

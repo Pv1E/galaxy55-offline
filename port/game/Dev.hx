@@ -1042,6 +1042,10 @@ class Dev {
 			Sys.println(app.devSavesInfo());
 			return;
 		}
+		if( a[1] == "icons" ) {
+			Sys.println(IconMesh.Icons.devInfo());
+			return;
+		}
 		if( a[1] == "unknown" ) {
 			Sys.println(unknownInfo());
 			return;

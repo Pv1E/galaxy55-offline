@@ -1,0 +1,11 @@
+# iconos grandes de reserva de la Base de datos ESCorp (Icons.pump): se hacen todos en la pantalla de carga, que espera a
+# tenerlos. Al llegar no queda ninguno y jugando no se hace ninguno mas (antes seguian en juego pasados 2 s de la llegada y,
+# con algunas tarjetas, la escena parpadeaba esos segundos: el casco, el cielo y el HUD desaparecian a ratos)
+# esperado: las tres lineas con reserva 0, pedidos 0 y el mismo numero de hechos
+print icons
+wait 180
+print icons
+planet
+wait 180
+print icons
+quit
