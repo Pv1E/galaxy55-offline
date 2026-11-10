@@ -177,6 +177,16 @@ class GameView {
 			}
 			yaw = Math.PI / 2;
 			pitch = 0;
+			// partida guardada dentro de la nodriza: donde estaba (GalaxyApp.finishLoading)
+			var at = info.inMother;
+			if( at != null ) {
+				px = at.x;
+				py = at.y;
+				pz = at.z;
+				yaw = at.yaw;
+				pitch = at.pitch;
+				info.inMother = null;
+			}
 			// robots (añadido del port): el comerciante del puesto y los drones
 			for( r in Mothership.robots ) {
 				var drone = r.k >= 4;

@@ -57,6 +57,9 @@ typedef TutoInfo = {
 	@:optional var spots : Array<Int>;
 }
 
+/** donde estaba el jugador dentro de la nave nodriza al guardar (SaveInfo.inMother) */
+typedef MotherPos = { x : Float, y : Float, z : Float, yaw : Float, pitch : Float };
+
 /** Datos de una partida guardada. Los cambios de terreno, inventario y creditos se anadiran aqui. */
 typedef SaveInfo = {
 	var version : Int;
@@ -100,8 +103,11 @@ typedef SaveInfo = {
 	@:optional var hangar : Bool;
 	/** solo mientras se esta en la nave nodriza (no se guarda) */
 	@:optional var mothership : Bool;
-	/** se guardo estando dentro de la nave nodriza (la partida es la del espacio, acoplada al robot): al cargarla se vuelve a entrar */
-	@:optional var inMother : Bool;
+	/**
+	 * se guardo estando dentro de la nave nodriza (la partida es la del espacio, acoplada al robot): donde estaba el jugador. Al
+	 * cargarla se vuelve a entrar y se aparece ahi
+	 */
+	@:optional var inMother : MotherPos;
 	/** contenido de las cantinas (cofres): clave "s:x,y,z" en la nave o "p<planeta>:x,y,z" en un planeta */
 	@:optional var chests : Array<{ key : String, t : Protocol.BlockInventory }>;
 	/** tutorial en curso (null: sin tutorial, terminado o pasado) */
@@ -167,6 +173,16 @@ class SaveData {
 	/** lista de enteros guardada; null si no la hay */
 	static function ints( o : Dynamic ) : Array<Int> {
 		return o == null ? null : [for( v in (o : Array<Dynamic>) ) Std.int(v)];
+	}
+
+	/** donde estaba el jugador al guardar dentro de la nave nodriza: null si no estaba dentro o no es valido */
+	static function readMotherPos( o : Dynamic ) : MotherPos {
+		try {
+			if( o == null || o.x == null || o.y == null || o.z == null ) return null;
+			return { x : o.x, y : o.y, z : o.z, yaw : o.yaw != null ? o.yaw : 0, pitch : o.pitch != null ? o.pitch : 0 };
+		} catch( e : Dynamic ) {
+			return null;
+		}
 	}
 
 	/** sitio de la nave pilotada (anadido del port): null si no hay o no es valido */
@@ -302,7 +318,7 @@ class SaveData {
 					creative : o.creative == true, tutorial : o.tutorial == null ? null : o.tutorial == true, inv : readInv(o.inv), uni : uni, credits : o.credits != null ? Std.int(o.credits) : Market.START_CREDITS, market : readMarket(o.market), contracts : readContracts(o.contracts), chests : readChests(o.chests), shipData : o.shipData,
 					shipEdits : o.shipEdits != null ? [for( v in (o.shipEdits : Array<Dynamic>) ) Std.int(v)] : [], edits : o.edits != null ? [for( v in (o.edits : Array<Dynamic>) ) Std.int(v)] : [],
 					tuto : readTuto(o.tuto), shipAt : readSpot(o.shipAt), comet : readComet(o.comet), kub : readKub(o.kub),
-					inMother : o.inMother == true ? true : null,
+					inMother : readMotherPos(o.inMother),
 			};
 		} catch( e : Dynamic ) {
 			return null;

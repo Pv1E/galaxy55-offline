@@ -1,4 +1,5 @@
-# Guardar dentro de la nave nodriza y volver a cargar: se aparece otra vez dentro (SaveInfo.inMother), no en el mapa; al salir
+# Guardar dentro de la nave nodriza y volver a cargar: se aparece otra vez dentro y donde se estaba (SaveInfo.inMother), no en el
+# mapa ni en la nave; al salir
 # por el teletransportador se vuelve al mapa, junto al robot. Capturas port/out/nodriza_guardar_*.png
 wait 3
 tuto notuto 4242
@@ -6,6 +7,10 @@ waitfor map 6000
 wait 60
 expdock
 waitfor mother 3000
+wait 30
+print pos
+# a otro sitio (delante de la tienda, mirando al robot): al cargar hay que aparecer aqui y no en la nave
+tp 191.5 198.5 43 1.5708 -0.1
 wait 30
 print pos
 savegame

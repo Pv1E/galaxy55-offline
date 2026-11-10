@@ -1564,14 +1564,14 @@ class GalaxyApp extends hxd.App {
 		startGame(h);
 	}
 
+	/** ultima frase de Charlar (para no repetirla seguida) */
+	var robotChat = -1;
+
 	/**
 	 * Hablar con el robot comerciante de la nave nodriza (anadido del port): un panel con lo que dice y las opciones Comerciar
 	 * (la tienda), Charlar (se cierra el panel y el robot dice una frase al azar en un globo a su lado: RobotBubble) y Adios.
 	 * Se rehace cada vez.
 	 */
-	/** ultima frase de Charlar (para no repetirla seguida) */
-	var robotChat = -1;
-
 	public function openRobotTalk() {
 		if( state != Playing || game == null || shop != null ) return;
 		game.stopSounds();
@@ -1861,14 +1861,18 @@ class GalaxyApp extends hxd.App {
 				loadToast = null;
 			}
 			// guardada dentro de la nave nodriza: se vuelve a entrar en ella (como al acoplarse al robot: dockRobot); al salir, al mapa
-			if( loadInfo.inMother == true ) {
+			if( loadInfo.inMother != null ) {
 				var info = loadInfo;
+				var at = info.inMother;
 				info.inMother = null;
 				hangarReturn = info;
 				var h : SaveInfo = Reflect.copy(info);
 				h.inv = Inv.copy(info.inv);
 				h.market = Market.copy(info.market);
 				h.mothership = true;
+				// donde estaba al guardar (GameView lo usa en vez del teletransportador de su nave)
+				h.inMother = at;
+				dim.visible = true;
 				startGame(h);
 				return;
 			}
@@ -2203,7 +2207,7 @@ class GalaxyApp extends hxd.App {
 		var info = game.hangar != null || game.info.mothership == true ? returnInfo() : game.toInfo();
 		// dentro de la nodriza (llegando del mapa): se apunta, para que al cargar se aparezca dentro y no en el mapa
 		var inMother = game.info.mothership == true && !GameView.editMother && info != null && info.uni != null && info.uni.space == true;
-		if( inMother ) info.inMother = true;
+		if( inMother ) info.inMother = { x : game.px, y : game.py, z : game.pz, yaw : game.yaw, pitch : game.pitch };
 		var ok = SaveData.write(info, captureThumb());
 		if( inMother ) info.inMother = null;
 		// modo de edicion: guardar (Esc, guardar y salir) tambien escribe la nave nodriza

@@ -169,14 +169,6 @@ class Mothership {
 	static var shopCells : Map<Int, Bool>;
 
 	/**
-	 * Tienda del robot comerciante r (anadido del port), hecha aqui y no en mothership.bin, asi no se pierde al volver a generarla
-	 * con mc2g55.py. Abierta, sin paredes, para que no tape el hangar: un cuadro de 7x7 a la altura del robot con el mostrador
-	 * todo alrededor (se le habla con un clic: GameView.aimedMerchant) y, por dentro, el estante con la mercancia; postes finos
-	 * en las esquinas, encima un mantel rojo (a 4 de alto) que sobresale un bloque por cada lado con flecos triangulares, cadenas
-	 * con farolitos colgando dentro y el cartel en lo alto. Sobre el mostrador, hasta el mantel, una pared invisible
-	 * (BShopBarrier) para que no se salte adentro; no se apunta, asi se le sigue hablando al robot.
-	 */
-	/**
 	 * cosas sobre el mostrador de la tienda (ShopProps: 0 botellitas, 1 papeles, 2 monedas, 3 frasco), por (a + 3) * 7 + (b + 3):
 	 * a a la derecha del robot, b hacia delante
 	 */
@@ -194,6 +186,14 @@ class Mothership {
 		return { x : r.x + b * fx - a * fy, y : r.y + b * fy + a * fx };
 	}
 
+	/**
+	 * Tienda del robot comerciante r (anadido del port), hecha aqui y no en mothership.bin, asi no se pierde al volver a generarla
+	 * con mc2g55.py. Abierta, sin paredes, para que no tape el hangar: un cuadro de 7x7 a la altura del robot con el mostrador
+	 * todo alrededor (se le habla con un clic: GameView.aimedMerchant) y, por dentro, el estante con la mercancia; postes finos
+	 * en las esquinas, encima un mantel rojo (a 4 de alto) que sobresale un bloque por cada lado con flecos triangulares, cadenas
+	 * con farolitos colgando dentro y el cartel en lo alto. Sobre el mostrador, hasta el mantel, una pared invisible
+	 * (BShopBarrier) para que no se salte adentro; no se apunta, asi se le sigue hablando al robot.
+	 */
 	static function shop( r : { x : Int, y : Int, z : Int, k : Int }, out : Array<ShipData.ShipCell> ) {
 		function put( a : Int, b : Int, dz : Int, k : BlockKind ) {
 			var c = shopCell(r, a, b);
