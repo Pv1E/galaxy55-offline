@@ -171,7 +171,7 @@ class Mothership {
 	/**
 	 * Tienda del robot comerciante r (anadido del port), hecha aqui y no en mothership.bin, asi no se pierde al volver a generarla
 	 * con mc2g55.py. Abierta, sin paredes, para que no tape el hangar: un cuadro de 7x7 a la altura del robot con el mostrador
-	 * delante (hacia donde mira el robot, con su ordenador en el centro: GameView.isRobotComputer), a los lados y el estante
+	 * delante (hacia donde mira el robot; se le habla con un clic: GameView.aimedMerchant), a los lados y el estante
 	 * detras; postes en las esquinas, encima un mantel rojo que sobresale un bloque por cada lado con flecos triangulares
 	 * colgando del borde, y el cartel en lo alto. Sobre el mostrador y el estante, hasta el mantel, una pared invisible
 	 * (BShopBarrier) para que no se salte adentro; no se apunta, asi el ordenador se sigue usando.
@@ -189,7 +189,7 @@ class Mothership {
 				var corner = (a == -3 || a == 3) && (b == -3 || b == 3);
 				if( corner ) {
 					for( dz in 0...5 ) put(a, b, dz, BIron);
-				} else if( b == 3 ) put(a, b, 0, a == 0 ? BShipComputer : BShopCounter);
+				} else if( b == 3 ) put(a, b, 0, BShopCounter);
 				else if( b == -3 ) put(a, b, 0, BShopShelf);
 				else if( a == -3 || a == 3 ) put(a, b, 0, BShopCounter);
 				if( !corner && (a == -3 || a == 3 || b == -3 || b == 3) ) for( dz in 1...5 ) put(a, b, dz, BShopBarrier);

@@ -1561,6 +1561,47 @@ class GalaxyApp extends hxd.App {
 		startGame(h);
 	}
 
+	/**
+	 * Hablar con el robot comerciante de la nave nodriza (anadido del port): un panel con lo que dice y las opciones Comerciar
+	 * (la tienda), Charlar (otra frase al azar: consejos, rumores y bromas) y Adios. Se rehace cada vez.
+	 */
+	public function openRobotTalk() {
+		if( state != Playing || game == null || shop != null ) return;
+		game.stopSounds();
+		state = Paused;
+		captureMouse(false);
+		hud.visible = false; msgText.visible = false;
+		var old = screens.get("robot");
+		if( old != null ) old.remove();
+		var PW = 760, PH = 400;
+		var s = panelFor(PW, PH, Lang.t("shop.title"));
+		var x0 = (W - PW) * 0.5, y0 = (H - PH) * 0.5;
+		var line = Theme.text(s, Lang.t("robot.hello" + (Std.random(3) + 1)), 2.2, Theme.TEXT, x0 + 40, y0 + 92);
+		line.maxWidth = (PW - 80) / line.scaleX;
+		var chatN = 10, last = -1;
+		var bx = (W - 460) * 0.5, by = y0 + PH - 210;
+		var trade = new Button(s, Lang.t("computer.trade"));
+		var chat = new Button(s, Lang.t("robot.chat"));
+		var bye = new Button(s, Lang.t("robot.bye"));
+		// en el tutorial no se comercia (como en el ordenador de a bordo)
+		trade.enabled = !Tutorial.active(game.info);
+		s.add(trade, bx, by);
+		s.add(chat, bx, by + 62);
+		s.add(bye, bx, by + 124);
+		trade.onActivate = openShop;
+		chat.onActivate = function() {
+			var i = Std.random(chatN);
+			if( i == last ) i = (i + 1) % chatN;
+			last = i;
+			line.text = Lang.t("robot.chat" + (i + 1));
+		};
+		bye.onActivate = resume;
+		s.onBack = resume;
+		screens.set("robot", s);
+		show("robot");
+		centerMouse();
+	}
+
 	function openComputer() {
 		if( state != Playing ) return;
 		game.stopSounds();
@@ -1817,6 +1858,7 @@ class GalaxyApp extends hxd.App {
 		Kubindex.shipKnown(game.info);
 		Kubindex.visit(game.info);
 		game.onComputer = openComputer;
+		game.onTalk = openRobotTalk;
 		game.onCometOver = function() showToast(Lang.t("comet.over"), GameView.COMET_OVER_TOAST);
 		game.onChest = openChest;
 		game.onChestBreak = function(t) if( chest != null && chest.box == t ) closeChest();

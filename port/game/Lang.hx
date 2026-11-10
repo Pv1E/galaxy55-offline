@@ -32,6 +32,22 @@ class Lang {
 		// anadido del port: pilotar la nave sobre el planeta
 		"computer.pilot" => ["Pilotar la nave", "Pilot the ship", "Piloter le vaisseau"],
 		"computer.trade" => ["Comerciar", "Trade", "Commercer"],
+		// anadido del port: hablar con el robot comerciante de la nave nodriza (GalaxyApp.openRobotTalk)
+		"robot.chat" => ["Charlar", "Chat", "Discuter"],
+		"robot.bye" => ["Adiós", "Goodbye", "Au revoir"],
+		"robot.hello1" => ["¡Bienvenido a la tienda de la ESCorp! ¿Qué necesitas hoy?", "Welcome to the ESCorp shop! What do you need today?", "Bienvenue à la boutique de l'EScorp ! De quoi as-tu besoin aujourd'hui ?"],
+		"robot.hello2" => ["Ah, un cliente. Mis circuitos se alegran de verte.", "Ah, a customer. My circuits are glad to see you.", "Ah, un client. Mes circuits sont ravis de te voir."],
+		"robot.hello3" => ["Bip bup. Tienda abierta, precios justos... casi siempre.", "Beep boop. Shop open, fair prices... almost always.", "Bip boup. Boutique ouverte, prix honnêtes... presque toujours."],
+		"robot.chat1" => ["Los precios suben cuando todos compran lo mismo. Vende lo que nadie trae.", "Prices go up when everyone buys the same thing. Sell what nobody brings.", "Les prix montent quand tout le monde achète la même chose. Vends ce que personne n'apporte."],
+		"robot.chat2" => ["Dicen que en los cometas hay cosas que no se encuentran en ningún planeta.", "They say comets hold things you won't find on any planet.", "On dit que les comètes cachent des choses introuvables sur les planètes."],
+		"robot.chat3" => ["Un cofre de kubes en el sintetizador da una gema al azar. Yo siempre espero rubíes.", "A Kube chest in the synthesizer gives a random gem. I always hope for rubies.", "Un coffre de kubes dans le synthétiseur donne une gemme au hasard. Moi, j'espère toujours des rubis."],
+		"robot.chat4" => ["Los contratos de la ESCorp pagan bien. Míralos en el ordenador de tu nave.", "ESCorp contracts pay well. Check them on your ship's computer.", "Les contrats de l'EScorp paient bien. Regarde-les sur l'ordinateur de ton vaisseau."],
+		"robot.chat5" => ["Llevo tres mil ciclos detrás de este mostrador. Nunca me han dado vacaciones.", "I've been behind this counter for three thousand cycles. Never had a holiday.", "Trois mille cycles derrière ce comptoir. Jamais eu de vacances."],
+		"robot.chat6" => ["No intentes saltar el mostrador. Hay una pared que no se ve. Créeme, lo sé.", "Don't try to jump the counter. There's a wall you can't see. Trust me, I know.", "N'essaie pas de sauter le comptoir. Il y a un mur invisible. Crois-moi, je sais."],
+		"robot.chat7" => ["Si te quedas sin oxígeno, vuelve a la nave. Los clientes sin aire no compran nada.", "If you run low on oxygen, go back to your ship. Customers without air don't buy anything.", "Si tu manques d'oxygène, retourne au vaisseau. Les clients sans air n'achètent rien."],
+		"robot.chat8" => ["El dron de ahí arriba es mi primo. Habla poco y vuela mucho.", "The drone up there is my cousin. Talks little, flies a lot.", "Le drone là-haut, c'est mon cousin. Il parle peu et vole beaucoup."],
+		"robot.chat9" => ["Mantel nuevo. ¿Te gusta? Lo eligió el jefe.", "New tablecloth. Do you like it? The boss picked it.", "Nouvelle nappe. Tu aimes ? C'est le patron qui l'a choisie."],
+		"robot.chat10" => ["Con 8 gemas iguales el sintetizador hace una Sombra. Con 8 Sombras... algo mejor.", "8 matching gems make a Shade in the synthesizer. 8 Shades make... something better.", "8 gemmes identiques font une Ombre au synthétiseur. 8 Ombres font... mieux encore."],
 		"computer.contracts" => ["Contratos", "Contracts", "Contrats"],
 		"contracts.title" => ["Contratos de la ESCorp", "ESCorp contracts", "Contrats ESCorp"],
 		// %t% = mm:ss hasta el siguiente tablero
