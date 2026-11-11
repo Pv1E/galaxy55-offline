@@ -1,4 +1,4 @@
-# cantidades de las recetas: 8 fer = un conteneur EScorp, un bois = 4 planches, l'oeil de Grozarb = 2 lumine + 2 planches (dos resultados), 2 rosh = 2
+# cantidades de las recetas: 8 fer = un conteneur ESCorp, un bois = 4 planches, l'oeil de Grozarb = 2 lumine + 2 planches (dos resultados), 2 rosh = 2
 # colonnes en rosh, 8 rouge'rosh / roches douces / roches du frimas = 2 carrelages, 2 lunimeuses mortes = 2 troncs de lunimeuse, 4 planches = 4 dalles.
 # Cada receta se pone en la zona (si el inventario no tiene esos bloques se gasta la zona): print msg dice lo que da, print drops
 # lo que suelta el ordenador y print inv lo recogido. Despues la Base de datos ESCorp: la ficha del ojo de Grozarb (receta con sus
@@ -9,7 +9,7 @@ wait 10
 tpl 62.5 63.5 3.0 3.14 -0.45
 wait 5
 print inv
-# 8 fer (deux couches de 2x2) -> conteneur EScorp; el inventario tiene fer: se gasta ese y la zona queda, se vacia a mano
+# 8 fer (deux couches de 2x2) -> conteneur ESCorp; el inventario tiene fer: se gasta ese y la zona queda, se vacia a mano
 setl 59 62 3 BIron
 setl 60 62 3 BIron
 setl 59 63 3 BIron
