@@ -303,8 +303,9 @@ wait 10
 shot mas255_rejilla
 hand BShipGlassPink
 print inv
-tp 44.5 44.5 58 0 0
-lookat 42.5 42.5 57
+tp 43.5 43.5 57 0 0
+waitfor ground
+lookat 42.5 42.5 56.5
 wait 2
 print select
 key place
