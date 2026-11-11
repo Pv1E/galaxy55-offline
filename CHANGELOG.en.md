@@ -2,7 +2,7 @@
 
 [Español: `CHANGELOG.md`](CHANGELOG.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
-## Unreleased
+## v0.8 — pre-release
 - **The kubes of Kube** (port addition): its 77 blocks (Motion Twin, 2010) are in the game as full blocks, with their
   textures, light and transparency, in the creative palette and the ESCorp database. Kube Water and Kube Lava run down their
   sides as in Kube, but they do not flow nor hurt. Each one is also in `port/kubes` as a `.kube` file, to retouch it in the

@@ -2,7 +2,7 @@
 
 [English: `CHANGELOG.en.md`](CHANGELOG.en.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
-## Sin publicar
+## v0.8 — pre-release
 - **Kubes de Kube** (añadido del port): los 77 bloques de Kube (Motion Twin, 2010) están en el juego como bloques enteros,
   con sus texturas, su luz y su transparencia, en la paleta creativa y en la Base de datos ESCorp. El agua y la lava de Kube
   corren por sus caras como en Kube, pero no fluyen ni hacen daño. Cada uno está también en `port/kubes` como archivo `.kube`

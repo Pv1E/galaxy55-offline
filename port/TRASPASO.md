@@ -258,6 +258,18 @@ A tener en cuenta:
 - 99: un recurso nuevo con `-resource` va en `game.hxml` y en `game_dx.hxml`.
 - 110: el parpadeo al llegar a un planeta no se ha comprobado en un PC donde pasaba; para los fallos de dibujo, pedir el
   `gpu.txt` de la carpeta de datos.
+## v0.8 preparada (2026-11-11)
+Changelogs ES/EN/FR y ERRORES/BUGS pasan de "Sin publicar" a v0.8; enlaces de los README a `releases/tag/v0.8`; menú
+"v0.8 · port nativo"; notas en `port/RELEASE.md` (3 idiomas). En el README, las novedades de la v0.8 con 4 fotos nuevas en
+`docs/img` (kubes de Kube, anomalía invisible, tienda de la nave nodriza, contrato en curso), sacadas en inglés y sin la
+ayuda de teclas (`helptext 0`) con los guiones `kube_blocks`, `anomalia_invisible`, `tienda_centro` y `contrats_parciales`;
+la v0.7 queda en una línea con su enlace. Entra también el PR 113 (ESCorp en las frases del robot en francés), sin línea en
+el changelog porque esas frases son nuevas de esta versión.
+Zips con `package.ps1 -Version 0.8 -HashLink ..\tools-portable\hashlink\hashlink-1.16.0-win` en `port/out/release`
+(Windows 8,6 MB, Linux/macOS 3,2 MB). Compilados con la toolchain portable de Cornor923: su hldx 1.16 no tiene
+`dx.Window.NO_ACTIVATE`, así que `game_dx.hxml` se compiló con una copia de `dx/Window.hx` que lo define a 0 (fuera del
+repositorio). Probado el de Windows descomprimido en una carpeta vacía: OpenGL y DirectX crean partida, cargan el planeta y
+abren la base de datos (249 fichas). Falta: etiqueta `v0.8` y crear la release (pre-release) con los dos zips.
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;
