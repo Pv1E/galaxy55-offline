@@ -305,6 +305,8 @@ class Lang {
 		"kube.color.kube" => ["Colores del kube", "Kube colours", "Couleurs du kube"],
 		"kube.preview.open" => ["Puerta abierta", "Door open", "Porte ouverte"],
 		"kube.preview.spin" => ["Girar solo", "Auto-rotate", "Rotation auto"],
+		"kube.preview.tile" => ["Mosaico", "Tiling", "Mosaïque"],
+		"kube.preview.zoom" => ["Rueda: zoom", "Wheel: zoom", "Molette : zoom"],
 		"kube.save" => ["Guardar", "Save", "Enregistrer"],
 		"kube.folder" => ["Abrir la carpeta", "Open folder", "Ouvrir le dossier"],
 		"kube.new" => ["Nuevo", "New", "Nouveau"],

@@ -83,15 +83,16 @@ import Common;
  *                           cada sitio que guarda numeros de bloque: inventario, cantina, terreno, nave, nave del hangar, planeta
  *                           visitado y precios del robot (como una partida de una version con mas bloques); la primera de la lista
  *   print unknown           bloques desconocidos de cada partida (UnknownBlocks), md5 de su .json y copias de saves/backups
- *   tap TECLA               pulsar y soltar una tecla: up down left right enter esc tab space pgup pgdown o una letra
+ *   tap TECLA               pulsar y soltar una tecla: up down left right enter esc tab space pgup pgdown numpad+ numpad- o una letra
  *   type TEXTO              escribir el resto de la linea en el campo de texto en el que se esta escribiendo
  *   wheel N                 rueda del raton (N > 0 = hacia abajo), donde lo dejo la ultima orden mouse
- *   mouse X Y [click]       llevar el raton a ese punto de la zona 1280x720 (y hacer clic)
+ *   mouse X Y [click|down|up] llevar el raton a ese punto de la zona 1280x720 (y hacer clic, o solo apretar o soltar: arrastrar)
  *   print menu|saves        pantalla de menu abierta y su foco / partidas guardadas (waitfor menu: el menu y su fondo listos)
  *   print mouse             donde cree el juego que esta el puntero (pixeles de la ventana, zona 1280x720) y el cursor del sistema
  *   kube ORDEN              editor de kubes abierto (screen kubes): load BLOQUE (copiar un bloque del juego), shape ID, face NOMBRE,
  *                           paint x0 y0 x1 y1 AARRGGBB (rectangulo de la cara, 0 = borrar), name TEXTO, tab 0|1, file N (cargar el
- *                           .kube N de Mis kubes), save; print kube
+ *                           .kube N de Mis kubes), save, tile N (mosaico N x N x N de la vista previa), zoom Z (el paso de zoom
+ *                           mas cercano), view (vista fija de los iconos, sin girar); print kube
  *   quit
  */
 class Dev {
@@ -242,6 +243,8 @@ class Dev {
 			case "pgup": K.PGUP;
 			case "pgdown": K.PGDOWN;
 			case "mouseright": K.MOUSE_RIGHT; // boton derecho del raton
+			case "numpad+": K.NUMPAD_ADD;
+			case "numpad-": K.NUMPAD_SUB;
 			default: n.toUpperCase().charCodeAt(0);
 		}
 	}
@@ -668,10 +671,9 @@ class Dev {
 					@:privateAccess { win.curMouseX = Std.int(mx); win.curMouseY = Std.int(my); }
 					mousePos = [mx, my];
 					win.event(new hxd.Event(EMove, mx, my));
-					if( a[3] == "click" ) {
-						win.event(new hxd.Event(EPush, mx, my));
-						win.event(new hxd.Event(ERelease, mx, my));
-					}
+					// down / up: apretar o soltar solo, para arrastrar (mouse X Y down, mouse X2 Y2, mouse X2 Y2 up)
+					if( a[3] == "click" || a[3] == "down" ) win.event(new hxd.Event(EPush, mx, my));
+					if( a[3] == "click" || a[3] == "up" ) win.event(new hxd.Event(ERelease, mx, my));
 				case "menu":
 					@:privateAccess app.toMainMenu();
 					inMenu = true;
@@ -695,6 +697,9 @@ class Dev {
 						case "tab": k.devTab(Std.parseInt(a[2]));
 						case "file": k.devLoadFile(Std.parseInt(a[2]));
 						case "save": k.saveKube();
+						case "tile": k.devTiles(Std.parseInt(a[2]));
+						case "zoom": k.devZoom(f(a[2]));
+						case "view": k.devView();
 						default: Sys.println("kube: orden desconocida " + a[1]);
 					}
 				case "winsize":

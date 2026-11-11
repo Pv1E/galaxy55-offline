@@ -145,6 +145,60 @@ class IconMesh {
 		poly.colors = m.cols;
 		return poly;
 	}
+
+	/**
+	 * n x n x n bloques iguales pegados, en las celdas (0..n) (mosaico del editor de kubes). Las caras entre dos vecinos se
+	 * quitan como en World.buildChunk: un bloque lleno tapa la cara de su vecino lleno (open) y uno con alfa la de su vecino con
+	 * alfa (openAlphaNear); las cajas, los de 6 caras, los calados y los modelos se dibujan enteros, tambien por dentro.
+	 */
+	public static function tiled( b : Block, n : Int ) : h3d.prim.Polygon {
+		var one = polygon(b, true);
+		if( one == null || n <= 1 ) return one;
+		var hides = b.type == BTFull || b.type == BTAlpha;
+		var pts = one.points, uvs = one.uvs, cols = one.colors, idx = one.idx;
+		var m = new MeshBuf();
+		// cara contra la celda de al lado dentro del mosaico: sus 4 esquinas en el mismo borde de la celda
+		inline function inner( q : Int, x : Int, y : Int, z : Int ) : Bool {
+			var p = pts[q], hid = false;
+			for( a in 0...3 ) {
+				var v = a == 0 ? p.x : a == 1 ? p.y : p.z;
+				if( v != 0 && v != 1 ) continue;
+				var flat = true;
+				for( k in 1...4 ) {
+					var o = pts[q + k];
+					if( (a == 0 ? o.x : a == 1 ? o.y : o.z) != v ) flat = false;
+				}
+				var c = (a == 0 ? x : a == 1 ? y : z) + (v == 0 ? -1 : 1);
+				if( flat && c >= 0 && c < n ) hid = true;
+			}
+			return hid;
+		}
+		for( z in 0...n ) for( y in 0...n ) for( x in 0...n ) {
+			var q = 0;
+			// cada cara son 4 puntos y 6 indices seguidos (quad y model)
+			while( q + 3 < pts.length ) {
+				if( !(hides && inner(q, x, y, z)) ) {
+					var base = m.pts.length;
+					for( k in 0...4 ) {
+						var p = pts[q + k];
+						m.pts.push(new h3d.col.Point(p.x + x, p.y + y, p.z + z));
+						m.uvs.push(uvs[q + k].clone());
+						m.cols.push(cols[q + k].clone());
+					}
+					var i0 = Std.int(q / 4) * 6;
+					for( i in i0...i0 + 6 ) m.idx.push(idx[i] - q + base);
+				}
+				q += 4;
+			}
+		}
+		one.dispose();
+		if( m.pts.length == 0 ) return null;
+		var poly = new h3d.prim.Polygon(m.pts, m.idx);
+		poly.addNormals();
+		poly.uvs = m.uvs;
+		poly.colors = m.cols;
+		return poly;
+	}
 }
 
 /**

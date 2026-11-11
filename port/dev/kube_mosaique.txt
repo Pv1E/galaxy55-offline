@@ -1,0 +1,146 @@
+# Editor de kubes: mosaico de la vista previa (boton a la izquierda de Rotation auto: 1x1, 2x2, 3x3 = n x n x n kubes iguales
+# pegados, sin las caras de dentro como los pinta el mundo) y zoom con la rueda sobre la vista previa (o + y - del teclado
+# numerico). print kube: mosaico, zoom, punto mirado (foco) y caras de la malla de la vista previa. Capturas port/out/kubemos_*.png
+wait 3
+setlang fr
+menu
+waitfor menu
+tap down
+tap down
+tap enter
+wait 30
+# tierra con hierba: el dessus y los lados son distintos, se ven los raccords de lado, de arriba y entre los dos
+kube load BSoilCover
+kube view
+wait 5
+print kube
+shot kubemos_1x1
+# el boton de la casilla libre pasa de 1x1 a 2x2 y a 3x3 (8 y 27 kubes: 24 y 54 caras, las de fuera)
+mouse 992 614 click
+wait 5
+print kube
+shot kubemos_2x2
+mouse 992 614 click
+wait 5
+print kube
+shot kubemos_3x3
+# rueda sobre la vista previa: acerca el punto que esta bajo el raton (un raccord del dessus, arriba a la izquierda de la arista)
+mouse 1060 455
+wheel -1
+wheel -1
+wheel -1
+wheel -1
+wheel -1
+wait 5
+print kube
+shot kubemos_3x3_zoom
+# y aleja: a 100% vuelve a mirar al centro; por debajo, el mosaico entero mas pequeno
+wheel 1
+wheel 1
+wheel 1
+wheel 1
+wheel 1
+wheel 1
+wheel 1
+wheel 1
+wait 5
+print kube
+shot kubemos_3x3_dezoom
+# el teclado numerico, hacia el centro de la vista
+tap numpad+
+wait 2
+tap numpad+
+wait 2
+tap numpad+
+wait 2
+tap numpad+
+wait 5
+print kube
+shot kubemos_3x3_teclado
+kube zoom 1
+# la vista se pone al dia al pintar: una raya roja arriba de los lados y una azul a la izquierda del dessus
+kube face side
+kube paint 0 0 31 1 FFFF2020
+kube face up
+kube paint 0 0 1 31 FF2040FF
+wait 5
+print kube
+shot kubemos_3x3_pintado
+# 2x2 acercado a la arista de delante, donde se juntan los lados de dos kubes
+mouse 992 614 click
+mouse 992 614 click
+wait 2
+mouse 1084 500
+wheel -1
+wheel -1
+wheel -1
+wheel -1
+wait 5
+print kube
+shot kubemos_2x2_zoom
+# con el raton fuera de la vista previa solo queda el zoom
+mouse 700 300
+wait 2
+shot kubemos_2x2_zoom_fuera
+kube zoom 1
+# translucido (hielo): sin caras de dentro, como en el mundo; calado (hojas): con ellas, como en el mundo
+kube load BIce
+wait 5
+print kube
+shot kubemos_2x2_hielo
+kube load BGreenLeaves
+wait 5
+print kube
+shot kubemos_2x2_hojas
+# una puerta: el mosaico se queda en "2x2" a la izquierda y el boton de la puerta al lado
+kube load BShipLight
+kube shape door
+wait 5
+print kube
+shot kubemos_puerta
+# la rotacion auto sigue: otra vez puesta, el mosaico gira entre las dos capturas
+kube load BSoilCover
+mouse 1176 614 click
+wait 30
+shot kubemos_2x2_gira1
+wait 40
+shot kubemos_2x2_gira2
+# girar arrastrando sobre la vista previa: el kube sigue al raton (a la derecha, la arista de delante se va a la derecha;
+# hacia abajo, se ve mas el dessus)
+kube view
+wait 5
+shot kubemos_arrastre_antes
+mouse 1084 493 down
+wait 2
+mouse 1104 493
+wait 2
+mouse 1124 493
+wait 2
+mouse 1124 493 up
+wait 5
+shot kubemos_arrastre_derecha
+kube view
+wait 5
+mouse 1084 493 down
+wait 2
+mouse 1084 513
+wait 2
+mouse 1084 533
+wait 2
+mouse 1084 533 up
+wait 5
+shot kubemos_arrastre_abajo
+# guardado con el mosaico puesto: la miniatura de Mis kubes es la del kube solo
+kube name Mosaique test
+kube save
+kube tab 1
+wait 10
+print kube
+shot kubemos_miskubes
+# vuelta a 1x1 con el mismo boton (2x2 -> 3x3 -> 1x1), con el raton fuera de la vista previa: sin texto de zoom
+mouse 992 614 click
+mouse 992 614 click
+wait 5
+print kube
+shot kubemos_vuelta_1x1
+quit
