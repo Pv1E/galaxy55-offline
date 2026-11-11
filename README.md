@@ -15,7 +15,7 @@ It was shut down and its server no longer exists. This project ports it to a **n
 
 | I want to… | Look at |
 |---|---|
-| **Play without compiling** | [pre-release v0.7](../../releases/tag/v0.7): download the zip, unzip it, run `jugar.bat` |
+| **Play without compiling** | [pre-release v0.8](../../releases/tag/v0.8): download the zip, unzip it, run `jugar.bat` |
 | **Controls and how to build** | [`port/README.md`](port/README.md) |
 | **See or report bugs** | [`BUGS.md`](BUGS.md) (known bugs); to report a new one, open an *issue* or message me |
 | **See what is missing** | [`TODO.md`](TODO.md) (to-do list) |
@@ -26,28 +26,32 @@ It was shut down and its server no longer exists. This project ports it to a **n
 
 ## Play in 3 steps
 
-1. Download the zip from the [pre-release v0.7](../../releases/tag/v0.7) and **unzip everything** (keep all its folders).
+1. Download the zip from the [pre-release v0.8](../../releases/tag/v0.8) and **unzip everything** (keep all its folders).
 2. Check that there is a **`res/`** folder next to `galaxy55.hl` (with `texture.png`, `lazer.png`… inside). If you see loose files named
    like `res\texture.png` instead, extraction failed: unzip again with a different program. (Symptom: `Can't read res/texture.png`.)
-3. Windows: double-click `jugar.bat` (if it doesn't open, `jugar_dx.bat`). **Linux / macOS (not tested by us):** download the `galaxy55-offline-v0.7-linux-mac.zip` from the release,
+3. Windows: double-click `jugar.bat` (if it doesn't open, `jugar_dx.bat`). **Linux / macOS (not tested by us):** download the `galaxy55-offline-v0.8-linux-mac.zip` from the release,
    install [HashLink](https://github.com/HaxeFoundation/hashlink) (`brew install hashlink` on macOS) and run `sh jugar.sh`. (A player got it running on Linux; tell us how it goes.)
    The language (Spanish, English, French), VSync and the FPS limit are changed in Options.
 
-## New in v0.7
+## New in v0.8
 
-Almost all of it by **Cornor923**: the **ESCorp database** on the on-board computer (Kubindex with every kube, its recipes,
-the planets and anomalies you found), **comets** that visit solar systems for a limited time, **exploration licenses**
-(4 planets in adventure, the ship is piloted over the main one) and the **kube editor** in the start menu to draw new blocks.
-Details in the [release notes](../../releases/tag/v0.7) and the [`CHANGELOG.en.md`](CHANGELOG.en.md).
+Almost all of it by **Cornor923**: the 77 **kubes of Kube** (Motion Twin, 2010) as game blocks, the **invisible anomaly**
+(a cube you only see as a piece of sky, with Kube chests and gems inside, and coloured toughened glass), the **mothership
+shop** in the middle of the hangar where you talk to the merchant robot, and **ESCorp contracts in parts**. Also more
+generous synthesizer recipes, fairer merchant prices and smooth block icons. Details in the
+[release notes](../../releases/tag/v0.8) and the [`CHANGELOG.en.md`](CHANGELOG.en.md).
 
 <p>
-<img src="docs/img/base-datos.jpg" width="49%" alt="ESCorp database: the Kubindex">
-<img src="docs/img/cometa.jpg" width="49%" alt="A comet on the star map, with its docking time">
+<img src="docs/img/kubes-kube.jpg" width="49%" alt="Kubes of Kube placed on a planet">
+<img src="docs/img/anomalia-invisible.jpg" width="49%" alt="The invisible anomaly: a piece of sky above the ground">
 </p>
 <p>
-<img src="docs/img/editor-kubes.gif" width="49%" alt="Kube editor: drawing a block and its 3D preview">
-<img src="docs/img/pilotar.gif" width="49%" alt="Piloting the ship over the planet">
+<img src="docs/img/tienda-nodriza.jpg" width="49%" alt="Talking to the merchant robot at its stall in the mothership">
+<img src="docs/img/contratos-partes.jpg" width="49%" alt="An ESCorp contract in progress, delivered in parts">
 </p>
+
+v0.7 brought the ESCorp database, comets, exploration licenses and the kube editor
+([release notes](../../releases/tag/v0.7)).
 
 ## What works today
 
@@ -109,7 +113,7 @@ El objetivo es ser fiel al original; lo que añadimos está marcado como tal.
 
 | Quiero… | Mira |
 |---|---|
-| **Jugar sin compilar** | [pre-release v0.7](../../releases/tag/v0.7): descarga el zip, descomprímelo y abre `jugar.bat` |
+| **Jugar sin compilar** | [pre-release v0.8](../../releases/tag/v0.8): descarga el zip, descomprímelo y abre `jugar.bat` |
 | **Controles y cómo compilar** | [`port/LEEME.md`](port/LEEME.md) |
 | **Ver o avisar de errores** | [`ERRORES.md`](ERRORES.md); para avisar de uno nuevo, abre un *issue* o escríbeme |
 | **Saber qué falta por hacer** | [`PENDIENTES.md`](PENDIENTES.md) |
@@ -120,29 +124,32 @@ El objetivo es ser fiel al original; lo que añadimos está marcado como tal.
 
 ### Jugar en 3 pasos
 
-1. Descarga el zip de la [pre-release v0.7](../../releases/tag/v0.7) y **descomprímelo entero** (con todas sus carpetas).
+1. Descarga el zip de la [pre-release v0.8](../../releases/tag/v0.8) y **descomprímelo entero** (con todas sus carpetas).
 2. Comprueba que hay una carpeta **`res/`** junto a `galaxy55.hl` (con `texture.png`, `lazer.png`… dentro). Si en vez de eso ves
    archivos sueltos llamados `res\texture.png`, la extracción falló: vuelve a descomprimir con otro programa. (Síntoma: `Can't read res/texture.png`.)
-3. Windows: doble clic en `jugar.bat` (si no abre, `jugar_dx.bat`). **Linux / macOS (sin probar por nosotros):** descarga `galaxy55-offline-v0.7-linux-mac.zip` de la release,
+3. Windows: doble clic en `jugar.bat` (si no abre, `jugar_dx.bat`). **Linux / macOS (sin probar por nosotros):** descarga `galaxy55-offline-v0.8-linux-mac.zip` de la release,
    instala [HashLink](https://github.com/HaxeFoundation/hashlink) (`brew install hashlink` en macOS) y ejecuta `sh jugar.sh`. (Un jugador lo ha hecho funcionar en Linux; cuéntanos qué tal.)
    El idioma (español, inglés, francés), la sincronización vertical (VSync) y el límite de FPS se cambian en Opciones.
 
-### Novedades de la v0.7
+### Novedades de la v0.8
 
-Casi todo de **Cornor923**: la **base de datos ESCorp** en el ordenador de a bordo (el Kubindex con todos los kubes, sus
-recetas, los planetas y las anomalías que encontraste), los **cometas** que visitan los sistemas solares por tiempo limitado,
-las **licencias de exploración** (4 planetas en aventura, la nave se pilota sobre el principal) y el **editor de kubes** del
-menú de inicio para dibujar bloques nuevos. Detalles en las [notas de la release](../../releases/tag/v0.7) y el
-[`CHANGELOG.md`](CHANGELOG.md).
+Casi todo de **Cornor923**: los 77 **kubes de Kube** (Motion Twin, 2010) como bloques del juego, la **anomalía invisible**
+(un cubo que solo se ve como un trozo de cielo, con cofres de Kube y gemas dentro, y los vidrios blindados de color), la
+**tienda de la nave nodriza** en el centro del hangar, donde se habla con el robot comerciante, y los **contratos de la
+ESCorp por partes**. También recetas del sintetizador que dan más, precios del robot más justos e iconos de bloques lisos.
+Detalles en las [notas de la release](../../releases/tag/v0.8) y el [`CHANGELOG.md`](CHANGELOG.md).
 
 <p>
-<img src="docs/img/base-datos.jpg" width="49%" alt="Base de datos ESCorp: el Kubindex">
-<img src="docs/img/cometa.jpg" width="49%" alt="Un cometa en el mapa de estrellas, con su tiempo de amarre">
+<img src="docs/img/kubes-kube.jpg" width="49%" alt="Kubes de Kube puestos en un planeta">
+<img src="docs/img/anomalia-invisible.jpg" width="49%" alt="La anomalía invisible: un trozo de cielo sobre el suelo">
 </p>
 <p>
-<img src="docs/img/editor-kubes.gif" width="49%" alt="Editor de kubes: dibujo de un bloque y su vista 3D">
-<img src="docs/img/pilotar.gif" width="49%" alt="Pilotar la nave sobre el planeta">
+<img src="docs/img/tienda-nodriza.jpg" width="49%" alt="Hablar con el robot comerciante en su puesto de la nave nodriza">
+<img src="docs/img/contratos-partes.jpg" width="49%" alt="Un contrato de la ESCorp en curso, entregado por partes">
 </p>
+
+La v0.7 trajo la base de datos ESCorp, los cometas, las licencias de exploración y el editor de kubes
+([notas de la release](../../releases/tag/v0.7)).
 
 ### Qué funciona hoy
 
@@ -192,7 +199,7 @@ L'objectif est de rester fidèle à l'original ; ce que nous ajoutons est signal
 
 | Je veux… | Voir |
 |---|---|
-| **Jouer sans compiler** | [pré-version v0.7](../../releases/tag/v0.7) : télécharge le zip, décompresse-le et lance `jugar.bat` |
+| **Jouer sans compiler** | [pré-version v0.8](../../releases/tag/v0.8) : télécharge le zip, décompresse-le et lance `jugar.bat` |
 | **Les commandes et la compilation** | [`port/LISEZMOI.md`](port/LISEZMOI.md) |
 | **Voir ou signaler des bugs** | [`BUGS.fr.md`](BUGS.fr.md) (bugs connus) ; pour en signaler un nouveau, ouvre une *issue* ou écris-moi |
 | **Voir ce qui manque** | [`TODO.fr.md`](TODO.fr.md) (liste des tâches) |
@@ -203,29 +210,32 @@ L'objectif est de rester fidèle à l'original ; ce que nous ajoutons est signal
 
 ### Jouer en 3 étapes
 
-1. Télécharge le zip de la [pré-version v0.7](../../releases/tag/v0.7) et **décompresse-le entièrement** (avec tous ses dossiers).
+1. Télécharge le zip de la [pré-version v0.8](../../releases/tag/v0.8) et **décompresse-le entièrement** (avec tous ses dossiers).
 2. Vérifie qu'il y a un dossier **`res/`** à côté de `galaxy55.hl` (avec `texture.png`, `lazer.png`… dedans). Si tu vois à la place
    des fichiers isolés nommés `res\texture.png`, l'extraction a échoué : décompresse à nouveau avec un autre programme. (Symptôme : `Can't read res/texture.png`.)
-3. Windows : double-clic sur `jugar.bat` (s'il ne s'ouvre pas, `jugar_dx.bat`). **Linux / macOS (non testé par nous) :** télécharge `galaxy55-offline-v0.7-linux-mac.zip` depuis la release,
+3. Windows : double-clic sur `jugar.bat` (s'il ne s'ouvre pas, `jugar_dx.bat`). **Linux / macOS (non testé par nous) :** télécharge `galaxy55-offline-v0.8-linux-mac.zip` depuis la release,
    installe [HashLink](https://github.com/HaxeFoundation/hashlink) (`brew install hashlink` sur macOS) et lance `sh jugar.sh`. (Un joueur l'a fait fonctionner sous Linux ; dis-nous comment ça se passe.)
    La langue (espagnol, anglais, français), la synchronisation verticale (VSync) et la limite d'images par seconde se changent dans les Options.
 
-### Nouveautés de la v0.7
+### Nouveautés de la v0.8
 
-Presque tout de **Cornor923** : la **base de données ESCorp** dans l'ordinateur de bord (le Kubindex avec tous les kubes,
-leurs recettes, les planètes et les anomalies trouvées), les **comètes** qui visitent les systèmes solaires pendant un temps
-limité, les **licences d'exploration** (4 planètes en aventure, le vaisseau se pilote au-dessus de la principale) et
-l'**éditeur de Kubes** du menu de démarrage pour dessiner de nouveaux blocs. Détails dans les
-[notes de la version](../../releases/tag/v0.7) et le [`CHANGELOG.fr.md`](CHANGELOG.fr.md).
+Presque tout de **Cornor923** : les 77 **kubes de Kube** (Motion Twin, 2010) en blocs du jeu, l'**anomalie invisible** (un
+cube qu'on ne voit que comme un morceau de ciel, avec des coffres de Kube et des gemmes dedans, et les vitres blindées de
+couleur), la **boutique du vaisseau-mère** au milieu du hangar, où l'on parle au robot marchand, et les **contrats ESCorp en
+plusieurs fois**. Aussi des recettes du synthétiseur plus généreuses, des prix du robot plus justes et des icônes de blocs
+lisses. Détails dans les [notes de la version](../../releases/tag/v0.8) et le [`CHANGELOG.fr.md`](CHANGELOG.fr.md).
 
 <p>
-<img src="docs/img/base-datos.jpg" width="49%" alt="Base de données ESCorp : le Kubindex">
-<img src="docs/img/cometa.jpg" width="49%" alt="Une comète sur la carte stellaire, avec son temps d'amarrage">
+<img src="docs/img/kubes-kube.jpg" width="49%" alt="Des kubes de Kube posés sur une planète">
+<img src="docs/img/anomalia-invisible.jpg" width="49%" alt="L'anomalie invisible : un morceau de ciel au-dessus du sol">
 </p>
 <p>
-<img src="docs/img/editor-kubes.gif" width="49%" alt="Éditeur de Kubes : dessin d'un bloc et son aperçu 3D">
-<img src="docs/img/pilotar.gif" width="49%" alt="Piloter le vaisseau au-dessus de la planète">
+<img src="docs/img/tienda-nodriza.jpg" width="49%" alt="Parler au robot marchand à son étal dans le vaisseau-mère">
+<img src="docs/img/contratos-partes.jpg" width="49%" alt="Un contrat ESCorp en cours, livré en plusieurs fois">
 </p>
+
+La v0.7 a apporté la base de données ESCorp, les comètes, les licences d'exploration et l'éditeur de Kubes
+([notes de la version](../../releases/tag/v0.7)).
 
 ### Ce qui fonctionne aujourd'hui
 

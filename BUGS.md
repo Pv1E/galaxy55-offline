@@ -16,8 +16,8 @@ Fixed ones are moved to the bottom. Technical details are in [`port/RESUMEN.md`]
 
 ## Fixed
 
-- Unreleased (fixed by **Cornor923**, PRs 96-112): icons of translucent blocks no longer look hollow or dark and no icon is jagged in a small window; the ancient bomb fade no longer flickers; the DirectX build no longer closes when the ESCorp database opens; a save with blocks this version does not know no longer closes the game when loaded; the scene should no longer flicker on arrival on a planet (to be confirmed); in the kube editor preview, the back faces of glass and ice no longer show on top and the kube turns the way the mouse goes; in French, the canteen is spelled "ESCorp".
-- Unreleased: a game saved inside the mothership no longer opens on the star map.
+- v0.8 (fixed by **Cornor923**, PRs 96-112): icons of translucent blocks no longer look hollow or dark and no icon is jagged in a small window; the ancient bomb fade no longer flickers; the DirectX build no longer closes when the ESCorp database opens; a save with blocks this version does not know no longer closes the game when loaded; the scene should no longer flicker on arrival on a planet (to be confirmed); in the kube editor preview, the back faces of glass and ice no longer show on top and the kube turns the way the mouse goes; in French, the canteen is spelled "ESCorp".
+- v0.8: a game saved inside the mothership no longer opens on the star map.
 - v0.7 (from **Sekhmet**, fixed by **Cornor923**): volume at 0 is silent; a cascade behind glass is visible.
 - v0.7: the floor under four ingots placed together in the ship no longer looks black (port change).
 - v0.7 (fixed by **Cornor923**, PRs 81-86): the tall red grass no longer throws white pieces; the tutorial no longer gets stuck if the aluminium is used up on another recipe; the tutorial green arrow shows; the window no longer shows small at launch.
