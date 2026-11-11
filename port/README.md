@@ -11,6 +11,7 @@ Build it (see below) and double-click `jugar.bat`, or download the portable zip 
 [release](../../../releases/tag/v0.7). The start menu offers Continue (the list of saved games: play, rename or delete), New game, Kube editor (port addition: draw new blocks and save them as `.kube` files in the `kubes` folder of the game data), Options and Quit.
 In New game you choose name, seed and mode: **Adventure** (as in the original, with an empty inventory) or **Creative** (our addition, with biome and size).
 Saved games and settings go to `%APPDATA%\Galaxy55\` (change it with the `GALAXY55_DATA` environment variable), and screenshots (F2) to its `screenshots` folder.
+The game also writes `gpu.txt` there, with the graphics card and driver: attach it when reporting a drawing bug.
 The save format may change between versions: do not count on today's saves working forever.
 
 ## Controls
@@ -100,7 +101,9 @@ A player got it running on Linux this way; we have not tested it.
   gamepad (while it is open the arrow keys move its cursor, not the player). Its contents are kept in the save (the original
   kept them on the server) and fall to the ground when it is broken.
 - The merchant robot's shop (the original was a web panel), its ship on the star map and the orange GPS arrow pointing to it
-  are additions of this port.
+  are additions of this port. In the mothership, its stall is in the middle of the hangar and you talk to the robot (click on
+  it) to trade or chat. Its prices are the port's own: crafted goods do not resell for more than their ingredients cost and
+  some things are only bought.
 - ESCorp contracts (on-board computer > Contracts) are an addition of this port (in the original they came from the server;
   only the list of trivial blocks for the base contracts survives). They are edited in `contracts.json`. With only part of
   the blocks you give what you have and the contract stays in progress: it no longer expires, takes one line of the board
@@ -148,4 +151,13 @@ A player got it running on Linux this way; we have not tested it.
 - In the synthesizer area and in the hangar, whatever is broken always drops (port change: in the original, what only drops
   by chance was often lost when taken back from there). A drop buried under placed blocks comes out by the side; in the
   original it rose through them and, in the ship, ended on the roof.
+- The 77 kubes of Kube (Motion Twin, 2010) are an addition of this port: full blocks with Kube's textures (CC BY-NC-SA 4.0,
+  in `NOTICE`), in the creative palette and the ESCorp database (the merchant robot neither sells nor buys them), with one
+  `.kube` per block in `port/kubes`. The invisible anomaly (Kube Chests wrapped in invisible kubes), the gems the Kube Chest
+  gives in the synthesizer and the coloured toughened glass are additions too.
+- Synthesizer recipes give more than in the original (wood, 4 planks; many recipes, 2 instead of 1) and there are new
+  recipes: rock column, HardRoq, soft rock and frost tiles, and the ESCorp canteen from 8 iron. The lumen rock trunk is made
+  from dead lumen rocks (in the original, from moon rock).
+- A save with blocks this version does not know (saved by a newer one) asks before loading; if accepted, it is copied to
+  `saves/backups` and those blocks are deleted.
 - What is missing is in `TODO.md`, bugs in `BUGS.md` and ideas for later in `IDEAS.en.md` (repository root).

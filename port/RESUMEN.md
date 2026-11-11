@@ -153,6 +153,59 @@ etiqueta `flash-version` y la rama `flash`, con sus SWF y archivos de compilaci�
   - 94 (cambios del port): `GameView.breakBlock` suelta siempre en las zonas de sintetizador y en el hangar
     (`GameView.inCraftZone`, la que ya usaba `mine()`); `Drops.unbury` saca por un lado (el más cercano al jugador) un suelto
     enterrado con otro bloque sólido encima; sin lado libre, en la nave va al jugador. Guiones `recuperar_zona`, `suelto_enterrado`.
+- PR 96-112 de Cornor923 (2026-11-06 a 2026-11-11):
+  - 96: `Icons.bitmap` es la única manera de dibujar un bloque en la interfaz (ver el 92 arriba); `Icons.get` y su caché de
+    90 px ya no existen. Los iconos que faltan se hacen unos pocos por imagen (`Icons.pump`, 8 ms con la Base de datos o la
+    paleta abiertas); la barra del inventario hace al momento el que le falta. Guion `iconos_lisos`.
+  - 97 (añadido del port): los 77 kubes de Kube como `BKube*` después de `BMother*` (`client2/blocks.ods`). Texturas de
+    `client/gfx.swf` a 32x32 en las filas 40 y 41 de `texture.png` (caras laterales en espejo, como pide el atlas para los
+    cubos); opacos, calados (`BTTransp`) o translúcidos (`BTAlpha` con `BFAlpha`); luz en la lava y las gemas, salto
+    (`BFJump 0.6`) en el Muelle. Nombres franceses de `client2/client.xml`, inglés y español en `BlockNames` (los que se
+    llamarían como un bloque de Galaxy 55 llevan otro nombre: compartirían su ficha). Un `.kube` por bloque en `port/kubes`.
+    Con ellos hay más de 255 tipos y la celda guarda su id local en un byte: `World.hasRoom` no pone (ni gasta) el que ya no
+    cabe en ese mundo. `BFScroll(velocidad)`: el agua (6 px/s) y la lava (3,5 px/s) de Kube bajan por su casilla en el shader
+    (`World.TileScroll`, 4 pasos de 2 px por segundo), en mallas propias con el atlas sin mipmaps. Licencia en `NOTICE`.
+    Guion `kube_blocks`.
+  - 98: `Market.wares` se salta los `BKube*` (`KubeData.isKube`, por el prefijo del constructor). Guion `kubes_tienda`.
+  - 99: `game_dx.hxml` incluye `mush_recent.png` con `-resource`, como `game.hxml`; sin él, la versión DirectX se cerraba
+    ("Resource not found") al abrir la Base de datos con algo nuevo. Guion `kubindex_nuevo`.
+  - 100: `CraftRule` con una segunda salida opcional (`extra`, `extraCount`) y `Data.craftOutputs` para el sintetizador y la
+    Base de datos; recetas con más rendimiento. Bloques nuevos al final de `BlockKind` (los números guardados no se mueven):
+    `BRockColumn`, `BHardRockWallSquare`, `BAcidWallSquare` y `BWinterWallSquare` (fila 42 de `texture.png`); receta 62
+    (cantina, 8 de hierro), 63 y 64; la 57 pide 2 `BMoonLightDead`. La cantina sale en la paleta. Guion `recetas_cantidades`.
+  - 101: orden de la Base de datos: por planeta (`KubData.PLANETS`, compartido con la pestaña Espacio), recetas por
+    `recipeOrder` de `kubindex.json`, los fabricados en el orden de sus recetas. `print kuborder`. Guion `kub_orden`.
+  - 102: "Conteneur ESCorp" en `BlockNames.FR_EXTRA` y en `LISEZMOI`.
+  - 103 (cambio del port): `Market.PRICES`, `NOT_SOLD` (solo los compra), `NOT_TRADED` (ni los vende ni los compra),
+    `SPECIAL_TRADED` (motor espacial y cantina, especiales pero a la venta) y `SHELF_MOVES` (orden del estante). `print shelf`.
+  - 104 (cambio del port, WCAG 2.3.1): el fundido de la bomba se alarga desde su opacidad y su color actuales y solo vuelve a
+    subir si ha pasado 1 s, con el color más rojo (como mucho 1 destello por segundo, 2 en un segundo cualquiera); sin el
+    parpadeo aleatorio. El fundido de muerte conserva `lock`, `dz` y `done`. `fadelog on|off`. Guion `bomb_flash`.
+  - 105: `UnknownBlocks.hx`: al jugar una partida con bloques desconocidos se pregunta; con Sí se copia (json y miniatura) a
+    `saves/backups`, sus celdas pasan a aire, se vacían esas casillas del inventario y de las cantinas, se quitan sus precios
+    del robot, se guarda y se carga con un mensaje. `savecopy`, `unknownsave`, `print unknown`. Guion `bloques_desconocidos`.
+  - 106: los contratos en curso se guardan por nombre de constructor de `BlockKind`, con copia de cantidad y recompensa por si
+    cambia `contracts.json`; las partidas antiguas cargan. `contracts ...`, `print contracts`. Guion `contrats_parciales`.
+  - 107 (añadido del port): anomalía invisible en `DetailsGenerator`, generada la última con su propio generador aleatorio
+    (los planetas sin ella son idénticos byte a byte): 8 `BKubeChest` dentro de una capa de `BKubeInvisible` (4x4x4). Solo
+    el kube invisible se dibuja como el cielo (`Sky`); a través de `BShipGlassBlack` o `BBlackIce`, con pasadas de stencil
+    en la de alfa, antes del agua. Anomalía "invisible" en `kubindex.json`. Guion `anomalia_invisible` (semilla 30: 112,2,51
+    a 115,5,54).
+  - 108 (añadido del port): `CraftRule.random` y `Data.craftRoll`: el Cofre de Kube da una de las cuatro gemas; en el
+    sintetizador se ve `BKubeMystery` (casillas [62,41] y [63,41]), sin precio y oculto en `kubindex.json`. `KubStat.r`
+    cuenta lo que dio el cofre (se guarda). Recetas de Kube al final (`recipeOrder` "kube"). `print roll N`. Guion `cofre_kube`.
+  - 109 (añadido del port): `BShipGlassRed`, `BShipGlassBlue`, `BShipGlassGreen` y `BShipGlassPink` al final de `BlockKind`;
+    texturas pintadas al cargar (`Atlas.gemGlassTiles`, casillas [54,61] a [57,61]) desde el vidrio blindado oscuro, con el
+    vidrio del color de la gema y un 25 % más transparente; `texture.png` no cambia. Recetas 71 a 74. Guion `vitres_gemmes`.
+  - 110: los iconos de reserva de la Base de datos (`Icons.pump`) solo se hacen en la pantalla de carga, que los espera (30 ms
+    por imagen en vez de 3 con el mundo listo): ya no hay renders fuera de pantalla con `glGenerateMipmap` al empezar a jugar,
+    la causa probable del parpadeo del vídeo de Pvie (2026-11-09). Sin confirmar en un PC afectado. `gpu.txt` en la carpeta
+    de datos. `print icons`. Guion `iconos_carga`.
+  - 111: vista previa del editor de kubes en mosaico de 1x1, 2x2 o 3x3 (caras entre vecinos quitadas como en
+    `World.buildChunk`), zoom con la rueda (50 % a 600 %) y con + y - del teclado numérico; arrastrar gira hacia donde va el
+    ratón. Guion `kube_mosaique`.
+  - 112: la vista previa usa las tres pasadas de `World.emitMesh` para `BTAlpha`, con las caras de detrás quitadas. Guion
+    `kube_translucide`.
 
 ## Qué falló y cómo se resolvió
 | Problema | Causa | Solución |
@@ -222,6 +275,10 @@ puertas abiertas en el hangar (57), arreglos perdidos de los PR 31-51 (56), `dev
 PR 87-94 de Cornor923 (2026-11-05): `kub ...` y `print kub|kubdata` (Base de datos ESCorp), `comet force|time|speed|stats`,
 `print comet` y `--all-comets` (cometas), `breakl` (romper en coordenadas locales de la nave), `--frametime=MS` (umbral de los
 fotogramas lentos y tiempo de arranque) y `--lighttime` con la suma Adler-32 de la luz.
+PR 96-112 de Cornor923 (2026-11-06/11): `print kuborder` (orden de la Base de datos), `print shelf` (estante del robot),
+`fadelog on|off` (fundido de la bomba y destellos por segundo), `savecopy`, `unknownsave` y `print unknown` (bloques
+desconocidos; `devsaves` borra también las copias de prueba), `contracts ...` y `print contracts`, `print roll N` (recetas al
+azar), `print icons` (iconos que quedan y hechos), y para el editor de kubes `kube tile|zoom|view`, `tap` y `mouse X Y down|up`.
 Los ganchos antiguos `--screen=... --craft --at=...` siguen funcionando, pero para pruebas nuevas se usa Dev.
 
 ## Siguiente paso acordado (mañana): paquete de prueba

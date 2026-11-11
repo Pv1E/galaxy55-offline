@@ -237,6 +237,27 @@ ayuda de teclas, FPS ni nombre del bloque (settings.json con "showHelp": false y
 Notas de la release v0.7 rehechas con el texto largo de Cornor (en inglés, comprobado contra el código: licencias, 1000
 créditos y 24 h, abandonar, categorías del Kubindex, cometas), formato limpio, cómo jugar, créditos y traducción ES/FR, en
 `port/RELEASE.md`; Pvie guarda el cambio en la página de la release.
+## PR 96-112 de Cornor923 integrados (2026-11-06 a 2026-11-11)
+Cornor fusionó en GitHub los PR 96-98 (2026-11-06), 99-106 (2026-11-09), 111 y 112 (2026-11-11); Pvie fusionó a mano los
+107-110 (ramas `pr-107` a `pr-110`, 2026-11-10). El 97 lleva dentro el 96 (`fix/kube-blocks` fusionó
+`fix/smooth-block-icons`). El 101 movió sus funciones de orden junto a `placeOf` para no chocar con el 100 (`51141f8`) y el
+103 fusionó `main` en su rama antes de entrar (`cb88840`). Cada PR trae su guion en `port/dev/` (ver su entrada en RESUMEN).
+Añadidos del port: 97 (kubes de Kube), 100 (recetas y bloques nuevos), 105 (preguntar antes de cargar bloques desconocidos),
+106 (contratos por partes), 107 (anomalía invisible), 108 (gemas del Cofre de Kube) y 109 (vidrios blindados de color).
+Cambios del port respecto al original: 100 (rendimientos del sintetizador; tronco de lunimosa con lunimosas muertas, antes con
+roca lunar), 103 (precios y estante del robot) y 104 (fundido de la bomba, WCAG 2.3.1).
+A tener en cuenta:
+- Los bloques nuevos van al final de `BlockKind`: las partidas guardadas no cambian. Pero una partida que los use puede
+  cerrar la v0.7 al cargarla (bloque nulo en `InvBar.refresh`); desde el 105, el juego pregunta y quita lo que no conoce.
+- Con los kubes de Kube hay más de 255 tipos de bloque y la celda guarda su id local en un byte: `World.hasRoom` no deja
+  poner un bloque que ya no cabe en ese mundo (la nave tiene el suyo).
+- `texture.png`: filas 40 y 41 para los kubes de Kube y el Kube misterioso ([62,41] y [63,41]), fila 42 para los pilares y
+  zócalos nuevos. Los vidrios de color se pintan al cargar en [54,61] a [57,61]: no están en el archivo.
+- Las texturas de los kubes de Kube son de Motion Twin (CC BY-NC-SA 4.0), en `NOTICE`, como `recent.png`.
+- El Teletransporte de Kube (8 Sombras) todavía no hace nada.
+- 99: un recurso nuevo con `-resource` va en `game.hxml` y en `game_dx.hxml`.
+- 110: el parpadeo al llegar a un planeta no se ha comprobado en un PC donde pasaba; para los fallos de dibujo, pedir el
+  `gpu.txt` de la carpeta de datos.
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;
