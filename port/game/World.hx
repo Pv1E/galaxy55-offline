@@ -152,7 +152,12 @@ class World {
 	/** altura de las olas: animWater.scale * 0.5 */
 	public static inline var WAVE_AMP = 0.3 * 0.5;
 	var gen : gen.DetailsGenerator;
-	var bytes : haxe.io.Bytes;
+	/**
+	 * id local (gen.blocks) del bloque de cada celda, en dos bytes. Cambio del port: el original guardaba uno, y un mundo no
+	 * podia tener mas de 255 bloques distintos (con los kubes de Kube el juego ya tiene mas). El generador sigue dando un byte
+	 * por celda (wideCells)
+	 */
+	var cells : haxe.io.Bytes;
 	var atlas : h3d.mat.Texture;
 	var phase = 0;
 	var chunk = 0;
@@ -337,7 +342,7 @@ class World {
 				if( Sys.args().indexOf("--frametime") >= 0 && haxe.Timer.stamp() - t0 > 0.2 )
 					Sys.println("generador: " + Std.int((haxe.Timer.stamp() - t0) * 1000) + " ms en un paso (progreso " + Std.int(p0 * 100) + "% -> " + Std.int(gen.progress * 100) + "%)");
 				if( busy ) return progress = gen.progress * 0.75;
-				bytes = gen.getBytes().b;
+				wideCells(gen.getBytes().b);
 				initLightTables();
 				// el sitio de la nave se elige antes de aplicar los cambios guardados: si no, con el suelo cavado o construido bajo
 				// la nave, al cargar la partida la nave aparecia en otro sitio
@@ -381,12 +386,25 @@ class World {
 
 	// ---------------------------------------------------------------- consulta de bloques
 
+	/** id local del bloque de la celda p (p = ((x + y * size) << ZBITS) | z) */
+	inline function cell( p : Int ) : Int return cells.getUInt16(p << 1);
+
+	inline function setCell( p : Int, id : Int ) cells.setUInt16(p << 1, id);
+
+	/** las celdas que da el generador (un byte cada una) en dos bytes */
+	function wideCells( src : haxe.io.Bytes ) {
+		var n = src.length;
+		cells = haxe.io.Bytes.alloc(n << 1);
+		var s = hl.Bytes.fromBytes(src), d = hl.Bytes.fromBytes(cells);
+		for( p in 0...n ) d.setUI16(p << 1, s[p]);
+	}
+
 	public inline function voxel( x : Int, y : Int, z : Int ) : Int {
 		if( x < 0 ) x += size else if( x >= size ) x -= size;
 		if( y < 0 ) y += size else if( y >= size ) y -= size;
 		if( z < 0 ) return 1;
 		if( z >= HEIGHT ) return 0;
-		return bytes.get(((x + y * size) << ZBITS) | z);
+		return cell(((x + y * size) << ZBITS) | z);
 	}
 
 	/**
@@ -566,8 +584,8 @@ class World {
 	/** diagnostico: recuento de celdas por bloque y tipo (solo para pruebas) */
 	public function debugStats() : String {
 		var counts = new Map<Int, Int>();
-		for( i in 0...bytes.length ) {
-			var id = bytes.get(i);
+		for( i in 0...cells.length >> 1 ) {
+			var id = cell(i);
 			if( id != 0 ) counts.set(id, (counts.exists(id) ? counts.get(id) : 0) + 1);
 		}
 		var s = "";
@@ -714,7 +732,7 @@ class World {
 			var z = top;
 			while( z >= 0 ) {
 				var p = base | z;
-				var t = idTag[bytes.get(p)];
+				var t = idTag[cell(p)];
 				if( t != 0 ) {
 					if( t < NOLIGHT ) {
 						light.set(p, lsun);
@@ -725,12 +743,12 @@ class World {
 				light.set(p, lmax);
 				// la luz se cuela hacia los vecinos -x e -y que aun no la tienen
 				var q = (cxm << ZBITS) | z;
-				if( light.get(q) == 0 && idTag[bytes.get(q)] < NOLIGHT ) {
+				if( light.get(q) == 0 && idTag[cell(q)] < NOLIGHT ) {
 					light.set(q, lsun);
 					seeds.push(q);
 				}
 				q = (cym << ZBITS) | z;
-				if( light.get(q) == 0 && idTag[bytes.get(q)] < NOLIGHT ) {
+				if( light.get(q) == 0 && idTag[cell(q)] < NOLIGHT ) {
 					light.set(q, lsun);
 					seeds.push(q);
 				}
@@ -739,7 +757,7 @@ class World {
 			// bajo el primer bloque: aire/bloques con luz directa a su lado
 			while( z > 0 ) {
 				var p = base | z;
-				if( idTag[bytes.get(p)] < NOLIGHT && (isSunAir((cxm << ZBITS) | z, lmax) || isSunAir((cym << ZBITS) | z, lmax)) ) {
+				if( idTag[cell(p)] < NOLIGHT && (isSunAir((cxm << ZBITS) | z, lmax) || isSunAir((cym << ZBITS) | z, lmax)) ) {
 					light.set(p, lsun);
 					seeds.push(p);
 				}
@@ -751,7 +769,7 @@ class World {
 	/** las lamparas de las celdas p0 ... end - 1 (lightTask): cada una ilumina su entorno */
 	function lamps( p0 : Int, end : Int, lightIdx : Array<Int>, infos : Array<{ p : Int, f : Float }>, powers : Array<Float> ) {
 		for( p in p0...end ) {
-			var id = bytes.get(p);
+			var id = cell(p);
 			var li = lightIdx[id];
 			if( li < 0 ) continue;
 			var info = infos[li];
@@ -762,7 +780,7 @@ class World {
 	}
 
 	inline function isSunAir( p : Int, lmax : Int ) : Bool {
-		return light.get(p) == lmax && idTag[bytes.get(p)] == 0;
+		return light.get(p) == lmax && idTag[cell(p)] == 0;
 	}
 
 	/** onda expansiva: cada anillo baja la luz en delta (Builder.processLight) */
@@ -840,7 +858,7 @@ class World {
 	}
 
 	inline function spread( q : Int, l : Int, next : Array<Int> ) {
-		if( light.get(q) < l && idTag[bytes.get(q)] < NOLIGHT && (!useMask || mask.get(q >> ZBITS) != 0) ) {
+		if( light.get(q) < l && idTag[cell(q)] < NOLIGHT && (!useMask || mask.get(q >> ZBITS) != 0) ) {
 			light.set(q, l);
 			next.push(q);
 		}
@@ -851,7 +869,7 @@ class World {
 	function initShip( d : ShipData.ShipDataInfo ) {
 		isShip = true;
 		wraps = false;
-		bytes = haxe.io.Bytes.alloc(size * size * HEIGHT);
+		cells = haxe.io.Bytes.alloc((size * size * HEIGHT) << 1);
 		initLightTables();
 		// las celdas se ponen en los primeros pasos de la carga (placeCells): las ~390 000 de la nave nodriza tardaban ~100 ms
 		shipCells = d.cells;
@@ -870,7 +888,7 @@ class World {
 			var end = shipCell + 8192 < cells.length ? shipCell + 8192 : cells.length;
 			for( i in shipCell...end ) {
 				var c = cells[i];
-				bytes.set(((c.x + c.y * size) << ZBITS) | c.z, localId(Block.all[c.id]));
+				setCell(((c.x + c.y * size) << ZBITS) | c.z, localId(Block.all[c.id]));
 			}
 			shipCell = end;
 		}
@@ -984,19 +1002,7 @@ class World {
 		if( b == null ) return 0;
 		var id = gen.alloc(b.k);
 		for( i in idTag.length...gen.blocks.length ) registerId(i);
-		return id > 255 ? 0 : id;
-	}
-
-	/**
-	 * Cabe el bloque en la celda z (la nave tiene su propio mundo): cada celda guarda su id local en un byte, asi que un mundo
-	 * solo tiene 255 bloques distintos. Con los kubes de Kube hay mas en el juego; sin esto, el que no cabe se pondria como aire.
-	 */
-	public function hasRoom( b : Block, z : Int ) : Bool {
-		if( z >= SHIP_Z && ship != null ) return ship.hasRoom(b, z - SHIP_Z);
-		if( b == null ) return true;
-		// gen.alloc da de alta el bloque aunque no quepa (localId lo pone entonces como aire)
-		var id = gen.hblocks.get(Type.enumIndex(b.k));
-		return id != null ? id <= 255 : gen.blocks.length <= 255;
+		return id;
 	}
 
 	function applySaved() {
@@ -1021,7 +1027,7 @@ class World {
 			if( key < 0 ) continue;
 			var lvl = gi >> 16;
 			var b = (gi & 0xFFFF) == 0 ? null : Block.all[gi & 0xFFFF];
-			bytes.set(key, localId(b));
+			setCell(key, localId(b));
 			editMap.set(key, gi);
 			if( lvl > 0 ) waterLvl.set(key, lvl);
 		}
@@ -1063,9 +1069,9 @@ class World {
 		for( col in 0...size * size ) {
 			var base = col << ZBITS;
 			for( z in 1...gl + 1 ) {
-				if( bytes.get(base | z) != seaId ) continue;
+				if( cell(base | z) != seaId ) continue;
 				seaCount[z]++;
-				if( z > seaLevel ) bytes.set(base | z, 0);
+				if( z > seaLevel ) setCell(base | z, 0);
 			}
 		}
 	}
@@ -1112,20 +1118,20 @@ class World {
 		j.seen = haxe.io.Bytes.alloc((cols << ZBITS) >> 3);
 		// las celdas de esa capa cambiadas en la partida (pocas) quedan como aire en el guardado; las del generador las vuelve a
 		// quitar initSea al cargar
-		for( k in [for( k in editMap.keys() ) if( (k & (HEIGHT - 1)) == z && bytes.get(k) == seaId ) k] ) {
+		for( k in [for( k in editMap.keys() ) if( (k & (HEIGHT - 1)) == z && cell(k) == seaId ) k] ) {
 			editMap.set(k, 0);
 			waterLvl.remove(k);
 		}
 		j.cand = [];
 		for( col in 0...cols ) {
 			var p = (col << ZBITS) | z;
-			var id = bytes.get(p);
+			var id = cell(p);
 			if( id != seaId ) {
 				// agua del mar bajo un bloque en la nueva capa de arriba: con olas tiene cara de arriba (Builder.hx: anim && z == waterLevel)
-				if( id != 0 && bytes.get(p - 1) == seaId ) j.chg.set(col, 1);
+				if( id != 0 && cell(p - 1) == seaId ) j.chg.set(col, 1);
 				continue;
 			}
-			bytes.set(p, 0);
+			setCell(p, 0);
 			j.removed++;
 			j.chg.set(col, 1);
 			// puede estar al sol si encima hay luz plena (la tiene todo el aire al sol); se mira en stepSeaLight
@@ -1148,7 +1154,7 @@ class World {
 			var base = col << ZBITS;
 			s = j.top + 1;
 			while( s > 0 ) {
-				var id = bytes.get(base | (s - 1));
+				var id = cell(base | (s - 1));
 				if( id != 0 && idTag[id] != 0 ) break;
 				s--;
 			}
@@ -1185,7 +1191,7 @@ class World {
 	 */
 	function sunSide( q : Int ) {
 		var j = seaJob;
-		var t = idTag[bytes.get(q)];
+		var t = idTag[cell(q)];
 		if( t >= NOLIGHT || (j.seen.get(q >> 3) & (1 << (q & 7))) != 0 || (t == 0 && (q & (HEIGHT - 1)) >= skyZ(q >> ZBITS)) ) return;
 		j.seen.set(q >> 3, j.seen.get(q >> 3) | (1 << (q & 7)));
 		if( light.get(q) < j.lsun ) {
@@ -1277,7 +1283,7 @@ class World {
 
 	inline function seaSpread( q : Int, l : Int ) {
 		var j = seaJob;
-		var t = idTag[bytes.get(q)];
+		var t = idTag[cell(q)];
 		if( t < NOLIGHT && (j.seen.get(q >> 3) & (1 << (q & 7))) == 0 ) {
 			var v = light.get(q);
 			if( !(t == 0 && v >= j.lmax && (q & (HEIGHT - 1)) >= skyZ(q >> ZBITS)) ) {
@@ -1406,7 +1412,7 @@ class World {
 		y = wrapC(y);
 		if( z < 1 || z >= HEIGHT - 1 ) return;
 		var key = ((x + y * size) << ZBITS) | z;
-		bytes.set(key, localId(b));
+		setCell(key, localId(b));
 		editMap.set(key, b == null ? 0 : b.index);
 		waterLvl.remove(key);
 		var n = size >> 4;
@@ -1417,7 +1423,7 @@ class World {
 				if( immediate.indexOf(id) < 0 ) immediate.push(id);
 			}
 		// mientras tanto, un hueco nuevo toma la luz de su vecino mas claro (si no, se veria negro hasta recalcular)
-		if( idTag[bytes.get(key)] < NOLIGHT ) {
+		if( idTag[cell(key)] < NOLIGHT ) {
 			var best = light.get(key);
 			inline function nb( q : Int ) { var v = light.get(q); if( v > best ) best = v; }
 			nb(((wrapC(x - 1) + y * size) << ZBITS) | z);
@@ -1544,7 +1550,7 @@ class World {
 			var base = col << ZBITS;
 			for( z in 1...HEIGHT ) {
 				var p = base | z;
-				var li = lightIdx[bytes.get(p)];
+				var li = lightIdx[cell(p)];
 				if( li < 0 ) continue;
 				var info = lightInfos[li];
 				if( light.get(p) >= info.p ) continue;
@@ -1598,7 +1604,7 @@ class World {
 		var z = lightTop >= 0 ? lightTop : HEIGHT - 1;
 		while( z >= 0 ) {
 			var p = base | z;
-			var t = idTag[bytes.get(p)];
+			var t = idTag[cell(p)];
 			if( t != 0 ) {
 				if( t < NOLIGHT ) {
 					light.set(p, lsun);
@@ -1609,14 +1615,14 @@ class World {
 			light.set(p, lmax);
 			if( okx ) {
 				var q = (cxm << ZBITS) | z;
-				if( light.get(q) == 0 && idTag[bytes.get(q)] < NOLIGHT ) {
+				if( light.get(q) == 0 && idTag[cell(q)] < NOLIGHT ) {
 					light.set(q, lsun);
 					seeds.push(q);
 				}
 			}
 			if( oky ) {
 				var q = (cym << ZBITS) | z;
-				if( light.get(q) == 0 && idTag[bytes.get(q)] < NOLIGHT ) {
+				if( light.get(q) == 0 && idTag[cell(q)] < NOLIGHT ) {
 					light.set(q, lsun);
 					seeds.push(q);
 				}
@@ -1625,7 +1631,7 @@ class World {
 		}
 		while( z > 0 ) {
 			var p = base | z;
-			if( idTag[bytes.get(p)] < NOLIGHT && ((okx && isSunAir((cxm << ZBITS) | z, lmax)) || (oky && isSunAir((cym << ZBITS) | z, lmax))) ) {
+			if( idTag[cell(p)] < NOLIGHT && ((okx && isSunAir((cxm << ZBITS) | z, lmax)) || (oky && isSunAir((cym << ZBITS) | z, lmax))) ) {
 				light.set(p, lsun);
 				seeds.push(p);
 			}
