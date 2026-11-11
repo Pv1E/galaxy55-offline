@@ -50,7 +50,9 @@ class Drops {
 
 	public function add( x : Float, y : Float, z : Float, b : Block ) : Drop {
 		var d = new Drop(x, y, z, b);
-		var poly = IconMesh.polygon(b, true);
+		// el Kube invisible y los que el recorte borraria enteros: translucidos como su icono (IconMesh.seeThrough), con sus 6 caras
+		var clear = IconMesh.seeThrough(b);
+		var poly = IconMesh.polygon(b, true, 1.0, clear);
 		if( poly != null ) {
 			var mat = h3d.mat.Material.create(atlas);
 			mat.shadows = false;
@@ -58,8 +60,13 @@ class Drops {
 			mat.mainPass.culling = None;
 			mat.mainPass.addShader(new h3d.shader.VertexColor());
 			mat.mainPass.addShader(world.sky.fog);
-			mat.textureShader.killAlpha = true;
-			mat.textureShader.killAlphaThreshold = 0.5;
+			if( clear ) {
+				mat.blendMode = Alpha;
+				mat.mainPass.depthWrite = false;
+			} else {
+				mat.textureShader.killAlpha = true;
+				mat.textureShader.killAlphaThreshold = 0.5;
+			}
 			d.mat = mat;
 			d.obj = new h3d.scene.Object(world.root);
 			d.obj.setScale(SCALE);

@@ -1,0 +1,29 @@
+# Kube invisible suelto y en la mano (cambio del port): el recorte de los sueltos y de la mano (killAlpha 0.5) lo borraba entero
+# (BFAlpha(0.25): ningun pixel llega a la mitad de opacidad) y al romperlo no se veia lo que caia al suelo. Ahora se dibujan
+# translucidos, como su icono (IconMesh.seeThrough); el Kube de niebla (BFAlpha(0.5) da 127) tambien. Los demas no cambian.
+# uso: devrun.ps1 -Script port/dev/kube_invisible_suelto.txt -Extra "--lang=fr --seed=4916"
+# semilla 4916, otono, tamano 1: el cubo de la anomalia va de 61,82,48 a 64,85,51; debajo, suelo llano (z = 35)
+wait 3
+# un bloque bajo el cubo para llegar a el (el laser alcanza 7): se rompen dos Kubes invisibles de abajo y caen al suelo
+set 63 87 44 BRock
+tp 63.5 87.5 45
+waitfor ground
+mine 63 85 48
+mine 62 85 48
+wait 150
+print loose
+tp 63.5 89.5 top
+waitfor ground
+lookat 63.2 85.3 35.15
+wait 10
+shot invisible_suelto
+# en la mano: el Kube invisible y el Kube de niebla
+slot 2
+hand BKubeInvisible
+look -1.57 0.25
+wait 10
+shot invisible_mano
+hand BKubeFog
+wait 10
+shot niebla_mano
+quit

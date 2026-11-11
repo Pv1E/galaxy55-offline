@@ -44,12 +44,19 @@ class Hand {
 				mesh.remove();
 				mesh = null;
 			}
-			var poly = b == null ? null : IconMesh.polygon(b, true);
+			// el Kube invisible y los que el recorte borraria enteros: translucidos como su icono (IconMesh.seeThrough), con sus 6
+			// caras; con el recorte la mano se quedaba vacia
+			var clear = b != null && IconMesh.seeThrough(b);
+			var poly = b == null ? null : IconMesh.polygon(b, true, 1.0, clear);
 			if( poly != null ) {
 				mesh = new h3d.scene.Mesh(poly, mat, turn);
 				mesh.setPosition(-0.5, -0.5, -0.5);
 				// los cubos son convexos: sin profundidad basta con no dibujar las caras de atras
-				mat.mainPass.culling = (b.type == BTModel || b.type == BTModel2Side || b.type == BTSprite) ? None : Back;
+				mat.mainPass.culling = clear || b.type == BTModel || b.type == BTModel2Side || b.type == BTSprite ? None : Back;
+				// en la misma pasada (additive, delante de todo): mainPass.setBlendMode no la cambia, Material.blendMode si
+				mat.mainPass.setBlendMode(clear ? Alpha : None);
+				mat.mainPass.depthWrite = !clear;
+				mat.textureShader.killAlpha = !clear;
 			}
 		}
 		if( mesh == null ) {
