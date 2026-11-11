@@ -1,0 +1,37 @@
+# Editor de kubes: vista previa de los kubes translucidos (cristal, hielo: BTAlpha) como los pinta el mundo (World.emitMesh):
+# sin la cara de atras, los pixeles solidos (marcos) opacos, la profundidad de la cara translucida mas cercana y despues su
+# color. Antes las caras de atras se mezclaban encima de las de delante: los marcos del fondo pasaban por delante.
+# Capturas port/out/kubetr_*.png
+wait 3
+setlang fr
+menu
+waitfor menu
+tap down
+tap down
+tap enter
+wait 30
+kube load BShipGlassBlue
+wait 5
+print kube
+shot kubetr_vitre_bleue
+kube load BShipGlass
+wait 5
+print kube
+shot kubetr_vitre
+kube load BGlass
+wait 5
+print kube
+shot kubetr_verre
+kube load BIce
+wait 5
+print kube
+shot kubetr_glace
+# la miniatura de Mis kubes se pinta con las mismas pasadas
+kube load BShipGlassBlue
+kube name Vitre translucide test
+kube save
+kube tab 1
+wait 10
+print kube
+shot kubetr_miskubes
+quit

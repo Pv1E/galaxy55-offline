@@ -1778,8 +1778,8 @@ class World {
 	 */
 	static inline var LAYER_WATER = -4;
 	public static inline var LAYER_SKY = -3;
-	static inline var LAYER_ALPHA_DEPTH = -2;
-	static inline var LAYER_ALPHA = -1;
+	public static inline var LAYER_ALPHA_DEPTH = -2;
+	public static inline var LAYER_ALPHA = -1;
 
 	function emitMesh( m : MeshBuf, kind : Int, scroll = 0. ) {
 		if( m.pts.length == 0 ) return;

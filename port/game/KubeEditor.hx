@@ -222,6 +222,8 @@ class KubeEditor extends Screen {
 
 	// vista previa 3D (se pinta en una textura, como los iconos)
 	var scene : h3d.scene.Scene;
+	/** las otras pasadas de previewMesh (cristal y hielo: pixeles solidos y profundidad), con su misma primitiva */
+	var previewPasses = new Array<h3d.scene.Mesh>();
 	var previewTex : h3d.mat.Texture;
 	var previewMesh : h3d.scene.Mesh;
 	var yaw = -Math.PI / 4;
@@ -738,6 +740,8 @@ class KubeEditor extends Screen {
 	/** la malla del bloque con la forma actual (la misma que dibuja el mundo), con la tira de caras en lugar del atlas */
 	function rebuildPreview() {
 		if( previewMesh != null ) {
+			for( m in previewPasses ) m.remove();
+			previewPasses = [];
 			previewMesh.remove();
 			previewMesh.primitive.dispose();
 			previewMesh = null;
@@ -754,22 +758,42 @@ class KubeEditor extends Screen {
 			uv.u *= 64 / n;
 			uv.v *= 64;
 		}
-		var mat = h3d.mat.Material.create(strip);
-		mat.shadows = false;
-		mat.mainPass.enableLights = false;
-		mat.mainPass.culling = None;
-		mat.mainPass.addShader(new h3d.shader.VertexColor());
+		function material( culling : h3d.mat.Data.Face, killAlpha : Float ) {
+			var mat = h3d.mat.Material.create(strip);
+			mat.shadows = false;
+			mat.mainPass.enableLights = false;
+			mat.mainPass.culling = culling;
+			mat.mainPass.addShader(new h3d.shader.VertexColor());
+			if( killAlpha > 0 ) {
+				mat.textureShader.killAlpha = true;
+				mat.textureShader.killAlphaThreshold = killAlpha;
+			}
+			return mat;
+		}
 		// como World.emitMesh: lo opaco tal cual, lo translucido mezclado y el resto recortado por el alfa
 		switch( b.type ) {
 		case BTFull:
+			previewMesh = new h3d.scene.Mesh(poly, material(None, 0), scene);
 		case BTAlpha:
+			// las tres pasadas del cristal y del hielo del mundo, todas sin la cara de atras: los pixeles solidos (marcos) opacos,
+			// la profundidad de la cara translucida mas cercana y despues su color. Mezcladas sin mas, las caras de atras se
+			// pintaban encima de las de delante (los marcos del fondo sobre los de delante)
+			previewPasses.push(new h3d.scene.Mesh(poly, material(Back, 0.9), scene));
+			var depth = material(Back, 0.25);
+			depth.mainPass.setPassName("alpha");
+			depth.mainPass.setColorMask(false, false, false, false);
+			depth.mainPass.layer = World.LAYER_ALPHA_DEPTH;
+			previewPasses.push(new h3d.scene.Mesh(poly, depth, scene));
+			var mat = material(Back, 0);
 			mat.blendMode = Alpha;
 			mat.mainPass.depthWrite = false;
+			mat.mainPass.setPassName("alpha");
+			mat.mainPass.depthTest = LessEqual;
+			mat.mainPass.layer = World.LAYER_ALPHA;
+			previewMesh = new h3d.scene.Mesh(poly, mat, scene);
 		default:
-			mat.textureShader.killAlpha = true;
-			mat.textureShader.killAlphaThreshold = 0.5;
+			previewMesh = new h3d.scene.Mesh(poly, material(None, 0.5), scene);
 		}
-		previewMesh = new h3d.scene.Mesh(poly, mat, scene);
 	}
 
 	/**
