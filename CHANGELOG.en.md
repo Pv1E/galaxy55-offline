@@ -2,6 +2,68 @@
 
 [Español: `CHANGELOG.md`](CHANGELOG.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
+## Unreleased
+- **The kubes of Kube** (port addition): its 77 blocks (Motion Twin, 2010) are in the game as full blocks, with their
+  textures, light and transparency, in the creative palette and the ESCorp database. Kube Water and Kube Lava run down their
+  sides as in Kube, but they do not flow nor hurt. Each one is also in `port/kubes` as a `.kube` file, to retouch it in the
+  kube editor. A world only holds 255 different blocks: if a new one no longer fits, it is not placed and not used up.
+- **Invisible anomaly** (port addition): on about 1 normal planet in 8 (not on comets), a 4x4x4 cube floats 10 to 20 blocks
+  above the ground: 8 Kube Chests wrapped in Invisible kubes. The invisible kube looks like the sky behind it and hides what
+  lies further; through Tinted Toughened Glass or Black Ice it shows as under a black light, with blue edges. The ESCorp
+  database counts it as an anomaly (identified when passing below or beside it). Planets without it are unchanged and saves
+  stay valid.
+- **Kube gems** (port addition): in the synthesizer, a Kube Chest gives a random Ruby, Sapphire, Emerald or Amethyst (a
+  Mystery Kube shows before crafting); 8 matching gems make a Shade and 8 Shades a Teleport, which does nothing yet. In the
+  database, the chest recipe shows its four possible results.
+- **Coloured Toughened Glass** (port addition): Toughened Glass with a gem on top makes Red (Ruby), Blue (Sapphire), Green
+  (Emerald) or Pink (Amethyst) Tinted Toughened Glass. They are ship blocks, lighter than the Tinted Toughened Glass and,
+  unlike it, they do not reveal invisible kubes. The merchant robot buys them at 100 and does not sell them.
+- **Mothership shop** (port addition): the merchant robot's stall is in the middle of the hangar, between the two rows of
+  bays (it was in the nose, far from everything). It is an open stall built from ship blocks, with an invisible wall over the
+  counter. No more computer: the robot turns to face you and, when you click on it, you talk to it in a window like the
+  Contracts one: 1. trade (the shop), 2. chat (tips, rumours and robot jokes) and 3. goodbye, with the number keys, the
+  mouse, the arrows or the gamepad. Trading is off during the tutorial.
+- A game saved inside the mothership loads inside, where you were (it used to open on the star map).
+- Synthesizer (port change): recipes give more. Wood (Grozarb and Frost Wood too) makes 4 planks (2 before), 4 planks in a
+  square make 4 wood platings (1 before) and many recipes make 2 instead of 1 (window frames, columns, rock tiles, leaf
+  curtain, glass, armoured door and plate, aggregates...).
+- New recipes and blocks (port addition): **Rock Column** (2 rock stacked) and **HardRoq, Soft Rock and Frost Tiles** (8 of
+  their rock in two 2x2 layers), 2 per recipe. The **ESCorp Canteen** is crafted from 8 iron in two 2x2 layers and shows in
+  the creative palette (there was no way to get one). The Lumen Rock Trunk is made from 2 Dead Lumen Rocks (2 moon rock
+  before), which always drop, so the recipe works in adventure.
+- Merchant robot (port change): what is crafted from what it sells no longer resells for more than its ingredients cost
+  (planks 3, basic glass 4, lumine and lantern 12, hull plating and toughened glass 100...). Citronox charges cost 20 (120
+  before), the space engine 1000 and the ESCorp Canteen 400. It no longer sells, though it still buys them, walls and tiles,
+  columns, ship parts (aluminium stays on sale to craft them), the ores and crystals found on planets, what only anomalies
+  give and other rare finds. It neither sells nor buys kubes, special blocks (except the space engine and the canteen), old
+  citronox and blue etherium fragments.
+- **ESCorp contracts in parts**: with only some of the blocks, "Give" hands over what you carry and the contract stays in
+  progress at the top of the panel. It no longer expires with the board, can be finished whenever you want and the full
+  reward is paid with the last block. It takes one line of the board (with 3 in progress, it is full). "Abandon" asks for
+  confirmation: the blocks given are lost and nothing is paid. It is saved with the game.
+- ESCorp database: kubes follow an order closer to the original one: first those of the planets, planet by planet (in the
+  Space tab order), then those of comets and those only anomalies give, crafted blocks in the order of their recipes,
+  special blocks and the kubes. Recipes go by material: wood, stone, ship, glass and light, aggregates, iron and devices,
+  charges.
+- Kube editor: a button next to "Auto-rotate" shows a 2x2x2 or 3x3x3 block of the same kube, to see how its faces join. The
+  mouse wheel zooms toward the point under the cursor (50% to 600%), and numpad + and - toward the centre. Dragging the view
+  turns the kube the way the mouse goes (it went the opposite way). Glass and ice look as in the world, front faces only (the
+  back ones used to show on top).
+- Block icons are smooth in the whole interface (inventory bar, palette, chest, shop, contracts, kube editor), as in the
+  database: no more skipped pixels or jagged icons in a small window, and translucent ones (glass, ice, water, quicksand,
+  armoured HUD, force field...) no longer look hollow or dark.
+- The ancient bomb screen fade no longer flickers (port change, for people with epilepsy): in a chain or with several bombs
+  in a row it lasts longer instead of starting again and rises again at most once per second (before, up to 15-17 red and
+  white flashes per second). Damage and shake are unchanged.
+- Loading a game saved by a newer version, with blocks this one does not know, no longer closes the game: it asks first and,
+  if accepted, keeps a copy in `saves/backups`, deletes those blocks and tells what it deleted and where the copy is.
+- The DirectX build no longer closes when the ESCorp database opens with something new in it.
+- On arrival on a planet, the scene should no longer flicker for a few seconds on some PCs (to be confirmed on one where it
+  happened): the spare database icons are finished on the loading screen. The game writes `gpu.txt` (graphics card and
+  driver) in its data folder, to attach it when reporting a drawing bug.
+- In French, the canteen is named "Conteneur ESCorp" ("EScorp" before).
+- `jugar.bat` and `jugar_dx.bat` (when building) also find `hl.exe` directly in `tools-portable\hashlink`.
+
 ## v0.7 — pre-release
 - **ESCorp database** (port addition), on the on-board computer, with three tabs: the **Kubindex**, with every kube of the
   game by category (pointing the laser at one spots it; having it in the inventory collects it, with how many times it was

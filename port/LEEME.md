@@ -10,6 +10,7 @@ conocidos, ver `ERRORES.md` en la raíz); el juego original en Flash, con sus ar
 Compila (ver abajo) y haz doble clic en `jugar.bat`. Abre el menú de inicio: Continuar (la lista de partidas: jugar, renombrar o borrar), Nueva partida, Editor de kubes (añadido del port: dibujar bloques nuevos y guardarlos como `.kube` en la carpeta `kubes` de los datos), Opciones y Salir.
 En Nueva partida eliges nombre, semilla y modo: **Aventura** (como el original, con el inventario vacío) o **Creativo** (añadido nuestro, con bioma y tamaño).
 Las partidas y los ajustes se guardan en `%APPDATA%\Galaxy55\` (se puede cambiar con la variable `GALAXY55_DATA`), y las capturas (F2) en su carpeta `screenshots`.
+El juego deja ahí también `gpu.txt`, con la tarjeta gráfica y el controlador: adjúntalo si avisas de un fallo de dibujo.
 El formato de las partidas puede cambiar entre versiones: no cuentes con que las de hoy sirvan siempre.
 
 ## Controles
@@ -94,7 +95,9 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
   teclado y el mando (mientras está abierta, las flechas mueven su marca y no al jugador). Lo que guarda va en la partida
   (en el original, en el servidor) y sale suelto si se rompe.
 - La tienda del robot comerciante (en el original era un panel web), su nave por el mapa de estrellas y la flecha GPS naranja
-  que lo señala son un añadido de este port.
+  que lo señala son un añadido de este port. En la nave nodriza, su puesto está en el centro del hangar y se habla con el
+  robot (clic en él) para comerciar o charlar. Sus precios son del port: lo fabricado no se revende por más de lo que cuestan
+  sus ingredientes y algunas cosas solo las compra.
 - Los contratos de la ESCorp (ordenador de a bordo > Contratos) son un añadido de este port (en el original los daba el
   servidor; solo queda la lista de bloques triviales de los contratos de base). Se editan en `contracts.json`. Con parte de
   los bloques se dan los que lleves y el contrato queda en curso: ya no caduca, ocupa una línea del tablero y solo se quita
@@ -142,4 +145,13 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
 - En la zona del sintetizador y en el hangar, lo que se rompe se suelta siempre (cambio de este port: en el original, lo que
   solo se suelta con suerte se perdía a menudo al recogerlo de ahí). Un suelto enterrado bajo bloques puestos sale por un lado;
   en el original subía atravesándolos y, en la nave, acababa en el techo.
+- Los 77 kubes de Kube (Motion Twin, 2010) son un añadido de este port: bloques enteros con las texturas de Kube (CC BY-NC-SA
+  4.0, en `NOTICE`), en la paleta creativa y la Base de datos ESCorp (el robot comerciante ni los vende ni los compra), con un
+  `.kube` por bloque en `port/kubes`. También son añadidos la anomalía invisible (Cofres de Kube rodeados de kubes
+  invisibles), las gemas que da el Cofre de Kube en el sintetizador y los vidrios blindados de color.
+- Las recetas del sintetizador dan más que en el original (la madera, 4 tablas; muchas recetas, 2 en vez de 1) y hay recetas
+  nuevas: pilar de piedra, zócalos de volcanita, de roca ácida y de escarcha, y la cantina de ESCorp con 8 de hierro. El
+  tronco de lunimosa se hace con lunimosas muertas (en el original, con roca lunar).
+- Una partida con bloques que esta versión no conoce (guardada por una más nueva) pregunta antes de cargarse; si se acepta,
+  se copia en `saves/backups` y se borran esos bloques.
 - Lo que falta está en `PENDIENTES.md`, los fallos en `ERRORES.md` y las ideas para más adelante en `IDEAS.md` (raíz del repositorio).

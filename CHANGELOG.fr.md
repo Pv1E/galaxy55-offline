@@ -2,6 +2,76 @@
 
 [Español : `CHANGELOG.md`](CHANGELOG.md) · [English: `CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## Non publié
+- **Kubes de Kube** (ajout du portage) : les 77 blocs de Kube (Motion Twin, 2010) sont dans le jeu en blocs pleins, avec
+  leurs textures, leur lumière et leur transparence, dans la palette créative et la base de données ESCorp. L'Eau de Kube et
+  la Lave de Kube coulent sur leurs faces comme dans Kube, mais ne s'écoulent pas et ne blessent pas. Chacun est aussi dans
+  `port/kubes` en fichier `.kube`, pour le retoucher dans l'éditeur de Kubes. Un monde ne garde que 255 blocs différents :
+  si un nouveau ne tient plus, il n'est pas posé ni consommé.
+- **Anomalie invisible** (ajout du portage) : sur environ 1 planète normale sur 8 (pas sur les comètes), un cube de 4x4x4
+  flotte à 10-20 blocs du sol : 8 Coffres de Kube entourés de kubes Invisibles. Le kube invisible a l'air du ciel derrière
+  lui et cache ce qui est plus loin ; à travers une vitre blindée teintée ou de la glace noire, il apparaît comme sous une
+  lumière noire, avec des arêtes bleues. La base de données ESCorp la compte comme anomalie (repérée en passant dessous ou à
+  côté). Les planètes sans elle ne changent pas et les sauvegardes restent valables.
+- **Gemmes de Kube** (ajout du portage) : dans le synthétiseur, un Coffre de Kube donne au hasard un Rubis, un Saphir, une
+  Émeraude ou une Améthyste (un Kube mystère s'affiche avant la fabrication) ; 8 gemmes identiques font une Ombre et 8 Ombres
+  un Téléport, qui ne fait rien pour l'instant. Dans la base de données, la recette du coffre montre ses quatre résultats
+  possibles.
+- **Vitres blindées de couleur** (ajout du portage) : une vitre blindée avec une gemme dessus donne une vitre blindée teintée
+  rouge (Rubis), bleue (Saphir), verte (Émeraude) ou rose (Améthyste). Ce sont des blocs du vaisseau, plus clairs que la
+  vitre blindée teintée et, contrairement à elle, ils ne révèlent pas les kubes invisibles. Le robot marchand les achète
+  100 et ne les vend pas.
+- **Boutique du vaisseau-mère** (ajout du portage) : l'étal du robot marchand est au milieu du hangar, entre les deux rangées
+  de baies (avant, dans la proue, loin de tout). C'est un étal ouvert, fait de blocs du vaisseau, avec un mur invisible
+  au-dessus du comptoir. Plus d'ordinateur : le robot se tourne vers toi et, en cliquant dessus, on lui parle dans une
+  fenêtre comme celle des contrats : 1. commercer (la boutique), 2. discuter (conseils, rumeurs et blagues de robot) et
+  3. au revoir, avec les touches numériques, la souris, les flèches ou la manette. Pendant le tutoriel, on ne peut pas
+  commercer.
+- Une partie enregistrée dans le vaisseau-mère se charge dedans, là où tu étais (avant, elle s'ouvrait sur la carte
+  stellaire).
+- Synthétiseur (changement du portage) : les recettes donnent plus. Le bois (aussi celui de Grozarb et le bois Frimas) donne
+  4 planches (2 avant), 4 planches en carré donnent 4 dalles en bois (1 avant) et beaucoup de recettes donnent 2 au lieu de 1
+  (barreaux de fenêtre, colonnes, carrelage en rosh, rideau de feuilles, verre, porte et dalle blindées, agrégats...).
+- Recettes et blocs nouveaux (ajout du portage) : **Colonne en rosh** (2 rosh l'un sur l'autre) et **Carrelages en
+  rouge'rosh, de roche douce et du frimas** (8 de leur roche en deux couches de 2x2), 2 par recette. Le **Conteneur ESCorp**
+  se fabrique avec 8 fers en deux couches de 2x2 et apparaît dans la palette créative (avant, impossible d'en avoir un). Le
+  tronc de lunimeuse se fait avec 2 lunimeuses mortes (avant 2 roches lunaires), qui tombent toujours : la recette marche en
+  aventure.
+- Robot marchand (changement du portage) : ce qui se fabrique avec ce qu'il vend ne se revend plus au-dessus du prix de ses
+  ingrédients (planches 3, verre basique 4, lumine et lanterne 12, blindage et vitre blindée 100...). Les charges de
+  citronox coûtent 20 (120 avant), le moteur spatial 1000 et le Conteneur ESCorp 400. Il ne vend plus, mais achète toujours,
+  les murs et carrelages, les colonnes, les pièces du vaisseau (l'aluminium reste en vente pour les fabriquer), les minerais
+  et cristaux trouvés sur les planètes, ce que seules les anomalies donnent et d'autres trouvailles rares. Il ne vend ni
+  n'achète les kubes, les blocs spéciaux (sauf le moteur spatial et le conteneur), le vieux citronox et les fragments
+  d'etherium bleu.
+- **Contrats ESCorp en plusieurs fois** : avec une partie des blocs seulement, « Donner » remet ceux que tu portes et le
+  contrat reste en cours en haut du panneau. Il n'expire plus avec le tableau, se termine quand tu veux et la récompense
+  entière est payée avec le dernier bloc. Il prend une ligne du tableau (avec 3 en cours, il est plein). « Abandonner »
+  demande confirmation : les blocs donnés sont perdus et rien n'est payé. Il est enregistré avec la partie.
+- Base de données ESCorp : les kubes suivent un ordre plus proche de l'original : d'abord ceux des planètes, planète par
+  planète (dans l'ordre de l'onglet Espace), puis ceux des comètes et ceux que seules les anomalies donnent, les blocs
+  fabriqués dans l'ordre de leurs recettes, les blocs spéciaux et les kubes. Les recettes vont par matériau : bois, pierre,
+  vaisseau, verre et lumière, agrégats, fer et appareils, charges.
+- Éditeur de Kubes : un bouton à côté de « Rotation auto » montre un bloc de 2x2x2 ou de 3x3x3 du même kube, pour voir comment
+  ses faces se raccordent. La molette zoome vers le point sous le curseur (de 50 % à 600 %), et + et - du pavé numérique vers
+  le centre. En faisant glisser la vue, le kube tourne dans le sens de la souris (avant, à l'envers). Le verre et la glace
+  s'affichent comme dans le monde, faces avant seulement (avant, celles de derrière passaient par-dessus).
+- Les icônes des blocs sont lisses dans toute l'interface (barre d'inventaire, palette, coffre, boutique, contrats, éditeur
+  de Kubes), comme dans la base de données : plus de pixels sautés ni d'icônes crénelées dans une petite fenêtre, et les
+  translucides (verre, glace, eau, sable mouvant, HUD blindé, champ de force...) ne paraissent plus creux ni sombres.
+- Le fondu d'écran de la bombe antique ne clignote plus (changement du portage, pour les personnes épileptiques) : dans une
+  réaction en chaîne ou avec plusieurs bombes d'affilée, il se prolonge au lieu de recommencer et ne remonte qu'une fois par
+  seconde au plus (avant, jusqu'à 15-17 flashs rouges et blancs par seconde). Les dégâts et les secousses ne changent pas.
+- Charger une partie enregistrée par une version plus récente, avec des blocs que celle-ci ne connaît pas, ne ferme plus le
+  jeu : il demande d'abord et, si on accepte, garde une copie dans `saves/backups`, supprime ces blocs et dit ce qu'il a
+  supprimé et où est la copie.
+- La version DirectX ne se ferme plus à l'ouverture de la base de données ESCorp quand elle contient une nouveauté.
+- En arrivant sur une planète, la scène ne devrait plus clignoter quelques secondes sur certains PC (à confirmer sur un PC
+  où ça arrivait) : les icônes de réserve de la base de données sont terminées sur l'écran de chargement. Le jeu écrit
+  `gpu.txt` (carte graphique et pilote) dans son dossier de données, à joindre quand on signale un bug d'affichage.
+- Le conteneur s'appelle « Conteneur ESCorp » (avant « EScorp »).
+- `jugar.bat` et `jugar_dx.bat` (à la compilation) trouvent aussi `hl.exe` directement dans `tools-portable\hashlink`.
+
 ## v0.7 — pre-release
 - **Base de données ESCorp** (ajout du portage), dans l'ordinateur de bord, avec trois onglets : le **Kubindex**, avec tous
   les kubes du jeu par catégorie (viser un kube au laser le repère ; l'avoir dans l'inventaire le récupère, avec le nombre de

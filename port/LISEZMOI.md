@@ -11,6 +11,7 @@ Compile-le (voir plus bas) et double-clique sur `jugar.bat`, ou télécharge le 
 [release](../../../releases/tag/v0.7). Le menu de démarrage propose Continuer (la liste des parties : jouer, renommer ou supprimer), Nouvelle partie, Éditeur de Kubes (ajout du portage : dessiner de nouveaux blocs et les enregistrer en `.kube` dans le dossier `kubes` des données), Options et Quitter.
 Dans Nouvelle partie, tu choisis le nom, la graine et le mode : **Aventure** (comme dans l'original, inventaire vide) ou **Créatif** (notre ajout, avec biome et taille).
 Les parties et les réglages sont enregistrés dans `%APPDATA%\Galaxy55\` (modifiable avec la variable d'environnement `GALAXY55_DATA`), et les captures d'écran (F2) dans son dossier `screenshots`.
+Le jeu y écrit aussi `gpu.txt`, avec la carte graphique et le pilote : joins-le si tu signales un bug d'affichage.
 Le format des sauvegardes peut changer d'une version à l'autre : ne compte pas sur le fait que les parties d'aujourd'hui fonctionnent toujours.
 
 ## Commandes
@@ -103,7 +104,9 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
   et à la manette (tant qu'elle est ouverte, les flèches déplacent sa sélection et pas le joueur). Son contenu est gardé dans
   la partie (dans l'original, sur le serveur) et tombe au sol quand on le casse.
 - La boutique du robot marchand (dans l'original, c'était un panneau web), son vaisseau sur la carte stellaire et la flèche
-  GPS orange qui le désigne sont des ajouts du port.
+  GPS orange qui le désigne sont des ajouts du port. Dans le vaisseau-mère, son étal est au milieu du hangar et on parle au
+  robot (clic dessus) pour commercer ou discuter. Ses prix sont propres au portage : ce qui est fabriqué ne se revend pas plus
+  cher que ses ingrédients et certaines choses sont seulement achetées.
 - Les contrats ESCorp (ordinateur de bord > Contrats) sont un ajout du port (dans l'original, ils venaient du serveur ; seule
   reste la liste des blocs triviaux des contrats de base). Ils se modifient dans `contracts.json`. Avec une partie des blocs,
   on donne ce qu'on a et le contrat reste en cours : il n'expire plus, prend une ligne du tableau et ne part qu'une fois
@@ -159,4 +162,13 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
 - Dans la zone du synthétiseur et dans le hangar, ce qu'on casse tombe toujours (changement du portage : dans l'original, ce qui
   ne tombe qu'avec de la chance était souvent perdu quand on le reprenait là). Un bloc tombé enterré sous des blocs posés
   ressort par le côté ; dans l'original, il montait à travers eux et, dans le vaisseau, finissait sur le toit.
+- Les 77 kubes de Kube (Motion Twin, 2010) sont un ajout de ce portage : des blocs pleins avec les textures de Kube (CC BY-NC-SA
+  4.0, dans `NOTICE`), dans la palette créative et la base de données ESCorp (le robot marchand ne les vend ni ne les achète),
+  avec un `.kube` par bloc dans `port/kubes`. L'anomalie invisible (des Coffres de Kube entourés de kubes invisibles), les
+  gemmes que donne le Coffre de Kube au synthétiseur et les vitres blindées de couleur sont aussi des ajouts.
+- Les recettes du synthétiseur donnent plus que dans l'original (le bois, 4 planches ; beaucoup de recettes, 2 au lieu de 1)
+  et il y a de nouvelles recettes : colonne en rosh, carrelages en rouge'rosh, de roche douce et du frimas, et le Conteneur
+  ESCorp avec 8 fers. Le tronc de lunimeuse se fait avec des lunimeuses mortes (dans l'original, avec de la roche lunaire).
+- Une partie avec des blocs que cette version ne connaît pas (enregistrée par une plus récente) demande confirmation avant
+  de se charger ; si on accepte, elle est copiée dans `saves/backups` et ces blocs sont supprimés.
 - Ce qui manque est dans `TODO.fr.md`, les bugs dans `BUGS.fr.md` et les idées pour plus tard dans `IDEAS.fr.md` (racine du dépôt).

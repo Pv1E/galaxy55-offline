@@ -16,6 +16,8 @@ Les bugs corrigés sont déplacés à la fin. Les détails techniques sont dans 
 
 ## Corrigés
 
+- Non publié (corrigés par **Cornor923**, PR 96-112) : les icônes des blocs translucides ne paraissent plus creuses ni sombres et aucune icône n'est crénelée dans une petite fenêtre ; le fondu de la bombe antique ne clignote plus ; la version DirectX ne se ferme plus à l'ouverture de la base de données ESCorp ; une partie avec des blocs que cette version ne connaît pas ne ferme plus le jeu au chargement ; la scène ne devrait plus clignoter en arrivant sur une planète (à confirmer) ; dans l'aperçu de l'éditeur de Kubes, les faces arrière du verre et de la glace ne passent plus par-dessus et le kube tourne dans le sens de la souris ; le Conteneur ESCorp s'écrit avec « ESCorp ».
+- Non publié : une partie enregistrée dans le vaisseau-mère ne s'ouvre plus sur la carte stellaire.
 - v0.7 (de **Sekhmet**, corrigés par **Cornor923**) : le volume à 0 ne fait plus de bruit ; une cascade derrière du verre se voit.
 - v0.7 : le sol sous quatre lingots collés dans le vaisseau n'est plus noir (changement du portage).
 - v0.7 (corrigés par **Cornor923**, PR 81-86) : les hautes herbes rouges ne lâchent plus de morceaux blancs ; le tutoriel ne reste plus bloqué si l'aluminium part dans une autre recette ; la flèche verte du tutoriel s'affiche ; la fenêtre n'apparaît plus petite au lancement.

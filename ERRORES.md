@@ -16,6 +16,8 @@ Los que están **arreglados** se mueven al final. Los detalles técnicos están 
 
 ## Arreglados
 
+- Sin publicar (arreglados por **Cornor923**, PR 96-112): los iconos de los bloques translúcidos ya no se ven huecos ni oscuros y ningún icono sale dentado en una ventana pequeña; el fundido de la bomba exótica ya no parpadea; la versión DirectX ya no se cierra al abrir la Base de datos ESCorp; una partida con bloques que esta versión no conoce ya no cierra el juego al cargarla; la escena ya no debería parpadear al llegar a un planeta (por confirmar); en la vista previa del editor de kubes, las caras de detrás del vidrio y del hielo ya no salen por encima y el kube gira hacia donde va el ratón; en francés, la cantina se escribe "ESCorp".
+- Sin publicar: una partida guardada dentro de la nave nodriza ya no se abre en el mapa de estrellas.
 - v0.7 (de **Sekhmet**, arreglados por **Cornor923**): el volumen a 0 ya no suena; la cascada se ve detrás del cristal.
 - v0.7: el suelo bajo cuatro lingotes juntos en la nave ya no se ve negro (cambio del port).
 - v0.7 (arreglados por **Cornor923**, PR 81-86): la hierba roja alta ya no suelta trozos blancos; el tutorial ya no se queda atascado si el aluminio se gasta en otra receta; sale la flecha verde del tutorial; la ventana ya no se ve pequeña al arrancar.
