@@ -500,6 +500,7 @@ class GalaxyApp extends hxd.App {
 				case "load": buildLoad();
 				case "options": buildOptions();
 				case "options.general", "options.controls", "options.graphics", "options.interface": buildOptionsSection(name.substr(8));
+				case "options.keys": buildKeys();
 				case "firstlang": buildFirstLang();
 				case "pause": buildPause();
 				case "mappause": buildMapPause();
@@ -923,7 +924,7 @@ class GalaxyApp extends hxd.App {
 	function buildOptionsSection( sec : String ) : Screen {
 		var rows : Array<Ui.Widget> = [];
 		var onOff = [Lang.t("off"), Lang.t("on")];
-		var count = switch( sec ) { case "general": 2; case "graphics": 5; default: 3; };
+		var count = switch( sec ) { case "general": 2; case "controls": 4; case "graphics": 5; default: 3; };
 		var h = 170 + (count + 1) * 60;
 		var s = panelFor(860, h, Lang.t("options." + sec).toUpperCase());
 		var x = (W - 660) * 0.5;
@@ -963,6 +964,12 @@ class GalaxyApp extends hxd.App {
 			tk.index = Settings.turnKeys ? 1 : 0;
 			tk.onChange = function(i) Settings.turnKeys = i == 1;
 			rows.push(tk);
+			var keys = new Button(s, Lang.t("options.keys"), 660);
+			keys.onActivate = function() {
+				Settings.save();
+				show("options.keys");
+			};
+			rows.push(keys);
 		case "graphics":
 			sel("fullscreen", Settings.fullscreen, function(v) {
 				Settings.fullscreen = v;
@@ -996,6 +1003,26 @@ class GalaxyApp extends hxd.App {
 		};
 		back.onActivate = leave;
 		s.onBack = leave;
+		return s;
+	}
+
+	/** Opciones > Controles > Configurar las teclas (KeysScreen, anadido del port) */
+	function buildKeys() : Screen {
+		var w = 1120, h = KeysScreen.TOP + KeysScreen.VISIBLE * KeysScreen.STEP + KeysScreen.BOTTOM;
+		var s = new KeysScreen(ui);
+		var bg = new h2d.Graphics(s);
+		drawPanel(bg, Theme.text(s, Lang.t("keys.title"), 3.2, Theme.TEXT), w, h);
+		s.onReset = function() askConfirm(s, Lang.t("keys.reset.ask"), Lang.t("keys.reset.warn"), Theme.ACCENT, function() {
+			Keys.reset();
+			Settings.save();
+			s.resetDone();
+		});
+		s.build((W - KeysScreen.KeyRow.W) * 0.5 - 8, (H - h) * 0.5 + KeysScreen.TOP, function() {
+			Settings.save();
+			show("options.controls");
+			// de vuelta en el boton Configurar las teclas (el penultimo, antes de Volver)
+			current.setFocus(current.widgets.length - 2);
+		});
 		return s;
 	}
 
@@ -1983,6 +2010,11 @@ class GalaxyApp extends hxd.App {
 	    en la lista de partidas la desplaza */
 	function onWindowEvent( e : hxd.Event ) {
 		if( e.kind != EWheel ) return;
+		// la lista de teclas (Opciones, desde el menu, la pausa o el mapa)
+		if( current != null && current.active && Std.isOfType(current, KeysScreen) ) {
+			cast(current, KeysScreen).scroll(e.wheelDelta > 0 ? 1 : -1);
+			return;
+		}
 		if( state == Menu && current != null && current.active && Std.isOfType(current, LoadScreen) ) {
 			cast(current, LoadScreen).scroll(e.wheelDelta > 0 ? 1 : -1);
 			return;
@@ -2623,7 +2655,7 @@ class GalaxyApp extends hxd.App {
 					database.update(dt, pad);
 				} else if( palette != null ) {
 					palette.update(dt, pad);
-				} else if( K.isPressed(K.ESCAPE) || K.isPressed(K.I) ) closePalette();
+				} else if( K.isPressed(K.ESCAPE) || Keys.pressed("palette") ) closePalette();
 				// la tienda y los contratos salen del ordenador de a bordo: tampoco paran el juego (ver abajo, state == Paused); la
 				// barra de vida se ve bajo el panel
 				if( shop != null || contracts != null || database != null ) {
@@ -2636,7 +2668,7 @@ class GalaxyApp extends hxd.App {
 				// anadido del port: Esc o Start dejan la nave donde esta (sin pausar)
 				game.stopPiloting();
 				pausedThisFrame = true;
-			} else if( chest == null && !game.piloting && game.creative && (K.isPressed(K.I) || (pad != null && pad.isPressed(pad.config.ranalogClick))) ) {
+			} else if( chest == null && !game.piloting && game.creative && (Keys.pressed("palette") || (pad != null && pad.isPressed(pad.config.ranalogClick))) ) {
 				openPalette();
 			} else if( chest == null && (K.isPressed(K.ESCAPE) || (pad != null && pad.isPressed(pad.config.start))) ) { pause(); pausedThisFrame = true; }
 			else {
@@ -2652,7 +2684,8 @@ class GalaxyApp extends hxd.App {
 				// Process.update del original: la cantina se cierra si el jugador se ha alejado
 				if( chest != null && chest.far(game) ) closeChest();
 				game.updateCamera();
-				if( K.isPressed(K.F5) ) saveGame(true);
+				// guardar (F5), coordenadas (F), casco (H) y la ayuda: teclas de Keys
+				if( Keys.pressed("save") ) saveGame(true);
 				autosaveTimer += dt;
 				if( autosaveTimer > 120 ) {
 					autosaveTimer = 0;
@@ -2663,11 +2696,11 @@ class GalaxyApp extends hxd.App {
 				// en pausa y en los menus no se recalcula y se queda quieto
 				hudShake = p.shake <= 0 ? 0 : Math.random() * 10 * p.shake * (Std.random(2) * 2 - 1) * Theme.visibleArea().w / engine.width;
 				// F (Game.checkKeys) muestra u oculta solo la linea de coordenadas y fps; la ayuda en pantalla (anadido del port) va con su opcion
-				if( chest == null && K.isPressed(K.F) ) showFps = !showFps; // con la cantina abierta no (actionKeys = false)
+				if( chest == null && Keys.pressed("fps") ) showFps = !showFps; // con la cantina abierta no (actionKeys = false)
 				var lines = [];
 				if( showFps ) lines.push(Std.int(p.px) + ", " + Std.int(p.py) + ", " + Std.int(p.pz) + "   " + Std.int(engine.fps) + " fps");
 				// con la cantina abierta, la ayuda de las teclas del juego no (casi todas estan desactivadas; la ventana tiene la suya)
-				if( Settings.showHelp && chest == null ) lines.push(p.piloting ? Lang.t("hud.pilot") : Lang.t("hud.help") + (p.creative ? "\n" + Lang.t("hud.creative") : ""));
+				if( Settings.showHelp && chest == null ) lines.push(Keys.fill(p.piloting ? Lang.t("hud.pilot") : Lang.t("hud.help")) + (p.creative && !p.piloting ? "\n" + Keys.fill(Lang.t("hud.creative")) : ""));
 				hud.text = lines.join("\n");
 				msgText.visible = game.message != null;
 				if( game.message != null ) {
@@ -2676,7 +2709,7 @@ class GalaxyApp extends hxd.App {
 					msgText.maxWidth = 600 / msgText.scaleX;
 					msgText.setPosition(s2d.width * 0.5 - 300, s2d.height * 0.72 + hudShake);
 				}
-				if( chest == null && (K.isPressed(K.H) || (pad != null && pad.isPressed(pad.config.back))) ) toggleHelmet();
+				if( chest == null && (Keys.pressed("helmet") || (pad != null && pad.isPressed(pad.config.back))) ) toggleHelmet();
 				if( !helmet.visible && helmetOn ) helmet.visible = true;
 				updateHelmet(dt, p);
 				layoutHelmet();
@@ -2783,9 +2816,15 @@ class GalaxyApp extends hxd.App {
 		}
 
 		// F2 (Interface.hx del original): en el planeta, la nave, el hangar y la nodriza, tambien con un menu abierto; no en el mapa
-		if( game != null && (state == Playing || state == Paused) && hxd.Key.isPressed(hxd.Key.F2) ) takeScreen();
+		if( game != null && (state == Playing || state == Paused) && Keys.pressed("screenshot") && !choosingKey() ) takeScreen();
 
 		testShot();
+	}
+
+	/** Configurar las teclas espera una tecla: es para ella, no para el juego */
+	function choosingKey() : Bool {
+		var k = Std.downcast(current, KeysScreen);
+		return k != null && k.capturing;
 	}
 
 	// ---------------------------------------------------------------- fondo del menu

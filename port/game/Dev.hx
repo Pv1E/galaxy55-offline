@@ -232,6 +232,10 @@ class Dev {
 			case "shift": K.SHIFT;
 			case "ctrl": K.CTRL;
 			case "backspace": K.BACKSPACE;
+			case "delete": K.DELETE;
+			case "alt": K.ALT;
+			case "f2": K.F2;
+			case "f5": K.F5;
 			case "up": K.UP;
 			case "down": K.DOWN;
 			case "left": K.LEFT;
@@ -683,6 +687,14 @@ class Dev {
 				case "trace": trace = true;
 				case "shop": app.openShop();
 				case "screen": @:privateAccess app.show(a[1]);
+				case "keyrow":
+					// keyrow ACCION CASILLA: en Configurar las teclas (KeysScreen), el foco en esa casilla de esa accion
+					var ks = Std.downcast(@:privateAccess app.current, KeysScreen);
+					if( ks == null ) Sys.println("keyrow: la pantalla de teclas no esta abierta");
+					else for( i in 0...ks.rows.length ) if( ks.rows[i].id == a[1] ) {
+						ks.setFocus(i);
+						ks.rows[i].slot = Std.parseInt(a[2]);
+					}
 				case "kube":
 					var k = Std.downcast(@:privateAccess app.current, KubeEditor);
 					if( k == null ) Sys.println("kube: el editor de kubes no esta abierto");
@@ -1246,6 +1258,16 @@ class Dev {
 			Sys.println("inv: " + [for( s in g.inv.inv.t ) s == null ? "-" : Block.all[s.k].k + "x" + s.n].join(" ") + "  casilla=" + g.inv.blockIndex);
 		case "pos":
 			Sys.println("pos: " + g.px + "," + g.py + "," + g.pz + "  yaw=" + g.yaw + " pitch=" + g.pitch + "  suelo=" + (g.standingBlock == null ? "-" : "" + g.standingBlock.k));
+		case "keys":
+			// teclas de cada accion (Keys); ! = la usa tambien otra accion en el mismo sitio
+			Sys.println("teclas: " + [for( x in Keys.ACTIONS ) x.id + "=" + [for( k in Keys.get(x.id) ) if( k != Keys.NONE ) Keys.name(k) + (Keys.conflicts(x.id, k).length > 0 ? "!" : "")].join("/")].join(" "));
+		case "tutotext":
+			// textos del tutorial (TutoText) tal como salen, con las teclas elegidas: print tutotext alu hangar
+			for( k in a.slice(2) ) Sys.println("tuto " + k + ": " + TutoText.get(k));
+		case "keyinfo":
+			// linea de abajo de Configurar las teclas: ayuda, tecla esperada o conflicto
+			var ks = Std.downcast(@:privateAccess app.current, KeysScreen);
+			Sys.println("teclas info: " + (ks == null ? "cerrada" : @:privateAccess ks.info.text));
 		case "hud":
 			// texto de arriba a la izquierda (coordenadas y fps de la tecla F, ayuda en pantalla) en una linea
 			Sys.println("hud: " + @:privateAccess app.hud.text.split("\n").join(" | "));

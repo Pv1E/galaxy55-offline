@@ -51,7 +51,7 @@ class Palette extends h2d.Object {
 		// la ayuda no cabia en una linea (en frances se salia del panel): se parte entre sus partes y el panel crece hacia abajo
 		// lo que ocupen las lineas de mas (hacia arriba taparia los numeros de la barra del inventario)
 		var hint = Theme.text(null, "", 1.5, Theme.DIM, px + 24, py + h - 34);
-		var lines = hintLines(hint, Lang.t("palette.hint"), w - 48);
+		var lines = hintLines(hint, Keys.fill(Lang.t("palette.hint")), w - 48);
 		hint.text = lines.join("\n");
 		var more = (lines.length - 1) * (hint.font.lineHeight + hint.lineSpacing) * hint.scaleY;
 		var bg = new h2d.Graphics(this);
@@ -150,7 +150,7 @@ class Palette extends h2d.Object {
 	/** banco de pruebas (print palette) */
 	public function devInfo() return "pagina " + (page + 1) + " foco " + focus + " nombre '" + info.text + "'";
 
-	/** mando y teclado: cruceta/stick o flechas mueven, A/Intro pone el bloque, LB/RB cambian de pagina, B/R3/Esc/I cierran */
+	/** mando y teclado: cruceta/stick o flechas mueven, A/Intro pone el bloque, LB/RB cambian de pagina, B/R3/Esc/I (Keys) cierran */
 	public function update( dt : Float, pad : hxd.Pad ) {
 		var K = hxd.Key;
 		var dx = 0, dy = 0, pg = 0, pick = false, back = false;
@@ -159,7 +159,7 @@ class Palette extends h2d.Object {
 		if( K.isPressed(K.UP) ) dy = -1;
 		if( K.isPressed(K.DOWN) ) dy = 1;
 		if( K.isPressed(K.ENTER) ) pick = true;
-		if( K.isPressed(K.ESCAPE) || K.isPressed(K.I) ) back = true;
+		if( K.isPressed(K.ESCAPE) || Keys.pressed("palette") ) back = true;
 		if( pad != null ) {
 			if( navCooldown > 0 ) navCooldown -= dt;
 			if( pad.isPressed(pad.config.dpadLeft) ) dx = -1;

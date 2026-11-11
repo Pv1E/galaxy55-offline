@@ -3,7 +3,7 @@ import Common;
 /**
  * Textos del tutorial (Tutorial) en español, inglés y francés, aparte de Lang para no alargarlo.
  * %bauxite%, %cit%, %eth%, %rock%, %alu% y %hull% son nombres de bloques en el idioma elegido; %gift% las cargas de la ESCorp, %credits% sus creditos
- * y %expl% las licencias de exploracion (Licenses).
+ * y %expl% las licencias de exploracion (Licenses). %click% es "haz clic" o la tecla elegida para excavar o colocar (Keys.clickVerb).
  */
 class TutoText {
 
@@ -51,9 +51,9 @@ class TutoText {
 			"Go back to the ship: step into the light beam.",
 			"Retourne au vaisseau : place-toi dans le rayon de lumière."],
 		"alu" => [
-			"Pon 1 %bauxite% en la zona del sintetizador (en verde), apunta al sintetizador con la mano vacía y haz clic para fabricar %alu%. Recoge lo que salga.",
-			"Put 1 %bauxite% on the synthesis area (in green), then aim at the synthesizer with an empty hand and click to make %alu%. Pick up what comes out.",
-			"Pose 1 %bauxite% sur la zone de synthèse (en vert), puis vise le synthétiseur main vide et clique pour fabriquer de l'%alu%. Ramasse ce qui en sort."],
+			"Pon 1 %bauxite% en la zona del sintetizador (en verde), apunta al sintetizador con la mano vacía y %click% para fabricar %alu%. Recoge lo que salga.",
+			"Put 1 %bauxite% on the synthesis area (in green), then aim at the synthesizer with an empty hand and %click% to make %alu%. Pick up what comes out.",
+			"Pose 1 %bauxite% sur la zone de synthèse (en vert), puis vise le synthétiseur main vide et %click% pour fabriquer de l'%alu%. Ramasse ce qui en sort."],
 		"plates" => [
 			"Haz lo mismo con el %alu%: el sintetizador lo convierte en %hull%.",
 			"Do the same with the %alu%: the synthesizer turns it into %hull%.",
@@ -71,9 +71,9 @@ class TutoText {
 			"Activate the on-board computer (in green) and choose \"Modify the ship\".",
 			"Active l'ordinateur de bord (en vert) et choisis \"Modifier le vaisseau\"."],
 		"hangar" => [
-			"Apunta a la puerta de la nave y haz clic una vez para abrirla. Luego tapa los agujeros del techo (en verde) con tu %hull%: la nave tiene que ser estanca.",
-			"Aim at the ship's door and click once to open it. Then fill the holes in the roof (in green) with your %hull%: the ship must be airtight.",
-			"Vise la porte du vaisseau et clique une fois pour l'ouvrir. Bouche ensuite les trous du toit (en vert) avec ton %hull% : le vaisseau doit être étanche."],
+			"Apunta a la puerta de la nave y %click% una vez para abrirla. Luego tapa los agujeros del techo (en verde) con tu %hull%: la nave tiene que ser estanca.",
+			"Aim at the ship's door and %click% once to open it. Then fill the holes in the roof (in green) with your %hull%: the ship must be airtight.",
+			"Vise la porte du vaisseau et %click% une fois pour l'ouvrir. Bouche ensuite les trous du toit (en vert) avec ton %hull% : le vaisseau doit être étanche."],
 		"hangarearly" => [
 			"Primero necesitas %hull%: sal del hangar y usa el sintetizador.",
 			"You need %hull% first: leave the hangar and use the synthesizer.",
@@ -126,6 +126,7 @@ class TutoText {
 		var s = a == null ? key : a[Lang.cur];
 		for( k => b in NAMES ) if( s.indexOf(k) >= 0 ) s = s.split(k).join(Block.get(b).getName());
 		s = s.split("%gift%").join("" + TutoSetup.GIFT).split("%credits%").join("" + Market.START_CREDITS).split("%expl%").join("" + (Licenses.MAX - 1));
+		if( s.indexOf("%click%") >= 0 ) s = s.split("%click%").join(Keys.clickVerb());
 		return max >= 0 ? s + " (" + n + "/" + max + ")" : s;
 	}
 }
