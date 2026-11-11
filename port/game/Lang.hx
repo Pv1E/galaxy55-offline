@@ -97,6 +97,7 @@ class Lang {
 		"hangar.help" => ["HANGAR - rompe y coloca bloques para rehacer tu nave. Sal por las casillas de teletransporte para guardar.", "HANGAR - break/place blocks to rebuild your ship. Leave through the teleporter tiles to save.", "HANGAR - retire et pose des kubes pour refaire ton vaisseau. Sors par les téléporteurs pour sauvegarder."],
 		"helptext" => ["Ayuda en pantalla", "On-screen help", "Aide à l'écran"],
 		"placepreview" => ["Sombra del bloque al poner", "Shadow of the block to place", "Ombre du bloc à poser"],
+		"selectbox" => ["Marco de selección", "Selection frame", "Cadre de sélection"],
 		"waterwaves" => ["Olas del agua", "Water waves", "Vagues de l'eau"],
 		"targetname" => ["Nombre del bloque apuntado", "Name of the targeted block", "Nom du bloc visé"],
 		"vsync" => ["Sincronización vertical (VSync)", "Vertical sync (VSync)", "Synchronisation verticale (VSync)"],
