@@ -141,6 +141,14 @@ class Palette extends h2d.Object {
 		info.text = focus >= 0 && focus < pageCount() ? blocks[page * COLS * ROWS + focus].getName() : "";
 	}
 
+	/** boton abajo a la derecha, en la fila del nombre del bloque y alineado con la cuadricula (la bascula a supervivencia,
+	    ModeSwitch.button) */
+	public function addCornerButton( b : Ui.Widget ) {
+		addChild(b);
+		b.x = Std.int(x0 + COLS * CELL - b.w);
+		b.y = Std.int(info.y + (info.font.lineHeight * info.scaleY - b.h) * 0.5);
+	}
+
 	/** banco de pruebas (orden palhover): el raton entra en la casilla i de la pagina (o sale de ella) */
 	public function devHover( i : Int, over : Bool ) {
 		var it = Std.downcast(grid.getChildAt(i).getChildAt(2), h2d.Interactive);

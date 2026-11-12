@@ -87,6 +87,8 @@ typedef SaveInfo = {
 	@:optional var shipEdits : Array<Int>;
 	/** modo creativo: bloques sin limite, rotura instantanea y jetpack infinito (no existe en el original) */
 	@:optional var creative : Bool;
+	/** partida creativa jugada ahora en supervivencia (GameView.setSurvival, anadido del port); null = en creativo */
+	@:optional var survival : Null<Bool>;
 	/** aventura: se eligio jugar el tutorial al crear la partida (null en las partidas antiguas) */
 	@:optional var tutorial : Null<Bool>;
 	/** universo (mapa de estrellas); las partidas antiguas no lo tienen y se crea al abrir el mapa */
@@ -317,6 +319,7 @@ class SaveData {
 				yaw : o.yaw != null ? o.yaw : 0, pitch : o.pitch != null ? o.pitch : 0, fly : o.fly == true, life : o.life != null ? o.life : 100,
 					creative : o.creative == true, tutorial : o.tutorial == null ? null : o.tutorial == true, inv : readInv(o.inv), uni : uni, credits : o.credits != null ? Std.int(o.credits) : Market.START_CREDITS, market : readMarket(o.market), contracts : readContracts(o.contracts), chests : readChests(o.chests), shipData : o.shipData,
 					shipEdits : o.shipEdits != null ? [for( v in (o.shipEdits : Array<Dynamic>) ) Std.int(v)] : [], edits : o.edits != null ? [for( v in (o.edits : Array<Dynamic>) ) Std.int(v)] : [],
+					survival : o.creative == true && o.survival == true ? true : null,
 					tuto : readTuto(o.tuto), shipAt : readSpot(o.shipAt), comet : readComet(o.comet), kub : readKub(o.kub),
 					inMother : readMotherPos(o.inMother),
 			};

@@ -112,6 +112,18 @@ class Lang {
 		"mode" => ["Modo", "Mode", "Mode"],
 		"mode.adventure" => ["Aventura (original)", "Adventure (original)", "Aventure (original)"],
 		"mode.creative" => ["Creativo", "Creative", "Créatif"],
+		// partida creativa jugada en supervivencia (GameView.setSurvival, ModeSwitch)
+		"mode.survival" => ["Supervivencia", "Survival", "Survie"],
+		"mode.hud" => ["Modo: %m%", "Mode: %m%", "Mode : %m%"],
+		"mode.creative.survival" => ["Creativo (en supervivencia)", "Creative (in survival)", "Créatif (en survie)"],
+		"mode.toSurvival" => ["Pasar a supervivencia", "Switch to survival", "Passer en survie"],
+		"mode.toCreative" => ["Volver a creativo", "Back to creative", "Revenir en créatif"],
+		"mode.now.survival" => ["Modo supervivencia", "Survival mode", "Mode survie"],
+		"mode.now.creative" => ["Modo creativo", "Creative mode", "Mode créatif"],
+		"mode.panel.title" => ["Supervivencia", "Survival", "Survie"],
+		"mode.panel.info" => ["Partida creativa jugada en supervivencia: daño, oxígeno y bloques gastados como en la aventura.", "Creative game played in survival: damage, oxygen and used-up blocks as in adventure.", "Partie créative jouée en survie : dégâts, oxygène et blocs consommés comme en aventure."],
+		"mode.panel.hint" => ["Intro / A / Y: volver a creativo   %palette% / Esc / B: cerrar", "Enter / A / Y: back to creative   %palette% / Esc / B: close", "Entrée / A / Y : revenir en créatif   %palette% / Échap / B : fermer"],
+		"hud.survival" => ["Supervivencia (partida creativa): %palette% para volver a creativo", "Survival (creative game): %palette% to go back to creative", "Survie (partie créative) : %palette% pour revenir en créatif"],
 		"palette.title" => ["Bloques", "Blocks", "Blocs"],
 		// %move%, %palette%... = las teclas elegidas (Keys.fill)
 		"palette.hint" => ["Clic / A: poner en la casilla elegida   Rueda / LB RB: cambiar de pagina   %palette% / Esc / B: cerrar", "Click / A: put in the selected slot   Wheel / LB RB: change page   %palette% / Esc / B: close", "Clic / A : mettre dans la case choisie   Molette / LB RB : changer de page   %palette% / Échap / B : fermer"],
