@@ -815,7 +815,7 @@ class KubeEditor extends Screen {
 			previewPasses.push(new h3d.scene.Mesh(poly, material(Back, 0.9), scene));
 			var depth = material(Back, 0.25);
 			depth.mainPass.setPassName("alpha");
-			depth.mainPass.setColorMask(false, false, false, false);
+			World.keepColor(depth.mainPass);
 			depth.mainPass.layer = World.LAYER_ALPHA_DEPTH;
 			previewPasses.push(new h3d.scene.Mesh(poly, depth, scene));
 			var mat = material(Back, 0);

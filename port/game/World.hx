@@ -1787,6 +1787,17 @@ class World {
 	public static inline var LAYER_ALPHA_DEPTH = -2;
 	public static inline var LAYER_ALPHA = -1;
 
+	/**
+	 * Pasada que solo escribe la profundidad o el stencil: el color queda como estaba con la mezcla Zero, One (0 * nuevo +
+	 * 1 * lo que habia), con la mascara de color abierta. Antes era setColorMask(false, false, false, false), y en un PC con
+	 * "Mesa Intel(R) HD Graphics 4600 (HSW GT2)" (Mesa 25.2, controlador crocus) la cascada se veia negra y opaca, tambien a
+	 * traves de las hojas: sus pasadas usan los mismos shaders que el terreno y las hojas, que se veian bien, y la pasada de
+	 * profundidad con la mascara cerrada era lo unico distinto. En las demas tarjetas el resultado es el mismo.
+	 */
+	public static function keepColor( p : h3d.mat.Pass ) {
+		p.blend(Zero, One);
+	}
+
 	function emitMesh( m : MeshBuf, kind : Int, scroll = 0. ) {
 		if( m.pts.length == 0 ) return;
 		var ts = null;
@@ -1868,7 +1879,7 @@ class World {
 			depth.textureShader.killAlpha = true;
 			depth.textureShader.killAlphaThreshold = 0.25;
 			depth.mainPass.setPassName("alpha");
-			depth.mainPass.setColorMask(false, false, false, false);
+			keepColor(depth.mainPass);
 			depth.mainPass.layer = LAYER_ALPHA_DEPTH;
 			addChunkMesh(poly, depth);
 		}
@@ -1906,7 +1917,7 @@ class World {
 			// como sus pasadas normales de BTAlpha: solo la cara de delante
 			mk.mainPass.culling = Back;
 			mk.mainPass.depthWrite = false;
-			mk.mainPass.setColorMask(false, false, false, false);
+			keepColor(mk.mainPass);
 			mk.mainPass.stencil.setFunc(Always, STENCIL_REVEAL, 0xFF, STENCIL_REVEAL);
 			mk.mainPass.stencil.setOp(Keep, Keep, Replace);
 			addChunkMesh(poly, mk);
