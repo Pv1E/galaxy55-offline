@@ -1,0 +1,181 @@
+# pantalla de inventario del modo aventura (InvScreen, tecla I): arrastrar, juntar, cambiar, mitad, una a una, doble clic,
+# tirar fuera del panel, teclas 1-0 y R sobre una casilla, mando, cerrar con I y Esc. La pila del cursor sigue en su casilla
+# hasta dejarla: "print inv" (el inventario de verdad) la cuenta siempre; "print invscreen" muestra lo que se ve y el cursor.
+# Casillas 0-9 = las de la barra (1-0). En creativo, I sigue abriendo la paleta.
+wait 3
+planet
+wait 30
+contracts empty
+give BIron 40
+slot 1
+wait 2
+tap i
+wait 3
+print invscreen
+# arrastrar a una casilla vacia: el hierro pasa de 0 a 3; la casilla elegida (1) no cambia
+invscreen drag 0 3
+print inv
+# arrastrar sobre otro bloque: se intercambian las dos casillas
+give BGlass 10
+invscreen drag 0 3
+print inv
+# clic derecho: la mitad al cursor (redondeando hacia arriba); clic en una vacia: se deja alli
+invscreen click 0 r
+print invscreen
+invscreen click 5
+print inv
+# arrastrar sobre el mismo bloque: se juntan
+invscreen drag 5 0
+print inv
+# clic sin arrastrar: la pila se queda en el cursor; clic en otro bloque: se cambian y el cursor se queda con el otro
+invscreen click 0
+print invscreen
+invscreen click 3
+print invscreen
+print inv
+invscreen click 7
+print inv
+# clic derecho mantenido arrastrado por 4 5 6: una unidad en cada una; clic en su casilla: el resto se queda alli
+# (los guiones corren en un mismo fotograma: entre dos clics en la misma casilla se espera, si no es un doble clic)
+wait 40
+invscreen click 3
+invscreen rdrag 4 5 6
+print invscreen
+wait 40
+invscreen click 3
+print inv
+# doble clic: junta en la casilla las otras pilas del mismo bloque
+wait 40
+invscreen dbl 3
+print inv
+# soltar fuera del panel: la pila cae al suelo entera (un suelto con todas)
+invscreen drag 7 out
+print inv
+print loose
+# clic derecho fuera con una pila en el cursor: una unidad al suelo; el resto sigue en el cursor (y en su casilla)
+wait 40
+invscreen click 3
+invscreen click out r
+print invscreen
+print inv
+wait 40
+invscreen click 3
+# soltar en el panel (sin casilla): no se mueve
+invscreen drag 3 panel
+print inv
+# 1-0 sobre una casilla: cambiarla con esa (1 = la casilla 0)
+invscreen move 3
+tap 1
+wait 2
+print inv
+# R sobre una casilla: tirar su pila
+give BGlass 5
+invscreen move 1
+tap r
+wait 2
+print inv
+print loose
+# mando: flechas y A (coger y dejar), X (la mitad)
+invscreen nav right
+invscreen nav a
+invscreen nav right
+invscreen nav a
+print inv
+invscreen nav x
+invscreen nav right
+invscreen nav a
+print inv
+# Mayus + arrastrar: la mitad (19 -> 9 y 10); Ctrl + clic: una al cursor, clic en una vacia: se deja alli
+press shift
+invscreen drag 1 4
+release shift
+print inv
+press ctrl
+invscreen click 2
+release ctrl
+print invscreen
+invscreen click 5
+print inv
+# Mayus + clic con la pila en el cursor: deja la mitad
+invscreen click 4
+press shift
+invscreen click 6
+release shift
+print invscreen
+invscreen click 4
+print inv
+# con media pila en el cursor, sobre la casilla 6
+invscreen click 2 r
+invscreen move 6
+print invscreen
+wait 2
+shot inventaire_ouvert
+# I cierra; lo del cursor no se ha ido del inventario
+tap i
+wait 3
+print invscreen
+print inv
+# Esc tambien cierra (sin pausar)
+tap i
+wait 3
+print invscreen
+tap esc
+wait 3
+print invscreen
+print menu
+# lo tirado cae y sigue en el suelo un rato (vida 180 s)
+wait 60
+print loose
+# un suelto de verdad: la pila tirada cae entera (x10) delante del jugador y se recoge entera al pasar por encima
+filla 56 58 72 64 110 110 BRock
+filla 56 58 72 64 111 115 none
+tp 58.5 61.5 111 0 0
+wait 10
+contracts empty
+give BGlass 10
+tap i
+wait 3
+invscreen drag 0 out
+print inv
+tap i
+wait 90
+print loose
+walk 1
+wait 60
+walk 0 0
+print inv
+# R al jugar (GameView.dropCurrent, que ahora pasa por throwStack): la pila de la casilla elegida, entera
+slot 1
+tap r
+wait 3
+print inv
+print loose
+# en creativo, I abre la paleta
+creative
+tap i
+wait 3
+print palette
+print invscreen
+close
+wait 3
+# partida creativa en supervivencia: I abre esta pantalla con el boton "Volver a creativo" arriba a la derecha; el boton
+# vuelve a creativo y la cierra; en creativo, I abre la paleta con "Pasar a supervivencia"
+creativegame
+mode survival
+give BGlass 8
+tap i
+wait 3
+print mode
+print invscreen
+invscreen click 0
+wait 2
+shot inventaire_survie
+modebutton
+wait 3
+print mode
+tap i
+wait 3
+print mode
+close
+wait 3
+quit

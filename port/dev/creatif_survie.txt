@@ -82,14 +82,14 @@ print drops
 tp 70.5 58.5 57.01 0 0
 wait 100
 vitals
-# 7) en supervivencia la tecla de la paleta abre solo el panel de la bascula
+# 7) en supervivencia la tecla de la paleta abre la pantalla de inventario, con el boton de la bascula arriba a la derecha
 tp 60.5 60.5 57.01 0 0
 wait 20
 palette
 wait 5
 print mode
-print palette
-shot creatif_survie_panel
+print invscreen
+shot creatif_survie_inventaire
 close
 # 8) guardar y volver a cargar: sigue en supervivencia
 savegame
@@ -98,7 +98,7 @@ reload
 waitfor planet 6000
 wait 30
 print mode
-# 9) el boton del panel vuelve a creativo: bajo el agua el oxigeno vuelve a 100
+# 9) el boton de la pantalla de inventario vuelve a creativo: bajo el agua el oxigeno vuelve a 100
 palette
 wait 3
 modebutton

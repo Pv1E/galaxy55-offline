@@ -25,7 +25,7 @@ import Common;
  *   creative                pasar a creativo solo el modo de juego (la partida no cambia ni se guarda asi)
  *   creativegame            la partida de prueba pasa a ser creativa, como creada en creativo (se guarda asi)
  *   mode survival|creative  bascula de una partida creativa, como el boton de la paleta (GalaxyApp.switchMode); print mode
- *   modebutton              pulsar el boton de la bascula de la paleta o del panel de supervivencia abiertos
+ *   modebutton              pulsar el boton de la bascula de la paleta o de la pantalla de inventario abiertas
  *   set x y z Bloque|none   poner o quitar un bloque (como si el jugador lo hubiera hecho); setl = locales de la nave
  *   breakp x y z            romper un bloque como al jugar (suelta lo suyo); breakl = locales de la nave
  *   activate x y z          activar el bloque de esa celda (puertas, ordenadores); activatel = local; si abre un menu, el guion sigue en el
@@ -50,7 +50,9 @@ import Common;
  *   print land              aterrizaje: suelo, gravedad, aturdimiento (stun), cabeceo del casco (bobY), temblor y fundido
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
  *   mine x y z              excavar ese bloque con el excavador y decir cuanto tarda (y con que potencia)
- *   print inv|pos|zones|drops|loose|chest|msg|shake|fade|block x y z|blockl x y z|around x y z r|ids x y z r|select|ship|map [z]|palette|time|power|life|fov|sky|menu
+ *   print inv|pos|zones|drops|loose|chest|msg|shake|fade|block x y z|blockl x y z|around x y z r|ids x y z r|select|ship|map [z]|palette|invscreen|time|power|life|fov|sky|menu
+ *   invscreen ORDEN         pantalla de inventario del modo aventura (anadido del port): open, close, drag A B, click N [r],
+ *                           dbl N, rdrag A B..., down|up|move N [r], nav left|right|a|x|y; casillas 0-9, out (fuera), panel
  *   fadelog on|off          fundido de color de pantalla imagen por imagen, tal como lo pinta el HUD (opacidad y color); off
  *                           dice cuantas veces subio (destellos) y cuantas como mucho en un segundo (WCAG 2.3.1: 3)
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
@@ -116,7 +118,7 @@ class Dev {
 			+ " survival=" + g.info.survival + " bascula=" + (g.canSwitchMode() ? "si" : "no")
 			+ " licencias=" + (Licenses.unlimited(g.info) ? "sin limite" : "limitadas") + " pilotar=" + (g.pilotLicensed() ? "si" : "no")
 			+ " kubindex=" + (Kubindex.full(g.info) ? "completo" : "parcial") + " | paleta=" + (app.palette != null ? "abierta" + (palBtn ? " con boton" : "") : "cerrada")
-			+ " panel=" + (app.modePanel != null ? "abierto" : "cerrado");
+			+ " inventario=" + (app.invScreen != null ? "abierto" + (app.invScreen.corner != null ? " con boton" : "") : "cerrado");
 	}
 
 	/** vida y tiempo de juego del ultimo `print life` (para el ritmo de curacion) */
@@ -243,6 +245,69 @@ class Dev {
 		copies.sort(Reflect.compare);
 		return out.length + " partidas:\n  " + out.join("\n  ") + "\ncopias en " + UnknownBlocks.BACKUPS + ": "
 			+ (copies.length == 0 ? "ninguna" : [for( c in copies ) c + (StringTools.endsWith(c, ".json") ? " md5=" + md5(dir + "/" + c) : "")].join(", "));
+	}
+
+	/**
+	 * invscreen ORDEN: pantalla de inventario del modo aventura (InvScreen) con eventos del raton de verdad, como la orden mouse.
+	 * Las casillas son 0-9; "out" = un punto fuera del panel, "panel" = dentro del panel sin casilla. r = boton derecho.
+	 *   open | close | move N | down N [r] | up N [r] | click N [r] | drag A B (apretar en A, pasar a B, soltar) | dbl N (doble clic)
+	 *   rdrag A B... (clic derecho apretado en A y arrastrado por las demas) | nav left|right|a|x|y (flechas, A, X, Y del mando)
+	 */
+	function invScreen( app : GalaxyApp, a : Array<String> ) {
+		if( a[1] == "open" ) {
+			app.openInventory();
+			if( app.invScreen == null ) Sys.println("invscreen: no se ha abierto");
+			return;
+		}
+		var s = app.invScreen;
+		if( s == null ) {
+			Sys.println("invscreen: la pantalla de inventario no esta abierta");
+			return;
+		}
+		inline function pt( n : String ) return s.devPoint(n == "out" ? -1 : n == "panel" ? -2 : Std.parseInt(n));
+		var right = a[a.length - 1] == "r" ? 1 : 0;
+		switch( a[1] ) {
+		case "close": @:privateAccess app.closeInventory();
+		case "move": mouseAt(pt(a[2]), EMove);
+		case "down":
+			mouseAt(pt(a[2]), EMove);
+			mouseAt(pt(a[2]), EPush, right);
+		case "up":
+			mouseAt(pt(a[2]), EMove);
+			mouseAt(pt(a[2]), ERelease, right);
+		case "click", "dbl":
+			for( i in 0...(a[1] == "dbl" ? 2 : 1) ) {
+				mouseAt(pt(a[2]), EMove);
+				mouseAt(pt(a[2]), EPush, right);
+				mouseAt(pt(a[2]), ERelease, right);
+			}
+		case "drag":
+			mouseAt(pt(a[2]), EMove);
+			mouseAt(pt(a[2]), EPush);
+			mouseAt(pt(a[3]), EMove);
+			mouseAt(pt(a[3]), ERelease);
+		case "rdrag":
+			mouseAt(pt(a[2]), EMove);
+			mouseAt(pt(a[2]), EPush, 1);
+			for( n in a.slice(3) ) mouseAt(pt(n), EMove);
+			mouseAt(pt(a[a.length - 1]), ERelease, 1);
+		case "nav":
+			var k = a[2];
+			s.nav(k == "left" ? -1 : k == "right" ? 1 : 0, k == "a", k == "x", k == "y");
+		default: Sys.println("invscreen: orden desconocida " + a[1]);
+		}
+	}
+
+	/** evento del raton de verdad en el punto p de la zona W x H (como la orden mouse) */
+	function mouseAt( p : h2d.col.Point, kind : hxd.Event.EventKind, button = 0 ) {
+		var area = Ui.Theme.visibleArea(), eng = h3d.Engine.getCurrent();
+		var mx = (p.x - area.x) * eng.width / area.w, my = (p.y - area.y) * eng.height / area.h;
+		var win = hxd.Window.getInstance();
+		@:privateAccess { win.curMouseX = Std.int(mx); win.curMouseY = Std.int(my); }
+		mousePos = [mx, my];
+		var e = new hxd.Event(kind, mx, my);
+		e.button = button;
+		win.event(e);
 	}
 
 	/** codigo de una tecla de press, release y tap: un nombre o una letra */
@@ -538,6 +603,8 @@ class Dev {
 				case "palhover":
 					// palhover N [out]: el raton entra en la casilla N de la pagina de la paleta (out: sale de ella)
 					if( app.palette != null ) app.palette.devHover(Std.parseInt(a[1]), a[2] != "out");
+				case "invscreen":
+					invScreen(app, a);
 				case "row":
 					// row X1 X2 Y Z: nivel del agua en una fila (m = mar, p = puesta, 1..4 = pasos, . = sin agua)
 					var y = Std.parseInt(a[3]), z = Std.parseInt(a[4]), out = [];
@@ -741,9 +808,10 @@ class Dev {
 					// cover NOMBRE: lo abierto tapa toda la ventana? (y guarda port/out/cover_NOMBRE.png con solo eso dibujado)
 					Sys.println("cover " + (a.length > 1 ? a[1] + " " : "") + app.devCover(a[1]));
 				case "close":
-					// close: cierra la tienda, el cofre, la paleta, el mapa de estrellas o el menu abierto (como Esc)
+					// close: cierra la tienda, el cofre, el inventario, la paleta, el mapa de estrellas o el menu abierto (como Esc)
 					@:privateAccess {
 						app.closeChest();
+						app.closeInventory();
 						app.closeShop();
 						app.closeContracts();
 						app.closePalette();
@@ -771,7 +839,7 @@ class Dev {
 					if( g.creative == (a[1] == "survival") ) app.switchMode();
 					Sys.println("modo: " + modeInfo(app, g));
 				case "modebutton":
-					if( app.modePanel != null ) app.modePanel.devPress();
+					if( app.invScreen != null && app.invScreen.corner != null ) cast(app.invScreen.corner, Ui.Button).activate();
 					else if( app.palette != null )
 						for( c in app.palette )
 							if( Std.isOfType(c, Ui.Button) ) {
@@ -1284,6 +1352,8 @@ class Dev {
 			Sys.println("paleta: " + (app.palette == null ? "cerrada" : app.palette.devNames()));
 		case "palette":
 			Sys.println("paleta: " + (app.palette == null ? "cerrada" : app.palette.devInfo()));
+		case "invscreen":
+			Sys.println("inventario: " + (app.invScreen == null ? "cerrado" : app.invScreen.devInfo()));
 		case "time":
 			Sys.println("tiempo: " + Std.int(g.playSeconds));
 		case "life":
