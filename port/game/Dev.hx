@@ -22,6 +22,10 @@ import Common;
  *   give Bloque [n]         meter n bloques (50) en el inventario
  *   drop x y z Bloque [vida] soltar un bloque quieto (vida en segundos, 180)
  *   hand Bloque             poner ese bloque en la casilla elegida (como la paleta creativa)
+ *   creative                pasar a creativo solo el modo de juego (la partida no cambia ni se guarda asi)
+ *   creativegame            la partida de prueba pasa a ser creativa, como creada en creativo (se guarda asi)
+ *   mode survival|creative  bascula de una partida creativa, como el boton de la paleta (GalaxyApp.switchMode); print mode
+ *   modebutton              pulsar el boton de la bascula de la paleta o del panel de supervivencia abiertos
  *   set x y z Bloque|none   poner o quitar un bloque (como si el jugador lo hubiera hecho); setl = locales de la nave
  *   breakp x y z            romper un bloque como al jugar (suelta lo suyo); breakl = locales de la nave
  *   activate x y z          activar el bloque de esa celda (puertas, ordenadores); activatel = local; si abre un menu, el guion sigue en el
@@ -58,7 +62,8 @@ import Common;
  *                           queda en curso), deliver a J al contrato en curso J; contracts abandon J lo abandona (con el panel
  *                           abierto, como su boton: pide confirmacion, button 1 = Si); contracts old los deja como en una
  *                           partida antigua (sin abandonados ni en curso); contracts empty vacia el inventario; print contracts;
- *                           contracts load RUTA lee otro contracts.json
+ *                           contracts load RUTA lee otro contracts.json. Contrato especial: contracts fill s [n] da la tierra roja
+ *                           que falta (o n), deliver s se la da; contracts full llena las casillas vacias (inventario lleno)
  *   kub [close|tab N|pick Bloque|page D|nav dx dy]   Base de datos ESCorp (anadido del port): abrirla, cerrarla, pestana, ficha,
  *                           categoria, flechas; kub forget|visit|see Bloque|got Bloque|break Bloque|load RUTA olvidan todo,
  *                           exploran el planeta, identifican, recuperan o rompen un bloque como al jugar, o leen otro kubindex.json;
@@ -87,10 +92,13 @@ import Common;
  *   print unknown           bloques desconocidos de cada partida (UnknownBlocks), md5 de su .json y copias de saves/backups
  *   tap TECLA               pulsar y soltar una tecla: up down left right enter esc tab space pgup pgdown numpad+ numpad- o una letra
  *   type TEXTO              escribir el resto de la linea en el campo de texto en el que se esta escribiendo
+ *   print palnames          bloques que deja la busqueda de la paleta creativa (Tab o clic en ella para escribir, y type)
  *   wheel N                 rueda del raton (N > 0 = hacia abajo), donde lo dejo la ultima orden mouse
  *   mouse X Y [click|down|up] llevar el raton a ese punto de la zona 1280x720 (y hacer clic, o solo apretar o soltar: arrastrar)
  *   print menu|saves        pantalla de menu abierta y su foco / partidas guardadas (waitfor menu: el menu y su fondo listos)
  *   print mouse             donde cree el juego que esta el puntero (pixeles de la ventana, zona 1280x720) y el cursor del sistema
+ *   print helmet            casco (filtro de la visera): OK si tiene la escala de la ventana actual y tapa sus cuatro bordes,
+ *                           DESAJUSTADO si se quedo con el tamano de una ventana anterior (port/dev/ordinateur_resize.txt)
  *   kube ORDEN              editor de kubes abierto (screen kubes): load BLOQUE (copiar un bloque del juego), shape ID, face NOMBRE,
  *                           paint x0 y0 x1 y1 AARRGGBB (rectangulo de la cara, 0 = borrar), name TEXTO, tab 0|1, file N (cargar el
  *                           .kube N de Mis kubes), save, tile N (mosaico N x N x N de la vista previa), zoom Z (el paso de zoom
@@ -101,6 +109,17 @@ class Dev {
 
 	static var shoreX = 0;
 	static var shoreY = 0;
+	/** orden mode / print mode: modo en curso, lo que es de la partida y lo que esta abierto */
+	static function modeInfo( app : GalaxyApp, g : GameView ) : String {
+		var palBtn = false;
+		if( app.palette != null ) for( c in app.palette ) if( Std.isOfType(c, Ui.Button) ) palBtn = true;
+		return (g.creative ? "creativo" : "supervivencia") + (g.hangar != null ? " (hangar)" : g.info.mothership == true ? " (nodriza)" : "") + " | partida " + (g.info.creative == true ? "creativa" : "de aventura")
+			+ " survival=" + g.info.survival + " bascula=" + (g.canSwitchMode() ? "si" : "no")
+			+ " licencias=" + (Licenses.unlimited(g.info) ? "sin limite" : "limitadas") + " pilotar=" + (g.pilotLicensed() ? "si" : "no")
+			+ " kubindex=" + (Kubindex.full(g.info) ? "completo" : "parcial") + " | paleta=" + (app.palette != null ? "abierta" + (palBtn ? " con boton" : "") : "cerrada")
+			+ " panel=" + (app.modePanel != null ? "abierto" : "cerrado");
+	}
+
 	/** vida y tiempo de juego del ultimo `print life` (para el ritmo de curacion) */
 	static var lifeV = 0.;
 	static var lifeT = -1.;
@@ -811,6 +830,21 @@ class Dev {
 						win.event(e);
 					}
 				case "creative": @:privateAccess g.creative = true;
+				case "creativegame":
+					g.info.creative = true;
+					@:privateAccess g.creative = true;
+				case "mode":
+					// mode survival|creative: si no esta ya en ese modo, la bascula como desde el boton (en aventura no hace nada)
+					if( g.creative == (a[1] == "survival") ) app.switchMode();
+					Sys.println("modo: " + modeInfo(app, g));
+				case "modebutton":
+					if( app.modePanel != null ) app.modePanel.devPress();
+					else if( app.palette != null )
+						for( c in app.palette )
+							if( Std.isOfType(c, Ui.Button) ) {
+								cast(c, Ui.Button).activate();
+								break;
+							}
 				case "fadelog":
 					if( a[1] == "on" ) fadeLog = { frames : 0, t0 : g.playSeconds, a : 0., col : 0, low : 0., riseCol : 0, rises : [], steps : [], max : 0. };
 					else if( fadeLog != null ) {
@@ -896,8 +930,12 @@ class Dev {
 						var s = Std.parseInt(a[2]);
 						Contracts.devSlot = s < 0 ? null : s;
 					case "fill":
-						// fill i [n]: bloques del contrato i del tablero; fill a J [n]: los que faltan al contrato en curso J
-						if( a[2] == "a" ) {
+						// fill i [n]: bloques del contrato i del tablero; fill a J [n]: los que faltan al contrato en curso J; fill s [n]:
+						// tierra roja, la que falta al contrato especial (o n)
+						if( a[2] == "s" ) {
+							g.inv.addBlocks(Contracts.specialBlock(), a[3] != null ? Std.parseInt(a[3]) : Contracts.SPECIAL_N - Contracts.specialGiven(g.info));
+							if( app.contracts != null ) @:privateAccess app.contracts.refresh();
+						} else if( a[2] == "a" ) {
 							var ac = Contracts.active(g.info)[Std.parseInt(a[3])];
 							g.inv.addBlocks(Contracts.blockOf(ac), a[4] != null ? Std.parseInt(a[4]) : ac.n - ac.given);
 						} else {
@@ -912,6 +950,11 @@ class Dev {
 						// empty: vacia las casillas del inventario (la partida de prueba empieza casi llena), para probar los dones parciales
 						for( k in 0...g.inv.inv.t.length ) g.inv.inv.t[k] = null;
 						g.inv.display();
+					case "full":
+						// full: llena las casillas vacias del inventario con una roca cada una (contrato especial con el inventario lleno)
+						for( k in 0...g.inv.inv.t.length ) if( g.inv.inv.t[k] == null ) g.inv.inv.t[k] = { k : Block.get(BRock).index, n : 1 };
+						g.inv.display();
+						if( app.contracts != null ) @:privateAccess app.contracts.refresh();
 					case "old":
 						// old: los contratos como en una partida de antes de los contratos en curso (sin abandonados ni en curso), para
 						// probar que se leen tras savegame y reload
@@ -980,7 +1023,11 @@ class Dev {
 					// deliver i: da lo que llevas a la linea i del tablero; deliver a J: al contrato en curso J (con el panel abierto, como
 					// su boton)
 					var ok : Bool, what : String;
-					if( a[1] == "a" ) {
+					if( a[1] == "s" ) {
+						// deliver s: al contrato especial
+						what = "especial";
+						ok = app.contracts != null ? app.contracts.giveSpecial() : Contracts.giveSpecial(g.info, g.inv);
+					} else if( a[1] == "a" ) {
 						var ac = Contracts.active(g.info)[Std.parseInt(a[2])];
 						what = "en curso " + a[2];
 						ok = ac != null && (app.contracts != null ? app.contracts.give(ac) : Contracts.give(g.info, g.inv, ac));
@@ -1254,7 +1301,10 @@ class Dev {
 					+ (Contracts.isAbandoned(g.info, i) ? " ABANDONADO" : "") + (Contracts.isActive(g.info, i) ? " EN CURSO" : offered.indexOf(i) < 0 ? " OCULTO" : "");
 			}].join(" | ") + " | en curso: " + [for( ac in Contracts.active(g.info) ) ac.block + " " + ac.given + "/" + ac.n + " +" + ac.reward + " (periodo " + ac.slot + " linea " + ac.index + ")"].join(", ")
 				+ " | quedan " + Std.int(Contracts.remaining()) + " s creditos=" + g.info.credits + " panel=" + (app.contracts == null ? "no" : "si foco " + app.contracts.devFocus() + (app.contracts.paused ? " (confirmando)" : ""))
-				+ " boton=" + (@:privateAccess app.computerContracts == null ? "-" : "" + @:privateAccess app.computerContracts.enabled));
+				+ " boton=" + (@:privateAccess app.computerContracts == null ? "-" : "" + @:privateAccess app.computerContracts.enabled)
+				+ " | especial " + Contracts.specialGiven(g.info) + "/" + Contracts.SPECIAL_N + (Contracts.specialDone(g.info) ? " CUMPLIDO" : "")
+				+ " llevas " + Contracts.have(g.inv, Contracts.specialBlock()) + " conteneurs " + Contracts.have(g.inv, Contracts.specialReward())
+				+ " tuto=" + (g.info.tuto == null ? "-" : "" + g.info.tuto.step) + " avisos=" + app.kubNotify.devInfo());
 		case "kub":
 			// Base de datos ESCorp: localizados, recuperados, nuevos, planetas y cometas explorados, recetas fabricadas, estadisticas
 			// y, con el panel abierto, la pestana
@@ -1293,6 +1343,9 @@ class Dev {
 		case "menu":
 			// botones del menu abierto (etiqueta y y), de arriba abajo
 			Sys.println("menu: " + (@:privateAccess app.current == null ? "cerrado" : [for( wd in @:privateAccess app.current.widgets ) @:privateAccess wd.label.text + "@" + Std.int(wd.y)].join(" | ")));
+		case "palnames":
+			// nombres de los bloques que deja la busqueda de la paleta
+			Sys.println("paleta: " + (app.palette == null ? "cerrada" : app.palette.devNames()));
 		case "palette":
 			Sys.println("paleta: " + (app.palette == null ? "cerrada" : app.palette.devInfo()));
 		case "invscreen":
@@ -1370,6 +1423,7 @@ class Dev {
 				if( b != null ) out.push(b.k + "@" + (c.x + dx) + "," + (c.y + dy) + "," + (c.z + dz));
 			}
 			Sys.println("celdas de la zona: " + out.join("  ") + "   texto: " + c.curText);
+		case "mode": Sys.println("modo: " + modeInfo(app, g));
 		case "hit": Sys.println(g.debugPick());
 		case "power":
 			// potencia de excavacion (turbo minero) y el icono "power" del casco
@@ -1393,6 +1447,25 @@ class Dev {
 			inline function r( v : Float ) return Math.round(v * 1000) / 1000;
 			var hudPx = @:privateAccess app.hudShake * h3d.Engine.getCurrent().width / Ui.Theme.visibleArea().w;
 			Sys.println("temblor " + r(g.shake) + " camara " + r(g.shakeZ) + " hud " + r(hudPx) + " px  t=" + r(g.playSeconds));
+		case "helmet":
+			// casco (filtro de la visera): OK si tiene la escala de la ventana actual (ancho/974, alto/624, como layoutHelmet) y
+			// tapa sus cuatro bordes; DESAJUSTADO si se quedo con el tamano de una ventana anterior (bandas sin filtro a los lados)
+			var h = @:privateAccess app.helmet, va = Ui.Theme.visibleArea();
+			if( !h.visible ) {
+				Sys.println("casco oculto");
+				return;
+			}
+			var e = h3d.Engine.getCurrent(), px = e.width / va.w;
+			var x0 = h.x, x1 = h.x + h.tile.width * h.scaleX, y0 = h.y, y1 = h.y + h.tile.height * h.scaleY;
+			var bad = [];
+			if( Math.abs(h.scaleX / (va.w / 974) - 1) > 0.001 || Math.abs(h.scaleY / (va.h / 624) - 1) > 0.001 ) bad.push("escala");
+			if( x0 > va.x ) bad.push("izquierda");
+			if( x1 < va.x + va.w ) bad.push("derecha");
+			if( y0 > va.y ) bad.push("arriba");
+			if( y1 < va.y + va.h ) bad.push("abajo");
+			inline function p( v : Float ) return Math.round(v * px);
+			Sys.println("casco " + e.width + "x" + e.height + " " + (bad.length == 0 ? "OK" : "DESAJUSTADO: " + bad.join(", "))
+				+ " (de " + p(x0 - va.x) + "," + p(y0 - va.y) + " a " + p(x1 - va.x) + "," + p(y1 - va.y) + " px)");
 		case "cam":
 			// altura de la camara y distancia hasta el primer bloque que choca encima (negativa = la camara esta dentro de el)
 			var cz = @:privateAccess g.s3d.camera.pos.z, top = Math.floor(cz);

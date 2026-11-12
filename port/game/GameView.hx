@@ -63,7 +63,8 @@ class GameView {
 	/** Hero.miningPower: 3 cerca de un turbo minero (WorldProcess.updateTrack), si no 1 */
 	public var miningPower(get, never) : Float;
 	inline function get_miningPower() return process.miningPower;
-	/** modo creativo (anadido nuestro): bloques sin limite, rotura instantanea y jetpack infinito */
+	/** modo creativo (anadido nuestro): bloques sin limite, rotura instantanea y jetpack infinito. Es el modo en curso: una
+	    partida creada en creativo puede pasar a supervivencia y volver (setSurvival); lo de la partida va con info.creative */
 	public var creative(default, null) = false;
 	/** --editnodriza: la nave nodriza se puede editar (en creativo) y al salir se guarda en mothership.bin */
 	public static var editMother = Sys.args().indexOf("--editnodriza") >= 0;
@@ -142,7 +143,7 @@ class GameView {
 		playSeconds = info.playSeconds;
 		// Game.init: con la vida a 0 se vuelve a la nave (hero.hit(0)); aqui directamente con la vida llena
 		life = info.life != null && info.life > 0 ? info.life : 100;
-		creative = info.creative == true || Sys.args().indexOf("--creative") >= 0 || (editMother && info.mothership == true);
+		creative = (info.creative == true && info.survival != true) || Sys.args().indexOf("--creative") >= 0 || (editMother && info.mothership == true);
 		inv = new Inv(info.inv != null ? Inv.copy(info.inv) : Inv.defaults());
 		// solo pruebas: --inv=BIron,BGlass,... llena el inventario con esos bloques
 		for( a in Sys.args() )
@@ -644,6 +645,30 @@ class GameView {
 
 	var fallBob = 0.;
 
+	// ---------------------------------------------------------------- modo creativo / supervivencia (anadido del port)
+
+	/** solo una partida creada en creativo pasa a supervivencia y vuelve; una de aventura nunca */
+	public function canSwitchMode() : Bool return info.creative == true;
+
+	/**
+	 * Partida creativa: pasa a supervivencia (on) o vuelve a creativo. Sigue al modo lo que mira `creative`: dano, oxigeno,
+	 * jetpack, rotura y botin, bloques gastados al ponerlos, paleta. La partida sigue siendo creativa (info.creative): licencias,
+	 * Base de datos ESCorp completa. Mismo inventario en los dos modos; al pasar a supervivencia, vida y oxigeno llenos. El modo
+	 * queda en info.survival y se guarda con la partida. Devuelve false si no ha cambiado nada.
+	 */
+	public function setSurvival( on : Bool ) : Bool {
+		if( !canSwitchMode() || creative != on ) return false;
+		creative = !on;
+		info.survival = on ? true : null;
+		if( on ) {
+			life = 100;
+			oxygen = 100;
+			jetpack = 1;
+		}
+		laserCharge = null;
+		return true;
+	}
+
 	// ---------------------------------------------------------------- vida (Hero.hit, Hero.heal, Hero.update)
 
 	/** Hero.hit: quita vida y aturde; a 0, fundido rojo y vuelta a la nave con la vida y el oxigeno llenos (Game.returnToShip, modo local) */
@@ -1104,9 +1129,10 @@ class GameView {
 			&& life > 0 && pz >= World.SHIP_Z;
 	}
 
-	/** licencias (Licenses, anadido del port): en aventura solo se pilota sobre el planeta principal; en creativo, sobre todos */
+	/** licencias (Licenses, anadido del port): en aventura solo se pilota sobre el planeta principal; en creativo, sobre todos
+	    (tambien en supervivencia en una partida creativa: las licencias son de la partida) */
 	public function pilotLicensed() : Bool {
-		return creative || info.uni == null || Licenses.isMain(info.uni, info.uni.planetId);
+		return creative || info.creative == true || info.uni == null || Licenses.isMain(info.uni, info.uni.planetId);
 	}
 
 	public function startPiloting() {

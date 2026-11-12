@@ -1,0 +1,107 @@
+# contrato especial (anadido del port): 16 de tierra roja por un Conteneur ESCorp, una vez por partida y sin plazo, debajo del
+# tablero (rotulo, dorado, etiqueta Especial). Sin tierra: rechazado; con 10: "Donner 10" y queda 10 / 16; con el inventario
+# lleno el ultimo don se rechaza ("Inventaire plein", el conteneur no cabe); con sitio se entrega con el teclado (abajo, arriba
+# = la linea especial; Intro), se cobra el conteneur sin creditos y la linea queda "Livre" hasta cerrar el panel. El aviso de
+# arriba a la derecha espera a que se cierre el panel (avisos=... esperan 1) y sale al volver al juego (captura special_aviso).
+# Se guarda y se recarga: sigue cumplido y el panel ya no lo ofrece. Despues, el tutorial: el boton Contratos sigue
+# desactivado en el paso de la Base de datos (13), se activa al abrirla (paso 14, texto "contracts") y abrir los contratos
+# pasa al paso del ordenador (9). Con -Extra "--lang=fr". Unos 3 minutos: -Timeout 300
+wait 3
+contracts empty
+contracts slot 1000000
+ship
+wait 10
+print credits
+print contracts
+# sin tierra roja: rechazado
+deliver s
+contracts fill s 10
+contracts
+wait 5
+shot special_dar
+deliver s
+wait 2
+print contracts
+shot special_parcial
+# 7 de tierra (6 se darian y 1 se queda en su casilla) y el resto de casillas llenas: el conteneur no cabe
+contracts fill s 7
+contracts full
+wait 2
+print contracts
+shot special_lleno
+deliver s
+print contracts
+# con sitio: abajo elige la linea 0, arriba pasa a la ultima (la especial); Intro entrega
+contracts empty
+contracts fill s 6
+wait 2
+tap down
+wait 2
+tap up
+wait 2
+print contracts
+shot special_livrer
+tap enter
+wait 3
+print contracts
+print credits
+shot special_livre
+# ya cumplido: rechazado aunque haya tierra
+contracts fill s 16
+deliver s
+contracts close
+wait 1
+print contracts
+wait 20
+shot special_aviso
+print contracts
+savegame
+wait 3
+reload
+waitfor ready
+wait 10
+print contracts
+contracts
+wait 5
+shot special_recarga
+contracts close
+# tutorial: paso de los contratos
+tuto new 4242
+waitfor map
+expplanet 0
+waitfor window
+expbutton
+waitfor planet
+wait 30
+ship
+wait 10
+tuto step 13
+computer
+wait 5
+print contracts
+close
+wait 3
+contracts
+wait 3
+print contracts
+kub
+wait 5
+kub close
+wait 3
+print tuto
+computer
+wait 5
+print contracts
+shot special_tuto_menu
+close
+wait 5
+print tuto
+shot special_tuto_texto
+contracts
+wait 5
+print contracts
+shot special_tuto_panel
+contracts close
+wait 3
+print tuto
+quit

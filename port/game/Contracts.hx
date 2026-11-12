@@ -34,6 +34,12 @@ typedef ContractsInfo = {
 	@:optional var active : Array<ActiveContract>;
 }
 
+/** Contrato especial de la partida (SaveInfo.special, anadido del port): bloques ya dados y si ya se cobro. */
+typedef SpecialInfo = {
+	var given : Int;
+	var done : Bool;
+}
+
 /** Cantidad pedida de un bloque, cargas que cuesta conseguir cada uno (amarillas, azules) y recompensa fija (null = calculada). */
 typedef ContractSpec = {
 	var k : BlockKind;
@@ -70,6 +76,7 @@ typedef ContractsConfig = {
  *   se pierden). La recompensa se cobra entera al dar el ultimo bloque.
  * - Cada contrato en curso ocupa una linea del tablero: se ofrecen tantos contratos nuevos como lineas quedan libres.
  * - Una linea entregada o abandonada queda bloqueada hasta el cambio de tablero.
+ * - Aparte del tablero, el contrato especial: una vez por partida y sin plazo (ver mas abajo).
  */
 class Contracts {
 
@@ -250,5 +257,60 @@ class Contracts {
 
 	static function pay( info : SaveInfo, n : Int ) {
 		info.credits = (info.credits == null ? Market.START_CREDITS : info.credits) + n;
+	}
+
+	// ---------------------------------------------------------------- contrato especial
+
+	/*
+	 * Contrato especial (anadido del port): SPECIAL_N bloques de tierra roja a cambio de un Conteneur ESCorp, sin creditos. Va
+	 * aparte del tablero: no cambia con el periodo, no caduca y se cumple una sola vez por partida (SaveInfo.special). Se le dan
+	 * bloques poco a poco, como a un contrato en curso, pero no se abandona. Sale en aventura y en creativo; en el tutorial,
+	 * desde su paso (Tutorial.contractsAllowed). Con el ultimo bloque, si el conteneur no cabe en el inventario no se da nada.
+	 */
+
+	public static inline var SPECIAL_N = 16;
+	/** se ha cobrado el contrato especial (GalaxyApp: aviso arriba a la derecha, specialNews) */
+	public static var onSpecial : Void -> Void;
+
+	public static function specialBlock() : Block return Block.get(BSoil);
+
+	public static function specialReward() : Block return Block.get(BChest);
+
+	public static function specialGiven( info : SaveInfo ) : Int return info.special == null ? 0 : info.special.given;
+
+	public static function specialDone( info : SaveInfo ) : Bool return info.special != null && info.special.done;
+
+	/** bloques que se darian ahora al contrato especial (0 = cumplido o sin tierra roja) */
+	public static function canGiveSpecial( info : SaveInfo, inv : Inv ) : Int {
+		if( specialDone(info) ) return 0;
+		return Std.int(Math.min(have(inv, specialBlock()), SPECIAL_N - specialGiven(info)));
+	}
+
+	/** el conteneur cabe en el inventario despues de dar n bloques de tierra (se prueba en una copia) */
+	public static function specialRoom( inv : Inv, n : Int ) : Bool {
+		var t = new Inventory(Inv.copy(inv.inv));
+		return t.useBlocks(specialBlock(), n) && t.canAddBlock(specialReward());
+	}
+
+	/** da lo que llevas (hasta lo que falta) al contrato especial; con el ultimo bloque se cobra el conteneur */
+	public static function giveSpecial( info : SaveInfo, inv : Inv ) : Bool {
+		var n = canGiveSpecial(info, inv);
+		if( n <= 0 ) return false;
+		var last = specialGiven(info) + n >= SPECIAL_N;
+		if( last && !specialRoom(inv, n) ) return false;
+		if( !inv.useBlocks(specialBlock(), n) ) return false;
+		if( info.special == null ) info.special = { given : 0, done : false };
+		info.special.given += n;
+		if( last ) {
+			info.special.done = true;
+			inv.addBlock(specialReward());
+			if( onSpecial != null ) onSpecial();
+		}
+		return true;
+	}
+
+	/** aviso del conteneur cobrado: para que sirve y como se fabrica */
+	public static function specialNews() : KubNotify.KubNews {
+		return { title : Lang.t("contracts.special.got"), name : specialReward().getName(), block : specialReward(), text : Lang.t("contracts.special.info"), time : 12 };
 	}
 }

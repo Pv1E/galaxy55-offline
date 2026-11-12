@@ -2,7 +2,7 @@ import Common;
 
 /**
  * Textos del tutorial (Tutorial) en español, inglés y francés, aparte de Lang para no alargarlo.
- * %bauxite%, %cit%, %eth%, %rock%, %alu% y %hull% son nombres de bloques en el idioma elegido; %gift% las cargas de la ESCorp, %credits% sus creditos
+ * %bauxite%, %cit%, %eth%, %rock%, %alu%, %hull% y %chest% son nombres de bloques en el idioma elegido; %gift% las cargas de la ESCorp, %credits% sus creditos
  * y %expl% las licencias de exploracion (Licenses). %click% es "haz clic" o la tecla elegida para excavar o colocar (Keys.clickVerb).
  */
 class TutoText {
@@ -66,6 +66,10 @@ class TutoText {
 			"Activa el ordenador de a bordo (en verde) y abre la \"Base de datos ESCorp\": allí quedan los kubes que has identificado con el láser y los que has recuperado, los planetas explorados y las recetas descubiertas.",
 			"Activate the on-board computer (in green) and open the \"ESCorp database\": it keeps the kubes you have identified with your laser and the ones you have collected, the planets you have explored and the recipes you have discovered.",
 			"Active l'ordinateur de bord (en vert) et ouvre la \"Base de données ESCorp\" : elle garde les kubes identifiés avec ton laser et ceux que tu as récupérés, les planètes explorées et les recettes découvertes."],
+		"contracts" => [
+			"Activa el ordenador de a bordo (en verde) y abre los \"Contratos\": son encargos de la ESCorp que te cambian bloques por créditos, y pagan mucho más que vendérselos al robot comerciante. El contrato especial no caduca y te da una %chest%.",
+			"Activate the on-board computer (in green) and open \"Contracts\": these are ESCorp missions that trade your blocks for credits, and they pay much more than selling them to the merchant robot. The special contract never expires and gives you an %chest%.",
+			"Active l'ordinateur de bord (en vert) et ouvre les \"Contrats\" : ce sont des missions de l'ESCorp qui échangent tes blocs contre des crédits, bien plus rentables que de les vendre au robot marchand. Le contrat spécial n'expire pas et te donne un %chest%."],
 		"computer" => [
 			"Activa el ordenador de a bordo (en verde) y elige \"Modificar la nave\".",
 			"Activate the on-board computer (in green) and choose \"Modify the ship\".",
@@ -117,7 +121,7 @@ class TutoText {
 
 	static var NAMES = [
 		"%bauxite%" => BMinAluminium, "%cit%" => BYellowCrystalLight, "%eth%" => BBlueCrystalLight,
-		"%rock%" => BRock, "%alu%" => BAluminium, "%hull%" => BShipHull,
+		"%rock%" => BRock, "%alu%" => BAluminium, "%hull%" => BShipHull, "%chest%" => BChest,
 	];
 
 	/** texto en el idioma elegido; con max >= 0 se le anade el recuento (n/max) */

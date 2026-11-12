@@ -64,6 +64,17 @@ class Lang {
 		"contracts.abandon.ask" => ["¿Abandonar el contrato de %name%?", "Abandon the %name% contract?", "Abandonner le contrat de %name% ?"],
 		"contracts.abandon.warn" => ["Los %n% bloques ya dados se pierden y no cobras nada.", "The %n% blocks already given are lost and you get nothing.", "Les %n% blocs déjà donnés sont perdus et tu ne touches rien."],
 		"contracts.full" => ["Tablero lleno: termina o abandona un contrato en curso.", "Board full: finish or abandon a contract in progress.", "Tableau plein : termine ou abandonne un contrat en cours."],
+		// contrato especial (anadido del port, Contracts): rotulo encima de su linea, recompensa (%name% = el conteneur), boton con el
+		// inventario lleno y aviso al cobrarlo (arriba a la derecha, KubNotify)
+		"contracts.special" => ["Contrato especial: sin límite de tiempo, una sola vez", "Special contract: no time limit, one time only", "Contrat spécial : sans limite de temps, une seule fois"],
+		"contracts.special.tag" => ["Especial", "Special", "Spécial"],
+		"contracts.special.reward" => ["Recompensa: 1 %name%", "Reward: 1 %name%", "Récompense : 1 %name%"],
+		"contracts.invfull" => ["Inventario lleno", "Inventory full", "Inventaire plein"],
+		"contracts.special.got" => ["Contrato especial cumplido", "Special contract complete", "Contrat spécial rempli"],
+		"contracts.special.info" => [
+			"Sirve para guardar objetos. Se fabrica con 8 de hierro en el sintetizador: ¡te será útil!",
+			"Use it to store items. It is crafted from 8 iron in the synthesizer: it will come in handy!",
+			"Il sert à stocker des objets. Il se fabrique avec 8 fer au synthétiseur : il te sera utile !"],
 		"shop.title" => ["Robot comerciante", "Merchant robot", "Robot marchand"],
 		"shop.yours" => ["Lo que llevas (clic: vender)", "Your items (click: sell)", "Ton inventaire (clic : vendre)"],
 		"shop.robot" => ["Lo que vende el robot (clic: comprar)", "Robot's stock (click: buy)", "Stock du robot (clic : acheter)"],
@@ -112,7 +123,22 @@ class Lang {
 		"mode" => ["Modo", "Mode", "Mode"],
 		"mode.adventure" => ["Aventura (original)", "Adventure (original)", "Aventure (original)"],
 		"mode.creative" => ["Creativo", "Creative", "Créatif"],
+		// partida creativa jugada en supervivencia (GameView.setSurvival, ModeSwitch)
+		"mode.survival" => ["Supervivencia", "Survival", "Survie"],
+		"mode.hud" => ["Modo: %m%", "Mode: %m%", "Mode : %m%"],
+		"mode.creative.survival" => ["Creativo (en supervivencia)", "Creative (in survival)", "Créatif (en survie)"],
+		"mode.toSurvival" => ["Pasar a supervivencia", "Switch to survival", "Passer en survie"],
+		"mode.toCreative" => ["Volver a creativo", "Back to creative", "Revenir en créatif"],
+		"mode.now.survival" => ["Modo supervivencia", "Survival mode", "Mode survie"],
+		"mode.now.creative" => ["Modo creativo", "Creative mode", "Mode créatif"],
+		"mode.panel.title" => ["Supervivencia", "Survival", "Survie"],
+		"mode.panel.info" => ["Partida creativa jugada en supervivencia: daño, oxígeno y bloques gastados como en la aventura.", "Creative game played in survival: damage, oxygen and used-up blocks as in adventure.", "Partie créative jouée en survie : dégâts, oxygène et blocs consommés comme en aventure."],
+		"mode.panel.hint" => ["Intro / A / Y: volver a creativo   %palette% / Esc / B: cerrar", "Enter / A / Y: back to creative   %palette% / Esc / B: close", "Entrée / A / Y : revenir en créatif   %palette% / Échap / B : fermer"],
+		"hud.survival" => ["Supervivencia (partida creativa): %palette% para volver a creativo", "Survival (creative game): %palette% to go back to creative", "Survie (partie créative) : %palette% pour revenir en créatif"],
 		"palette.title" => ["Bloques", "Blocks", "Blocs"],
+		// busqueda por nombre de la paleta (vacia) y sin resultados (%q% = lo buscado)
+		"palette.search" => ["Buscar (Tab)", "Search (Tab)", "Rechercher (Tab)"],
+		"palette.none" => ["Ningún bloque se llama \"%q%\"", "No block is called \"%q%\"", "Aucun bloc ne s'appelle \"%q%\""],
 		// %move%, %palette%... = las teclas elegidas (Keys.fill)
 		"palette.hint" => ["Clic / A: poner en la casilla elegida   Rueda / LB RB: cambiar de pagina   %palette% / Esc / B: cerrar", "Click / A: put in the selected slot   Wheel / LB RB: change page   %palette% / Esc / B: close", "Clic / A : mettre dans la case choisie   Molette / LB RB : changer de page   %palette% / Échap / B : fermer"],
 		"hud.pilot" => ["Pilotando: %move% mover la nave   Ratón girar la cámara   %leave% / Esc dejar la nave aquí", "Piloting: %move% move the ship   Mouse turn the camera   %leave% / Esc leave the ship here", "Pilotage : %move% déplacer le vaisseau   Souris tourner la caméra   %leave% / Échap laisser le vaisseau ici"],

@@ -51,6 +51,8 @@ class TutoSetup {
 		info.tuto = null;
 		info.inv = Inv.empty();
 		info.credits = 0;
+		// el contrato especial vuelve a estar sin cumplir: el conteneur cobrado en el tutorial se va con el inventario
+		info.special = null;
 		grant(info);
 		info.shipData = null;
 		info.shipEdits = [];

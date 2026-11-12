@@ -1,0 +1,92 @@
+# casco (filtro de la visera, hud.png) al cambiar el tamano de la ventana con el ordenador de a bordo abierto, y con lo que se abre
+# desde el (licencias, contratos, comercio, Base de datos ESCorp) o la pausa: "print helmet" debe decir OK en cada tamano.
+# DESAJUSTADO = el casco se quedo con el tamano de la ventana anterior (bandas sin filtro a los lados o bordes cian fuera de la
+# ventana). Capturas en port/out/casco_*.png. Los tamanos mayores que la pantalla los recorta Windows: print helmet dice el real.
+# "cover" comprueba ademas que el fondo oscurecido del ordenador tapa la ventana muy ancha y muy alta (Theme.fullRect).
+wait 3
+ship
+wait 10
+print helmet
+# ordenador de a bordo: ensanchar, la ventana de la captura del aviso, muy ancha, mas alta que 16:9, muy alta y vuelta a 1280x720
+computer
+wait 5
+print helmet
+shot casco_ordenador_1280x720
+winsize 1500 600
+wait 5
+print helmet
+shot casco_ordenador_1500x600
+winsize 1024 420
+wait 5
+print helmet
+shot casco_ordenador_1024x420
+winsize 1500 380
+wait 5
+print helmet
+cover ordenador_1500x380
+shot casco_ordenador_1500x380
+winsize 700 800
+wait 5
+print helmet
+shot casco_ordenador_700x800
+winsize 480 800
+wait 5
+print helmet
+cover ordenador_480x800
+shot casco_ordenador_480x800
+winsize 1280 720
+wait 5
+print helmet
+shot casco_ordenador_vuelta_1280x720
+close
+wait 5
+print helmet
+# pausa (Esc)
+pause
+wait 5
+winsize 1500 600
+wait 5
+print helmet
+shot casco_pausa_1500x600
+close
+wait 5
+# licencias (desde el ordenador, el juego sigue en Paused)
+computer
+wait 3
+licenses open
+wait 5
+winsize 700 800
+wait 5
+print helmet
+shot casco_licencias_700x800
+close
+wait 5
+# contratos, comercio y Base de datos ESCorp (paneles con el juego en marcha)
+contracts
+wait 5
+winsize 1500 600
+wait 5
+print helmet
+shot casco_contratos_1500x600
+contracts close
+wait 5
+shop
+wait 5
+winsize 1024 420
+wait 5
+print helmet
+shot casco_comercio_1024x420
+close
+wait 5
+kub
+wait 10
+winsize 700 800
+wait 5
+print helmet
+shot casco_basedatos_700x800
+kub close
+wait 5
+winsize 1280 720
+wait 5
+print helmet
+quit
