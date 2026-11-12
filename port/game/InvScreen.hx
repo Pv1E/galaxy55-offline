@@ -3,8 +3,9 @@ import Ui;
 import IconMesh.Icons;
 
 /**
- * Pantalla de inventario del modo aventura (anadido del port), como la de Minecraft: las casillas de la barra de arriba (las
- * mismas, en grande) con el raton libre. La barra sigue a la vista y cambia a la vez: el orden elegido aqui es el de la barra.
+ * Pantalla de inventario del modo aventura y de la supervivencia de una partida creativa (anadido del port), como la de
+ * Minecraft: las casillas de la barra de arriba (las mismas, en grande) con el raton libre. La barra sigue a la vista y cambia
+ * a la vez: el orden elegido aqui es el de la barra.
  *   - clic izquierdo mantenido: coger la pila y arrastrarla; al soltarla sobre una casilla se deja, se junta (mismo bloque, hasta
  *     el maximo de la pila; lo que no cabe se queda en su casilla) o se intercambian las dos casillas
  *   - un clic sin moverse deja la pila en el cursor (como en Minecraft): el clic siguiente la deja, la junta o la cambia por la de
@@ -16,6 +17,8 @@ import IconMesh.Icons;
  *   - soltar fuera del panel, o hacer clic fuera con una pila en el cursor: tirarla al suelo, como R; clic derecho fuera: una unidad
  *   - 1-0 (Keys) sobre una casilla: cambiarla con esa casilla; R (Keys "drop") sobre una casilla: tirar su pila
  *   - mando y teclado: cruceta/flechas eligen la casilla, A/Intro = clic, X = clic derecho, Y = tirar, B/Esc/I = cerrar
+ *   - en la supervivencia de una partida creativa, arriba a la derecha el boton para volver a creativo (addCornerButton,
+ *     ModeSwitch; Select del mando lo pulsa, GalaxyApp)
  * La pila del cursor no sale del inventario: sigue en su casilla (que aqui se ve con lo que queda) hasta que se deja en otra o se
  * tira. Asi el guardado, los cambios de mundo y el Kubindex ven siempre el inventario entero, y al cerrar no hay nada que devolver.
  * La casilla elegida de la barra (blockIndex) es una posicion, como en Minecraft: no sigue al bloque que se mueve.
@@ -25,12 +28,11 @@ class InvScreen extends h2d.Object {
 	public var onClose : Void -> Void;
 	/** tirar n bloques b delante del jugador (GameView.throwStack) */
 	public var onThrow : Block -> Int -> Void;
-	/** sitio reservado arriba a la derecha del panel (EXTRA_W x EXTRA_H) para un boton mas (addButton), p. ej. creativo / supervivencia */
-	public var extra(default, null) : h2d.Object;
+	/** boton de arriba a la derecha (addCornerButton): la bascula creativo / supervivencia de una partida creativa */
+	public var corner(default, null) : Ui.Widget;
 
 	public static inline var CELL = 60;
-	public static inline var EXTRA_W = 220;
-	public static inline var EXTRA_H = 34;
+	static inline var BTN_H = 34;
 	/** segundos entre los dos clics de un doble clic */
 	static inline var DOUBLE = 0.35;
 
@@ -60,6 +62,8 @@ class InvScreen extends h2d.Object {
 	var mx = -1000.;
 	var my = -1000.;
 	var winEvents : hxd.Event -> Void;
+	/** altura del centro del titulo: el boton de arriba a la derecha se centra con el */
+	var titleMid = 0.;
 
 	public function new( parent : h2d.Object, atlas : h3d.mat.Texture, inv : Inv ) {
 		super(parent);
@@ -78,10 +82,8 @@ class InvScreen extends h2d.Object {
 		Theme.fullRect(bg, 0x000000, 0.35);
 		Theme.rect(bg, px, py, w, h, Theme.PANEL, 0.96);
 		Theme.rect(bg, px, py, w, 4, Theme.ACCENT);
-		Theme.text(this, Lang.t("invscreen.title"), 2.4, Theme.TEXT, px + 24, py + 18);
-		extra = new h2d.Object(this);
-		extra.x = px + w - 24 - EXTRA_W;
-		extra.y = py + 18;
+		var title = Theme.text(this, Lang.t("invscreen.title"), 2.4, Theme.TEXT, px + 24, py + 18);
+		titleMid = title.y + title.font.lineHeight * title.scaleY * 0.5;
 		x0 = px + (w - n * CELL) * 0.5;
 		y0 = py + 74;
 		grid = new h2d.Object(this);
@@ -120,23 +122,27 @@ class InvScreen extends h2d.Object {
 	}
 
 	function button( parent : h2d.Object, label : String, w : Int, cb : Void -> Void ) : h2d.Interactive {
-		var it = new h2d.Interactive(w, EXTRA_H, parent);
+		var it = new h2d.Interactive(w, BTN_H, parent);
 		var g = new h2d.Graphics(it);
 		var draw = function(on : Bool) {
 			g.clear();
-			Theme.rect(g, 0, 0, w, EXTRA_H, on ? Theme.ACCENT : 0xFFFFFF, on ? 0.3 : 0.08);
+			Theme.rect(g, 0, 0, w, BTN_H, on ? Theme.ACCENT : 0xFFFFFF, on ? 0.3 : 0.08);
 		};
 		draw(false);
-		Theme.center(Theme.text(it, label, 1.7, Theme.TEXT), w, EXTRA_H);
+		Theme.center(Theme.text(it, label, 1.7, Theme.TEXT), w, BTN_H);
 		it.onOver = function(_) draw(true);
 		it.onOut = function(_) draw(false);
 		it.onClick = function(_) cb();
 		return it;
 	}
 
-	/** boton en el sitio reservado de arriba a la derecha (extra), p. ej. la bascula creativo / supervivencia */
-	public function addButton( label : String, cb : Void -> Void ) : h2d.Interactive {
-		return button(extra, label, EXTRA_W, cb);
+	/** boton arriba a la derecha, centrado con el titulo (como Palette.addCornerButton): la bascula creativo / supervivencia
+	    (ModeSwitch.button). Va debajo de la pila del cursor */
+	public function addCornerButton( b : Ui.Widget ) {
+		addChildAt(b, getChildIndex(hand));
+		b.x = Std.int(panel.xMax - 24 - b.w);
+		b.y = Std.int(titleMid - b.h * 0.5);
+		corner = b;
 	}
 
 	// ---------------------------------------------------------------- dibujo

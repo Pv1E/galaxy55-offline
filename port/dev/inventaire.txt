@@ -158,4 +158,24 @@ print palette
 print invscreen
 close
 wait 3
+# partida creativa en supervivencia: I abre esta pantalla con el boton "Volver a creativo" arriba a la derecha; el boton
+# vuelve a creativo y la cierra; en creativo, I abre la paleta con "Pasar a supervivencia"
+creativegame
+mode survival
+give BGlass 8
+tap i
+wait 3
+print mode
+print invscreen
+invscreen click 0
+wait 2
+shot inventaire_survie
+modebutton
+wait 3
+print mode
+tap i
+wait 3
+print mode
+close
+wait 3
 quit

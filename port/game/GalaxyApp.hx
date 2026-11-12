@@ -296,8 +296,6 @@ class GalaxyApp extends hxd.App {
 	var nMode : Selector;
 	var nTutorial : Selector;
 	public var palette : Palette;
-	/** supervivencia en una partida creativa: la tecla de la paleta abre solo la bascula a creativo (ModeSwitch, provisional) */
-	public var modePanel : ModeSwitch;
 	var paletteOpen = false;
 
 	/** tutorial de la partida de aventura y lo que se ve de el (objetivo, flecha y aura) */
@@ -2040,15 +2038,13 @@ class GalaxyApp extends hxd.App {
 
 	function openPalette() {
 		if( paletteOpen || game == null || !(game.creative || game.canSwitchMode()) ) return;
-		paletteOpen = true;
-		captureMouse(false);
 		if( !game.creative ) {
-			// supervivencia en una partida creativa: solo la bascula, hasta que esta tecla abra la pantalla de inventario
-			modePanel = new ModeSwitch(s2d);
-			modePanel.onSwitch = switchMode;
-			modePanel.onClose = closePalette;
+			// supervivencia en una partida creativa: la pantalla de inventario, con el boton para volver a creativo
+			openInventory();
 			return;
 		}
+		paletteOpen = true;
+		captureMouse(false);
 		palette = new Palette(s2d, atlas);
 		palette.onPick = function(b) game.setSlot(b);
 		palette.onClose = closePalette;
@@ -2056,19 +2052,21 @@ class GalaxyApp extends hxd.App {
 	}
 
 	/**
-	 * Bascula creativo <-> supervivencia de una partida creativa (GameView.setSurvival): boton de la paleta, panel de
-	 * supervivencia y, cuando exista, boton de la pantalla de inventario. Cierra lo que estuviera abierto y vuelve al juego.
+	 * Bascula creativo <-> supervivencia de una partida creativa (GameView.setSurvival): boton de la paleta y de la pantalla
+	 * de inventario. Cierra lo que estuviera abierto y vuelve al juego.
 	 */
 	public function switchMode() {
 		if( game == null || !game.setSurvival(game.creative) ) return;
 		// en el hangar o la nodriza se juega una copia: el modo pasa tambien a la partida a la que se vuelve
 		if( hangarReturn != null ) hangarReturn.survival = game.info.survival;
 		closePalette();
+		closeInventory();
 		showToast(Lang.t(game.creative ? "mode.now.creative" : "mode.now.survival"));
 	}
 
-	/** pantalla de inventario (InvScreen, anadido del port): I en el modo aventura, a pie. Como la tienda, el juego sigue detras
-	    (sin controles): lo que se tira cae y rueda a la vista */
+	/** pantalla de inventario (InvScreen, anadido del port): I en el modo aventura y en la supervivencia de una partida creativa
+	    (con la bascula arriba a la derecha), a pie. Como la tienda, el juego sigue detras (sin controles): lo que se tira cae y
+	    rueda a la vista */
 	public var invScreen : InvScreen;
 
 	public function openInventory() {
@@ -2076,6 +2074,7 @@ class GalaxyApp extends hxd.App {
 		invScreen = new InvScreen(s2d, atlas, game.inv);
 		invScreen.onClose = closeInventory;
 		invScreen.onThrow = function(b, n) if( game != null ) game.throwStack(b, n);
+		if( game.canSwitchMode() ) invScreen.addCornerButton(ModeSwitch.button(null, game.creative, switchMode));
 		paletteOpen = true;
 		captureMouse(false);
 		// el panel tiene su ayuda: la de las teclas del juego (hud) no se ve detras
@@ -2241,10 +2240,6 @@ class GalaxyApp extends hxd.App {
 		if( palette != null ) {
 			palette.remove();
 			palette = null;
-		}
-		if( modePanel != null ) {
-			modePanel.remove();
-			modePanel = null;
 		}
 		paletteOpen = false;
 		if( game != null && state == Playing ) {
@@ -2719,13 +2714,13 @@ class GalaxyApp extends hxd.App {
 				} else if( database != null ) {
 					database.update(dt, pad);
 				} else if( invScreen != null ) {
-					invScreen.update(dt, pad);
+					// Select del mando: la bascula a creativo (el boton de arriba a la derecha); Y tira, como al jugar
+					if( pad != null && pad.isPressed(pad.config.back) && game.canSwitchMode() ) switchMode();
+					else invScreen.update(dt, pad);
 				} else if( palette != null ) {
 					// Y del mando: la bascula a supervivencia (el boton de abajo a la derecha)
 					if( pad != null && pad.isPressed(pad.config.Y) && game.canSwitchMode() ) switchMode();
 					else palette.update(dt, pad);
-				} else if( modePanel != null ) {
-					modePanel.update(dt, pad);
 				} else if( K.isPressed(K.ESCAPE) || Keys.pressed("palette") ) closePalette();
 				// la tienda y los contratos salen del ordenador de a bordo: tampoco paran el juego (ver abajo, state == Paused); la
 				// barra de vida se ve bajo el panel
@@ -2740,8 +2735,8 @@ class GalaxyApp extends hxd.App {
 				game.stopPiloting();
 				pausedThisFrame = true;
 			} else if( chest == null && !game.piloting && (Keys.pressed("palette") || (pad != null && pad.isPressed(pad.config.ranalogClick))) ) {
-				// I / R3: la paleta en creativo (y su panel de bascula en supervivencia), la pantalla de inventario en aventura
-				if( game.creative || game.canSwitchMode() ) openPalette() else openInventory();
+				// I / R3: la paleta en creativo; la pantalla de inventario en aventura y en supervivencia (con la bascula si la partida es creativa)
+				if( game.creative ) openPalette() else openInventory();
 			} else if( chest == null && (K.isPressed(K.ESCAPE) || (pad != null && pad.isPressed(pad.config.start))) ) { pause(); pausedThisFrame = true; }
 			else {
 				// con la cantina abierta el juego sigue (Esc o B la cierran, sin pausar)
@@ -3306,7 +3301,7 @@ class GalaxyApp extends hxd.App {
 	    el casco y el HUD se ocultan un momento) y mira si queda magenta en algun punto de los cuatro bordes de la ventana. Se
 	    usa un color y no el alfa porque el mapa de estrellas suma sus capas (blend Add): su alfa es 1 aunque deje ver el fondo. */
 	public function devCover( ?name : String ) : String {
-		var top : h2d.Object = shop != null ? shop : contracts != null ? contracts : database != null ? database : invScreen != null ? invScreen : chest != null ? chest : palette != null ? palette : modePanel != null ? modePanel : explorer != null ? explorer : current != null ? ui : null;
+		var top : h2d.Object = shop != null ? shop : contracts != null ? contracts : database != null ? database : invScreen != null ? invScreen : chest != null ? chest : palette != null ? palette : explorer != null ? explorer : current != null ? ui : null;
 		if( top == null ) return "nada abierto";
 		IconMesh.Icons.flush();
 		var hidden = [];

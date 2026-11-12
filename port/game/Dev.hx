@@ -25,7 +25,7 @@ import Common;
  *   creative                pasar a creativo solo el modo de juego (la partida no cambia ni se guarda asi)
  *   creativegame            la partida de prueba pasa a ser creativa, como creada en creativo (se guarda asi)
  *   mode survival|creative  bascula de una partida creativa, como el boton de la paleta (GalaxyApp.switchMode); print mode
- *   modebutton              pulsar el boton de la bascula de la paleta o del panel de supervivencia abiertos
+ *   modebutton              pulsar el boton de la bascula de la paleta o de la pantalla de inventario abiertas
  *   set x y z Bloque|none   poner o quitar un bloque (como si el jugador lo hubiera hecho); setl = locales de la nave
  *   breakp x y z            romper un bloque como al jugar (suelta lo suyo); breakl = locales de la nave
  *   activate x y z          activar el bloque de esa celda (puertas, ordenadores); activatel = local; si abre un menu, el guion sigue en el
@@ -117,7 +117,7 @@ class Dev {
 			+ " survival=" + g.info.survival + " bascula=" + (g.canSwitchMode() ? "si" : "no")
 			+ " licencias=" + (Licenses.unlimited(g.info) ? "sin limite" : "limitadas") + " pilotar=" + (g.pilotLicensed() ? "si" : "no")
 			+ " kubindex=" + (Kubindex.full(g.info) ? "completo" : "parcial") + " | paleta=" + (app.palette != null ? "abierta" + (palBtn ? " con boton" : "") : "cerrada")
-			+ " panel=" + (app.modePanel != null ? "abierto" : "cerrado");
+			+ " inventario=" + (app.invScreen != null ? "abierto" + (app.invScreen.corner != null ? " con boton" : "") : "cerrado");
 	}
 
 	/** vida y tiempo de juego del ultimo `print life` (para el ritmo de curacion) */
@@ -838,7 +838,7 @@ class Dev {
 					if( g.creative == (a[1] == "survival") ) app.switchMode();
 					Sys.println("modo: " + modeInfo(app, g));
 				case "modebutton":
-					if( app.modePanel != null ) app.modePanel.devPress();
+					if( app.invScreen != null && app.invScreen.corner != null ) cast(app.invScreen.corner, Ui.Button).activate();
 					else if( app.palette != null )
 						for( c in app.palette )
 							if( Std.isOfType(c, Ui.Button) ) {

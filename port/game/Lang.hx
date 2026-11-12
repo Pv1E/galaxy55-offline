@@ -131,10 +131,7 @@ class Lang {
 		"mode.toCreative" => ["Volver a creativo", "Back to creative", "Revenir en créatif"],
 		"mode.now.survival" => ["Modo supervivencia", "Survival mode", "Mode survie"],
 		"mode.now.creative" => ["Modo creativo", "Creative mode", "Mode créatif"],
-		"mode.panel.title" => ["Supervivencia", "Survival", "Survie"],
-		"mode.panel.info" => ["Partida creativa jugada en supervivencia: daño, oxígeno y bloques gastados como en la aventura.", "Creative game played in survival: damage, oxygen and used-up blocks as in adventure.", "Partie créative jouée en survie : dégâts, oxygène et blocs consommés comme en aventure."],
-		"mode.panel.hint" => ["Intro / A / Y: volver a creativo   %palette% / Esc / B: cerrar", "Enter / A / Y: back to creative   %palette% / Esc / B: close", "Entrée / A / Y : revenir en créatif   %palette% / Échap / B : fermer"],
-		"hud.survival" => ["Supervivencia (partida creativa): %palette% para volver a creativo", "Survival (creative game): %palette% to go back to creative", "Survie (partie créative) : %palette% pour revenir en créatif"],
+		"hud.survival" => ["Supervivencia (partida creativa): %palette% abre el inventario, con el botón para volver a creativo", "Survival (creative game): %palette% opens the inventory, with the button to go back to creative", "Survie (partie créative) : %palette% ouvre l'inventaire, avec le bouton pour revenir en créatif"],
 		"palette.title" => ["Bloques", "Blocks", "Blocs"],
 		// busqueda por nombre de la paleta (vacia) y sin resultados (%q% = lo buscado)
 		"palette.search" => ["Buscar (Tab)", "Search (Tab)", "Rechercher (Tab)"],
