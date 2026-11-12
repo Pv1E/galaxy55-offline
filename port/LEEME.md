@@ -15,7 +15,7 @@ El formato de las partidas puede cambiar entre versiones: no cuentes con que las
 
 ## Controles
 
-Son los del juego original (el movimiento y la física son una copia de `ent/Hero.hx` y `Game.moveHero`).
+Se pueden cambiar en Opciones > Controles > Personalizar teclas (añadido del port). Por defecto son los del juego original (el movimiento y la física son una copia de `ent/Hero.hx` y `Game.moveHero`).
 
 | Acción | Teclas |
 |---|---|
@@ -125,7 +125,7 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
   siempre a la misma altura, sin gasto, con una cámara por detrás y por encima y la niebla más suave mientras dura; el haz de
   luz marca dónde quedará (a toda velocidad se desvanece y vuelve al ir despacio, al pararse y al aterrizar). Acelera y frena con suavidad, gira hacia donde va y se inclina en las curvas; al dejarla vuelve a su
   orientación de siempre antes de aterrizar (sus bloques, cofres y sintetizadores no giran). El sitio se guarda por planeta; sin pilotarla, la nave aterriza donde siempre.
-- Opciones añadidas: sombra del bloque que vas a poner, nombre del bloque apuntado y quitar las olas del agua.
+- Opciones añadidas: sombra del bloque que vas a poner, nombre del bloque apuntado, quitar el marco de selección y quitar las olas del agua.
 - El turbo minero hace excavar tres veces más rápido hasta 15 bloques a su alrededor (5 en el original) y se recupera al
   romperlo (en el original se perdía).
 - La captura de F2 se guarda directamente en la carpeta `screenshots` y un mensaje dice dónde (el original abría el diálogo de Flash para guardarla).

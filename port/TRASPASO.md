@@ -270,6 +270,14 @@ Zips con `package.ps1 -Version 0.8 -HashLink ..\tools-portable\hashlink\hashlink
 `dx.Window.NO_ACTIVATE`, así que `game_dx.hxml` se compiló con una copia de `dx/Window.hx` que lo define a 0 (fuera del
 repositorio). Probado el de Windows descomprimido en una carpeta vacía: OpenGL y DirectX crean partida, cargan el planeta y
 abren la base de datos (249 fichas). Falta: etiqueta `v0.8` y crear la release (pre-release) con los dos zips.
+## PR 116-119 de Cornor923 integrados (2026-11-12)
+Fusionados en local en `main`, en orden 116, 117, 119, 118. Un conflicto en `Settings.save` (117 añade `selectBox`, 118 añade
+`keys`): se dejaron los dos campos. Compilan SDL, DX y headless. #116 (celdas de dos bytes) no toca el generador, así que los
+hashes de referencia no cambian; una partida guardada con `main` anterior (bb31545+) carga con los mismos bloques y `lightcheck`
+0; `mas_de_255.txt` da 288 distintos, 33 con id > 255, misma suma antes y después de cargar, `lightcheck` 0. #117, #118 y #119
+no se probaron aquí más allá de compilar (Cornor describe sus guiones en cada PR). Changelogs ES/EN/FR y LEEME/README/LISEZMOI
+actualizados (la sección "Controles" de LEEME/README dice que se pueden cambiar).
+
 ## Lo siguiente (orden acordado)
 1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;

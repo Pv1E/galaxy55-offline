@@ -3,6 +3,15 @@
 [Español: `CHANGELOG.md`](CHANGELOG.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
 ## Unreleased
+- **Custom key bindings** (port addition, PR 118): Options > Controls > Customize keys. 28 actions, up to 4 keys or mouse buttons
+  each; a key another action already uses turns red, and a button puts back the default keys. Saved in `settings.json`. The
+  on-screen help and the tutorial show the chosen keys. Esc, menu keys, the mouse wheel and the gamepad do not change. The
+  "A/D and arrow keys" option is renamed "Left and right".
+- **Selection frame** (port addition, PR 117): new option in Options > Interface to hide the orange frame on the targeted block.
+  On by default.
+- **More than 255 different blocks per world** (port change, PR 116): each cell stores its block on two bytes. No more blocks
+  refused for lack of room. Saves do not change. The world uses twice the memory.
+- The invisible kube shows translucent when dropped on the ground and in the hand (port change, PR 119); it could not be seen.
 - Repository: the `port-hashlink` branch, a copy of `main`, was deleted. All work is on `main`.
 
 ## v0.8 — pre-release

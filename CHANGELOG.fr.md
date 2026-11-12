@@ -3,6 +3,15 @@
 [Español : `CHANGELOG.md`](CHANGELOG.md) · [English: `CHANGELOG.en.md`](CHANGELOG.en.md)
 
 ## Non publié
+- **Touches au choix** (ajout du port, PR 118) : Options > Contrôles > Personnaliser les touches. 28 actions, jusqu'à 4 touches
+  ou boutons de souris chacune ; une touche déjà prise par une autre action passe en rouge, et un bouton remet les touches
+  d'origine. Enregistrées dans `settings.json`. L'aide à l'écran et le tutoriel montrent les touches choisies. Échap, les
+  touches des menus, la molette et la manette ne changent pas. L'option « A/D et flèches » devient « Gauche et droite ».
+- **Cadre de sélection** (ajout du port, PR 117) : nouvelle option dans Options > Interface pour cacher le cadre orange du bloc
+  visé. Activée par défaut.
+- **Plus de 255 blocs différents par monde** (changement du port, PR 116) : chaque case garde son bloc sur deux octets. Plus
+  de blocs refusés faute de place. Les sauvegardes ne changent pas. Le monde prend deux fois plus de mémoire.
+- Le kube invisible se voit translucide posé au sol et en main (changement du port, PR 119) ; avant il ne se voyait pas.
 - Dépôt : la branche `port-hashlink`, une copie de `main`, a été supprimée. Tout le travail est sur `main`.
 
 ## v0.8 — pre-release
