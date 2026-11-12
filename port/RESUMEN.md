@@ -162,8 +162,8 @@ etiqueta `flash-version` y la rama `flash`, con sus SWF y archivos de compilaci�
     cubos); opacos, calados (`BTTransp`) o translúcidos (`BTAlpha` con `BFAlpha`); luz en la lava y las gemas, salto
     (`BFJump 0.6`) en el Muelle. Nombres franceses de `client2/client.xml`, inglés y español en `BlockNames` (los que se
     llamarían como un bloque de Galaxy 55 llevan otro nombre: compartirían su ficha). Un `.kube` por bloque en `port/kubes`.
-    Con ellos hay más de 255 tipos y la celda guarda su id local en un byte: `World.hasRoom` no pone (ni gasta) el que ya no
-    cabe en ese mundo. `BFScroll(velocidad)`: el agua (6 px/s) y la lava (3,5 px/s) de Kube bajan por su casilla en el shader
+    Con ellos hay más de 255 tipos y la celda guardaba su id local en un byte: `World.hasRoom` no ponía (ni gastaba) el que ya no
+    cabía en ese mundo (hasta el PR 116, ver abajo). `BFScroll(velocidad)`: el agua (6 px/s) y la lava (3,5 px/s) de Kube bajan por su casilla en el shader
     (`World.TileScroll`, 4 pasos de 2 px por segundo), en mallas propias con el atlas sin mipmaps. Licencia en `NOTICE`.
     Guion `kube_blocks`.
   - 98: `Market.wares` se salta los `BKube*` (`KubeData.isKube`, por el prefijo del constructor). Guion `kubes_tienda`.
@@ -206,6 +206,20 @@ etiqueta `flash-version` y la rama `flash`, con sus SWF y archivos de compilaci�
     ratón. Guion `kube_mosaique`.
   - 112: la vista previa usa las tres pasadas de `World.emitMesh` para `BTAlpha`, con las caras de detrás quitadas. Guion
     `kube_translucide`.
+- PR 116-119 de Cornor923 (2026-11-12):
+  - 116 (cambio del port): `World.cells` guarda el id local de cada celda en dos bytes (`cell(p)` / `setCell(p, id)`, con
+    `getUInt16` / `setUInt16`); el generador sigue escribiendo un byte y `World.wideCells` lo ensancha una vez al cargar.
+    Quitados `World.hasRoom` y su comprobación en `GameView.canPlace`: hasta 65 535 tipos. Los guardados no cambian (ya
+    usaban 16 bits). La malla del mundo ocupa el doble de memoria. `print ids`. Guion `mas_de_255`.
+  - 117 (añadido del port): opción `Settings.selectBox` (Opciones > Interfaz > Marco de selección) que quita el marco de
+    `Fx` sobre el bloque apuntado y la celda donde se pone; el cubo que parpadea en un bloque irrompible se queda.
+  - 118 (añadido del port): teclas configurables. Tabla central `Keys.hx` (28 acciones, hasta 4 teclas o botones cada una,
+    con Mayús/Ctrl/Alt), pantalla `KeysScreen.hx` (Opciones > Controles > Personalizar teclas), conflictos en rojo y botón
+    para restablecer; en `settings.json` (`keys`) solo las que cambian. `Keys.fill` pone las teclas elegidas en las ayudas y
+    el tutorial. Fijas: Esc, las teclas de menús y paneles, la rueda y el mando. Guiones `teclas`, `teclas_guardadas`,
+    `teclas_paleta`.
+  - 119: el kube invisible (y la niebla de Kube) suelto y en la mano se dibujan con mezcla y sus 6 caras
+    (`IconMesh.seeThrough`), porque `killAlpha 0.5` descartaba todos sus texeles. Guion `kube_invisible_suelto`.
 
 ## Qué falló y cómo se resolvió
 | Problema | Causa | Solución |
@@ -279,9 +293,11 @@ PR 96-112 de Cornor923 (2026-11-06/11): `print kuborder` (orden de la Base de da
 `fadelog on|off` (fundido de la bomba y destellos por segundo), `savecopy`, `unknownsave` y `print unknown` (bloques
 desconocidos; `devsaves` borra también las copias de prueba), `contracts ...` y `print contracts`, `print roll N` (recetas al
 azar), `print icons` (iconos que quedan y hechos), y para el editor de kubes `kube tile|zoom|view`, `tap` y `mouse X Y down|up`.
+PR 116 y 118 (2026-11-12): `print ids` (bloques distintos y ids locales > 255), `keyrow ACCION CASILLA` (pantalla de teclas),
+`print keys`, `print keyinfo`, `print tutotext TECLA...`; `tap`/`press` conocen también `delete`, `alt`, `f2` y `f5`.
 Los ganchos antiguos `--screen=... --craft --at=...` siguen funcionando, pero para pruebas nuevas se usa Dev.
 
-## Siguiente paso acordado (mañana): paquete de prueba
+## Paquete de prueba (HECHO: zips con `package.ps1` y pre-releases en GitHub desde la v0.4; plan original de octubre de 2026)
 Crear un **zip portátil** (no instalador todavía) y publicarlo como **pre-release** en GitHub Releases (no dentro de `main`):
 - Contenido: `hl.exe` y DLL de HashLink, `galaxy55.hl`, los gráficos del original que lee el juego (`texture.png`, `hud.png`, `hud_jetpack.png`, `digger.png`,
   `icons.png`, `lazer*.png`, `ship_halo.png`, `door.md`) en una carpeta `res/`, un `jugar.bat`, `LEEME`, `NOTICE` y licencia.
@@ -290,7 +306,7 @@ Crear un **zip portátil** (no instalador todavía) y publicarlo como **pre-rele
 - En la descripción: lista de errores conocidos, aviso de que el formato de las partidas puede cambiar entre versiones, y que la versión Flash es hoy la más completa.
 - Un instalador `.exe` vendrá después, cuando haya menos errores. No empezar sin que el usuario pruebe el zip.
 
-## Pendiente (por orden)
+## Pendiente antiguo (plan de octubre de 2026, en gran parte hecho: nave, tienda, hangar, explorador, agua, vida y oxígeno; la lista al día es [`PENDIENTES.md`](../PENDIENTES.md))
 1. **Nave** (parte 1 hecha: aparecer, teletransporte, ordenador, puertas; parte 2a hecha: **sintetizador** con `CraftEngine` del original, vista previa del
    resultado, texto de la receta en pantalla y fabricar con el ordenador del sintetizador; probado por hook `--craft`/`--craftgo`, falta probarlo con ratón y
    teclado reales). Falta: **tienda ESCorp** (`Game.openShop`, créditos) — idea del usuario (a hacer DESPUÉS del explorador): naves de comerciantes (robot) que dan vueltas por las galaxias del mapa, entrando y saliendo de planetas; al pulsar una, nuestra nave la sigue; al llegar a su lado aparecemos en el espacio dentro de nuestra nave y la puerta se conecta a la nave del robot, donde está la tienda. A decidir luego: una nave fija o varias con vendedores distintos, y si el vendedor se va o espera mientras lo seguimos. Orden nuevo: explorador → nave del robot/tienda → hangar, y el menú "despegar" que llevará al explorador.

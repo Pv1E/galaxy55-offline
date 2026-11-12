@@ -1,4 +1,4 @@
-# Traspaso para seguir en otra PC (2026-10-16)
+# Traspaso para seguir en otra PC (2026-10-16, al día el 2026-11-12)
 
 Léelo entero antes de tocar nada. El usuario es **Pvie** (Pv1E en GitHub): habla español,
 quiere respuestas cortas y sin emojis, y que se **copie el original de Motion Twin, sin inventar**. Lo que añadimos nosotros se marca como
@@ -276,21 +276,23 @@ Fusionados en local en `main`, en orden 116, 117, 119, 118. Un conflicto en `Set
 hashes de referencia no cambian; una partida guardada con `main` anterior (bb31545+) carga con los mismos bloques y `lightcheck`
 0; `mas_de_255.txt` da 288 distintos, 33 con id > 255, misma suma antes y después de cargar, `lightcheck` 0. #117, #118 y #119
 no se probaron aquí más allá de compilar (Cornor describe sus guiones en cada PR). Changelogs ES/EN/FR y LEEME/README/LISEZMOI
-actualizados (la sección "Controles" de LEEME/README dice que se pueden cambiar).
+actualizados (la sección "Controles" de LEEME/README dice que se pueden cambiar). Después, revisión de los `.md`: en
+`RESUMEN.md` entran los PR 116-119 y sus órdenes de Dev, y las secciones antiguas "Siguiente paso acordado" y "Pendiente"
+quedan marcadas como plan de octubre ya hecho en gran parte; en este archivo, "Lo siguiente" marca lo hecho.
 
-## Lo siguiente (orden acordado)
-1. **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
+## Lo siguiente (orden acordado en octubre; la lista al día es `PENDIENTES.md`)
+1. (HECHO: bahías del hangar y tienda en el centro, v0.8) **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;
    - marcas: **bloque de esmeralda** en el centro de cada bahía y **bloque de diamante** en el mostrador del robot.
    Cuando mande el zip nuevo: convertir, leer esas marcas en el conversor (guardarlas en el .bin), aparcar la nave del jugador
    en una bahía, poner el robot y abrir la tienda en el mostrador. Las otras bahías quedan para el multijugador.
-2. **El robot en el mapa:**
+2. (HECHO el 2026-10-19) **El robot en el mapa:**
    - uno por sector, que viaja **despacio** entre sistemas (es comerciante);
    - icono con la forma de la Hades, renderizado como `Ship.captureFrames`; seguirlo con clic; al alcanzarlo, salto a la nave nodriza;
    - la velocidad de nuestra nave sale de la nave real (`Explorer.shipBytes` ya existe, pero la fórmula del mapa es aproximada:
      usar la del hangar, `Hangar.check().speed`);
    - ojo: `Ship.captureFrames` todavía centra la cámara con `DEFAULT_SHIP`; debería usar la nave actual.
-3. Después: equipo del personaje (mejoras de jetpack, botas, etc.; lista de ejemplos en `PENDIENTES.md` 3b).
+3. Después (sin empezar; ahora en `IDEAS.md`): equipo del personaje (mejoras de jetpack, botas, etc.; lista de ejemplos en `PENDIENTES.md` 3b).
 
 ## Ideas de multijugador de Pvie (apuntadas en PENDIENTES 3c)
 - Naves de jugador de como máximo 17x17x14, que aparcan en bahías.
