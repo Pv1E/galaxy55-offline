@@ -1,0 +1,134 @@
+# Bascula creativo <-> supervivencia (anadido del port, GameView.setSurvival): una partida creada en creativo pasa a
+# supervivencia y vuelve sin dejar de ser creativa (licencias sin limite, pilotar en todos los planetas, Base de datos
+# completa). Sigue al modo: dano, oxigeno, rotura y botin, bloques gastados al ponerlos. Mismo inventario en los dos modos;
+# al pasar a supervivencia, vida y oxigeno a 100. El modo se guarda con la partida. Una partida de aventura no tiene bascula.
+# Semilla 4242. Uso: devrun.ps1 -Script port/dev/creatif_survie.txt -Timeout 900 -Extra "--lang=fr" (creatif_survie_*.png)
+# Zona de pruebas: suelo de roca en z=56 y una pileta de agua
+wait 3
+planet
+wait 30
+# 0) la partida de prueba es de aventura: sin bascula; la tecla de la paleta no abre nada
+mode survival
+palette
+print mode
+close
+# 1) partida nueva creada en creativo: en creativo y con la bascula; la paleta lleva el boton abajo a la derecha
+newgame 4242
+waitfor planet 6000
+wait 30
+planet
+wait 60
+print mode
+filla 54 54 76 76 57 110 none
+filla 54 54 76 76 56 56 BRock
+filla 68 56 72 60 57 61 BRock
+filla 69 57 71 59 57 61 BWater
+tp 60.5 60.5 57.01 0 0
+waitfor ground
+wait 30
+palette
+wait 5
+print mode
+shot creatif_survie_paleta
+close
+# 2) creativo: caida de 12 bloques sin dano; poner no gasta; romper es instantaneo y no suelta nada
+tp 60.5 60.5 69 0 0
+waitfor ground
+wait 20
+vitals
+tp 60.5 60.5 57.01 0 0
+wait 20
+slot 5
+lookat 62.5 60.5 56.5
+key place
+wait 8
+unkey
+wait 10
+print inv
+print block 62 60 57
+mine 62 60 57
+wait 60
+print drops
+# 3) con la vida a 40, el boton de la paleta pasa a supervivencia: vuelve al juego con vida y oxigeno a 100
+life 40 60
+palette
+wait 3
+modebutton
+wait 5
+print mode
+vitals
+shot creatif_survie_hud
+# 4) supervivencia: la misma caida de 12 bloques hace dano
+tp 60.5 60.5 69 0 0
+waitfor ground
+wait 20
+vitals
+# 5) supervivencia: poner gasta un bloque; romper tarda y suelta el bloque
+life 100
+tp 60.5 60.5 57.01 0 0
+wait 20
+slot 5
+lookat 62.5 60.5 56.5
+key place
+wait 8
+unkey
+wait 10
+print inv
+print block 62 60 57
+mine 62 60 57
+wait 200
+print drops
+# 6) supervivencia: bajo el agua el oxigeno baja
+tp 70.5 58.5 57.01 0 0
+wait 100
+vitals
+# 7) en supervivencia la tecla de la paleta abre solo el panel de la bascula
+tp 60.5 60.5 57.01 0 0
+wait 20
+palette
+wait 5
+print mode
+print palette
+shot creatif_survie_panel
+close
+# 8) guardar y volver a cargar: sigue en supervivencia
+savegame
+print saves
+reload
+waitfor planet 6000
+wait 30
+print mode
+# 9) el boton del panel vuelve a creativo: bajo el agua el oxigeno vuelve a 100
+palette
+wait 3
+modebutton
+wait 5
+print mode
+tp 70.5 58.5 57.01 0 0
+life 100 30
+wait 30
+vitals
+# 10) guardar y volver a cargar: en creativo
+savegame
+reload
+waitfor planet 6000
+wait 30
+print mode
+# 11) en el hangar se juega una copia de la partida: la bascula hecha alli sigue al volver al planeta
+hangar
+waitfor ready 3000
+wait 30
+print mode
+mode survival
+hangarexit
+waitfor planet 6000
+wait 30
+print mode
+# 12) la lista de partidas: "Creatif (en survie)"
+menu
+waitfor menu
+print saves
+tap enter
+wait 5
+shot creatif_survie_liste
+quit

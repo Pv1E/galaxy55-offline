@@ -22,6 +22,10 @@ import Common;
  *   give Bloque [n]         meter n bloques (50) en el inventario
  *   drop x y z Bloque [vida] soltar un bloque quieto (vida en segundos, 180)
  *   hand Bloque             poner ese bloque en la casilla elegida (como la paleta creativa)
+ *   creative                pasar a creativo solo el modo de juego (la partida no cambia ni se guarda asi)
+ *   creativegame            la partida de prueba pasa a ser creativa, como creada en creativo (se guarda asi)
+ *   mode survival|creative  bascula de una partida creativa, como el boton de la paleta (GalaxyApp.switchMode); print mode
+ *   modebutton              pulsar el boton de la bascula de la paleta o del panel de supervivencia abiertos
  *   set x y z Bloque|none   poner o quitar un bloque (como si el jugador lo hubiera hecho); setl = locales de la nave
  *   breakp x y z            romper un bloque como al jugar (suelta lo suyo); breakl = locales de la nave
  *   activate x y z          activar el bloque de esa celda (puertas, ordenadores); activatel = local; si abre un menu, el guion sigue en el
@@ -99,6 +103,17 @@ class Dev {
 
 	static var shoreX = 0;
 	static var shoreY = 0;
+	/** orden mode / print mode: modo en curso, lo que es de la partida y lo que esta abierto */
+	static function modeInfo( app : GalaxyApp, g : GameView ) : String {
+		var palBtn = false;
+		if( app.palette != null ) for( c in app.palette ) if( Std.isOfType(c, Ui.Button) ) palBtn = true;
+		return (g.creative ? "creativo" : "supervivencia") + (g.hangar != null ? " (hangar)" : g.info.mothership == true ? " (nodriza)" : "") + " | partida " + (g.info.creative == true ? "creativa" : "de aventura")
+			+ " survival=" + g.info.survival + " bascula=" + (g.canSwitchMode() ? "si" : "no")
+			+ " licencias=" + (Licenses.unlimited(g.info) ? "sin limite" : "limitadas") + " pilotar=" + (g.pilotLicensed() ? "si" : "no")
+			+ " kubindex=" + (Kubindex.full(g.info) ? "completo" : "parcial") + " | paleta=" + (app.palette != null ? "abierta" + (palBtn ? " con boton" : "") : "cerrada")
+			+ " panel=" + (app.modePanel != null ? "abierto" : "cerrado");
+	}
+
 	/** vida y tiempo de juego del ultimo `print life` (para el ritmo de curacion) */
 	static var lifeV = 0.;
 	static var lifeT = -1.;
@@ -743,6 +758,21 @@ class Dev {
 						win.event(e);
 					}
 				case "creative": @:privateAccess g.creative = true;
+				case "creativegame":
+					g.info.creative = true;
+					@:privateAccess g.creative = true;
+				case "mode":
+					// mode survival|creative: si no esta ya en ese modo, la bascula como desde el boton (en aventura no hace nada)
+					if( g.creative == (a[1] == "survival") ) app.switchMode();
+					Sys.println("modo: " + modeInfo(app, g));
+				case "modebutton":
+					if( app.modePanel != null ) app.modePanel.devPress();
+					else if( app.palette != null )
+						for( c in app.palette )
+							if( Std.isOfType(c, Ui.Button) ) {
+								cast(c, Ui.Button).activate();
+								break;
+							}
 				case "fadelog":
 					if( a[1] == "on" ) fadeLog = { frames : 0, t0 : g.playSeconds, a : 0., col : 0, low : 0., riseCol : 0, rises : [], steps : [], max : 0. };
 					else if( fadeLog != null ) {
@@ -1300,6 +1330,7 @@ class Dev {
 				if( b != null ) out.push(b.k + "@" + (c.x + dx) + "," + (c.y + dy) + "," + (c.z + dz));
 			}
 			Sys.println("celdas de la zona: " + out.join("  ") + "   texto: " + c.curText);
+		case "mode": Sys.println("modo: " + modeInfo(app, g));
 		case "hit": Sys.println(g.debugPick());
 		case "power":
 			// potencia de excavacion (turbo minero) y el icono "power" del casco
