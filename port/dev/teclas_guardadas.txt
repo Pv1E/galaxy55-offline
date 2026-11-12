@@ -1,0 +1,29 @@
+# Despues de teclas.txt, en otra ejecucion con los mismos datos: las teclas cambiadas se han leido de settings.json (Saltar = J,
+# Coordenadas = O y clic, Volver a la nave = Ctrl+J). Restablecer (con confirmacion) vuelve a las de siempre y lo guarda.
+# Mira los teclas_guardadas*.png
+wait 3
+planet
+wait 30
+print keys
+print hud
+pause
+wait 3
+screen options.keys
+wait 3
+shot teclas_guardadas
+# el boton Restablecer, despues de la ultima fila; pide confirmacion (No / Si)
+keyrow leave 0
+tap down
+tap enter
+wait 2
+shot teclas_guardadas_confirmar
+tap down
+tap enter
+wait 2
+print keys
+print keyinfo
+shot teclas_guardadas_restablecidas
+close
+wait 5
+print hud
+quit

@@ -1,0 +1,34 @@
+# Teclas leidas de un settings.json escrito a mano (port/out/testkeys2: paleta = P, excavar o colocar = E solo, dejar la nave = L):
+# el tutorial dice "appuie sur E" en vez de "clique", la paleta creativa se abre y se cierra con P (I ya no) y, pilotando, E ya no
+# deja la nave y L si. Mira teclas_paleta.png
+wait 3
+print keys
+print tutotext alu hangar
+ship
+wait 10
+creative
+wait 2
+print hud
+tap i
+wait 3
+print palette
+tap p
+wait 3
+print palette
+shot teclas_paleta
+tap i
+wait 3
+print palette
+tap p
+wait 3
+print palette
+pilot
+wait 5
+print hud
+tap e
+wait 150
+print pilot
+tap l
+wait 150
+print pilot
+quit

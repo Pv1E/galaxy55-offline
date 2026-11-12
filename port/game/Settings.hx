@@ -59,12 +59,14 @@ class Settings {
 			if( o.targetName != null ) targetName = o.targetName;
 			if( o.vsync != null ) vsync = o.vsync;
 			if( o.maxFps != null ) maxFps = Std.int(o.maxFps);
+			// teclas cambiadas en Opciones > Controles (Keys): solo las que no son las de por defecto
+			Keys.load(o.keys);
 		} catch( e : Dynamic ) {}
 		Lang.setCode(lang);
 	}
 
 	public static function save() {
-		var o = { lang : lang, mouseSens : mouseSens, fov : fov, volume : volume, fullscreen : fullscreen, invertY : invertY, turnKeys : turnKeys, showHelp : showHelp, placePreview : placePreview, selectBox : selectBox, waterWaves : waterWaves, targetName : targetName, vsync : vsync, maxFps : maxFps };
+		var o = { lang : lang, mouseSens : mouseSens, fov : fov, volume : volume, fullscreen : fullscreen, invertY : invertY, turnKeys : turnKeys, showHelp : showHelp, placePreview : placePreview, selectBox : selectBox, waterWaves : waterWaves, targetName : targetName, vsync : vsync, maxFps : maxFps, keys : Keys.save() };
 		try sys.io.File.saveContent(dir() + "/settings.json", haxe.Json.stringify(o, null, "  ")) catch( e : Dynamic ) {}
 	}
 }

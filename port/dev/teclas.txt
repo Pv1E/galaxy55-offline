@@ -1,0 +1,94 @@
+# Opciones > Controles > Configurar las teclas (Keys, KeysScreen): cambiar una tecla, conflicto, Esc, Supr, un boton del raton
+# (el clic no debe pulsar el boton Volver que hay debajo), una combinacion (Ctrl+J), y probarlas en el juego. Las teclas se guardan
+# en el settings.json de los datos de prueba: teclas_guardadas.txt, en otra ejecucion, comprueba que siguen y las restablece.
+# Mira los teclas_*.png
+wait 3
+planet
+wait 30
+print keys
+print hud
+pause
+wait 3
+screen options.controls
+wait 3
+print menu
+shot teclas_controles
+screen options.keys
+wait 3
+shot teclas_lista
+print keyinfo
+# Saltar y jetpack, casilla 1: J en lugar de Espacio
+keyrow jump 0
+tap enter
+wait 2
+print keyinfo
+shot teclas_espera
+tap j
+wait 2
+# casilla 2: E, que ya usa Excavar o colocar: las dos en rojo y abajo el aviso
+keyrow jump 1
+tap enter
+wait 1
+tap e
+wait 2
+print keyinfo
+print keys
+shot teclas_conflicto
+# Esc cancela: sigue E
+tap enter
+wait 1
+tap esc
+wait 2
+print keyinfo
+# Supr borra la casilla 2 (ni E ni Ctrl hacen saltar)
+tap delete
+wait 2
+# Coordenadas y FPS: O en la casilla 1, clic izquierdo en la 2 (encima del boton Volver)
+keyrow fps 0
+tap enter
+wait 1
+tap o
+wait 2
+keyrow fps 1
+tap enter
+wait 1
+mouse 1000 635 down
+wait 1
+mouse 1000 635 up
+wait 3
+print menu
+# Volver a la nave: Ctrl+J
+keyrow ship 0
+tap enter
+wait 1
+press ctrl
+tap j
+release ctrl
+wait 2
+print keys
+print keyinfo
+shot teclas_cambiadas
+# en el juego: la ayuda dice las teclas nuevas
+close
+wait 5
+print hud
+# F ya no muestra las coordenadas; O si
+tap f
+wait 2
+print hud
+tap o
+wait 2
+print hud
+# Espacio ya no salta; J si
+print pos
+press space
+wait 12
+release space
+print pos
+wait 40
+press j
+wait 12
+release j
+print pos
+wait 10
+quit
