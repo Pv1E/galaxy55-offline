@@ -1,0 +1,32 @@
+# paleta del modo creativo (I): cada bloque sale una sola vez. El agua acida tiene precio en los datos, asi que ya esta entre
+# los bloques (pagina 1, casilla 69) y el bucle de las aguas del final la volvia a poner (pagina 3, casilla 10, entre el agua
+# oscura y la de invierno). print paldup: bloques y paginas, repetidos (0) y donde esta cada agua (pagina:casilla), una vez cada una.
+# Capturas port/out/paleta_agua_doble_*.png
+wait 3
+planet
+wait 30
+creative
+setlang fr
+slot 1
+palette
+wait 5
+print paldup
+# pagina 1: la casilla 69 es el agua acida (la del precio)
+palhover 69
+wait 2
+print palette
+shot paleta_agua_doble_p1
+close
+wait 5
+# pagina 3: al final quedan las otras tres aguas (casillas 8 a 10, todas se llaman Eau: BlockNames.base) y la de invierno es
+# la ultima casilla de la paleta
+palette 2
+wait 5
+print paldup
+palhover 10
+wait 2
+print palette
+shot paleta_agua_doble_p3
+close
+wait 5
+quit

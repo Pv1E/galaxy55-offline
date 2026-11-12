@@ -40,9 +40,10 @@ class Palette extends h2d.Object {
 			if( b.index > 0 && (b.basePrice != null || b.k == BChest) && b.charge == null && b.type != BTInvisible )
 				(KubeData.isKube(b.k) ? kubes : blocks).push(b);
 		for( b in kubes ) blocks.push(b);
-		// el agua de cada planeta no se vendia; en creativo se puede poner (fluye como en Minecraft)
+		// el agua de cada planeta no se vendia; en creativo se puede poner (fluye como en Minecraft). El agua acida si tiene precio en
+		// los datos y ya esta en la lista: no se repite
 		for( k in [BWater, BDarkWater, BAcidWater, BWinterWater] )
-			blocks.push(Block.get(k));
+			if( blocks.indexOf(Block.get(k)) < 0 ) blocks.push(Block.get(k));
 
 		var w = COLS * CELL + 40, h = ROWS * CELL + 150;
 		var px = (PX - w) * 0.5, py = (PY - h) * 0.5;
@@ -205,5 +206,14 @@ class Palette extends h2d.Object {
 			drawFocus();
 		}
 		if( pick && focus >= 0 && focus < pageCount() && onPick != null ) onPick(blocks[page * COLS * ROWS + focus]);
+	}
+
+	/** banco de pruebas (print paldup): bloques de la paleta, los que salen mas de una vez y donde estan las aguas (pagina:casilla) */
+	public function devRepeated() {
+		var per = COLS * ROWS;
+		var rep = [for( i in 0...blocks.length ) if( blocks.indexOf(blocks[i]) < i ) blocks[i].k + " '" + blocks[i].getName() + "'"];
+		var water = [for( i in 0...blocks.length ) if( blocks[i].type == BTWater ) blocks[i].k + "@" + (Std.int(i / per) + 1) + ":" + (i % per)];
+		return blocks.length + " bloques en " + pages() + " paginas, " + rep.length + " repetidos" + (rep.length == 0 ? "" : " (" + rep.join(", ") + ")")
+			+ " | aguas " + water.join(" ");
 	}
 }
