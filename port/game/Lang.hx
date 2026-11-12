@@ -113,6 +113,9 @@ class Lang {
 		"mode.adventure" => ["Aventura (original)", "Adventure (original)", "Aventure (original)"],
 		"mode.creative" => ["Creativo", "Creative", "Créatif"],
 		"palette.title" => ["Bloques", "Blocks", "Blocs"],
+		// busqueda por nombre de la paleta (vacia) y sin resultados (%q% = lo buscado)
+		"palette.search" => ["Buscar (Tab)", "Search (Tab)", "Rechercher (Tab)"],
+		"palette.none" => ["Ningún bloque se llama \"%q%\"", "No block is called \"%q%\"", "Aucun bloc ne s'appelle \"%q%\""],
 		// %move%, %palette%... = las teclas elegidas (Keys.fill)
 		"palette.hint" => ["Clic / A: poner en la casilla elegida   Rueda / LB RB: cambiar de pagina   %palette% / Esc / B: cerrar", "Click / A: put in the selected slot   Wheel / LB RB: change page   %palette% / Esc / B: close", "Clic / A : mettre dans la case choisie   Molette / LB RB : changer de page   %palette% / Échap / B : fermer"],
 		"hud.pilot" => ["Pilotando: %move% mover la nave   Ratón girar la cámara   %leave% / Esc dejar la nave aquí", "Piloting: %move% move the ship   Mouse turn the camera   %leave% / Esc leave the ship here", "Pilotage : %move% déplacer le vaisseau   Souris tourner la caméra   %leave% / Échap laisser le vaisseau ici"],

@@ -85,6 +85,7 @@ import Common;
  *   print unknown           bloques desconocidos de cada partida (UnknownBlocks), md5 de su .json y copias de saves/backups
  *   tap TECLA               pulsar y soltar una tecla: up down left right enter esc tab space pgup pgdown numpad+ numpad- o una letra
  *   type TEXTO              escribir el resto de la linea en el campo de texto en el que se esta escribiendo
+ *   print palnames          bloques que deja la busqueda de la paleta creativa (Tab o clic en ella para escribir, y type)
  *   wheel N                 rueda del raton (N > 0 = hacia abajo), donde lo dejo la ultima orden mouse
  *   mouse X Y [click|down|up] llevar el raton a ese punto de la zona 1280x720 (y hacer clic, o solo apretar o soltar: arrastrar)
  *   print menu|saves        pantalla de menu abierta y su foco / partidas guardadas (waitfor menu: el menu y su fondo listos)
@@ -1225,6 +1226,9 @@ class Dev {
 		case "menu":
 			// botones del menu abierto (etiqueta y y), de arriba abajo
 			Sys.println("menu: " + (@:privateAccess app.current == null ? "cerrado" : [for( wd in @:privateAccess app.current.widgets ) @:privateAccess wd.label.text + "@" + Std.int(wd.y)].join(" | ")));
+		case "palnames":
+			// nombres de los bloques que deja la busqueda de la paleta
+			Sys.println("paleta: " + (app.palette == null ? "cerrada" : app.palette.devNames()));
 		case "palette":
 			Sys.println("paleta: " + (app.palette == null ? "cerrada" : app.palette.devInfo()));
 		case "time":

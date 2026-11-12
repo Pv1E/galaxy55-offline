@@ -1,0 +1,175 @@
+# paleta del modo creativo (I): busqueda por nombre. Lanzar con -Extra "--lang=fr".
+# Tab (o un clic en el campo) empieza a escribir; la lista se filtra al escribir, sin mayusculas ni acentos ("eau" = "EAU",
+# "fenetre" = "fenêtre"), por palabras en cualquier orden, en los bloques y en los kubes; primero los nombres con una palabra
+# que empieza asi ("eau": las Eau antes que Barreaux o Chapeau). Escribiendo, I y las flechas no hacen
+# nada (la paleta no se cierra, no se marca ninguna casilla); Intro deja el campo y marca el primer bloque; Esc vacia la busqueda
+# y, vacia, cierra la paleta; la cruz la vacia. Sin resultados sale un aviso en medio. print palette: pagina, foco, busqueda,
+# bloques que quedan / todos, "escribiendo" si el campo tiene el teclado. Capturas port/out/palette_recherche_*.png
+wait 3
+planet
+wait 30
+creative
+slot 1
+palette
+wait 5
+print palette
+shot palette_recherche_vide
+# Tab: a escribir
+tap tab
+wait 2
+print palette
+shot palette_recherche_tab
+type eau
+wait 2
+print palette
+print palnames
+shot palette_recherche_eau
+# Esc vacia la busqueda (la paleta sigue abierta)
+tap esc
+wait 2
+print palette
+# mayusculas y acentos dan igual
+tap tab
+wait 2
+type EAU
+wait 2
+print palette
+tap esc
+wait 2
+tap tab
+wait 2
+type fenetre
+wait 2
+print palnames
+tap esc
+wait 2
+tap tab
+wait 2
+type FENÊTRE
+wait 2
+print palnames
+tap esc
+wait 2
+# por palabras, en cualquier orden
+tap tab
+wait 2
+type bouleau feuil
+wait 2
+print palnames
+shot palette_recherche_mots
+tap esc
+wait 2
+# "fer": Fer y Terre fertile
+tap tab
+wait 2
+type fer
+wait 2
+print palnames
+tap esc
+wait 2
+# kubes
+tap tab
+wait 2
+type bouleau
+wait 2
+print palnames
+shot palette_recherche_kubes
+tap esc
+wait 2
+# escribiendo, I (la tecla de la paleta) escribe una i y no cierra; las flechas no marcan casillas
+tap tab
+wait 2
+tap i
+type i
+wait 2
+print palette
+tap left
+wait 2
+tap right
+wait 2
+tap up
+wait 2
+print palette
+# borrar con Retroceso
+tap backspace
+wait 2
+print palette
+# sin resultados: aviso en medio de la cuadricula; Intro no marca nada
+type zzz
+wait 2
+print palette
+shot palette_recherche_rien
+tap enter
+wait 2
+print palette
+# la cruz (aparece con texto) vacia la busqueda y sigue escribiendo
+mouse 863 96 click
+wait 2
+print palette
+shot palette_recherche_croix
+# Intro deja el campo y marca el primer bloque; Intro otra vez lo pone en la casilla
+type cactus
+wait 2
+tap enter
+wait 2
+print palette
+shot palette_recherche_entree
+tap enter
+wait 2
+print inv
+palnav right
+wait 2
+print palette
+# con la busqueda puesta, I cierra la paleta del todo
+palette
+wait 2
+tap i
+wait 3
+print palette
+# al abrirla otra vez la busqueda esta vacia
+palette
+wait 5
+print palette
+# un clic en el campo tambien empieza a escribir; con muchos resultados hay varias paginas
+mouse 622 96 click
+wait 2
+type e
+wait 2
+print palette
+tap enter
+wait 2
+palnav rb
+wait 2
+print palette
+shot palette_recherche_pages
+# Esc: primero vacia, luego cierra
+tap esc
+wait 2
+print palette
+tap esc
+wait 3
+print palette
+# otras ventanas (con un aviso de sin resultados, que no debe salirse)
+winsize 1600 600
+wait 10
+palette
+wait 5
+tap tab
+wait 2
+type xylophone introuvable
+wait 2
+shot palette_recherche_ancha
+close
+wait 5
+winsize 800 900
+wait 10
+palette
+wait 5
+tap tab
+wait 2
+type roche
+wait 2
+shot palette_recherche_alta
+close
+wait 5
+quit
