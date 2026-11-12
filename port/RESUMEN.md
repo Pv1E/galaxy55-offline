@@ -7,9 +7,9 @@ Galaxy 55 (Motion Twin, 2012) era un juego de bloques en Flash. Este repo lo hac
 Flash está muerto, así que estamos **portándolo a una aplicación nativa de escritorio**: Haxe 4 + Heaps moderno + HashLink
 (el mismo motor y lenguaje con el que se hizo el original, y con el que Motion Twin hizo Dead Cells).
 Metas: menú de inicio con guardado y carga, fidelidad al original, y a futuro Steam y multijugador.
-Desde el 2026-10-14 la versión nativa es la oficial: está en `main` y en `port-hashlink` (iguales). La versión Flash sigue intacta en la
+Desde el 2026-10-14 la versión nativa es la oficial: está en `main` (la rama `port-hashlink`, que era una copia, se borró el 2026-11-12). La versión Flash sigue intacta en la
 etiqueta `flash-version` y la rama `flash`, con sus SWF y archivos de compilación. Desde el 2026-10-26 esos archivos (`client*.hxml`,
-`build.*`, `release/`, `libs/heaps`, `libs/format_old`) ya no están en `main`/`port-hashlink`: el port no los usa (usa el Heaps actual). El README avisa de las dos versiones y de los errores conocidos.
+`build.*`, `release/`, `libs/heaps`, `libs/format_old`) ya no están en `main`: el port no los usa (usa el Heaps actual). El README avisa de las dos versiones y de los errores conocidos.
 
 ## Cómo lo hacemos
 - **Reutilizar, no reescribir:** los generadores de planetas originales (`src/G55/fla/client/src/gen`) se compilan tal cual.
@@ -333,7 +333,7 @@ Crear un **zip portátil** (no instalador todavía) y publicarlo como **pre-rele
    - Vida, daño, curación, oxígeno y lava; bloques activables, cofres, `BFTransform`; sonido; partículas al romper; planeta Shed y Ciudad muerta completos.
 5. Decidir SDL (actual) o DirectX; empaquetar como instalable; multijugador y Steam.
    - **Evaluar versión web** (Heaps JS/WebGL; pedida por la comunidad de Eternaltwin; NO probado). Trabajo: sustituir `sys.io.File`/`sys.FileSystem` por recursos incrustados o descargados; guardados en localStorage/IndexedDB; versión JS del shim `flash.Memory`; ratón bloqueado, mando y pantalla completa con APIs del navegador; comprobar los filtros por software del explorador y `Ship.captureFrames`. Riesgos: velocidad y memoria de la generación de mundos en JS, y los ~5 s de generación del explorador.
-6. Cuando el usuario lo apruebe: fusionar `port-hashlink` en `main` ("hacerlo oficial").
+6. (HECHO el 2026-10-14) Fusionar `port-hashlink` en `main` ("hacerlo oficial"); la rama `port-hashlink` se borró el 2026-11-12.
 
 
 ## Cómo retomar

@@ -2,6 +2,9 @@
 
 [Español: `CHANGELOG.md`](CHANGELOG.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
+## Unreleased
+- Repository: the `port-hashlink` branch, a copy of `main`, was deleted. All work is on `main`.
+
 ## v0.8 — pre-release
 - **The kubes of Kube** (port addition): its 77 blocks (Motion Twin, 2010) are in the game as full blocks, with their
   textures, light and transparency, in the creative palette and the ESCorp database. Kube Water and Kube Lava run down their

@@ -2,6 +2,9 @@
 
 [Español : `CHANGELOG.md`](CHANGELOG.md) · [English: `CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## Non publié
+- Dépôt : la branche `port-hashlink`, une copie de `main`, a été supprimée. Tout le travail est sur `main`.
+
 ## v0.8 — pre-release
 - **Kubes de Kube** (ajout du portage) : les 77 blocs de Kube (Motion Twin, 2010) sont dans le jeu en blocs pleins, avec
   leurs textures, leur lumière et leur transparence, dans la palette créative et la base de données ESCorp. L'Eau de Kube et
