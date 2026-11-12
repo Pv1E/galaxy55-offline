@@ -46,7 +46,7 @@ import Common;
  *   print land              aterrizaje: suelo, gravedad, aturdimiento (stun), cabeceo del casco (bobY), temblor y fundido
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
  *   mine x y z              excavar ese bloque con el excavador y decir cuanto tarda (y con que potencia)
- *   print inv|pos|zones|drops|loose|chest|msg|shake|fade|block x y z|blockl x y z|around x y z r|ids x y z r|select|ship|map [z]|palette|time|power|life|fov|sky|menu
+ *   print inv|pos|zones|drops|loose|chest|msg|shake|fade|block x y z|blockl x y z|around x y z r|ids x y z r|select|ship|map [z]|palette|time|power|life|fov|sky|menu|helmet
  *   fadelog on|off          fundido de color de pantalla imagen por imagen, tal como lo pinta el HUD (opacidad y color); off
  *                           dice cuantas veces subio (destellos) y cuantas como mucho en un segundo (WCAG 2.3.1: 3)
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
@@ -1323,6 +1323,25 @@ class Dev {
 			inline function r( v : Float ) return Math.round(v * 1000) / 1000;
 			var hudPx = @:privateAccess app.hudShake * h3d.Engine.getCurrent().width / Ui.Theme.visibleArea().w;
 			Sys.println("temblor " + r(g.shake) + " camara " + r(g.shakeZ) + " hud " + r(hudPx) + " px  t=" + r(g.playSeconds));
+		case "helmet":
+			// casco (filtro de la visera): OK si tiene la escala de la ventana actual (ancho/974, alto/624, como layoutHelmet) y
+			// tapa sus cuatro bordes; DESAJUSTADO si se quedo con el tamano de una ventana anterior (bandas sin filtro a los lados)
+			var h = @:privateAccess app.helmet, va = Ui.Theme.visibleArea();
+			if( !h.visible ) {
+				Sys.println("casco oculto");
+				return;
+			}
+			var e = h3d.Engine.getCurrent(), px = e.width / va.w;
+			var x0 = h.x, x1 = h.x + h.tile.width * h.scaleX, y0 = h.y, y1 = h.y + h.tile.height * h.scaleY;
+			var bad = [];
+			if( Math.abs(h.scaleX / (va.w / 974) - 1) > 0.001 || Math.abs(h.scaleY / (va.h / 624) - 1) > 0.001 ) bad.push("escala");
+			if( x0 > va.x ) bad.push("izquierda");
+			if( x1 < va.x + va.w ) bad.push("derecha");
+			if( y0 > va.y ) bad.push("arriba");
+			if( y1 < va.y + va.h ) bad.push("abajo");
+			inline function p( v : Float ) return Math.round(v * px);
+			Sys.println("casco " + e.width + "x" + e.height + " " + (bad.length == 0 ? "OK" : "DESAJUSTADO: " + bad.join(", "))
+				+ " (de " + p(x0 - va.x) + "," + p(y0 - va.y) + " a " + p(x1 - va.x) + "," + p(y1 - va.y) + " px)");
 		case "cam":
 			// altura de la camara y distancia hasta el primer bloque que choca encima (negativa = la camara esta dentro de el)
 			var cz = @:privateAccess g.s3d.camera.pos.z, top = Math.floor(cz);
