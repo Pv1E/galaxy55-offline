@@ -60,7 +60,8 @@ import Common;
  *                           queda en curso), deliver a J al contrato en curso J; contracts abandon J lo abandona (con el panel
  *                           abierto, como su boton: pide confirmacion, button 1 = Si); contracts old los deja como en una
  *                           partida antigua (sin abandonados ni en curso); contracts empty vacia el inventario; print contracts;
- *                           contracts load RUTA lee otro contracts.json
+ *                           contracts load RUTA lee otro contracts.json. Contrato especial: contracts fill s [n] da la tierra roja
+ *                           que falta (o n), deliver s se la da; contracts full llena las casillas vacias (inventario lleno)
  *   kub [close|tab N|pick Bloque|page D|nav dx dy]   Base de datos ESCorp (anadido del port): abrirla, cerrarla, pestana, ficha,
  *                           categoria, flechas; kub forget|visit|see Bloque|got Bloque|break Bloque|load RUTA olvidan todo,
  *                           exploran el planeta, identifican, recuperan o rompen un bloque como al jugar, o leen otro kubindex.json;
@@ -859,8 +860,12 @@ class Dev {
 						var s = Std.parseInt(a[2]);
 						Contracts.devSlot = s < 0 ? null : s;
 					case "fill":
-						// fill i [n]: bloques del contrato i del tablero; fill a J [n]: los que faltan al contrato en curso J
-						if( a[2] == "a" ) {
+						// fill i [n]: bloques del contrato i del tablero; fill a J [n]: los que faltan al contrato en curso J; fill s [n]:
+						// tierra roja, la que falta al contrato especial (o n)
+						if( a[2] == "s" ) {
+							g.inv.addBlocks(Contracts.specialBlock(), a[3] != null ? Std.parseInt(a[3]) : Contracts.SPECIAL_N - Contracts.specialGiven(g.info));
+							if( app.contracts != null ) @:privateAccess app.contracts.refresh();
+						} else if( a[2] == "a" ) {
 							var ac = Contracts.active(g.info)[Std.parseInt(a[3])];
 							g.inv.addBlocks(Contracts.blockOf(ac), a[4] != null ? Std.parseInt(a[4]) : ac.n - ac.given);
 						} else {
@@ -875,6 +880,11 @@ class Dev {
 						// empty: vacia las casillas del inventario (la partida de prueba empieza casi llena), para probar los dones parciales
 						for( k in 0...g.inv.inv.t.length ) g.inv.inv.t[k] = null;
 						g.inv.display();
+					case "full":
+						// full: llena las casillas vacias del inventario con una roca cada una (contrato especial con el inventario lleno)
+						for( k in 0...g.inv.inv.t.length ) if( g.inv.inv.t[k] == null ) g.inv.inv.t[k] = { k : Block.get(BRock).index, n : 1 };
+						g.inv.display();
+						if( app.contracts != null ) @:privateAccess app.contracts.refresh();
 					case "old":
 						// old: los contratos como en una partida de antes de los contratos en curso (sin abandonados ni en curso), para
 						// probar que se leen tras savegame y reload
@@ -943,7 +953,11 @@ class Dev {
 					// deliver i: da lo que llevas a la linea i del tablero; deliver a J: al contrato en curso J (con el panel abierto, como
 					// su boton)
 					var ok : Bool, what : String;
-					if( a[1] == "a" ) {
+					if( a[1] == "s" ) {
+						// deliver s: al contrato especial
+						what = "especial";
+						ok = app.contracts != null ? app.contracts.giveSpecial() : Contracts.giveSpecial(g.info, g.inv);
+					} else if( a[1] == "a" ) {
 						var ac = Contracts.active(g.info)[Std.parseInt(a[2])];
 						what = "en curso " + a[2];
 						ok = ac != null && (app.contracts != null ? app.contracts.give(ac) : Contracts.give(g.info, g.inv, ac));
@@ -1217,7 +1231,10 @@ class Dev {
 					+ (Contracts.isAbandoned(g.info, i) ? " ABANDONADO" : "") + (Contracts.isActive(g.info, i) ? " EN CURSO" : offered.indexOf(i) < 0 ? " OCULTO" : "");
 			}].join(" | ") + " | en curso: " + [for( ac in Contracts.active(g.info) ) ac.block + " " + ac.given + "/" + ac.n + " +" + ac.reward + " (periodo " + ac.slot + " linea " + ac.index + ")"].join(", ")
 				+ " | quedan " + Std.int(Contracts.remaining()) + " s creditos=" + g.info.credits + " panel=" + (app.contracts == null ? "no" : "si foco " + app.contracts.devFocus() + (app.contracts.paused ? " (confirmando)" : ""))
-				+ " boton=" + (@:privateAccess app.computerContracts == null ? "-" : "" + @:privateAccess app.computerContracts.enabled));
+				+ " boton=" + (@:privateAccess app.computerContracts == null ? "-" : "" + @:privateAccess app.computerContracts.enabled)
+				+ " | especial " + Contracts.specialGiven(g.info) + "/" + Contracts.SPECIAL_N + (Contracts.specialDone(g.info) ? " CUMPLIDO" : "")
+				+ " llevas " + Contracts.have(g.inv, Contracts.specialBlock()) + " conteneurs " + Contracts.have(g.inv, Contracts.specialReward())
+				+ " tuto=" + (g.info.tuto == null ? "-" : "" + g.info.tuto.step) + " avisos=" + app.kubNotify.devInfo());
 		case "kub":
 			// Base de datos ESCorp: localizados, recuperados, nuevos, planetas y cometas explorados, recetas fabricadas, estadisticas
 			// y, con el panel abierto, la pestana

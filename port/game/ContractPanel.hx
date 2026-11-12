@@ -9,13 +9,16 @@ private enum ContractAction {
 	Deliver( i : Int );
 	Give( a : ActiveContract );
 	Abandon( a : ActiveContract );
+	/** dar tierra roja al contrato especial */
+	Special;
 }
 
 /**
  * Contratos de la ESCorp (anadido del port, ver Contracts): una linea por contrato con el bloque, lo que llevas de lo que
  * piden, la recompensa y el boton de entregar (o de dar los bloques que haya, y el contrato queda en curso). Arriba van los
  * contratos en curso, con dos botones: dar lo que llevas y abandonar (con confirmacion, onAbandon). Encima, el tiempo que
- * falta para el tablero siguiente; al cumplirse, el panel se rehace solo.
+ * falta para el tablero siguiente; al cumplirse, el panel se rehace solo. Debajo del tablero, el contrato especial (sin plazo,
+ * una vez por partida), con su rotulo y en dorado; tras cobrarlo sigue en el panel como Entregado hasta cerrarlo.
  */
 class ContractPanel extends h2d.Object {
 
@@ -31,13 +34,17 @@ class ContractPanel extends h2d.Object {
 	static inline var BTN_H = 44;
 	/** botones apilados de los contratos en curso */
 	static inline var BTN2_H = 36;
+	/** rotulo del contrato especial, entre el tablero y su linea */
+	static inline var HEAD = 34;
 
 	var atlas : h3d.mat.Texture;
 	var info : SaveInfo;
 	var inv : Inv;
 	var slot : Int;
-	/** lineas del panel: contratos en curso y luego los del tablero que se ofrecen */
+	/** lineas del panel: contratos en curso y luego los del tablero que se ofrecen (el especial va aparte) */
 	var count = -1;
+	/** el contrato especial sale en el panel: sin cumplir al abrirlo */
+	var special : Bool;
 	var px : Float;
 	var py : Float;
 	var bg : h2d.Graphics;
@@ -46,8 +53,8 @@ class ContractPanel extends h2d.Object {
 	var creditsText : h2d.Text;
 	var timerText : h2d.Text;
 	var close : h2d.Interactive;
-	/** botones que se eligen con el mando o las flechas, en orden: su linea, su sitio y lo que hacen */
-	var items : Array<{ row : Int, x : Float, y : Float, w : Float, h : Float, action : ContractAction }> = [];
+	/** botones que se eligen con el mando o las flechas, en orden: su linea (y su altura en el panel), su sitio y lo que hacen */
+	var items : Array<{ row : Int, ry : Float, x : Float, y : Float, w : Float, h : Float, action : ContractAction }> = [];
 	/** boton elegido con el mando o las flechas (-1 = solo raton) */
 	var focus = -1;
 	var focusG : h2d.Graphics;
@@ -60,6 +67,7 @@ class ContractPanel extends h2d.Object {
 		this.atlas = atlas;
 		this.info = info;
 		this.inv = inv;
+		special = !Contracts.specialDone(info);
 		px = (Theme.W - PW) * 0.5;
 		bg = new h2d.Graphics(this);
 		title = Theme.text(this, Lang.t("contracts.title"), 2.6, Theme.TEXT);
@@ -75,9 +83,9 @@ class ContractPanel extends h2d.Object {
 		refresh();
 	}
 
-	/** alto segun el numero de lineas (470 con 3) */
+	/** alto segun el numero de lineas del tablero (470 con 3), mas el contrato especial con su rotulo (596 con 3) */
 	function layout( n : Int ) {
-		var PH = 194 + Std.int(Math.max(1, n)) * ROW;
+		var PH = 194 + Std.int(Math.max(ROW, n * ROW + (special ? HEAD + ROW : 0)));
 		py = (Theme.H - PH) * 0.5;
 		bg.clear();
 		Theme.fullRect(bg, 0x000000, 0.55);
@@ -101,15 +109,19 @@ class ContractPanel extends h2d.Object {
 		count = n;
 		for( k in 0...active.length ) activeRow(k, active[k]);
 		for( k in 0...offered.length ) boardRow(active.length + k, offered[k], board[offered[k]]);
+		if( special ) specialRow(n);
 		if( focus >= items.length ) focus = items.length - 1;
 		updateTimer();
 		drawFocus();
 	}
 
-	/** fondo, icono, nombre (con la etiqueta tag detras, si la hay), cantidad y recompensa de una linea */
-	function rowBase( r : Int, c : Contracts.Contract, dim : Bool, tint : Int, progress : String, progressCol : Int, ?tag : String ) : h2d.Object {
+	/** altura de la linea r en el panel: la del contrato especial (r = count) va debajo de su rotulo */
+	function rowY( r : Int ) : Float return r * ROW + (r >= count ? HEAD : 0);
+
+	/** fondo, icono, nombre (con la etiqueta tag detras, si la hay), cantidad y recompensa (en creditos si no se da) de una linea */
+	function rowBase( r : Int, c : Contracts.Contract, dim : Bool, tint : Int, progress : String, progressCol : Int, ?tag : String, ?reward : String ) : h2d.Object {
 		var o = new h2d.Object(rows);
-		o.y = r * ROW;
+		o.y = rowY(r);
 		var g = new h2d.Graphics(o);
 		Theme.rect(g, 0, 0, PW - 48, ROW - 10, tint, tint == 0xFFFFFF ? 0.06 : 0.1);
 		var bm = Icons.bitmap(o, c.block, 64, atlas);
@@ -119,7 +131,11 @@ class ContractPanel extends h2d.Object {
 		var name = Theme.text(o, c.block.getName(), 1.9, dim ? Theme.DIM : Theme.TEXT, 92, 12);
 		if( tag != null ) Theme.text(o, tag, 1.4, tint, 92 + name.textWidth * name.scaleX + 16, 17);
 		Theme.text(o, progress, 1.6, progressCol, 92, 46);
-		Theme.text(o, Lang.t("contracts.reward").split("%n%").join("" + c.reward), 1.6, dim ? Theme.DIM : Theme.ACCENT, 250, 46);
+		if( reward == null ) reward = Lang.t("contracts.reward").split("%n%").join("" + c.reward);
+		var rt = Theme.text(o, reward, 1.6, dim ? Theme.DIM : Theme.ACCENT, 250, 46);
+		// una recompensa larga (la del contrato especial en frances) se corre a la izquierda para no llegar al boton
+		var room = PW - 48 - BTN_W - 24 - rt.textWidth * rt.scaleX;
+		if( rt.x > room ) rt.x = Math.max(170, room);
 		return o;
 	}
 
@@ -129,14 +145,17 @@ class ContractPanel extends h2d.Object {
 		b.setPosition(x, y);
 		var g = new h2d.Graphics(b);
 		Theme.rect(g, 0, 0, w, h, ok ? col : 0xFFFFFF, ok ? 0.35 : 0.06);
-		Theme.center(Theme.text(b, text, h < BTN_H ? 1.6 : 1.8, textCol >= 0 ? textCol : ok ? Theme.TEXT : Theme.DISABLED), w, h);
+		var t = Theme.text(b, text, h < BTN_H ? 1.6 : 1.8, textCol >= 0 ? textCol : ok ? Theme.TEXT : Theme.DISABLED);
+		// un texto largo ("Inventaire plein") se achica hasta caber en el boton
+		if( t.textWidth * t.scaleX > w - 16 ) t.setScale((w - 16) / t.textWidth);
+		Theme.center(t, w, h);
 		if( ok )
 			b.onClick = function(_) {
 				if( !paused ) run(action);
 			}
 		else
 			b.cursor = Default;
-		if( action != null ) items.push({ row : r, x : x, y : o.y + y, w : w, h : h, action : action });
+		if( action != null ) items.push({ row : r, ry : o.y, x : x, y : o.y + y, w : w, h : h, action : action });
 	}
 
 	/** linea i del tablero: entregar con todos los bloques, dar los que haya con parte, o entregada / abandonada */
@@ -163,6 +182,40 @@ class ContractPanel extends h2d.Object {
 		button(o, r, x, gap / 3 * 2 + BTN2_H, BTN_W, BTN2_H, Lang.t("contracts.abandon"), true, Theme.DANGER, Abandon(a));
 	}
 
+	/**
+	 * contrato especial (Contracts.giveSpecial), debajo del tablero: rotulo, fondo y marco dorados y la etiqueta Especial. Sin
+	 * plazo y sin abandonar: entregar con lo que falta, dar los que haya con parte (como un contrato en curso), inventario lleno
+	 * si con el ultimo bloque no cabe el conteneur, o entregado (hasta cerrar el panel)
+	 */
+	function specialRow( r : Int ) {
+		var soil = Contracts.specialBlock(), N = Contracts.SPECIAL_N;
+		var done = Contracts.specialDone(info), given = Contracts.specialGiven(info), give = Contracts.canGiveSpecial(info, inv);
+		var have = Contracts.have(inv, soil);
+		Theme.text(rows, Lang.t("contracts.special"), 1.6, Theme.ACCENT, 0, rowY(r) - HEAD + 6);
+		var progress = done ? N : given > 0 ? given : Std.int(Math.min(have, N));
+		var c : Contracts.Contract = { block : soil, n : N, reward : 0 };
+		var reward = Lang.t("contracts.special.reward").split("%name%").join(Contracts.specialReward().getName());
+		var o = rowBase(r, c, done, Theme.ACCENT, progress + " / " + N, done || given > 0 || given + give >= N ? Theme.CYAN : Theme.DIM,
+			Lang.t("contracts.special.tag"), reward);
+		// marco dorado: se distingue de las lineas del tablero (blancas) y de las en curso (azules)
+		var g = new h2d.Graphics(o);
+		var w = PW - 48, h = ROW - 10;
+		Theme.rect(g, 0, 0, w, 2, Theme.ACCENT, done ? 0.4 : 1);
+		Theme.rect(g, 0, h - 2, w, 2, Theme.ACCENT, done ? 0.4 : 1);
+		Theme.rect(g, 0, 0, 2, h, Theme.ACCENT, done ? 0.4 : 1);
+		Theme.rect(g, w - 2, 0, 2, h, Theme.ACCENT, done ? 0.4 : 1);
+		var x = w - BTN_W - 12, y = (h - BTN_H) * 0.5;
+		var last = give > 0 && given + give >= N;
+		if( done )
+			button(o, r, x, y, BTN_W, BTN_H, Lang.t("contracts.done"), false, 0, Special, Theme.CYAN);
+		else if( last && !Contracts.specialRoom(inv, give) )
+			button(o, r, x, y, BTN_W, BTN_H, Lang.t("contracts.invfull"), false, 0, Special, Theme.DANGER);
+		else if( give > 0 && !last )
+			button(o, r, x, y, BTN_W, BTN_H, giveLabel(give), true, Theme.CYAN, Special);
+		else
+			button(o, r, x, y, BTN_W, BTN_H, Lang.t("contracts.deliver"), give > 0, Theme.ACCENT, Special);
+	}
+
 	/** "Dar 12"; sin bloques, solo "Dar" */
 	static function giveLabel( n : Int ) : String {
 		var t = Lang.t("contracts.give");
@@ -174,7 +227,15 @@ class ContractPanel extends h2d.Object {
 		case Deliver(i): deliver(i);
 		case Give(a): give(a);
 		case Abandon(a): askAbandon(a);
+		case Special: giveSpecial();
 		}
+	}
+
+	/** da lo que llevas al contrato especial (Contracts.giveSpecial): con el ultimo bloque se cobra el conteneur */
+	public function giveSpecial() : Bool {
+		if( !Contracts.giveSpecial(info, inv) ) return false;
+		refresh();
+		return true;
 	}
 
 	/** da lo que llevas a la linea i del tablero (Contracts.deliver): se entrega o queda en curso */
@@ -218,7 +279,7 @@ class ContractPanel extends h2d.Object {
 		focusG.clear();
 		if( focus < 0 || focus >= items.length ) return;
 		var it = items[focus];
-		frame(rows.x - 3, rows.y + it.row * ROW - 3, PW - 42, ROW - 4, 3);
+		frame(rows.x - 3, rows.y + it.ry - 3, PW - 42, ROW - 4, 3);
 		if( it.h < BTN_H ) frame(rows.x + it.x - 3, rows.y + it.y - 3, it.w + 6, it.h + 6, 2);
 	}
 
@@ -237,6 +298,7 @@ class ContractPanel extends h2d.Object {
 			case Deliver(i): "entregar " + i;
 			case Give(a): "dar en curso " + all.indexOf(a);
 			case Abandon(a): "abandonar en curso " + all.indexOf(a);
+			case Special: "especial";
 		}
 		return focus + " (linea " + it.row + ": " + what + ")";
 	}

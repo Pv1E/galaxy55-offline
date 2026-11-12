@@ -438,6 +438,8 @@ class GalaxyApp extends hxd.App {
 		// Base de datos ESCorp: lo nuevo se avisa arriba a la derecha, con un aviso ligero
 		kubNotify = new KubNotify(s2d, atlas);
 		Kubindex.onNews = function(n) if( state == Playing ) kubNotify.push(n);
+		// contrato especial cobrado (desde el panel de contratos): para que sirve el conteneur, al volver al juego
+		Contracts.onSpecial = function() kubNotify.later(Contracts.specialNews());
 
 		if( demoSaves ) makeDemoSaves();
 
@@ -1057,8 +1059,8 @@ class GalaxyApp extends hxd.App {
 		trade.enabled = !Tutorial.active(game.info);
 		computerTrade = trade;
 		var contracts = new Button(s, Lang.t("computer.contracts"));
-		// en el tutorial los contratos se ven pero no se pueden abrir (se vuelve a mirar en openComputer: el menu se guarda)
-		contracts.enabled = !Tutorial.active(game.info);
+		// en el tutorial los contratos se ven pero no se abren hasta su paso (se vuelve a mirar en openComputer: el menu se guarda)
+		contracts.enabled = Tutorial.contractsAllowed(game.info);
 		computerContracts = contracts;
 		// licencias de la ESCorp y planeta principal (Licenses, anadido del port): como los contratos
 		var licenses = new Button(s, Lang.t("computer.licenses"));
@@ -1661,7 +1663,7 @@ class GalaxyApp extends hxd.App {
 		hud.visible = false; msgText.visible = false;
 		showComputer();
 		centerMouse();
-		computerContracts.enabled = !Tutorial.active(game.info);
+		computerContracts.enabled = Tutorial.contractsAllowed(game.info);
 		computerLicenses.enabled = !Tutorial.active(game.info);
 		computerTrade.enabled = !Tutorial.active(game.info);
 		computerDatabase.enabled = Tutorial.databaseAllowed(game.info);
@@ -2133,11 +2135,12 @@ class GalaxyApp extends hxd.App {
 	public var contracts : ContractPanel;
 
 	public function openContracts() {
-		if( game == null || contracts != null || Tutorial.active(game.info) ) return;
+		if( game == null || contracts != null || !Tutorial.contractsAllowed(game.info) ) return;
 		if( current != null ) resume();
 		contracts = new ContractPanel(s2d, atlas, game.info, game.inv);
 		contracts.onClose = closeContracts;
 		contracts.onAbandon = askAbandonContract;
+		Tutorial.contractsOpened(game.info);
 		paletteOpen = true;
 		captureMouse(false);
 	}

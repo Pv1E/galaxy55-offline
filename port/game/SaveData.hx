@@ -99,6 +99,8 @@ typedef SaveInfo = {
 	@:optional var market : Market.MarketInfo;
 	/** contratos de la ESCorp: lineas entregadas y abandonadas en el periodo actual, y contratos en curso (Contracts) */
 	@:optional var contracts : Contracts.ContractsInfo;
+	/** contrato especial de la ESCorp (Contracts, anadido del port); null = sin empezar (y en las partidas antiguas) */
+	@:optional var special : Contracts.SpecialInfo;
 	/** nave editada en el hangar (zlib en base64); null = la de serie */
 	@:optional var shipData : String;
 	/** solo mientras se esta en el hangar (no se guarda) */
@@ -224,6 +226,16 @@ class SaveData {
 		}
 	}
 
+	/** contrato especial; null si no hay o esta mal formado */
+	static function readSpecial( o : Dynamic ) : Contracts.SpecialInfo {
+		try {
+			if( o == null ) return null;
+			return { given : o.given != null ? Std.int(o.given) : 0, done : o.done == true };
+		} catch( e : Dynamic ) {
+			return null;
+		}
+	}
+
 	static function readChests( o : Dynamic ) : Array<{ key : String, t : Protocol.BlockInventory }> {
 		try {
 			if( o == null ) return [];
@@ -317,7 +329,7 @@ class SaveData {
 				playSeconds : o.playSeconds != null ? o.playSeconds : 0,
 				px : o.px != null ? o.px : -1, py : o.py != null ? o.py : -1, pz : o.pz != null ? o.pz : -1,
 				yaw : o.yaw != null ? o.yaw : 0, pitch : o.pitch != null ? o.pitch : 0, fly : o.fly == true, life : o.life != null ? o.life : 100,
-					creative : o.creative == true, tutorial : o.tutorial == null ? null : o.tutorial == true, inv : readInv(o.inv), uni : uni, credits : o.credits != null ? Std.int(o.credits) : Market.START_CREDITS, market : readMarket(o.market), contracts : readContracts(o.contracts), chests : readChests(o.chests), shipData : o.shipData,
+					creative : o.creative == true, tutorial : o.tutorial == null ? null : o.tutorial == true, inv : readInv(o.inv), uni : uni, credits : o.credits != null ? Std.int(o.credits) : Market.START_CREDITS, market : readMarket(o.market), contracts : readContracts(o.contracts), special : readSpecial(o.special), chests : readChests(o.chests), shipData : o.shipData,
 					shipEdits : o.shipEdits != null ? [for( v in (o.shipEdits : Array<Dynamic>) ) Std.int(v)] : [], edits : o.edits != null ? [for( v in (o.edits : Array<Dynamic>) ) Std.int(v)] : [],
 					survival : o.creative == true && o.survival == true ? true : null,
 					tuto : readTuto(o.tuto), shipAt : readSpot(o.shipAt), comet : readComet(o.comet), kub : readKub(o.kub),
