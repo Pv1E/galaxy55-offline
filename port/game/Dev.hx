@@ -95,6 +95,8 @@ import Common;
  *   mouse X Y [click|down|up] llevar el raton a ese punto de la zona 1280x720 (y hacer clic, o solo apretar o soltar: arrastrar)
  *   print menu|saves        pantalla de menu abierta y su foco / partidas guardadas (waitfor menu: el menu y su fondo listos)
  *   print mouse             donde cree el juego que esta el puntero (pixeles de la ventana, zona 1280x720) y el cursor del sistema
+ *   print helmet            casco (filtro de la visera): OK si tiene la escala de la ventana actual y tapa sus cuatro bordes,
+ *                           DESAJUSTADO si se quedo con el tamano de una ventana anterior (port/dev/ordinateur_resize.txt)
  *   kube ORDEN              editor de kubes abierto (screen kubes): load BLOQUE (copiar un bloque del juego), shape ID, face NOMBRE,
  *                           paint x0 y0 x1 y1 AARRGGBB (rectangulo de la cara, 0 = borrar), name TEXTO, tab 0|1, file N (cargar el
  *                           .kube N de Mis kubes), save, tile N (mosaico N x N x N de la vista previa), zoom Z (el paso de zoom
@@ -1375,6 +1377,25 @@ class Dev {
 			inline function r( v : Float ) return Math.round(v * 1000) / 1000;
 			var hudPx = @:privateAccess app.hudShake * h3d.Engine.getCurrent().width / Ui.Theme.visibleArea().w;
 			Sys.println("temblor " + r(g.shake) + " camara " + r(g.shakeZ) + " hud " + r(hudPx) + " px  t=" + r(g.playSeconds));
+		case "helmet":
+			// casco (filtro de la visera): OK si tiene la escala de la ventana actual (ancho/974, alto/624, como layoutHelmet) y
+			// tapa sus cuatro bordes; DESAJUSTADO si se quedo con el tamano de una ventana anterior (bandas sin filtro a los lados)
+			var h = @:privateAccess app.helmet, va = Ui.Theme.visibleArea();
+			if( !h.visible ) {
+				Sys.println("casco oculto");
+				return;
+			}
+			var e = h3d.Engine.getCurrent(), px = e.width / va.w;
+			var x0 = h.x, x1 = h.x + h.tile.width * h.scaleX, y0 = h.y, y1 = h.y + h.tile.height * h.scaleY;
+			var bad = [];
+			if( Math.abs(h.scaleX / (va.w / 974) - 1) > 0.001 || Math.abs(h.scaleY / (va.h / 624) - 1) > 0.001 ) bad.push("escala");
+			if( x0 > va.x ) bad.push("izquierda");
+			if( x1 < va.x + va.w ) bad.push("derecha");
+			if( y0 > va.y ) bad.push("arriba");
+			if( y1 < va.y + va.h ) bad.push("abajo");
+			inline function p( v : Float ) return Math.round(v * px);
+			Sys.println("casco " + e.width + "x" + e.height + " " + (bad.length == 0 ? "OK" : "DESAJUSTADO: " + bad.join(", "))
+				+ " (de " + p(x0 - va.x) + "," + p(y0 - va.y) + " a " + p(x1 - va.x) + "," + p(y1 - va.y) + " px)");
 		case "cam":
 			// altura de la camara y distancia hasta el primer bloque que choca encima (negativa = la camara esta dentro de el)
 			var cz = @:privateAccess g.s3d.camera.pos.z, top = Math.floor(cz);

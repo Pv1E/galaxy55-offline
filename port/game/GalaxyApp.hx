@@ -2752,7 +2752,6 @@ class GalaxyApp extends hxd.App {
 				if( chest == null && (Keys.pressed("helmet") || (pad != null && pad.isPressed(pad.config.back))) ) toggleHelmet();
 				if( !helmet.visible && helmetOn ) helmet.visible = true;
 				updateHelmet(dt, p);
-				layoutHelmet();
 				updateJetHud(p);
 				updateStatus(dt, p);
 					if( invBar != null ) invBar.update(dt);
@@ -2771,6 +2770,10 @@ class GalaxyApp extends hxd.App {
 			}
 			game.updateCamera();
 		}
+		// el casco (y las barras) se recolocan en cada imagen tambien en la pausa, en el ordenador de a bordo y con sus paneles
+		// (licencias, contratos, comercio, Base de datos ESCorp), donde siguen a la vista: antes solo jugando, y al cambiar el
+		// tamano de la ventana con uno de ellos abierto el casco se quedaba con el de antes (bandas sin filtro a los lados)
+		if( (state == Playing || state == Paused) && game != null ) layoutHelmet();
 
 		if( pendingExplorer > 0 && --pendingExplorer == 0 ) buildExplorer();
 		if( state == Exploring && explorer != null ) {
