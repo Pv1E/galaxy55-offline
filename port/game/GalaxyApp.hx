@@ -1286,6 +1286,7 @@ class GalaxyApp extends hxd.App {
 	var hangarOrig : String;
 
 	function leaveGame() {
+		closeInventory();
 		closePalette();
 		closeShop();
 		closeContracts();
@@ -2036,6 +2037,34 @@ class GalaxyApp extends hxd.App {
 		captureMouse(false);
 	}
 
+	/** pantalla de inventario (InvScreen, anadido del port): I en el modo aventura, a pie. Como la tienda, el juego sigue detras
+	    (sin controles): lo que se tira cae y rueda a la vista */
+	public var invScreen : InvScreen;
+
+	public function openInventory() {
+		if( paletteOpen || game == null || chest != null || game.piloting ) return;
+		invScreen = new InvScreen(s2d, atlas, game.inv);
+		invScreen.onClose = closeInventory;
+		invScreen.onThrow = function(b, n) if( game != null ) game.throwStack(b, n);
+		paletteOpen = true;
+		captureMouse(false);
+		// el panel tiene su ayuda: la de las teclas del juego (hud) no se ve detras
+		hud.visible = false;
+	}
+
+	function closeInventory() {
+		if( invScreen == null ) return;
+		// la pila del cursor no ha salido nunca del inventario (InvScreen): no hay nada que devolver
+		invScreen.remove();
+		invScreen = null;
+		paletteOpen = false;
+		if( game != null && state == Playing ) {
+			hud.visible = true;
+			captureMouse(true);
+			game.releaseAction();
+		}
+	}
+
 	public var shop : Shop;
 	public var chest : Chest;
 
@@ -2654,12 +2683,14 @@ class GalaxyApp extends hxd.App {
 					contracts.update(dt, pad);
 				} else if( database != null ) {
 					database.update(dt, pad);
+				} else if( invScreen != null ) {
+					invScreen.update(dt, pad);
 				} else if( palette != null ) {
 					palette.update(dt, pad);
 				} else if( K.isPressed(K.ESCAPE) || Keys.pressed("palette") ) closePalette();
 				// la tienda y los contratos salen del ordenador de a bordo: tampoco paran el juego (ver abajo, state == Paused); la
 				// barra de vida se ve bajo el panel
-				if( shop != null || contracts != null || database != null ) {
+				if( shop != null || contracts != null || database != null || invScreen != null ) {
 					game.update(dt, false, pad);
 					if( game == null || state != Playing ) return;
 					updateJetHud(game);
@@ -2669,8 +2700,9 @@ class GalaxyApp extends hxd.App {
 				// anadido del port: Esc o Start dejan la nave donde esta (sin pausar)
 				game.stopPiloting();
 				pausedThisFrame = true;
-			} else if( chest == null && !game.piloting && game.creative && (Keys.pressed("palette") || (pad != null && pad.isPressed(pad.config.ranalogClick))) ) {
-				openPalette();
+			} else if( chest == null && !game.piloting && (Keys.pressed("palette") || (pad != null && pad.isPressed(pad.config.ranalogClick))) ) {
+				// I / R3: la paleta en creativo, la pantalla de inventario en aventura
+				if( game.creative ) openPalette() else openInventory();
 			} else if( chest == null && (K.isPressed(K.ESCAPE) || (pad != null && pad.isPressed(pad.config.start))) ) { pause(); pausedThisFrame = true; }
 			else {
 				// con la cantina abierta el juego sigue (Esc o B la cierran, sin pausar)
@@ -2701,7 +2733,7 @@ class GalaxyApp extends hxd.App {
 				var lines = [];
 				if( showFps ) lines.push(Std.int(p.px) + ", " + Std.int(p.py) + ", " + Std.int(p.pz) + "   " + Std.int(engine.fps) + " fps");
 				// con la cantina abierta, la ayuda de las teclas del juego no (casi todas estan desactivadas; la ventana tiene la suya)
-				if( Settings.showHelp && chest == null ) lines.push(Keys.fill(p.piloting ? Lang.t("hud.pilot") : Lang.t("hud.help")) + (p.creative && !p.piloting ? "\n" + Keys.fill(Lang.t("hud.creative")) : ""));
+				if( Settings.showHelp && chest == null ) lines.push(Keys.fill(p.piloting ? Lang.t("hud.pilot") : Lang.t("hud.help")) + (p.piloting ? "" : "\n" + Keys.fill(Lang.t(p.creative ? "hud.creative" : "hud.inventory"))));
 				hud.text = lines.join("\n");
 				msgText.visible = game.message != null;
 				if( game.message != null ) {
@@ -3226,7 +3258,7 @@ class GalaxyApp extends hxd.App {
 	    el casco y el HUD se ocultan un momento) y mira si queda magenta en algun punto de los cuatro bordes de la ventana. Se
 	    usa un color y no el alfa porque el mapa de estrellas suma sus capas (blend Add): su alfa es 1 aunque deje ver el fondo. */
 	public function devCover( ?name : String ) : String {
-		var top : h2d.Object = shop != null ? shop : contracts != null ? contracts : database != null ? database : chest != null ? chest : palette != null ? palette : explorer != null ? explorer : current != null ? ui : null;
+		var top : h2d.Object = shop != null ? shop : contracts != null ? contracts : database != null ? database : invScreen != null ? invScreen : chest != null ? chest : palette != null ? palette : explorer != null ? explorer : current != null ? ui : null;
 		if( top == null ) return "nada abierto";
 		IconMesh.Icons.flush();
 		var hidden = [];

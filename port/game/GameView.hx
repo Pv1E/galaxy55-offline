@@ -1960,9 +1960,15 @@ class GameView {
 	function dropCurrent() {
 		var index = inv.blockIndex - 1;
 		var s = inv.drop(index);
-		if( s == null || creative ) return; // en creativo tirar solo vacia la casilla
-		var d = drops.add(px + Math.cos(yaw), py + Math.sin(yaw), pz + 1.2, Block.all[s.k]);
-		d.n = s.n;
+		if( s != null ) throwStack(Block.all[s.k], s.n);
+	}
+
+	/** tira n bloques b delante del jugador, como R (dropCurrent; tambien la pantalla de inventario): un solo suelto con todos,
+	    que se recoge entero. En creativo no cae nada: tirar solo vacia la casilla */
+	public function throwStack( b : Block, n : Int ) {
+		if( creative || n <= 0 ) return;
+		var d = drops.add(px + Math.cos(yaw), py + Math.sin(yaw), pz + 1.2, b);
+		d.n = n;
 		d.vx = Math.cos(yaw) * 0.3;
 		d.vy = Math.sin(yaw) * 0.3;
 		d.active = false;
