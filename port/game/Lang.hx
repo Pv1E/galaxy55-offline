@@ -64,6 +64,17 @@ class Lang {
 		"contracts.abandon.ask" => ["¿Abandonar el contrato de %name%?", "Abandon the %name% contract?", "Abandonner le contrat de %name% ?"],
 		"contracts.abandon.warn" => ["Los %n% bloques ya dados se pierden y no cobras nada.", "The %n% blocks already given are lost and you get nothing.", "Les %n% blocs déjà donnés sont perdus et tu ne touches rien."],
 		"contracts.full" => ["Tablero lleno: termina o abandona un contrato en curso.", "Board full: finish or abandon a contract in progress.", "Tableau plein : termine ou abandonne un contrat en cours."],
+		// contrato especial (anadido del port, Contracts): rotulo encima de su linea, recompensa (%name% = el conteneur), boton con el
+		// inventario lleno y aviso al cobrarlo (arriba a la derecha, KubNotify)
+		"contracts.special" => ["Contrato especial: sin límite de tiempo, una sola vez", "Special contract: no time limit, one time only", "Contrat spécial : sans limite de temps, une seule fois"],
+		"contracts.special.tag" => ["Especial", "Special", "Spécial"],
+		"contracts.special.reward" => ["Recompensa: 1 %name%", "Reward: 1 %name%", "Récompense : 1 %name%"],
+		"contracts.invfull" => ["Inventario lleno", "Inventory full", "Inventaire plein"],
+		"contracts.special.got" => ["Contrato especial cumplido", "Special contract complete", "Contrat spécial rempli"],
+		"contracts.special.info" => [
+			"Sirve para guardar objetos. Se fabrica con 8 de hierro en el sintetizador: ¡te será útil!",
+			"Use it to store items. It is crafted from 8 iron in the synthesizer: it will come in handy!",
+			"Il sert à stocker des objets. Il se fabrique avec 8 fer au synthétiseur : il te sera utile !"],
 		"shop.title" => ["Robot comerciante", "Merchant robot", "Robot marchand"],
 		"shop.yours" => ["Lo que llevas (clic: vender)", "Your items (click: sell)", "Ton inventaire (clic : vendre)"],
 		"shop.robot" => ["Lo que vende el robot (clic: comprar)", "Robot's stock (click: buy)", "Stock du robot (clic : acheter)"],

@@ -12,11 +12,12 @@ typedef TutoTarget = { x : Int, y : Int, z : Int };
  * BAUXITE  minar 2 bauxitas                        RETURN   volver a la nave por el rayo
  * ALU      bauxita -> aluminio en el sintetizador  PLATES   aluminio -> blindaje
  * DATABASE ordenador de a bordo, Base de datos ESCorp (Kubindex: lo que ya has localizado y recuperado)
+ * CONTRACTS ordenador de a bordo, Contratos: basta con abrirlos (encargos de la ESCorp, y el contrato especial)
  * COMPUTER ordenador de a bordo, Modificar la nave HANGAR   tapar los agujeros (solo ahi y solo blindaje)
  * LEAVE    salir del hangar con la nave estanca    DONE     la ESCorp envia cargas y creditos, el planeta pasa a ser el
  *                                                           principal (Licenses) y se acaba
- * Mientras dura no se despega (GalaxyApp.buildComputer). El paso se guarda en SaveInfo.tuto. DATABASE va entre PLATES y
- * COMPUTER pero lleva el numero siguiente a DONE: las partidas guardadas con el tutorial a medias conservan su paso.
+ * Mientras dura no se despega (GalaxyApp.buildComputer). El paso se guarda en SaveInfo.tuto. DATABASE y CONTRACTS van entre
+ * PLATES y COMPUTER pero llevan los numeros siguientes a DONE: las partidas guardadas con el tutorial a medias conservan su paso.
  */
 class Tutorial {
 
@@ -34,6 +35,7 @@ class Tutorial {
 	public static inline var LEAVE = 11;
 	public static inline var DONE = 12;
 	public static inline var DATABASE = 13;
+	public static inline var CONTRACTS = 14;
 
 	static inline var NEED_CITRONOX = 3;
 	static inline var NEED_ETHERIUM = 2;
@@ -61,8 +63,8 @@ class Tutorial {
 		var t = g.info.tuto;
 		if( t == null || g.info.mothership == true ) return;
 		if( g.hangar != null ) {
-			// sin pasar por la base de datos tambien vale: el paso solo la presenta
-			if( t.step == COMPUTER || t.step == DATABASE ) t.step = HANGAR;
+			// sin pasar por la base de datos ni por los contratos tambien vale: esos pasos solo los presentan
+			if( t.step == COMPUTER || t.step == DATABASE || t.step == CONTRACTS ) t.step = HANGAR;
 			if( t.step == HANGAR && holesFilled(g) && g.hangarValid ) t.step = LEAVE;
 			else if( t.step == LEAVE && !holesFilled(g) ) t.step = HANGAR;
 			return;
@@ -121,8 +123,17 @@ class Tutorial {
 	 */
 	public static function databaseAllowed( info : SaveInfo ) return !active(info) || info.tuto.step >= COMPUTER;
 
-	/** se abre la Base de datos ESCorp: el paso DATABASE esta hecho */
-	public static function databaseOpened( info : SaveInfo ) if( active(info) && info.tuto.step == DATABASE ) info.tuto.step = COMPUTER;
+	/** se abre la Base de datos ESCorp: el paso DATABASE esta hecho, toca CONTRACTS */
+	public static function databaseOpened( info : SaveInfo ) if( active(info) && info.tuto.step == DATABASE ) info.tuto.step = CONTRACTS;
+
+	/**
+	 * Los Contratos se abren desde su paso (CONTRACTS, tras la Base de datos ESCorp) hasta el final: COMPUTER y los numeros de
+	 * despues menos DATABASE. Antes, el boton sale desactivado. No hace falta cumplir ninguno: el paso solo los presenta.
+	 */
+	public static function contractsAllowed( info : SaveInfo ) return !active(info) || (info.tuto.step >= COMPUTER && info.tuto.step != DATABASE);
+
+	/** se abren los Contratos: el paso CONTRACTS esta hecho */
+	public static function contractsOpened( info : SaveInfo ) if( active(info) && info.tuto.step == CONTRACTS ) info.tuto.step = COMPUTER;
 
 	/** al salir del hangar con la nave guardada (valida y cambiada): se acaba en la siguiente actualizacion */
 	public static function repaired( info : SaveInfo ) if( active(info) ) info.tuto.step = DONE;
@@ -162,6 +173,7 @@ class Tutorial {
 			case ALU: TutoText.get(g.pz < World.SHIP_Z ? "return" : "alu", count(g, [BAluminium, BShipHull]), holes());
 			case PLATES: TutoText.get(g.pz < World.SHIP_Z ? "return" : "plates", count(g, [BShipHull]), holes());
 			case DATABASE: TutoText.get(g.pz < World.SHIP_Z ? "return" : "database");
+			case CONTRACTS: TutoText.get(g.pz < World.SHIP_Z ? "return" : "contracts");
 			default: TutoText.get(g.pz < World.SHIP_Z ? "return" : "computer");
 		}
 	}
