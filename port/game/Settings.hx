@@ -13,6 +13,8 @@ class Settings {
 	public static var showHelp = true;
 	/** sombra del bloque de la mano en la celda donde se pondra */
 	public static var placePreview = true;
+	/** marco de seleccion: el bloque apuntado (mano vacia) o la celda donde se pondra el de la mano */
+	public static var selectBox = true;
 	/** olas del agua (animWater del original, que las quitaba sin aceleracion grafica): se aplica al momento */
 	public static var waterWaves = true;
 	/** nombre del bloque apuntado, pequeno en una esquina */
@@ -52,6 +54,7 @@ class Settings {
 			if( o.turnKeys != null ) turnKeys = o.turnKeys;
 			if( o.showHelp != null ) showHelp = o.showHelp;
 			if( o.placePreview != null ) placePreview = o.placePreview;
+			if( o.selectBox != null ) selectBox = o.selectBox;
 			if( o.waterWaves != null ) waterWaves = o.waterWaves;
 			if( o.targetName != null ) targetName = o.targetName;
 			if( o.vsync != null ) vsync = o.vsync;
@@ -61,7 +64,7 @@ class Settings {
 	}
 
 	public static function save() {
-		var o = { lang : lang, mouseSens : mouseSens, fov : fov, volume : volume, fullscreen : fullscreen, invertY : invertY, turnKeys : turnKeys, showHelp : showHelp, placePreview : placePreview, waterWaves : waterWaves, targetName : targetName, vsync : vsync, maxFps : maxFps };
+		var o = { lang : lang, mouseSens : mouseSens, fov : fov, volume : volume, fullscreen : fullscreen, invertY : invertY, turnKeys : turnKeys, showHelp : showHelp, placePreview : placePreview, selectBox : selectBox, waterWaves : waterWaves, targetName : targetName, vsync : vsync, maxFps : maxFps };
 		try sys.io.File.saveContent(dir() + "/settings.json", haxe.Json.stringify(o, null, "  ")) catch( e : Dynamic ) {}
 	}
 }

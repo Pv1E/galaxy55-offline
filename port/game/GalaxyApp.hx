@@ -985,6 +985,7 @@ class GalaxyApp extends hxd.App {
 		default:
 			sel("helptext", Settings.showHelp, v -> Settings.showHelp = v);
 			sel("placepreview", Settings.placePreview, v -> Settings.placePreview = v);
+			sel("selectbox", Settings.selectBox, v -> Settings.selectBox = v);
 			sel("targetname", Settings.targetName, v -> Settings.targetName = v);
 		}
 		for( i in 0...rows.length ) s.add(rows[i], x, y + i * 60);

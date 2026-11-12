@@ -184,7 +184,7 @@ class Fx {
 			sx = pb.x2 - pb.x1; sy = pb.y2 - pb.y1; sz = pb.z2 - pb.z1;
 		}
 
-		box.visible = !laser;
+		box.visible = Settings.selectBox && !laser;
 		if( box.visible ) {
 			box.setPosition(fx + bx - 0.0015, fy + by - 0.0015, fz + bz - 0.0015);
 			box.setScale(1);
