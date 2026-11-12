@@ -70,6 +70,7 @@ import Common;
  *   savegame                guardar la partida (como F5, sin aviso)
  *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
  *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
+ *   print paldup            paleta creativa abierta: bloques y paginas, los que salen mas de una vez y donde estan las aguas
  *   shot nombre             captura en port/out/nombre.png ("%b" en el nombre = bioma del planeta)
  *   loadshot nombre [N]     captura en la imagen N (5) de la siguiente carga de planeta (mientras carga el guion no corre)
  *   f2                      pulsa F2 (captura sin HUD en screenshots de la carpeta de datos); print shots las lista
@@ -1267,6 +1268,9 @@ class Dev {
 			Sys.println("fichas: " + [for( e in d.sortEntries(d.entries.copy()) ) e.getName()].join(", "));
 			Sys.println("fabricados: " + [for( e in d.sortEntries([for( e in d.entries ) if( d.has(e, CCraft) ) e], true) ) e.getName()].join(", "));
 			Sys.println("recetas: " + [for( r in d.sortRecipes(Data.CRAFT.copy()) ) Block.get(r.out).getName()].join(", "));
+		case "paldup":
+			// paleta creativa: cuantos bloques tiene, los que salen mas de una vez y donde estan las aguas
+			Sys.println("paleta: " + (app.palette == null ? "cerrada" : app.palette.devRepeated()));
 		case "kubdata":
 			// fichas del Kubindex con sus sitios y categorias (para revisar kubindex.json)
 			var d = KubData.get();
