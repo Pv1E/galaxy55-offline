@@ -1,0 +1,328 @@
+# Un mundo con mas de 255 bloques distintos (World.cells: el id local de cada celda va en dos bytes; antes en uno y
+# World.hasRoom no dejaba poner el que ya no cabia). Todos los bloques (sin vacio, liquidos, lava, cascadas, bomba ni
+# bonus) en el aire sobre el planeta, en z = 100 (17 x 17 desde 100,100), y BShipGlassPink, de los ultimos, con la mano.
+# Luego Menu principal y Continuar (reload): los bloques siguen ahi y la luz es la de recalcularla toda.
+# Esperado: "ids: mundo" > 255, "con id > 255" > 0, la misma suma antes y despues de cargar, BShipGlassPink en 42 42 57.
+# Capturas port/out/mas255_*.png
+wait 3
+planet
+wait 30
+filla 38 38 50 50 46 56 BRock
+filla 38 38 50 50 57 70 none
+wait 5
+set 100 100 100 BBedrock
+set 101 100 100 BSoil
+set 102 100 100 BSoilCover
+set 103 100 100 BRock
+set 104 100 100 BWood
+set 105 100 100 BGreenLeaves
+set 106 100 100 BYellowCrystalLight
+set 107 100 100 BAutumnHerbs1
+set 108 100 100 BAutumnHerbs2
+set 109 100 100 BPinkFlower
+set 110 100 100 BChampiLight
+set 111 100 100 BAutumnStraw
+set 112 100 100 BVines
+set 113 100 100 BVinesY
+set 114 100 100 BTreeHerbs
+set 115 100 100 BCactus
+set 116 100 100 BLamp
+set 100 101 100 BYellowCrystalDense
+set 101 101 100 BYellowCharge
+set 102 101 100 BBackPack
+set 103 101 100 BWoodPlank
+set 104 101 100 BBrokenRock
+set 105 101 100 BHardRock
+set 106 101 100 BMinAluminium
+set 107 101 100 BCactusBase
+set 108 101 100 BCactusFlower
+set 109 101 100 BBlueCrystalLight
+set 110 101 100 BBlueCrystalDense
+set 111 101 100 BBlueCharge
+set 112 101 100 BRockWall
+set 113 101 100 BWoodWindow
+set 114 101 100 BWoodWindowY
+set 115 101 100 BWoodPlate
+set 116 101 100 BVineColumn
+set 100 102 100 BRockWallSquare
+set 101 102 100 BTest
+set 102 102 100 BHardRockColumn
+set 103 102 100 BWoodColumn
+set 104 102 100 BHardRockWall
+set 105 102 100 BWoodScrew
+set 106 102 100 BLeavesCurtain
+set 107 102 100 BLeavesCurtainY
+set 108 102 100 BRawRed
+set 109 102 100 BShedWall
+set 110 102 100 BShedGround
+set 111 102 100 BShedLight
+set 112 102 100 BShipHull
+set 113 102 100 BShipEngine
+set 114 102 100 BShipGlass
+set 115 102 100 BShipDoor
+set 116 102 100 BShipDoorY
+set 100 103 100 BShipDoorOpen
+set 101 103 100 BShipDoorYOpen
+set 102 103 100 BShipPlate
+set 103 103 100 BShipWire
+set 104 103 100 BShipComputer
+set 105 103 100 BShipTubes
+set 106 103 100 BShipGlass2
+set 107 103 100 BShipEntry
+set 108 103 100 BCrafter
+set 109 103 100 BCrafterComputer
+set 110 103 100 BShipLight
+set 111 103 100 BShedGroundArrow
+set 112 103 100 BShedWallColumn
+set 113 103 100 BShedGlass
+set 114 103 100 BShedWallLight
+set 115 103 100 BAluminium
+set 116 103 100 BGlass
+set 100 104 100 BLight
+set 101 104 100 BPurpleLeaves
+set 102 104 100 BBrownLeaves
+set 103 104 100 BPinkLeaves
+set 104 104 100 BMoonSoil
+set 105 104 100 BMoonSoilCover
+set 106 104 100 BMoonRock
+set 107 104 100 BMoonSand
+set 108 104 100 BMoonLight
+set 109 104 100 BMoonLightDead
+set 110 104 100 BMoonLightColumn
+set 111 104 100 BMoonRockColumn
+set 112 104 100 BMoonBrokenRock
+set 113 104 100 BStainEmpty
+set 114 104 100 BStainPurple
+set 115 104 100 BStainRed
+set 116 104 100 BRaw
+set 100 105 100 BRawPurple
+set 101 105 100 BMoonHerbs1
+set 102 105 100 BMoonHerbs2
+set 103 105 100 BAcidWood
+set 104 105 100 BAcidWoodHole
+set 105 105 100 BAcidWoodBubble
+set 106 105 100 BAcidSoil
+set 107 105 100 BAcidSoilCover
+set 108 105 100 BAcidRock
+set 109 105 100 BAcidLeaves
+set 110 105 100 BAcidLeavesBubble
+set 111 105 100 BAcidLeaves2
+set 112 105 100 BAcidLeaves2Bubble
+set 113 105 100 BAcidMush
+set 114 105 100 BAcidFruit
+set 115 105 100 BAcidTreeSap
+set 116 105 100 BFreezer
+set 100 106 100 BIce
+set 101 106 100 BYellowPlant
+set 102 106 100 BBluePlant
+set 103 106 100 BWinterSoil
+set 104 106 100 BWinterSoilCover
+set 105 106 100 BWinterRock
+set 106 106 100 BWinterBrokenRock
+set 107 106 100 BWinterHidden
+set 108 106 100 BWinterFlowerDeleted
+set 109 106 100 BWinterLeaves
+set 110 106 100 BWinterLeavesCover
+set 111 106 100 BWinterHerb1
+set 112 106 100 BWinterHerb2
+set 113 106 100 BWinterHerb3
+set 114 106 100 BWinterWood
+set 115 106 100 BBlackIce
+set 116 106 100 BBlackIceLight
+set 100 107 100 BIceStalactite1
+set 101 107 100 BIceStalactite2
+set 102 107 100 BBlackLight
+set 103 107 100 BMarsSoil
+set 104 107 100 BMarsSoil2
+set 105 107 100 BMarsRock
+set 106 107 100 BMarsCraterRock
+set 107 107 100 BMarsBlueRock
+set 108 107 100 BMarsHardRock
+set 109 107 100 BMarsRockFossil
+set 110 107 100 BMarsQuickSand
+set 111 107 100 BMarsCactus
+set 112 107 100 BMarsCactusFossil
+set 113 107 100 BMarsCactusFlower
+set 114 107 100 BPinkCharge
+set 115 107 100 BMarsHerb1
+set 116 107 100 BMarsHerb2
+set 100 108 100 BMarsHerb3
+set 101 108 100 BAlienRock
+set 102 108 100 BBigMushTrunk
+set 103 108 100 BBigMushHead
+set 104 108 100 BJumper
+set 105 108 100 BChest
+set 106 108 100 BAlienTreasure
+set 107 108 100 BCamera
+set 108 108 100 BMush
+set 109 108 100 BCoral1
+set 110 108 100 BCoral2
+set 111 108 100 BFrozenRock
+set 112 108 100 BCoal
+set 113 108 100 BCoalHot
+set 114 108 100 BPlantSoil
+set 115 108 100 BHighHerb1
+set 116 108 100 BHighHerb2
+set 100 109 100 BHighHerb3
+set 101 109 100 BHighHerb4
+set 102 109 100 BHighHerb5
+set 103 109 100 BHighHerb6
+set 104 109 100 BFreezerPlant
+set 105 109 100 BMiningGenerator
+set 106 109 100 BStainWhite
+set 107 109 100 BRawWhite
+set 108 109 100 BStainOrange
+set 109 109 100 BRawOrange
+set 110 109 100 BStainGreen
+set 111 109 100 BRawGreen
+set 112 109 100 BMarsWall
+set 113 109 100 BWinterWall
+set 114 109 100 BAcidWall
+set 115 109 100 BPlantRock
+set 116 109 100 BAcidHerb1
+set 100 110 100 BAcidHerb2
+set 101 110 100 BAcidHerbCeil
+set 102 110 100 BHealPlant
+set 103 110 100 BYellowCeil
+set 104 110 100 BCavePlantCeil
+set 105 110 100 BMinIron
+set 106 110 100 BIron
+set 107 110 100 BIronFence
+set 108 110 100 BIronFenceY
+set 109 110 100 BIronLight
+set 110 110 100 BShipGlassBlack
+set 111 110 100 BShiningWoodPlank
+set 112 110 100 BHealBox
+set 113 110 100 BCircuit
+set 114 110 100 BDeadRock
+set 115 110 100 BDeadSoil
+set 116 110 100 BDeadSwamp
+set 100 111 100 BDeadTree
+set 101 111 100 BDarkLeaves
+set 102 111 100 BMotherHull
+set 103 111 100 BMotherPanel
+set 104 111 100 BMotherDark
+set 105 111 100 BMotherField
+set 106 111 100 BMotherYellow
+set 107 111 100 BMotherBlack
+set 108 111 100 BKubeFixed
+set 109 111 100 BKubeWater
+set 110 111 100 BKubeSoilTree
+set 111 111 100 BKubeSoilTree1
+set 112 111 100 BKubeSoilTree2
+set 113 111 100 BKubeAutumnTree
+set 114 111 100 BKubeAutumnTree1
+set 115 111 100 BKubeAutumnTree2
+set 116 111 100 BKubeHighTree
+set 100 112 100 BKubeHighTree1
+set 101 112 100 BKubeHighTree2
+set 102 112 100 BKubeHighTree3
+set 103 112 100 BKubeClouds
+set 104 112 100 BKubeClouds1
+set 105 112 100 BKubeClouds2
+set 106 112 100 BKubeSphereTree
+set 107 112 100 BKubeSphereTree1
+set 108 112 100 BKubeLargeTree
+set 109 112 100 BKubeLargeTree1
+set 110 112 100 BKubeLargeTree2
+set 111 112 100 BKubeSnowSapin
+set 112 112 100 BKubeSnowSapin1
+set 113 112 100 BKubeSnowSapin2
+set 114 112 100 BKubeJungle
+set 115 112 100 BKubeJungle1
+set 116 112 100 BKubeJungle2
+set 100 113 100 BKubeJungle3
+set 101 113 100 BKubeCaverns
+set 102 113 100 BKubeCaverns1
+set 103 113 100 BKubeCaverns2
+set 104 113 100 BKubeField
+set 105 113 100 BKubeField1
+set 106 113 100 BKubeField2
+set 107 113 100 BKubeSwamp
+set 108 113 100 BKubeSwamp1
+set 109 113 100 BKubeSwamp2
+set 110 113 100 BKubeSwamp3
+set 111 113 100 BKubeSoilPeaks
+set 112 113 100 BKubeSoilPeaks1
+set 113 113 100 BKubePilarPlain
+set 114 113 100 BKubePilarPlain1
+set 115 113 100 BKubePilarPlain2
+set 116 113 100 BKubeFlowerPlain
+set 100 114 100 BKubeFlowerPlain1
+set 101 114 100 BKubeFlowerPlain2
+set 102 114 100 BKubeFlowerPlain3
+set 103 114 100 BKubeSavana
+set 104 114 100 BKubeSavana1
+set 105 114 100 BKubeSavana2
+set 106 114 100 BKubeSavana3
+set 107 114 100 BKubeDesert
+set 108 114 100 BKubeDesert1
+set 109 114 100 BKubeFruit
+set 110 114 100 BKubeLava
+set 111 114 100 BKubeDolpart
+set 112 114 100 BKubeDolmen
+set 113 114 100 BKubeFlying
+set 114 114 100 BKubeFlying1
+set 115 114 100 BKubeFlying2
+set 116 114 100 BKubeKoala
+set 100 115 100 BKubeInvisible
+set 101 115 100 BKubeAmethyste
+set 102 115 100 BKubeEmeraude
+set 103 115 100 BKubeRubis
+set 104 115 100 BKubeSaphir
+set 105 115 100 BKubeFog
+set 106 115 100 BKubeShade
+set 107 115 100 BKubeLight
+set 108 115 100 BKubeGold
+set 109 115 100 BKubeMessage
+set 110 115 100 BKubeTeleport
+set 111 115 100 BKubeJump
+set 112 115 100 BKubeChest
+set 113 115 100 BKubeMulticol
+set 114 115 100 BKubeMtwin
+set 115 115 100 BKubeCrate
+set 116 115 100 BKubeNoel
+set 100 116 100 BRockColumn
+set 101 116 100 BHardRockWallSquare
+set 102 116 100 BAcidWallSquare
+set 103 116 100 BWinterWallSquare
+set 104 116 100 BKubeMystery
+set 105 116 100 BShipGlassRed
+set 106 116 100 BShipGlassBlue
+set 107 116 100 BShipGlassGreen
+set 108 116 100 BShipGlassPink
+set 109 116 100 BShopBarrier
+wait 20
+print ids 108 108 100 8
+print block 107 116 100
+print block 109 116 100
+print lightcheck
+tp 108.5 121.5 110 0 0
+lookat 108.5 108.5 100
+wait 10
+shot mas255_rejilla
+hand BShipGlassPink
+print inv
+tp 43.5 43.5 57 0 0
+waitfor ground
+lookat 42.5 42.5 56.5
+wait 2
+print select
+key place
+wait 10
+unkey
+print block 42 42 57
+print inv
+reload
+waitfor ready
+wait 30
+print ids 108 108 100 8
+print block 107 116 100
+print block 109 116 100
+print block 42 42 57
+print lightcheck
+tp 108.5 121.5 110 0 0
+lookat 108.5 108.5 100
+wait 10
+shot mas255_cargada
+quit

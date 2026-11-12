@@ -1,8 +1,8 @@
 # Kubes de Kube (Motion Twin, 2010) como bloques enteros: los 77 en una cuadricula sobre el planeta (11 x 7, en el orden de
 # BlockKind), de dia y bajo un techo (luz de la lava, las gemas y la luz), la lava y el agua
 # que corren, en la paleta del modo creativo y en la mano.
-# Al final, un planeta con mas de 255 bloques distintos (World.hasRoom):
-# el que ya no cabe no se pone ni se gasta. Capturas port/out/kubeblocks_*.png
+# Al final, un planeta con mas de 255 bloques distintos (la celda guarda su id en dos bytes):
+# el ultimo tambien se pone con la mano. Capturas port/out/kubeblocks_*.png
 wait 3
 setlang fr
 planet
@@ -138,7 +138,7 @@ lookat 52.5 48.5 57
 wait 10
 shot kubeblocks_techo
 # planeta lleno: todos los bloques de Galaxy 55 (sin liquidos, lava, cascadas, bomba ni bonus) en el aire, en z = 100; con
-# los 77 kubes pasan de 255 y los ultimos no caben. BMotherBlack (el ultimo) no se pone y sigue en el inventario
+# los 77 kubes pasan de 255 y todos se ponen. BMotherBlack (el ultimo) tambien se pone con la mano y se gasta
 set 100 100 100 BBedrock
 set 101 100 100 BSoil
 set 102 100 100 BSoilCover

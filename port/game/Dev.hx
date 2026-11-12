@@ -46,7 +46,7 @@ import Common;
  *   print land              aterrizaje: suelo, gravedad, aturdimiento (stun), cabeceo del casco (bobY), temblor y fundido
  *   key NOMBRE / unkey      pulsar y soltar una accion: dig, place, jump
  *   mine x y z              excavar ese bloque con el excavador y decir cuanto tarda (y con que potencia)
- *   print inv|pos|zones|drops|loose|chest|msg|shake|fade|block x y z|blockl x y z|around x y z r|select|ship|map [z]|palette|time|power|life|fov|sky|menu
+ *   print inv|pos|zones|drops|loose|chest|msg|shake|fade|block x y z|blockl x y z|around x y z r|ids x y z r|select|ship|map [z]|palette|time|power|life|fov|sky|menu
  *   fadelog on|off          fundido de color de pantalla imagen por imagen, tal como lo pinta el HUD (opacidad y color); off
  *                           dice cuantas veces subio (destellos) y cuantas como mucho en un segundo (WCAG 2.3.1: 3)
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
@@ -1328,6 +1328,19 @@ class Dev {
 				if( zz >= World.SHIP_Z ) s++ else if( b.k == BBedrock ) bed++ else n++;
 			}
 			Sys.println("alrededor " + x + "," + y + "," + z + " r" + r + ": planeta " + n + " roca madre " + bed + " nave " + s + "  bombas en cola " + @:privateAccess g.bombQueue.length);
+		case "ids":
+			// print ids X Y Z R: bloques distintos del mundo (World.cells) y, en el cubo de lado 2R+1, los distintos, las celdas con
+			// id local > 255 (no cabrian en un byte) y la suma de los numeros de bloque (para comparar tras guardar y cargar)
+			var x = Std.parseInt(a[2]), y = Std.parseInt(a[3]), z = Std.parseInt(a[4]), r = Std.parseInt(a[5]);
+			var kinds = new Map<Int, Bool>(), high = 0, sum = 0;
+			for( dz in -r...r + 1 ) for( dy in -r...r + 1 ) for( dx in -r...r + 1 ) {
+				var b = w.block(x + dx, y + dy, z + dz);
+				if( b == null ) continue;
+				kinds.set(b.index, true);
+				sum += b.index;
+				if( w.voxel(x + dx, y + dy, z + dz) > 255 ) high++;
+			}
+			Sys.println("ids: mundo " + (@:privateAccess w.gen.blocks.length - 1) + " bloques distintos; cubo " + Lambda.count(kinds) + " distintos, " + high + " con id > 255, suma " + sum);
 		case "fade":
 			var f = g.fadeFX;
 			Sys.println(f == null ? "fundido: ninguno" : "fundido: color " + StringTools.hex(f.col, 6) + " t=" + Math.round(f.t * 100) / 100 + " opacidad " + Math.round(g.fadeAlpha() * 100) / 100 + " bloqueo " + f.lock);

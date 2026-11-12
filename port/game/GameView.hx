@@ -1828,8 +1828,6 @@ class GameView {
 		if( inShip && !ship.inCraft(x, y, z) ) return false;
 		// fuera del rango del planeta World.setBlock no pone nada: tampoco se gasta el bloque
 		if( !inShip && (z < 1 || z >= World.HEIGHT - 1) ) return false;
-		// mundo con 255 bloques distintos ya puestos: el bloque no se guardaria (World.hasRoom)
-		if( !world.hasRoom(hand.getFlip(yaw), z) ) return false;
 		// celda ocupada (p. ej. por lo que se acaba de poner): no se gasta nada
 		var here = world.block(x, y, z);
 		if( here != null && !overridable(here) ) return false;
