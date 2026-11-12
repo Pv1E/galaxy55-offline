@@ -147,6 +147,26 @@ class IconMesh {
 	}
 
 	/**
+	 * Cambio del port: bloque translucido que el recorte de los objetos sueltos y de la mano (killAlpha 0.5) borraria entero,
+	 * porque ningun pixel de sus casillas llega a la mitad de opacidad (Kube invisible, BFAlpha(0.25); Kube de niebla, BFAlpha(0.5)
+	 * da 127). Al romperlo, lo que caia al suelo no se veia: esos se dibujan translucidos, como su icono (Icons.draw).
+	 */
+	public static function seeThrough( b : Block ) : Bool {
+		var pix = Atlas.pixels;
+		if( pix == null || b.type != BTAlpha ) return false;
+		var ts = Std.int(pix.width / 64), tiles = 0;
+		for( t in [b.tu, b.td, b.tlr] ) {
+			if( t < 0 || t >= 0xFFF ) continue;
+			tiles++;
+			var x0 = (t & 63) * ts, y0 = (t >> 6) * ts;
+			for( y in 0...ts )
+				for( x in 0...ts )
+					if( (pix.getPixel(x0 + x, y0 + y) >>> 24) >= 128 ) return false;
+		}
+		return tiles > 0;
+	}
+
+	/**
 	 * n x n x n bloques iguales pegados, en las celdas (0..n) (mosaico del editor de kubes). Las caras entre dos vecinos se
 	 * quitan como en World.buildChunk: un bloque lleno tapa la cara de su vecino lleno (open) y uno con alfa la de su vecino con
 	 * alfa (openAlphaNear); las cajas, los de 6 caras, los calados y los modelos se dibujan enteros, tambien por dentro.
