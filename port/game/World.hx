@@ -52,6 +52,28 @@ class TileScroll extends hxsl.Shader {
 	};
 }
 
+/**
+	Recorte por el alfa con el umbral como parametro, para las tres pasadas de los bloques BTAlpha (pixeles solidos, profundidad y
+	color). Con textureShader.killAlpha, que es una constante de hxsl, cada pasada era otro programa GLSL, y OpenGL solo asegura
+	la misma profundidad para el mismo programa: la pasada de color (depth LessEqual) podia quedar detras de la de profundidad.
+	En un PC con "Mesa Intel(R) HD Graphics 4600 (HSW GT2)" (Mesa 25.2, crocus) la cascada no se veia. Con este shader las tres
+	pasadas comparten programa y solo cambia el umbral (0 en la de color: no descarta nada).
+**/
+class AlphaCut extends hxsl.Shader {
+	static var SRC = {
+		var pixelColor : Vec4;
+		@param var threshold : Float;
+		function fragment() {
+			if( pixelColor.a < threshold ) discard;
+		}
+	};
+
+	public function new( threshold : Float ) {
+		super();
+		this.threshold = threshold;
+	}
+}
+
 /** Geometria acumulada de un chunk para un material. */
 class MeshBuf {
 	public var pts = new Array<h3d.col.Point>();
@@ -1787,6 +1809,18 @@ class World {
 	public static inline var LAYER_ALPHA_DEPTH = -2;
 	public static inline var LAYER_ALPHA = -1;
 
+	/**
+	 * Pasada que solo escribe la profundidad o el stencil: el color queda como estaba con la mezcla Zero, One (0 * nuevo +
+	 * 1 * lo que habia), con la mascara de color abierta. Antes era setColorMask(false, false, false, false), y en un PC con
+	 * "Mesa Intel(R) HD Graphics 4600 (HSW GT2)" (Mesa 25.2, controlador crocus) la cascada salia de un negro puro, sin la
+	 * niebla de lo lejano (nada de lo que pinta el mundo da ese negro), tambien a traves de las hojas, despues de un rato de
+	 * juego. La pasada de profundidad con la mascara cerrada era lo unico que no usaba nada mas. En las demas tarjetas el
+	 * resultado es el mismo.
+	 */
+	public static function keepColor( p : h3d.mat.Pass ) {
+		p.blend(Zero, One);
+	}
+
 	function emitMesh( m : MeshBuf, kind : Int, scroll = 0. ) {
 		if( m.pts.length == 0 ) return;
 		var ts = null;
@@ -1829,6 +1863,8 @@ class World {
 			// solo la cara translucida mas cercana, como el original (pasada de profundidad y luego color con depth Equal)
 			mat.mainPass.depthTest = LessEqual;
 			mat.mainPass.layer = LAYER_ALPHA;
+			// el mismo programa que las pasadas de los pixeles solidos y de profundidad (ver AlphaCut); umbral 0: no descarta nada
+			mat.mainPass.addShader(new AlphaCut(0));
 		} else if( kind == 2 ) {
 			// agua: translucida; escribe profundidad como la primera pasada del original (water0)
 			mat.blendMode = Alpha;
@@ -1852,11 +1888,10 @@ class World {
 			cut.mainPass.addShader(new h3d.shader.VertexColor());
 			cut.mainPass.addShader(sky.fog);
 			if( ts != null ) cut.mainPass.addShader(ts);
-			cut.textureShader.killAlpha = true;
-			cut.textureShader.killAlphaThreshold = 0.9;
+			cut.mainPass.addShader(new AlphaCut(0.9));
 			addChunkMesh(poly, cut);
-			// profundidad de la cara translucida mas cercana (AlphaShader0 del original), antes del color: mismos shaders de
-			// vertices que el color, para que la profundidad coincida. El hielo tiene alfa >= 0.28 en toda su textura; el cristal
+			// profundidad de la cara translucida mas cercana (AlphaShader0 del original), antes del color: el mismo programa que el
+			// color (AlphaCut), para que la profundidad coincida. El hielo tiene alfa >= 0.28 en toda su textura; el cristal
 			// es casi todo < 0.25 y no la escribe, asi lo que hay detras de un cristal se sigue viendo
 			var depth = h3d.mat.Material.create(atlas);
 			depth.shadows = false;
@@ -1865,10 +1900,9 @@ class World {
 			depth.mainPass.addShader(new h3d.shader.VertexColor());
 			depth.mainPass.addShader(sky.fog);
 			if( ts != null ) depth.mainPass.addShader(ts);
-			depth.textureShader.killAlpha = true;
-			depth.textureShader.killAlphaThreshold = 0.25;
+			depth.mainPass.addShader(new AlphaCut(0.25));
 			depth.mainPass.setPassName("alpha");
-			depth.mainPass.setColorMask(false, false, false, false);
+			keepColor(depth.mainPass);
 			depth.mainPass.layer = LAYER_ALPHA_DEPTH;
 			addChunkMesh(poly, depth);
 		}
@@ -1906,7 +1940,7 @@ class World {
 			// como sus pasadas normales de BTAlpha: solo la cara de delante
 			mk.mainPass.culling = Back;
 			mk.mainPass.depthWrite = false;
-			mk.mainPass.setColorMask(false, false, false, false);
+			keepColor(mk.mainPass);
 			mk.mainPass.stencil.setFunc(Always, STENCIL_REVEAL, 0xFF, STENCIL_REVEAL);
 			mk.mainPass.stencil.setOp(Keep, Keep, Replace);
 			addChunkMesh(poly, mk);

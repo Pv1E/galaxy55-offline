@@ -812,13 +812,19 @@ class KubeEditor extends Screen {
 			// las tres pasadas del cristal y del hielo del mundo, todas sin la cara de atras: los pixeles solidos (marcos) opacos,
 			// la profundidad de la cara translucida mas cercana y despues su color. Mezcladas sin mas, las caras de atras se
 			// pintaban encima de las de delante (los marcos del fondo sobre los de delante)
-			previewPasses.push(new h3d.scene.Mesh(poly, material(Back, 0.9), scene));
-			var depth = material(Back, 0.25);
+			// las tres con el mismo programa, como en el mundo (World.AlphaCut): solo cambia el umbral del recorte por el alfa
+			function cut( threshold : Float ) {
+				var mat = material(Back, 0);
+				mat.mainPass.addShader(new World.AlphaCut(threshold));
+				return mat;
+			}
+			previewPasses.push(new h3d.scene.Mesh(poly, cut(0.9), scene));
+			var depth = cut(0.25);
 			depth.mainPass.setPassName("alpha");
-			depth.mainPass.setColorMask(false, false, false, false);
+			World.keepColor(depth.mainPass);
 			depth.mainPass.layer = World.LAYER_ALPHA_DEPTH;
 			previewPasses.push(new h3d.scene.Mesh(poly, depth, scene));
-			var mat = material(Back, 0);
+			var mat = cut(0);
 			mat.blendMode = Alpha;
 			mat.mainPass.depthWrite = false;
 			mat.mainPass.setPassName("alpha");

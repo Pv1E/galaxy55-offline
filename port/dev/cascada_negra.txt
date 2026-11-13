@@ -1,0 +1,30 @@
+# cascada que cae a traves de una copa de hojas, con una columna de hielo y otra de cristal al lado (las tres son BTAlpha:
+# pasada de los pixeles solidos, de profundidad y de color). En un PC con "Mesa Intel(R) HD Graphics 4600 (HSW GT2)" (Mesa
+# 25.2, crocus) la cascada no se veia al empezar a jugar y despues salia negra y opaca, tambien a traves de las hojas: la
+# pasada de color, en otro programa que la de profundidad, quedaba detras de ella (ahora World.AlphaCut, un solo programa)
+# y la de profundidad tenia la mascara de color cerrada (ahora World.keepColor). Las tres columnas deben verse
+# translucidas, de lado (cn_lado) y desde abajo, mirando hacia la copa (cn_abajo). Copa de hojas en z 110-111 con un hueco
+# para cada columna, fuente de cascada en z 114
+wait 3
+creative
+planet
+wait 30
+filla 52 52 74 74 100 100 BRock
+filla 54 58 72 70 110 111 BGreenLeaves
+filla 63 64 63 64 110 111 none
+setp 63 64 114 BCascadeSource
+filla 59 64 59 64 101 111 BIce
+filla 67 64 67 64 101 111 BGlass
+wait 900
+print block 63 64 112
+print block 63 64 105
+print block 63 64 101
+tp 63.5 55.5 101
+lookat 63.5 64.5 107
+wait 30
+shot cn_lado_%b
+tp 62.2 62.8 101
+lookat 63.5 64.5 113
+wait 30
+shot cn_abajo_%b
+quit
