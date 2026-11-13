@@ -156,6 +156,8 @@ class Lang {
 		"options.interface" => ["Interfaz", "Interface", "Interface"],
 		"pause.title" => ["PAUSA", "PAUSED", "PAUSE"],
 		"save.space" => ["En el espacio", "In space", "Dans l'espace"],
+		"save.version" => ["Versión %v%", "Version %v%", "Version %v%"],
+		"save.versions" => ["Versiones %c% a %v%", "Versions %c% to %v%", "Versions %c% à %v%"],
 		"nosaves" => ["No hay partidas guardadas", "No saved games", "Aucune partie sauvegardée"],
 		"play" => ["Jugar", "Play", "Jouer"],
 		"rename" => ["Renombrar", "Rename", "Renommer"],
