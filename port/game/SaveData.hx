@@ -70,6 +70,10 @@ typedef SaveInfo = {
 	var sizeChunks : Int;
 	var created : Float;
 	var saved : Float;
+	/** version del juego que creo la partida (GalaxyApp.VERSION, anadido del port); null en las partidas de antes */
+	@:optional var createdWith : String;
+	/** version del juego que la guardo por ultima vez (va con saved); null si no se ha guardado desde entonces */
+	@:optional var savedWith : String;
 	var playSeconds : Float;
 	var px : Float;
 	var py : Float;
@@ -146,7 +150,7 @@ class SaveData {
 		var now = Date.now().getTime();
 		return {
 			version : VERSION, id : newId(), name : name, seed : seed, biome : biome, sizeChunks : sizeChunks,
-			created : now, saved : now, playSeconds : 0, px : -1, py : -1, pz : -1, yaw : 0, pitch : 0, fly : false, inv : creative ? Inv.defaults() : Inv.empty(), edits : [], shipEdits : [], creative : creative, credits : Market.START_CREDITS,
+			created : now, saved : now, createdWith : GalaxyApp.VERSION, savedWith : GalaxyApp.VERSION, playSeconds : 0, px : -1, py : -1, pz : -1, yaw : 0, pitch : 0, fly : false, inv : creative ? Inv.defaults() : Inv.empty(), edits : [], shipEdits : [], creative : creative, credits : Market.START_CREDITS,
 		};
 	}
 
@@ -326,6 +330,7 @@ class SaveData {
 				version : o.version, id : id, name : o.name != null ? o.name : id, seed : o.seed, biome : o.biome,
 				sizeChunks : o.sizeChunks != null ? o.sizeChunks : 1,
 				created : o.created != null ? o.created : 0, saved : o.saved != null ? o.saved : 0,
+				createdWith : o.createdWith != null ? Std.string(o.createdWith) : null, savedWith : o.savedWith != null ? Std.string(o.savedWith) : null,
 				playSeconds : o.playSeconds != null ? o.playSeconds : 0,
 				px : o.px != null ? o.px : -1, py : o.py != null ? o.py : -1, pz : o.pz != null ? o.pz : -1,
 				yaw : o.yaw != null ? o.yaw : 0, pitch : o.pitch != null ? o.pitch : 0, fly : o.fly == true, life : o.life != null ? o.life : 100,
@@ -341,10 +346,13 @@ class SaveData {
 	}
 
 	/** Escribe la partida; se guarda primero a un archivo temporal para no corromperla si falla a medias.
-	    touch = false deja la fecha de guardado como estaba (renombrar no cambia el orden de la lista). */
+	    touch = false deja la fecha y la version de guardado como estaban (renombrar no cambia el orden de la lista). */
 	public static function write( info : SaveInfo, thumbPng : haxe.io.Bytes, touch = true ) : Bool {
 		try {
-			if( touch ) info.saved = Date.now().getTime();
+			if( touch ) {
+				info.saved = Date.now().getTime();
+				info.savedWith = GalaxyApp.VERSION;
+			}
 			var path = jsonPath(info.id);
 			sys.io.File.saveContent(path + ".tmp", haxe.Json.stringify(info, null, "  "));
 			if( sys.FileSystem.exists(path) ) sys.FileSystem.deleteFile(path);

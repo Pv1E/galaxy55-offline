@@ -51,6 +51,11 @@ class SaveRow extends Widget {
 		var where = info.uni != null && info.uni.space == true ? Lang.t("save.space") : Lang.t("biome." + info.biome) + "  ·  " + size + "x" + size;
 		Theme.text(this, where + "  ·  " + Lang.t("seed") + " " + info.seed + (info.creative == true ? "  ·  " + Lang.t(info.survival == true ? "mode.creative.survival" : "mode.creative") : ""), 1.7, Theme.CYAN, 190, 48);
 		Theme.text(this, Lang.t("played") + " " + Lang.duration(info.playSeconds) + "   " + Lang.t("saved") + " " + Lang.date(info.saved), 1.5, Theme.DIM, 190, 74);
+		var ver = versions(info);
+		if( ver != null ) {
+			var t = Theme.text(this, ver, 1.5, Theme.DIM, 0, 74);
+			t.x = Std.int(w - 14 - t.textWidth * t.scaleX);
+		}
 		// botones de las acciones, arriba a la derecha (el nombre tiene 24 letras como mucho y no llega a ellos)
 		acts = new h2d.Object(this);
 		actBg = [];
@@ -85,6 +90,15 @@ class SaveRow extends Widget {
 			activate();
 		};
 		drawActions();
+	}
+
+	/** versiones del juego de la partida (anadido del port), abajo a la derecha de la fila: la que la creo y la que la guardo por
+	    ultima vez ("?" si se creo antes de que se apuntaran); null en una partida de antes que aun no se ha vuelto a guardar */
+	public static function versions( info : SaveInfo ) : String {
+		if( info.savedWith == null ) return null;
+		if( info.createdWith == info.savedWith ) return Lang.t("save.version").split("%v%").join(info.savedWith);
+		var from = info.createdWith != null ? info.createdWith : "?";
+		return Lang.t("save.versions").split("%c%").join(from).split("%v%").join(info.savedWith);
 	}
 
 	function set_action( v : Int ) {
@@ -183,6 +197,8 @@ class GalaxyApp extends hxd.App {
 	static inline var W = Theme.W;
 	static inline var H = Theme.H;
 	static inline var TITLE = "Galaxy 55 (offline)";
+	/** version del juego: la del menu principal y la que se apunta en las partidas guardadas (SaveData); se cambia en cada release */
+	public static inline var VERSION = "0.8.1";
 	/** el juego corre en pruebas (--script o --shot): no se mueve el cursor del sistema (centerMouse) */
 	static var TEST_RUN = Lambda.exists(Sys.args(), a -> StringTools.startsWith(a, "--shot=") || StringTools.startsWith(a, "--script="));
 	/** color de fx.Load */
@@ -566,7 +582,7 @@ class GalaxyApp extends hxd.App {
 			var l = saves[0];
 			Theme.text(s, Lang.t("lastgame") + ": " + l.name + "  ·  " + Lang.duration(l.playSeconds), 1.5, Theme.DIM, 112, y + 330);
 		}
-		versionText = Theme.text(s, "v0.8.1 · port nativo", 1.4, Theme.DISABLED, W - 190, 690);
+		versionText = Theme.text(s, "v" + VERSION + " · port nativo", 1.4, Theme.DISABLED, W - 190, 690);
 		anchorToWindow();
 		s.onBack = null;
 		return s;
@@ -2522,7 +2538,7 @@ class GalaxyApp extends hxd.App {
 	}
 
 	/** partidas de ejemplo para las capturas (--demo-saves: las 3 primeras) y para probar la lista (devsaves N); de la cuarta en
-	    adelante, una de cada cuatro es creativa */
+	    adelante, una de cada cuatro es creativa, otra se creo con la 0.7 y otra es de antes de que se apuntaran las versiones */
 	function makeDemoSaves( n = 3 ) {
 		var names = ["Base Alfa", "Cráter del Norte", "Mundo helado", "Colonia Beta", "Dunas rojas", "Bosque de ácido", "Mina lunar", "Ciudad perdida", "Puesto Gamma", "Valle oculto"];
 		var biomes = ["BIAutumn", "BIMoon", "BIWinterPeaks", "BIMars", "BIMars", "BIAcidForest", "BIMoon", "BIDeadCity", "BIAutumn", "BIWinterPeaks"];
@@ -2531,6 +2547,8 @@ class GalaxyApp extends hxd.App {
 			var info = SaveData.create(names[k] + (i < names.length ? "" : " " + (1 + Std.int(i / names.length))), 1000 + i * 77, biomes[k], 1 + (i % 2), i % 4 == 3);
 			info.playSeconds = 900 + i * 4100;
 			info.saved = Date.now().getTime() - i * 86400000.0 * 1.3;
+			if( i >= 3 && i % 4 == 1 ) info.createdWith = "0.7";
+			if( i >= 3 && i % 4 == 2 ) info.createdWith = info.savedWith = null;
 			SaveData.write(info, null, false);
 		}
 	}
@@ -2561,7 +2579,8 @@ class GalaxyApp extends hxd.App {
 			for( s in i.inv.t ) if( s != null ) blocks += s.n;
 			for( c in i.inv.charges ) charges += c.n;
 			out.push("'" + i.name + "' " + (i.creative == true ? (i.survival == true ? "creativo(supervivencia)" : "creativo") : "aventura") + " tutorial=" + i.tutorial + " " + i.biome + "/" + i.sizeChunks
-				+ " bloques=" + blocks + " cargas=" + charges + " miniatura=" + (SaveData.thumb(i.id) != null ? "si" : "no") + " guardado=" + DateTools.format(Date.fromTime(i.saved), "%d/%m %H:%M:%S"));
+				+ " bloques=" + blocks + " cargas=" + charges + " miniatura=" + (SaveData.thumb(i.id) != null ? "si" : "no") + " guardado=" + DateTools.format(Date.fromTime(i.saved), "%d/%m %H:%M:%S")
+				+ " version=" + i.createdWith + "/" + i.savedWith + " fila='" + SaveRow.versions(i) + "'");
 		}
 		return out.length + " partidas:\n  " + out.join("\n  ");
 	}

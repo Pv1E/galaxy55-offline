@@ -1,0 +1,33 @@
+# Version del juego en las partidas guardadas (SaveInfo.createdWith / savedWith, abajo a la derecha de cada fila de la lista).
+# devsaves 7: las 5 primeras y la partida de prueba (se guarda al ir al menu) son de esta version ("Version 0.8.1"), la sexta se
+# creo con la 0.7 ("Versions 0.7 a 0.8.1") y la septima es de antes (sin versiones: no se ve nada). Al jugar esa ultima y volver
+# al menu se guarda: queda "Versions ? a 0.8.1" y la fecha de creacion no cambia. Mira los version_*.png
+wait 3
+devsaves 7
+menu
+waitfor menu
+print saves
+# Continuar: la lista, arriba del todo
+tap enter
+wait 2
+print menu
+shot version_lista
+# abajo del todo (Av Pag baja 4 filas): la creada con la 0.7 y la de antes
+tap pgdown
+wait 2
+tap pgdown
+wait 2
+print menu
+shot version_lista_abajo
+# jugar la de antes (la fila con el foco) y volver al menu: se guarda con esta version
+tap enter
+waitfor ready
+wait 30
+menu
+waitfor menu
+print saves
+tap enter
+wait 2
+print menu
+shot version_lista_guardada
+quit
