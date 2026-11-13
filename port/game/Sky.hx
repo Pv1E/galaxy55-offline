@@ -52,23 +52,36 @@ class FogShader extends hxsl.Shader {
 }
 
 /**
-	Estrellas como el Skybox del original: un cubo alrededor de la camara que lee la textura cubica con la direccion local de
-	cada pixel (tuv = pos), sin filtrar (nearest) ni mipmaps. Una estrella es blanca con alfa = skyBoxAlpha sobre el degradado.
+	Estrellas como el Skybox del original: un cubo alrededor de la camara con la misma textura en sus 6 caras, leida con la
+	direccion local de cada pixel (tuv = pos), sin filtrar (nearest) ni mipmaps. Una estrella es blanca con alfa = skyBoxAlpha
+	sobre el degradado. La textura es 2D y la cara se elige aqui (faceUV): con una textura cubica, en un PC con "Mesa Intel(R)
+	HD Graphics 4600 (HSW GT2)" (Mesa 25.2, crocus) lo que se pintaba justo despues (cascadas, cristal y gemas, en la pasada
+	alpha) salia invisible y luego parpadeaba en negro y blanco, y el menu principal salia a veces sin dibujar. Bajo el agua,
+	sin estrellas, todo se veia bien.
 **/
 class StarShader extends hxsl.Shader {
 	static var SRC = {
 		var relativePosition : Vec3;
 		var pixelColor : Vec4;
 		@var var starDir : Vec3;
-		@param var tex : SamplerCube;
+		@param var tex : Sampler2D;
 		@param var alpha : Float;
+
+		/** como una textura cubica con la misma imagen en las 6 caras: la cara del eje mayor y la posicion en ella (0..1) */
+		function faceUV( d : Vec3 ) : Vec2 {
+			var a = abs(d);
+			var uv = d.xy / max(a.z, 0.000001);
+			if( a.x >= a.y && a.x >= a.z ) uv = d.yz / a.x;
+			else if( a.y >= a.z ) uv = d.xz / a.y;
+			return uv * 0.5 + 0.5;
+		}
 
 		function vertex() {
 			starDir = relativePosition;
 		}
 
 		function fragment() {
-			pixelColor = vec4(1.0, 1.0, 1.0, tex.get(starDir).r * alpha);
+			pixelColor = vec4(1.0, 1.0, 1.0, tex.get(faceUV(starDir)).r * alpha);
 		}
 	};
 }
@@ -85,7 +98,8 @@ class InvisibleSkyShader extends hxsl.Shader {
 		@param var c0 : Vec3;
 		@param var c1 : Vec3;
 		@param var c2 : Vec3;
-		@param var stars : SamplerCube;
+		/** la textura 2D de las estrellas (ver StarShader) */
+		@param var stars : Sampler2D;
 		@param var starAlpha : Float;
 		/** del mundo al cubo de las estrellas (inversa de su giro) */
 		@param var starInv : Mat4;
@@ -98,10 +112,19 @@ class InvisibleSkyShader extends hxsl.Shader {
 			return mix(mix(c0, c1, a), c2, b);
 		}
 
+		/** la misma eleccion de cara que StarShader.faceUV */
+		function faceUV( d : Vec3 ) : Vec2 {
+			var a = abs(d);
+			var uv = d.xy / max(a.z, 0.000001);
+			if( a.x >= a.y && a.x >= a.z ) uv = d.yz / a.x;
+			else if( a.y >= a.z ) uv = d.xz / a.y;
+			return uv * 0.5 + 0.5;
+		}
+
 		function fragment() {
 			var d = normalize(fogDelta);
 			var col = skyAt(asin(clamp(d.z, -1.0, 1.0)));
-			var s = stars.get((vec4(d, 0.0) * starInv).xyz).r * starAlpha;
+			var s = stars.get(faceUV((vec4(d, 0.0) * starInv).xyz)).r * starAlpha;
 			pixelColor = vec4(mix(col, vec3(1.0, 1.0, 1.0), s), 1.0);
 		}
 	};
@@ -196,9 +219,10 @@ class Sky {
 	function updateInvisStars() {
 		var on = stars != null && stars.visible;
 		if( stars == null && noStars == null ) {
-			noStars = new h3d.mat.Texture(1, 1, [Cube]);
+			// propia (no Texture.fromColor, que comparte la suya con todo el juego): dispose() la libera
+			noStars = new h3d.mat.Texture(1, 1, null, RGBA);
 			var px = hxd.Pixels.alloc(1, 1, RGBA);
-			for( side in 0...6 ) noStars.uploadPixels(px, 0, side);
+			noStars.uploadPixels(px);
 			px.dispose();
 		}
 		invisSky.stars = stars != null ? starTex : noStars;
@@ -460,18 +484,18 @@ class Sky {
 		// como Game.init del original: 1024 px por cara y size * size * 0.003 = 3 145 estrellas de un texel, blancas y opacas,
 		// en sitios al azar (Std.random, otro cielo en cada carga); el mismo dibujo en las 6 caras
 		var size = 1024;
-		var px = hxd.Pixels.alloc(size, size, R8);
+		// una textura 2D RGBA como las demas del juego, que StarShader lee como las 6 caras del cubo (ver StarShader)
+		var px = hxd.Pixels.alloc(size, size, RGBA);
 		for( i in 0...Std.int(size * size * 0.003) ) {
 			var x = Std.random(size);
 			var y = Std.random(size);
-			px.bytes.set(x + y * size, 255);
+			px.setPixel(x, y, 0xFFFFFFFF);
 		}
-		starTex = new h3d.mat.Texture(size, size, [Cube], R8);
+		starTex = new h3d.mat.Texture(size, size, null, RGBA);
 		starTex.filter = Nearest;
 		starTex.mipMap = None;
 		starTex.wrap = Clamp;
-		for( side in 0...6 )
-			starTex.uploadPixels(px, 0, side);
+		starTex.uploadPixels(px);
 		px.dispose();
 		var cube = new h3d.prim.Cube(2, 2, 2, true);
 		cube.addNormals(); // DirectX exige la entrada 'normal' del shader aunque no se use (OpenGL la descarta)
