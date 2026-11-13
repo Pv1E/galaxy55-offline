@@ -284,7 +284,7 @@ quedan marcadas como plan de octubre ya hecho en gran parte; en este archivo, "L
 Traídos los PR 120-125 de Cornor923 (visor del casco al redimensionar, creativo/supervivencia, buscador de la paleta, contrato
 especial ESCorp, Agua ácida doble en la paleta, pantalla de inventario), que no traían changelog: se añadieron a los changelogs
 ES/EN/FR y a ERRORES/BUGS. Todo pasa de "Sin publicar" a v0.8.1; enlaces de los README a `releases/tag/v0.8.1` con un párrafo
-de novedades; menú "v0.8.1 · port nativo"; notas en `port/RELEASE.md` (3 idiomas). Compilan SDL y DX. Zips con
+de novedades; menú "v0.8.1 · port nativo"; notas en `port/RELEASE.md` (3 idiomas) con todo lo nuevo desde la v0.8 (PR 116-125). Compilan SDL y DX. Zips con
 `package.ps1 -Version 0.8.1 -HashLink ..\tools-portable\hashlink\hashlink-1.16.0-win` en `port/out/release`.
 
 ## Lo siguiente (orden acordado en octubre; la lista al día es `PENDIENTES.md`)

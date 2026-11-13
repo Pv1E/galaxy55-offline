@@ -1,10 +1,63 @@
 ## Galaxy 55 (offline) v0.8.1
 
-Versión pequeña sobre la v0.8, todo de **Cornor923**: pantalla de inventario (I en aventura), paso de creativo a supervivencia y vuelta, buscador en la paleta creativa, un contrato especial de la ESCorp (16 de Tierra roja por un Contenedor ESCorp) y arreglos gráficos: el visor del casco sigue el tamaño de la ventana, el kube invisible se ve tirado y en la mano, y el Agua ácida sale una sola vez en la paleta. Detalles en el `CHANGELOG.md`. Las partidas de la v0.8 siguen valiendo.
+Todo lo nuevo desde la v0.8, obra de **Cornor923** (PR 116-125). Las partidas de la v0.8 siguen valiendo.
 
-Small release on top of v0.8, all by **Cornor923**: inventory screen (I in adventure), switching from creative to survival and back, a search field in the creative palette, an ESCorp special contract (16 Red Earth for an ESCorp Container) and graphics fixes: the helmet visor follows window resizes, the invisible kube shows when dropped and in the hand, and Acid Water shows once in the palette. Details in `CHANGELOG.en.md`. v0.8 saves still work.
+- **Pantalla de inventario:** en aventura, I (o R3) abre un panel con las 10 casillas de la barra: arrastrar, partir montones y tirar fuera del panel, como en Minecraft. En creativo, I sigue abriendo la paleta.
+- **De creativo a supervivencia:** una partida creada en creativo puede pasar a supervivencia y volver (botón en la paleta y en la pantalla de inventario). El modo se guarda con la partida.
+- **Buscar en la paleta:** un campo en la paleta creativa filtra bloques y kubes por su nombre.
+- **Contrato especial de la ESCorp:** una vez por partida, 16 de Tierra roja dan un Contenedor ESCorp, sin límite de tiempo. Nuevo paso "Contratos" en el tutorial.
+- **Teclas a tu gusto:** Opciones > Controles > Personalizar teclas. 28 acciones, hasta 4 teclas o botones del ratón cada una; avisa si una tecla ya está usada y hay un botón para volver a las de siempre. Las ayudas y el tutorial muestran las teclas elegidas.
+- **Marco de selección:** nueva opción en Opciones > Interfaz para quitar el marco naranja del bloque apuntado.
+- **Más de 255 bloques distintos por mundo:** ya no hay bloques que no se puedan poner por falta de sitio. El mundo ocupa el doble de memoria.
 
-Petite version sur la v0.8, tout de **Cornor923** : écran d'inventaire (I en aventure), passage du créatif à la survie et retour, recherche dans la palette créative, un contrat spécial ESCorp (16 Terre rouge pour un Conteneur ESCorp) et corrections graphiques : la visière du casque suit la taille de la fenêtre, le kube invisible se voit posé et en main, et l'Eau acide n'apparaît qu'une fois dans la palette. Détails dans `CHANGELOG.fr.md`. Les parties de la v0.8 restent valables.
+**Arreglos gráficos**
+- El visor del casco sigue el tamaño de la ventana al cambiarla con el ordenador de a bordo, la pausa o un panel abiertos (antes quedaban bandas oscuras o los bordes fuera de la pantalla).
+- El kube invisible se ve translúcido tirado en el suelo y en la mano (antes no se veía).
+- El Agua ácida sale una sola vez en la paleta creativa.
+
+Detalles en el `CHANGELOG.md`.
+
+---
+
+## Galaxy 55 (offline) v0.8.1
+
+Everything new since v0.8, by **Cornor923** (PRs 116-125). v0.8 saves still work.
+
+- **Inventory screen:** in adventure, I (or R3) opens a panel with the 10 slots of the bar: drag, split stacks and throw outside the panel, Minecraft style. In creative, I still opens the palette.
+- **Creative to survival:** a game created in creative can switch to survival and back (button in the palette and in the inventory screen). The mode is saved with the game.
+- **Palette search:** a field in the creative palette filters blocks and kubes by name.
+- **ESCorp special contract:** once per game, 16 Red Earth give an ESCorp Container, no time limit. New "Contracts" step in the tutorial.
+- **Custom key bindings:** Options > Controls > Customize keys. 28 actions, up to 4 keys or mouse buttons each; a key already in use is flagged and a button restores the defaults. The help and the tutorial show the chosen keys.
+- **Selection frame:** new option in Options > Interface to hide the orange frame on the targeted block.
+- **More than 255 different blocks per world:** no more blocks refused for lack of room. The world uses twice the memory.
+
+**Graphics fixes**
+- The helmet visor follows window resizes with the on-board computer, the pause menu or a panel open (there were dark bands or its edges went off-screen).
+- The invisible kube shows translucent when dropped on the ground and in the hand (it could not be seen).
+- Acid Water shows only once in the creative palette.
+
+Details in `CHANGELOG.en.md`.
+
+---
+
+## Galaxy 55 (offline) v0.8.1
+
+Tout ce qui est nouveau depuis la v0.8, par **Cornor923** (PR 116-125). Les parties de la v0.8 restent valables.
+
+- **Écran d'inventaire :** en aventure, I (ou R3) ouvre un panneau avec les 10 cases de la barre : glisser, partager les piles et jeter hors du panneau, comme dans Minecraft. En créatif, I ouvre toujours la palette.
+- **Du créatif à la survie :** une partie créée en créatif peut passer en survie et revenir (bouton dans la palette et dans l'écran d'inventaire). Le mode est enregistré avec la partie.
+- **Recherche dans la palette :** un champ dans la palette créative filtre blocs et kubes par leur nom.
+- **Contrat spécial ESCorp :** une fois par partie, 16 Terre rouge donnent un Conteneur ESCorp, sans limite de temps. Nouvelle étape « Contrats » dans le tutoriel.
+- **Touches au choix :** Options > Contrôles > Personnaliser les touches. 28 actions, jusqu'à 4 touches ou boutons de souris chacune ; une touche déjà prise est signalée et un bouton remet celles d'origine. L'aide et le tutoriel montrent les touches choisies.
+- **Cadre de sélection :** nouvelle option dans Options > Interface pour cacher le cadre orange du bloc visé.
+- **Plus de 255 blocs différents par monde :** plus de blocs refusés faute de place. Le monde prend deux fois plus de mémoire.
+
+**Corrections graphiques**
+- La visière du casque suit le redimensionnement de la fenêtre avec l'ordinateur de bord, la pause ou un panneau ouvert (il restait des bandes sombres ou ses bords sortaient de l'écran).
+- Le kube invisible se voit translucide posé au sol et en main (avant il ne se voyait pas).
+- L'Eau acide n'apparaît qu'une fois dans la palette créative.
+
+Détails dans `CHANGELOG.fr.md`.
 
 ---
 
