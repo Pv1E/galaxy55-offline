@@ -16,6 +16,7 @@ Los que están **arreglados** se mueven al final. Los detalles técnicos están 
 
 ## Arreglados
 
+- v0.8.1 (arreglados por **Cornor923**, PR 119, 120 y 124): el kube invisible se ve tirado en el suelo y en la mano; el visor del casco sigue el tamaño de la ventana con el ordenador de a bordo o un panel abiertos; el Agua ácida sale una sola vez en la paleta.
 - v0.8 (arreglados por **Cornor923**, PR 96-112): los iconos de los bloques translúcidos ya no se ven huecos ni oscuros y ningún icono sale dentado en una ventana pequeña; el fundido de la bomba exótica ya no parpadea; la versión DirectX ya no se cierra al abrir la Base de datos ESCorp; una partida con bloques que esta versión no conoce ya no cierra el juego al cargarla; la escena ya no debería parpadear al llegar a un planeta (por confirmar); en la vista previa del editor de kubes, las caras de detrás del vidrio y del hielo ya no salen por encima y el kube gira hacia donde va el ratón; en francés, la cantina se escribe "ESCorp".
 - v0.8: una partida guardada dentro de la nave nodriza ya no se abre en el mapa de estrellas.
 - v0.7 (de **Sekhmet**, arreglados por **Cornor923**): el volumen a 0 ya no suena; la cascada se ve detrás del cristal.

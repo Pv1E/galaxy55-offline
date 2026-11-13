@@ -1,3 +1,13 @@
+## Galaxy 55 (offline) v0.8.1
+
+Versión pequeña sobre la v0.8, todo de **Cornor923**: pantalla de inventario (I en aventura), paso de creativo a supervivencia y vuelta, buscador en la paleta creativa, un contrato especial de la ESCorp (16 de Tierra roja por un Contenedor ESCorp) y arreglos gráficos: el visor del casco sigue el tamaño de la ventana, el kube invisible se ve tirado y en la mano, y el Agua ácida sale una sola vez en la paleta. Detalles en el `CHANGELOG.md`. Las partidas de la v0.8 siguen valiendo.
+
+Small release on top of v0.8, all by **Cornor923**: inventory screen (I in adventure), switching from creative to survival and back, a search field in the creative palette, an ESCorp special contract (16 Red Earth for an ESCorp Container) and graphics fixes: the helmet visor follows window resizes, the invisible kube shows when dropped and in the hand, and Acid Water shows once in the palette. Details in `CHANGELOG.en.md`. v0.8 saves still work.
+
+Petite version sur la v0.8, tout de **Cornor923** : écran d'inventaire (I en aventure), passage du créatif à la survie et retour, recherche dans la palette créative, un contrat spécial ESCorp (16 Terre rouge pour un Conteneur ESCorp) et corrections graphiques : la visière du casque suit la taille de la fenêtre, le kube invisible se voit posé et en main, et l'Eau acide n'apparaît qu'une fois dans la palette. Détails dans `CHANGELOG.fr.md`. Les parties de la v0.8 restent valables.
+
+---
+
 ## Galaxy 55 (offline) v0.8 — novedades
 
 La versión 0.8 del port nativo **no oficial** de Galaxy 55 (Motion Twin, 2012) ya está aquí. Sin Flash, sin navegador y sin servidor.

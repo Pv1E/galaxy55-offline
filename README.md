@@ -15,7 +15,7 @@ It was shut down and its server no longer exists. This project ports it to a **n
 
 | I want to… | Look at |
 |---|---|
-| **Play without compiling** | [pre-release v0.8](../../releases/tag/v0.8): download the zip, unzip it, run `jugar.bat` |
+| **Play without compiling** | [pre-release v0.8.1](../../releases/tag/v0.8.1): download the zip, unzip it, run `jugar.bat` |
 | **Controls and how to build** | [`port/README.md`](port/README.md) |
 | **See or report bugs** | [`BUGS.md`](BUGS.md) (known bugs); to report a new one, open an *issue* or message me |
 | **See what is missing** | [`TODO.md`](TODO.md) (to-do list) |
@@ -26,12 +26,17 @@ It was shut down and its server no longer exists. This project ports it to a **n
 
 ## Play in 3 steps
 
-1. Download the zip from the [pre-release v0.8](../../releases/tag/v0.8) and **unzip everything** (keep all its folders).
+1. Download the zip from the [pre-release v0.8.1](../../releases/tag/v0.8.1) and **unzip everything** (keep all its folders).
 2. Check that there is a **`res/`** folder next to `galaxy55.hl` (with `texture.png`, `lazer.png`… inside). If you see loose files named
    like `res\texture.png` instead, extraction failed: unzip again with a different program. (Symptom: `Can't read res/texture.png`.)
-3. Windows: double-click `jugar.bat` (if it doesn't open, `jugar_dx.bat`). **Linux / macOS (not tested by us):** download the `galaxy55-offline-v0.8-linux-mac.zip` from the release,
+3. Windows: double-click `jugar.bat` (if it doesn't open, `jugar_dx.bat`). **Linux / macOS (not tested by us):** download the `galaxy55-offline-v0.8.1-linux-mac.zip` from the release,
    install [HashLink](https://github.com/HaxeFoundation/hashlink) (`brew install hashlink` on macOS) and run `sh jugar.sh`. (A player got it running on Linux; tell us how it goes.)
    The language (Spanish, English, French), VSync and the FPS limit are changed in Options.
+
+## New in v0.8.1
+
+Inventory screen on I, creative games can switch to survival, palette search, an ESCorp special contract and
+graphics fixes (helmet visor on window resize, invisible kube when dropped). See the [`CHANGELOG.en.md`](CHANGELOG.en.md).
 
 ## New in v0.8
 
@@ -39,7 +44,7 @@ Almost all of it by **Cornor923**: the 77 **kubes of Kube** (Motion Twin, 2010) 
 (a cube you only see as a piece of sky, with Kube chests and gems inside, and coloured toughened glass), the **mothership
 shop** in the middle of the hangar where you talk to the merchant robot, and **ESCorp contracts in parts**. Also more
 generous synthesizer recipes, fairer merchant prices and smooth block icons. Details in the
-[release notes](../../releases/tag/v0.8) and the [`CHANGELOG.en.md`](CHANGELOG.en.md).
+[release notes](../../releases/tag/v0.8.1) and the [`CHANGELOG.en.md`](CHANGELOG.en.md).
 
 <p>
 <img src="docs/img/kubes-kube.jpg" width="49%" alt="Kubes of Kube placed on a planet">
@@ -113,7 +118,7 @@ El objetivo es ser fiel al original; lo que añadimos está marcado como tal.
 
 | Quiero… | Mira |
 |---|---|
-| **Jugar sin compilar** | [pre-release v0.8](../../releases/tag/v0.8): descarga el zip, descomprímelo y abre `jugar.bat` |
+| **Jugar sin compilar** | [pre-release v0.8.1](../../releases/tag/v0.8.1): descarga el zip, descomprímelo y abre `jugar.bat` |
 | **Controles y cómo compilar** | [`port/LEEME.md`](port/LEEME.md) |
 | **Ver o avisar de errores** | [`ERRORES.md`](ERRORES.md); para avisar de uno nuevo, abre un *issue* o escríbeme |
 | **Saber qué falta por hacer** | [`PENDIENTES.md`](PENDIENTES.md) |
@@ -124,12 +129,17 @@ El objetivo es ser fiel al original; lo que añadimos está marcado como tal.
 
 ### Jugar en 3 pasos
 
-1. Descarga el zip de la [pre-release v0.8](../../releases/tag/v0.8) y **descomprímelo entero** (con todas sus carpetas).
+1. Descarga el zip de la [pre-release v0.8.1](../../releases/tag/v0.8.1) y **descomprímelo entero** (con todas sus carpetas).
 2. Comprueba que hay una carpeta **`res/`** junto a `galaxy55.hl` (con `texture.png`, `lazer.png`… dentro). Si en vez de eso ves
    archivos sueltos llamados `res\texture.png`, la extracción falló: vuelve a descomprimir con otro programa. (Síntoma: `Can't read res/texture.png`.)
-3. Windows: doble clic en `jugar.bat` (si no abre, `jugar_dx.bat`). **Linux / macOS (sin probar por nosotros):** descarga `galaxy55-offline-v0.8-linux-mac.zip` de la release,
+3. Windows: doble clic en `jugar.bat` (si no abre, `jugar_dx.bat`). **Linux / macOS (sin probar por nosotros):** descarga `galaxy55-offline-v0.8.1-linux-mac.zip` de la release,
    instala [HashLink](https://github.com/HaxeFoundation/hashlink) (`brew install hashlink` en macOS) y ejecuta `sh jugar.sh`. (Un jugador lo ha hecho funcionar en Linux; cuéntanos qué tal.)
    El idioma (español, inglés, francés), la sincronización vertical (VSync) y el límite de FPS se cambian en Opciones.
+
+### Novedades de la v0.8.1
+
+Pantalla de inventario con I, las partidas creativas pueden pasar a supervivencia, buscador en la paleta, un contrato
+especial de la ESCorp y arreglos gráficos (visor del casco al cambiar la ventana, kube invisible tirado). Ver el [`CHANGELOG.md`](CHANGELOG.md).
 
 ### Novedades de la v0.8
 
@@ -137,7 +147,7 @@ Casi todo de **Cornor923**: los 77 **kubes de Kube** (Motion Twin, 2010) como bl
 (un cubo que solo se ve como un trozo de cielo, con cofres de Kube y gemas dentro, y los vidrios blindados de color), la
 **tienda de la nave nodriza** en el centro del hangar, donde se habla con el robot comerciante, y los **contratos de la
 ESCorp por partes**. También recetas del sintetizador que dan más, precios del robot más justos e iconos de bloques lisos.
-Detalles en las [notas de la release](../../releases/tag/v0.8) y el [`CHANGELOG.md`](CHANGELOG.md).
+Detalles en las [notas de la release](../../releases/tag/v0.8.1) y el [`CHANGELOG.md`](CHANGELOG.md).
 
 <p>
 <img src="docs/img/kubes-kube.jpg" width="49%" alt="Kubes de Kube puestos en un planeta">
@@ -199,7 +209,7 @@ L'objectif est de rester fidèle à l'original ; ce que nous ajoutons est signal
 
 | Je veux… | Voir |
 |---|---|
-| **Jouer sans compiler** | [pré-version v0.8](../../releases/tag/v0.8) : télécharge le zip, décompresse-le et lance `jugar.bat` |
+| **Jouer sans compiler** | [pré-version v0.8.1](../../releases/tag/v0.8.1) : télécharge le zip, décompresse-le et lance `jugar.bat` |
 | **Les commandes et la compilation** | [`port/LISEZMOI.md`](port/LISEZMOI.md) |
 | **Voir ou signaler des bugs** | [`BUGS.fr.md`](BUGS.fr.md) (bugs connus) ; pour en signaler un nouveau, ouvre une *issue* ou écris-moi |
 | **Voir ce qui manque** | [`TODO.fr.md`](TODO.fr.md) (liste des tâches) |
@@ -210,12 +220,17 @@ L'objectif est de rester fidèle à l'original ; ce que nous ajoutons est signal
 
 ### Jouer en 3 étapes
 
-1. Télécharge le zip de la [pré-version v0.8](../../releases/tag/v0.8) et **décompresse-le entièrement** (avec tous ses dossiers).
+1. Télécharge le zip de la [pré-version v0.8.1](../../releases/tag/v0.8.1) et **décompresse-le entièrement** (avec tous ses dossiers).
 2. Vérifie qu'il y a un dossier **`res/`** à côté de `galaxy55.hl` (avec `texture.png`, `lazer.png`… dedans). Si tu vois à la place
    des fichiers isolés nommés `res\texture.png`, l'extraction a échoué : décompresse à nouveau avec un autre programme. (Symptôme : `Can't read res/texture.png`.)
-3. Windows : double-clic sur `jugar.bat` (s'il ne s'ouvre pas, `jugar_dx.bat`). **Linux / macOS (non testé par nous) :** télécharge `galaxy55-offline-v0.8-linux-mac.zip` depuis la release,
+3. Windows : double-clic sur `jugar.bat` (s'il ne s'ouvre pas, `jugar_dx.bat`). **Linux / macOS (non testé par nous) :** télécharge `galaxy55-offline-v0.8.1-linux-mac.zip` depuis la release,
    installe [HashLink](https://github.com/HaxeFoundation/hashlink) (`brew install hashlink` sur macOS) et lance `sh jugar.sh`. (Un joueur l'a fait fonctionner sous Linux ; dis-nous comment ça se passe.)
    La langue (espagnol, anglais, français), la synchronisation verticale (VSync) et la limite d'images par seconde se changent dans les Options.
+
+### Nouveautés de la v0.8.1
+
+Écran d'inventaire sur I, les parties créatives peuvent passer en survie, recherche dans la palette, un contrat spécial
+ESCorp et corrections graphiques (visière du casque au redimensionnement, kube invisible posé). Voir le [`CHANGELOG.fr.md`](CHANGELOG.fr.md).
 
 ### Nouveautés de la v0.8
 
@@ -223,7 +238,7 @@ Presque tout de **Cornor923** : les 77 **kubes de Kube** (Motion Twin, 2010) en 
 cube qu'on ne voit que comme un morceau de ciel, avec des coffres de Kube et des gemmes dedans, et les vitres blindées de
 couleur), la **boutique du vaisseau-mère** au milieu du hangar, où l'on parle au robot marchand, et les **contrats ESCorp en
 plusieurs fois**. Aussi des recettes du synthétiseur plus généreuses, des prix du robot plus justes et des icônes de blocs
-lisses. Détails dans les [notes de la version](../../releases/tag/v0.8) et le [`CHANGELOG.fr.md`](CHANGELOG.fr.md).
+lisses. Détails dans les [notes de la version](../../releases/tag/v0.8.1) et le [`CHANGELOG.fr.md`](CHANGELOG.fr.md).
 
 <p>
 <img src="docs/img/kubes-kube.jpg" width="49%" alt="Des kubes de Kube posés sur une planète">

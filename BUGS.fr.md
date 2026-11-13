@@ -16,6 +16,7 @@ Les bugs corrigés sont déplacés à la fin. Les détails techniques sont dans 
 
 ## Corrigés
 
+- v0.8.1 (corrigés par **Cornor923**, PR 119, 120 et 124) : le kube invisible se voit posé au sol et en main ; la visière du casque suit le redimensionnement de la fenêtre avec l'ordinateur de bord ou un panneau ouvert ; l'Eau acide n'apparaît qu'une fois dans la palette.
 - v0.8 (corrigés par **Cornor923**, PR 96-112) : les icônes des blocs translucides ne paraissent plus creuses ni sombres et aucune icône n'est crénelée dans une petite fenêtre ; le fondu de la bombe antique ne clignote plus ; la version DirectX ne se ferme plus à l'ouverture de la base de données ESCorp ; une partie avec des blocs que cette version ne connaît pas ne ferme plus le jeu au chargement ; la scène ne devrait plus clignoter en arrivant sur une planète (à confirmer) ; dans l'aperçu de l'éditeur de Kubes, les faces arrière du verre et de la glace ne passent plus par-dessus et le kube tourne dans le sens de la souris ; le Conteneur ESCorp s'écrit avec « ESCorp ».
 - v0.8 : une partie enregistrée dans le vaisseau-mère ne s'ouvre plus sur la carte stellaire.
 - v0.7 (de **Sekhmet**, corrigés par **Cornor923**) : le volume à 0 ne fait plus de bruit ; une cascade derrière du verre se voit.

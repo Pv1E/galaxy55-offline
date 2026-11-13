@@ -2,7 +2,17 @@
 
 [Español : `CHANGELOG.md`](CHANGELOG.md) · [English: `CHANGELOG.en.md`](CHANGELOG.en.md)
 
-## Non publié
+## v0.8.1 — pre-release
+- **Écran d'inventaire** (ajout du port, PR 125) : en aventure, I (ou R3) ouvre un panneau avec les 10 cases de la barre :
+  glisser, partager les piles, jeter hors du panneau, comme dans Minecraft. En créatif, I ouvre toujours la palette.
+- **Du créatif à la survie** (ajout du port, PR 121 et 125) : une partie créée en créatif peut passer en survie et revenir (bouton
+  dans la palette et dans l'écran d'inventaire). Le mode est enregistré avec la partie.
+- **Recherche dans la palette** (ajout du port, PR 122) : un champ dans la palette créative filtre blocs et kubes par leur nom.
+- **Contrat spécial ESCorp** (ajout du port, PR 123) : une fois par partie, 16 Terre rouge donnent un Conteneur ESCorp, sans
+  limite de temps. Nouvelle étape « Contrats » dans le tutoriel.
+- La visière du casque suit le redimensionnement de la fenêtre avec l'ordinateur de bord, la pause ou un panneau ouvert
+  (changement du port, PR 120) ; il restait des bandes sombres ou ses bords sortaient de l'écran.
+- La palette créative ne montre plus deux fois l'Eau acide (PR 124).
 - **Touches au choix** (ajout du port, PR 118) : Options > Contrôles > Personnaliser les touches. 28 actions, jusqu'à 4 touches
   ou boutons de souris chacune ; une touche déjà prise par une autre action passe en rouge, et un bouton remet les touches
   d'origine. Enregistrées dans `settings.json`. L'aide à l'écran et le tutoriel montrent les touches choisies. Échap, les

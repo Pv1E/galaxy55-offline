@@ -280,6 +280,13 @@ actualizados (la sección "Controles" de LEEME/README dice que se pueden cambiar
 `RESUMEN.md` entran los PR 116-119 y sus órdenes de Dev, y las secciones antiguas "Siguiente paso acordado" y "Pendiente"
 quedan marcadas como plan de octubre ya hecho en gran parte; en este archivo, "Lo siguiente" marca lo hecho.
 
+## v0.8.1 preparada (2026-11-13)
+Traídos los PR 120-125 de Cornor923 (visor del casco al redimensionar, creativo/supervivencia, buscador de la paleta, contrato
+especial ESCorp, Agua ácida doble en la paleta, pantalla de inventario), que no traían changelog: se añadieron a los changelogs
+ES/EN/FR y a ERRORES/BUGS. Todo pasa de "Sin publicar" a v0.8.1; enlaces de los README a `releases/tag/v0.8.1` con un párrafo
+de novedades; menú "v0.8.1 · port nativo"; notas en `port/RELEASE.md` (3 idiomas). Compilan SDL y DX. Zips con
+`package.ps1 -Version 0.8.1 -HashLink ..\tools-portable\hashlink\hashlink-1.16.0-win` en `port/out/release`.
+
 ## Lo siguiente (orden acordado en octubre; la lista al día es `PENDIENTES.md`)
 1. (HECHO: bahías del hangar y tienda en el centro, v0.8) **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;

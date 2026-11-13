@@ -2,7 +2,17 @@
 
 [English: `CHANGELOG.en.md`](CHANGELOG.en.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
-## Sin publicar
+## v0.8.1 — pre-release
+- **Pantalla de inventario** (añadido del port, PR 125): en aventura, I (o R3) abre un panel con las 10 casillas de la barra:
+  arrastrar, partir montones, tirar fuera del panel, como en Minecraft. En creativo, I sigue abriendo la paleta.
+- **De creativo a supervivencia** (añadido del port, PR 121 y 125): una partida creada en creativo puede pasar a supervivencia y
+  volver (botón en la paleta y en la pantalla de inventario). El modo se guarda con la partida.
+- **Buscar en la paleta** (añadido del port, PR 122): un campo en la paleta creativa filtra bloques y kubes por su nombre.
+- **Contrato especial de la ESCorp** (añadido del port, PR 123): una vez por partida, 16 de Tierra roja dan un Contenedor ESCorp,
+  sin límite de tiempo. Nuevo paso "Contratos" en el tutorial.
+- El visor del casco sigue el tamaño de la ventana al cambiarla con el ordenador de a bordo, la pausa o un panel abiertos (cambio
+  del port, PR 120); antes quedaban bandas oscuras o los bordes fuera de la pantalla.
+- La paleta creativa ya no muestra dos veces el Agua ácida (PR 124).
 - **Teclas a tu gusto** (añadido del port, PR 118): Opciones > Controles > Personalizar teclas. 28 acciones, hasta 4 teclas o botones
   del ratón cada una; avisa en rojo si una tecla ya la usa otra acción y hay un botón para volver a las de siempre. Se guardan en
   `settings.json`. Las ayudas en pantalla y el tutorial muestran las teclas elegidas. Esc, las teclas de los menús, la rueda y el
