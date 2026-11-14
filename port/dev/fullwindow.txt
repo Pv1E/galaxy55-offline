@@ -1,4 +1,4 @@
-# fondos de pantalla completa (menus, tienda, contratos, paleta, inventario, mapa de estrellas) en ventanas mas anchas y mas altas que 16:9:
+# fondos de pantalla completa (menus, tienda, contratos, paleta, inventario, stockage de la nave, mapa de estrellas) en ventanas mas anchas y mas altas que 16:9:
 # cada "cover" debe decir OK (Theme.fullRect / Theme.coverWindow); SIN TAPAR = queda una banda sin tapar en ese borde.
 # port/out/cover_*.png muestra solo lo que estaba abierto; los shot, la ventana entera. La cantina (cofre) no es modal y no
 # tapa la ventana: solo se captura (el panel se ve entero).
@@ -42,6 +42,12 @@ invscreen open
 wait 5
 cover inventario_ancha
 shot fullwindow_inventario_ancha
+close
+wait 5
+storage open
+wait 5
+cover stockage_ancha
+shot fullwindow_stockage_ancha
 close
 wait 5
 # supervivencia de una partida creativa: la tecla de la paleta abre la pantalla de inventario con la bascula (ModeSwitch)
@@ -96,6 +102,12 @@ invscreen open
 wait 5
 cover inventario_alta
 shot fullwindow_inventario_alta
+close
+wait 5
+storage open
+wait 5
+cover stockage_alta
+shot fullwindow_stockage_alta
 close
 wait 5
 # supervivencia de una partida creativa: la tecla de la paleta abre la pantalla de inventario con la bascula (ModeSwitch)

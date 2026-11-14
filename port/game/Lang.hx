@@ -50,6 +50,15 @@ class Lang {
 		"robot.chat9" => ["Mantel nuevo. ¿Te gusta? Lo eligió el jefe.", "New tablecloth. Do you like it? The boss picked it.", "Nouvelle nappe. Tu aimes ? C'est le patron qui l'a choisie."],
 		"robot.chat10" => ["Con 8 gemas iguales el sintetizador hace una Sombra. Con 8 Sombras... algo mejor.", "8 matching gems make a Shade in the synthesizer. 8 Shades make... something better.", "8 gemmes identiques font une Ombre au synthétiseur. 8 Ombres font... mieux encore."],
 		"computer.contracts" => ["Contratos", "Contracts", "Contrats"],
+		// stockage de la nave (ShipStorage, anadido del port)
+		"computer.storage" => ["Almacén", "Storage", "Stockage"],
+		"computer.back" => ["Volver a tu nave", "Back to your ship", "Retourner au vaisseau"],
+		"storage.title" => ["Almacén de la nave", "Ship storage", "Stockage du vaisseau"],
+		"storage.blocks" => ["Bloques guardados", "Stored blocks", "Blocs stockés"],
+		"storage.charges" => ["Cargas guardadas", "Stored charges", "Charges stockées"],
+		"storage.yourcharges" => ["Tus cargas", "Your charges", "Tes charges"],
+		"storage.nolimit" => ["sin límite", "no limit", "sans limite"],
+		"storage.hint" => ["Las cargas van siempre a las de su color", "Charges always go to their own color", "Les charges vont toujours dans leur couleur"],
 		"contracts.title" => ["Contratos de la ESCorp", "ESCorp contracts", "Contrats ESCorp"],
 		// %t% = mm:ss hasta el siguiente tablero
 		"contracts.renew" => ["Nuevos contratos dentro de %t%", "New contracts in %t%", "Nouveaux contrats dans %t%"],

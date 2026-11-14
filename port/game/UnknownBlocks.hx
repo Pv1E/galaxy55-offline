@@ -6,7 +6,7 @@ typedef UnknownReport = {
 	var world : Int;
 	/** celdas de la nave: los cambios a bordo y la nave hecha en el hangar */
 	var ship : Int;
-	/** bloques del inventario y de las cantinas (unidades) */
+	/** bloques del inventario, de las cantinas y del stockage de la nave (unidades) */
 	var items : Int;
 	/** numeros de bloque desconocidos, de menor a mayor */
 	var ids : Array<Int>;
@@ -17,8 +17,8 @@ typedef UnknownReport = {
  * bloque, indices de Block.all, mas alla del ultimo) hacia fallar la carga: InvBar.refresh pedia el icono de un bloque nulo.
  * Al elegirla en la lista se cuentan (count) y se pregunta (GalaxyApp.playSave); si se acepta, se copia la partida (backup) y
  * se borran (clear): las celdas del terreno y de la nave pasan a aire y las casillas del inventario y de las cantinas se vacian.
- * Lo que guarda el numero de un bloque: inv, chests, edits, uni.planets[].edits, shipEdits, shipData y las claves "b<numero>"
- * de market. La Base de datos ESCorp (kub) guarda nombres, no numeros: no se toca.
+ * Lo que guarda el numero de un bloque: inv, chests, storage (stockage de la nave), edits, uni.planets[].edits, shipEdits,
+ * shipData y las claves "b<numero>" de market. La Base de datos ESCorp (kub) guarda nombres, no numeros: no se toca.
  */
 class UnknownBlocks {
 
@@ -67,6 +67,7 @@ class UnknownBlocks {
 		}
 		if( info.inv != null ) slots(info.inv.t);
 		if( info.chests != null ) for( c in info.chests ) slots(c.t);
+		if( info.storage != null ) slots(info.storage.t);
 		r.world += edits(info.edits);
 		if( info.uni != null && info.uni.planets != null ) for( p in info.uni.planets ) r.world += edits(p.edits);
 		r.ship += edits(info.shipEdits);

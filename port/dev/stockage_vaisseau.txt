@@ -1,0 +1,183 @@
+# stockage de la nave (ShipStorage, anadido del port): boton Stockage del ordenador de a bordo (despues de Modificar la nave) y
+# panel con arrastrar y soltar (SlotGrid). Zonas de "slots": 0 = bloques guardados (4 casillas, las de un Conteneur ESCorp),
+# 1 = cargas guardadas (contadores: amarillas 24, azules 12, rosas 5, bonus sin limite), 2 = el inventario, 3 = sus cargas.
+# "print storage" = lo guardado en la partida, las cargas del inventario y si el boton esta activo; "print slots" = lo que se ve
+# en el panel (la pila del cursor sigue en su casilla hasta dejarla) y el cursor.
+# Uso: powershell -File port/dev/devrun.ps1 -Script port/dev/stockage_vaisseau.txt -Timeout 900
+wait 3
+ship
+wait 10
+contracts empty
+give BWood 40
+give BGlass 10
+give BKubeRubis 3
+storage invcharge yellow 30
+storage invcharge blue 20
+storage invcharge pink 10
+storage invcharge bonus 500
+print storage
+# 1) el ordenador de a bordo: Stockage despues de Modificar la nave (3 = el cuarto boton, con Pilotar); el panel sale vacio
+activatel 64 63 3
+wait 5
+shot stockage_menu
+button 3
+wait 5
+print storage
+print slots
+# 2) depositar bloques: la madera y una gema (las gemas son bloques)
+slots drag 2:0 0:0
+slots drag 2:2 0:1
+print storage
+print inv
+# 3) depositar cargas: de 30 amarillas caben 24 (quedan 6); otra vez, con el stockage lleno, no pasa nada
+slots drag 3:0 1:0
+print storage
+slots drag 3:0 1:0
+print storage
+# 4) una carga soltada en la casilla de otro color va a la suya: las azules en la de las rosas -> 12 azules guardadas
+slots drag 3:1 1:2
+print storage
+# 5) cargas y bloques no se mezclan: una carga en una casilla de bloques y un bloque en una de cargas no se mueven
+slots drag 3:2 0:3
+slots drag 2:1 1:0
+print storage
+print inv
+# 6) las de bonus no tienen limite: pasan las 500
+slots drag 3:3 1:3
+print storage
+# 7) Mayus: la mitad (5 rosas de 10, justo el maximo); clic derecho: la mitad al cursor (3 de 5); con las rosas guardadas al
+# maximo no se deja nada (sigue en el cursor); Esc suelta la pila (vuelve a su casilla) sin cerrar el panel
+press shift
+slots drag 3:2 1:2
+release shift
+print storage
+slots click 3:2 r
+slots click 1:2
+print slots
+tap esc
+wait 2
+print slots
+# 8) retirar: las 24 amarillas al inventario (6 + 24 = 30) y la madera a la casilla 5
+slots drag 1:0 3:0
+slots drag 0:0 2:5
+print storage
+print inv
+# 9) una pila de bloques llena no admite mas: el hierro guardado al maximo y el del inventario (casilla 0) no pasa
+storage put BIron 1000
+give BIron 10
+print storage
+print inv
+slots drag 2:0 0:0
+print storage
+print inv
+# 10) mando y flechas: derecha recorre la fila (de los bloques guardados a las cargas guardadas), abajo baja al inventario;
+# A coge y deja (lleno: sigue en el cursor); B suelta la pila
+slots move out
+slots nav right
+slots nav right
+slots nav right
+slots nav right
+slots nav right
+print slots
+slots nav left
+slots nav left
+slots nav left
+slots nav left
+slots nav down
+slots nav a
+slots nav up
+slots nav a
+print slots
+tap esc
+wait 2
+slots move 1:3
+wait 2
+shot stockage_panel
+# 11) cerrar (Esc sin nada en el cursor) y volver a cargar la partida: el stockage se guarda
+tap esc
+wait 2
+print storage
+reload
+wait 30
+print storage
+print inv
+# 12) una partida de antes, sin stockage: se abre vacio
+storage forget
+reload
+wait 30
+print storage
+storage open
+wait 5
+print slots
+print storage
+storage close
+wait 3
+# 13) nave nodriza: el ordenador de tu nave aparcada ofrece volver a ella o el stockage. Lo guardado alli (en la copia de la
+# partida, aqui creado por primera vez) vuelve con el jugador a su nave
+mothership
+wait 300
+computer
+wait 3
+shot stockage_nodriza_menu
+button 1
+wait 5
+print slots
+slots drag 2:1 0:0
+print storage
+storage close
+wait 3
+computer
+wait 3
+button 0
+waitfor ready
+wait 30
+print storage
+print inv
+# 14) creativo: el boton tambien esta activo
+creativegame
+ship
+wait 10
+computer
+wait 3
+print storage
+close
+wait 3
+storage open
+wait 3
+print storage
+storage close
+wait 3
+# 15) kubes del editor en el stockage de una partida creativa: se guardan aparte (editorKubes.storage) y vuelven al cargarla
+edkube clear
+edkube make test-pierre cube opaque FFB0B0B0 Pierre grise test
+reload
+waitfor ready 6000
+wait 30
+storage put kube:test-pierre 5
+print storage
+savegame
+print edsave
+reload
+waitfor ready 6000
+wait 30
+print storage
+edkube clear
+# 16) tutorial: el boton Stockage sale desactivado y el stockage no se abre
+tuto new 4242
+waitfor map
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+ship
+wait 10
+computer
+wait 3
+print storage
+close
+wait 3
+storage open
+print storage
+quit

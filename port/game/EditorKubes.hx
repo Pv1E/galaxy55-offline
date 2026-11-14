@@ -20,6 +20,8 @@ typedef EditorKubesSave = {
 	@:optional var inv : Array<Int>;
 	/** cantinas (clave de SaveInfo.chests): [casilla, n, cantidad, ...] */
 	@:optional var chests : Array<{ key : String, t : Array<Int> }>;
+	/** stockage de la nave (SaveInfo.storage): [casilla, n, cantidad, ...] */
+	@:optional var storage : Array<Int>;
 }
 
 /** un kube del editor cargado en la sesion: sus bloques de Block.all no cambian de indice mientras dura */
@@ -409,6 +411,7 @@ class EditorKubes {
 		if( info.uni != null && info.uni.planets != null ) for( p in info.uni.planets ) edits(p.edits);
 		if( info.inv != null ) slotsOf(info.inv.t);
 		if( info.chests != null ) for( c in info.chests ) slotsOf(c.t);
+		if( info.storage != null ) slotsOf(info.storage.t);
 		return out;
 	}
 
@@ -467,6 +470,7 @@ class EditorKubes {
 			for( rc in raw.chests )
 				for( c in info.chests )
 					if( c.key == rc.key ) slotsOf(c.t, rc.t);
+		if( info.storage != null ) slotsOf(info.storage.t, raw.storage);
 	}
 
 	/**
@@ -546,6 +550,8 @@ class EditorKubes {
 				if( raw.chests == null ) raw.chests = [];
 				raw.chests.push({ key : c.key, t : m });
 			}) }];
+		if( info.storage != null )
+			out.storage = { t : slotsOf(info.storage.t, function(m) raw.storage = m), charges : [for( c in info.storage.charges ) { c : c.c, n : c.n }] };
 		out.editorKubes = raw.ids.length > 0 ? raw : null;
 		return out;
 	}
@@ -561,6 +567,7 @@ class EditorKubes {
 			r.inv = ints(o.inv);
 			if( o.planets != null ) r.planets = [for( p in (o.planets : Array<Dynamic>) ) { id : Std.int(p.id), edits : ints(p.edits) }];
 			if( o.chests != null ) r.chests = [for( c in (o.chests : Array<Dynamic>) ) { key : Std.string(c.key), t : ints(c.t) }];
+			r.storage = ints(o.storage);
 			return r;
 		} catch( e : Dynamic ) {
 			return null;
