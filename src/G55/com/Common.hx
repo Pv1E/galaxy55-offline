@@ -339,6 +339,9 @@ enum BlockKind {
 	// pared invisible de la tienda del robot comerciante de la nave nodriza (Mothership.shop): se choca con ella pero no se ve ni
 	// se apunta (BFNoPick: el puntero y el laser la atraviesan). Sin precio y kubindex.json hidden
 	BShopBarrier;
+	// kubes del editor de kubes puestos en una partida creativa (EditorKubes): todos comparten este BlockKind y cada uno tiene sus
+	// bloques al final de Block.all, despues de este (que no se pone nunca). Sin precio ni ficha en la Base de datos ESCorp
+	BKubeEditor;
 }
 
 enum BlockModel {

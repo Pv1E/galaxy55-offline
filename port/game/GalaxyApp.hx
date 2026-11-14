@@ -1851,6 +1851,8 @@ class GalaxyApp extends hxd.App {
 	function startGame( info : SaveInfo ) {
 		// antes de cualquier copia para el hangar o la nodriza: las copias comparten la Base de datos ESCorp
 		Kubindex.ensure(info);
+		// kubes del editor de kubes (solo en creativo): sus bloques y su sitio en el atlas antes del mundo y de los iconos
+		EditorKubes.attach(info);
 		warmIcons(info);
 		state = Loading;
 		clearUi();

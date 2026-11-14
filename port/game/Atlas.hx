@@ -42,16 +42,50 @@ class Atlas {
 		var t = h3d.mat.Texture.fromPixels(pix);
 		t.filter = Nearest;
 		t.mipMap = None;
+		tex = t;
 		var t0 = haxe.Timer.stamp();
 		mipped = buildMips(pix);
 		mipTime = haxe.Timer.stamp() - t0;
 		return t;
 	}
 
+	/** la textura que devolvio build (sin mipmaps) y los niveles de mipped: updateTiles los rehace por casillas */
+	static var tex : h3d.mat.Texture;
+	static var levels : Array<hxd.Pixels>;
+
+	/**
+	 * Casillas de pixels cambiadas despues de build (los kubes del editor, EditorKubes): se rehacen sus mipmaps como en buildMips
+	 * y las dos texturas se vuelven a subir. Los objetos h3d.mat.Texture no cambian (el mundo, los iconos y la mano los guardan).
+	 */
+	public static function updateTiles( tiles : Array<Int> ) {
+		if( tiles.length == 0 || tex == null ) return;
+		for( t in tiles ) retile(t);
+		tex.uploadPixels(pixels);
+		for( l in 0...MIP_LEVELS )
+			mipped.uploadPixels(levels[l], l);
+	}
+
+	/** niveles de una casilla desde pixels: halve, y fillClear y keepCoverage si la casilla es mixta (como buildMips) */
+	static function retile( t : Int ) {
+		var tx = t & 63, ty = t >> 6;
+		var src = hl.Bytes.fromBytes(pixels.bytes), dst = hl.Bytes.fromBytes(levels[0].bytes);
+		for( y in ty << 5...(ty + 1) << 5 )
+			dst.blit(pos(levels[0], tx << 5, y), src, pos(pixels, tx << 5, y), 32 << 2);
+		var kinds = new haxe.ds.Vector<Int>((pixels.width >> 5) * (pixels.height >> 5));
+		for( l in 1...MIP_LEVELS ) {
+			var s = 32 >> l;
+			halveRect(levels[l - 1], levels[l], tx * s, ty * s, (tx + 1) * s, (ty + 1) * s, l == 1 ? kinds : null);
+		}
+		if( kinds[ty * (pixels.width >> 5) + tx] == 3 ) {
+			fillClear(levels, tx, ty);
+			keepCoverage(levels, tx, ty);
+		}
+	}
+
 	static function buildMips( pix : hxd.Pixels ) : h3d.mat.Texture {
 		// por casilla: 1 = algun texel visible, 2 = algun texel no opaco; solo las mixtas (3) necesitan fillClear y keepCoverage
 		var kinds = new haxe.ds.Vector<Int>((pix.width >> 5) * (pix.height >> 5));
-		var levels = [pix.clone()];
+		levels = [pix.clone()];
 		for( l in 1...MIP_LEVELS )
 			levels.push(halve(levels[l - 1], l == 1 ? kinds : null));
 		for( i in 0...kinds.length )
@@ -77,11 +111,18 @@ class Atlas {
 	static function halve( src : hxd.Pixels, kinds : haxe.ds.Vector<Int> ) : hxd.Pixels {
 		var w = src.width >> 1, h = src.height >> 1;
 		var dst = hxd.Pixels.alloc(w, h, src.format);
+		halveRect(src, dst, 0, 0, w, h, kinds);
+		return dst;
+	}
+
+	/** halve en el rectangulo [x0, x1) x [y0, y1) de dst (coordenadas del nivel siguiente): una casilla sola (retile) */
+	static function halveRect( src : hxd.Pixels, dst : hxd.Pixels, x0 : Int, y0 : Int, x1 : Int, y1 : Int, kinds : haxe.ds.Vector<Int> ) {
+		var w = dst.width;
 		// hl.Bytes: sin comprobar los limites en cada acceso (haxe.io.Bytes hacia que tardase varias veces mas)
-		var sb = hl.Bytes.fromBytes(src.bytes), db = hl.Bytes.fromBytes(dst.bytes), row = src.width << 2, dp = dst.offset;
-		for( y in 0...h ) {
-			var sp = src.offset + y * 2 * row;
-			for( x in 0...w ) {
+		var sb = hl.Bytes.fromBytes(src.bytes), db = hl.Bytes.fromBytes(dst.bytes), row = src.width << 2;
+		for( y in y0...y1 ) {
+			var sp = src.offset + y * 2 * row + (x0 << 3), dp = pos(dst, x0, y);
+			for( x in x0...x1 ) {
 				var c0 = sb.getI32(sp), c1 = sb.getI32(sp + 4), c2 = sb.getI32(sp + row), c3 = sb.getI32(sp + row + 4);
 				// canales rojo y azul, verde y alfa: dos sumas de 4 bytes por entero, sin desbordar
 				var rb = (c0 & 0xFF00FF) + (c1 & 0xFF00FF) + (c2 & 0xFF00FF) + (c3 & 0xFF00FF);
@@ -103,7 +144,6 @@ class Atlas {
 				dp += 4;
 			}
 		}
-		return dst;
 	}
 
 	static inline function pos( p : hxd.Pixels, x : Int, y : Int ) return p.offset + ((y * p.width + x) << 2);

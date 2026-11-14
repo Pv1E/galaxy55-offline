@@ -126,6 +126,11 @@ typedef SaveInfo = {
 	@:optional var comet : CometInfo;
 	/** lo que sabe la Base de datos ESCorp (Kubindex, añadido del port); null en las partidas antiguas */
 	@:optional var kub : Kubindex.KubInfo;
+	/**
+	 * kubes del editor de kubes puestos en la partida (EditorKubes, anadido del port), aparte de los campos de siempre. Solo en
+	 * disco: al empezar a jugar pasan a esos campos (EditorKubes.attach) y SaveData.write los vuelve a sacar (EditorKubes.encode)
+	 */
+	@:optional var editorKubes : EditorKubes.EditorKubesSave;
 }
 
 /** Guardado en disco: %APPDATA%\Galaxy55\saves\<id>.json (+ <id>.png con la miniatura). */
@@ -338,7 +343,7 @@ class SaveData {
 					shipEdits : o.shipEdits != null ? [for( v in (o.shipEdits : Array<Dynamic>) ) Std.int(v)] : [], edits : o.edits != null ? [for( v in (o.edits : Array<Dynamic>) ) Std.int(v)] : [],
 					survival : o.creative == true && o.survival == true ? true : null,
 					tuto : readTuto(o.tuto), shipAt : readSpot(o.shipAt), comet : readComet(o.comet), kub : readKub(o.kub),
-					inMother : readMotherPos(o.inMother),
+					inMother : readMotherPos(o.inMother), editorKubes : EditorKubes.readSave(o.editorKubes),
 			};
 		} catch( e : Dynamic ) {
 			return null;
@@ -354,7 +359,8 @@ class SaveData {
 				info.savedWith = GalaxyApp.VERSION;
 			}
 			var path = jsonPath(info.id);
-			sys.io.File.saveContent(path + ".tmp", haxe.Json.stringify(info, null, "  "));
+			// los kubes del editor van aparte (EditorKubes.encode: una copia; la partida en juego no cambia)
+			sys.io.File.saveContent(path + ".tmp", haxe.Json.stringify(EditorKubes.encode(info), null, "  "));
 			if( sys.FileSystem.exists(path) ) sys.FileSystem.deleteFile(path);
 			sys.FileSystem.rename(path + ".tmp", path);
 			if( thumbPng != null ) sys.io.File.saveBytes(thumbPath(info.id), thumbPng);

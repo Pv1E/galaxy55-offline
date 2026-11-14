@@ -41,10 +41,13 @@ class Hangar {
 	 * - liquidos: BFLiquid (agua de cada planeta, cascada, arena movediza) y la lava (BFIsLava: en el original no es
 	 *   BFLiquid). Incluye lo que se extiende (propagate), lo unico que el original no dejaba poner (EditShip.checkSelect).
 	 * - la bomba exotica (BArtiBomb).
+	 * - los kubes del editor (EditorKubes): la nave del hangar se guarda con los numeros de sus bloques (shipData), y los de estos
+	 *   kubes solo valen durante la sesion.
 	 */
 	public static function forbidden( b : Block ) : String {
 		if( b.hasProp(PLiquid) || b.hasProp(PLava) || b.propagate != null ) return "no_liquid";
 		if( b.k == BArtiBomb ) return "no_bomb";
+		if( EditorKubes.isEditor(b) ) return "no_editor_kube";
 		return null;
 	}
 

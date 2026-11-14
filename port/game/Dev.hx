@@ -104,6 +104,11 @@ import Common;
  *                           paint x0 y0 x1 y1 AARRGGBB (rectangulo de la cara, 0 = borrar), name TEXTO, tab 0|1, file N (cargar el
  *                           .kube N de Mis kubes), save, tile N (mosaico N x N x N de la vista previa), zoom Z (el paso de zoom
  *                           mas cercano), view (vista fija de los iconos, sin girar); print kube
+ *   edkube ORDEN            kubes del editor puestos en una partida creativa (EditorKubes; solo con GALAXY55_DATA): import RUTA
+ *                           [ARCHIVO] copia un .kube a la carpeta kubes, make ARCHIVO FORMA opaque|cutout|blend AARRGGBB NOMBRE
+ *                           crea uno de ese color con el borde oscuro, fill N crea N cubos lot-1..N, delete ARCHIVO, clear vacia
+ *                           la carpeta, refresh la vuelve a leer como al empezar a jugar. En hand, give, set...: kube:ARCHIVO[/variante]
+ *   print edkubes|edsave    kubes del editor cargados / los de la partida guardada en disco, y lo que veria una version sin ellos
  *   quit
  */
 class Dev {
@@ -157,11 +162,126 @@ class Dev {
 	}
 
 	static function bk( name : String ) : Block {
+		// kube:ARCHIVO[/variante]: un kube del editor cargado (EditorKubes)
+		if( StringTools.startsWith(name, "kube:") ) {
+			var p = name.substr(5).split("/");
+			var b = EditorKubes.block(p[0], p.length > 1 ? Std.parseInt(p[1]) : 0);
+			if( b == null ) throw "kube del editor no cargado: " + name;
+			return b;
+		}
 		var k = Type.createEnum(BlockKind, name);
 		return Block.get(k);
 	}
 
 	static function f( s : String ) return Std.parseFloat(s);
+
+	/** orden edkube: los .kube de la carpeta kubes de los datos de prueba (EditorKubes) */
+	static function editorKube( app : GalaxyApp, g : GameView, a : Array<String> ) {
+		var data = Sys.getEnv("GALAXY55_DATA");
+		if( a[1] != "refresh" && (data == null || data == "") ) {
+			Sys.println("edkube: solo con GALAXY55_DATA (devrun.ps1)");
+			return;
+		}
+		var dir = KubeData.dir();
+		switch( a[1] ) {
+		case "import":
+			var id = a.length > 3 ? a[3] : EditorKubes.idOf(a[2]);
+			sys.io.File.copy(a[2], dir + "/" + id + ".kube");
+			Sys.println("edkube: " + a[2] + " -> kubes/" + id + ".kube");
+		case "make":
+			// la forma pedida, de un color y con el borde mas oscuro en todas sus caras
+			var k = new KubeData(a.slice(6).join(" "));
+			k.shape = KubeData.shapeById(a[3]);
+			k.render = ["opaque", "cutout", "blend"].indexOf(a[4]);
+			if( k.render < 0 ) k.render = 0;
+			if( k.shape.id == "door" ) k.box = KubeData.BOXES.get("door").copy();
+			if( k.shape.id == "box" ) k.box = KubeData.BOXES.get("slab").copy();
+			var c = (Std.parseInt("0x" + a[5].substr(0, 2)) << 24) | Std.parseInt("0x" + a[5].substr(2));
+			var edge = (c & 0xFF000000) | ((c >> 1) & 0x7F7F7F);
+			for( f in 0...KubeData.FACES.length )
+				for( y in 0...KubeData.SIZE ) for( x in 0...KubeData.SIZE )
+					k.faces[f][y * KubeData.SIZE + x] = x < 2 || y < 2 || x > KubeData.SIZE - 3 || y > KubeData.SIZE - 3 ? edge : c;
+			var path = dir + "/" + a[2] + ".kube";
+			// KubeData.save escribe en k.file si ya existe en la carpeta: asi el archivo se llama como se pide
+			sys.io.File.saveContent(path, "");
+			k.file = path;
+			k.save(null, [for( _ in KubeData.FACES ) false]);
+			Sys.println("edkube: kubes/" + a[2] + ".kube '" + k.name + "' " + k.shape.id + " " + k.blockType());
+		case "fill":
+			// fill N: N cubos de prueba (lot-1 ... lot-N), para pasar de EditorKubes.MAX
+			var n = Std.parseInt(a[2]);
+			for( i in 0...n ) {
+				var k = new KubeData("Lot " + (i + 1));
+				for( f in 0...KubeData.FACES.length ) for( p in 0...KubeData.SIZE * KubeData.SIZE ) k.faces[f][p] = 0xFF000000 | ((i * 37) & 0xFF) << 16 | ((i * 91) & 0xFF) << 8 | 0x80;
+				var path = dir + "/lot-" + (i + 1) + ".kube";
+				sys.io.File.saveContent(path, "");
+				k.file = path;
+				k.save(null, [for( _ in KubeData.FACES ) false]);
+			}
+			Sys.println("edkube: " + n + " kubes lot-N en kubes/");
+		case "delete":
+			sys.FileSystem.deleteFile(dir + "/" + a[2] + ".kube");
+			Sys.println("edkube: kubes/" + a[2] + ".kube borrado");
+		case "clear":
+			for( p in KubeData.list() ) sys.FileSystem.deleteFile(p);
+			Sys.println("edkube: carpeta kubes vacia");
+		case "refresh":
+			if( g != null ) EditorKubes.attach(g.info) else EditorKubes.refresh();
+			Sys.println(EditorKubes.devInfo());
+		default:
+			Sys.println("edkube: orden desconocida " + a[1]);
+		}
+	}
+
+	/**
+	 * print edsave: los kubes del editor de la partida guardada en disco (su campo aparte) y la misma partida como la leeria una
+	 * version sin ellos: lo que hay en los campos de siempre donde iban los kubes (aire y casillas vacias) y sus bloques desconocidos
+	 */
+	static function editorSave( app : GalaxyApp ) {
+		var info = app.curInfo();
+		if( info == null ) {
+			Sys.println("edsave: sin partida");
+			return;
+		}
+		var o : Dynamic = haxe.Json.parse(sys.io.File.getContent(SaveData.jsonPath(info.id)));
+		var raw = EditorKubes.readSave(o.editorKubes);
+		if( raw == null ) {
+			Sys.println("edsave: sin kubes del editor");
+			return;
+		}
+		var edits : Array<Int> = o.edits == null ? [] : [for( v in (o.edits : Array<Dynamic>) ) Std.int(v)];
+		var at = new Map<Int, Int>();
+		var i = 0;
+		while( i + 1 < edits.length ) {
+			at.set(edits[i], edits[i + 1]);
+			i += 2;
+		}
+		var cells = [], slots = [];
+		if( raw.edits != null ) {
+			i = 0;
+			while( i + 1 < raw.edits.length ) {
+				var v = at.get(raw.edits[i]);
+				cells.push(raw.ids[raw.edits[i + 1] >> 2] + "/" + (raw.edits[i + 1] & 3) + "=" + (v == null ? "sin cambio" : v == 0 ? "aire" : "" + v));
+				i += 2;
+			}
+		}
+		var t : Array<Dynamic> = o.inv == null ? [] : o.inv.t;
+		if( raw.inv != null ) {
+			i = 0;
+			while( i + 2 < raw.inv.length ) {
+				var s = t[raw.inv[i]];
+				slots.push(raw.ids[raw.inv[i + 1] >> 2] + "x" + raw.inv[i + 2] + "@" + raw.inv[i] + "=" + (s == null ? "vacia" : "" + s.k));
+				i += 3;
+			}
+		}
+		// la partida tal cual (sin pasar los kubes a sus bloques): lo que cargaria una version sin ellos
+		var old = SaveData.read(info.id);
+		old.editorKubes = null;
+		var u = UnknownBlocks.count(old);
+		Sys.println("edsave: kubes " + raw.ids.join(",") + " | terreno " + cells.join(" ") + " | inventario " + slots.join(" ")
+			+ " | nave " + (raw.shipEdits == null ? 0 : raw.shipEdits.length >> 1) + " planetas " + (raw.planets == null ? 0 : raw.planets.length)
+			+ " cantinas " + (raw.chests == null ? 0 : raw.chests.length) + " | sin ellos: desconocidos " + UnknownBlocks.total(u));
+	}
 
 	/** savecopy: copia una partida (.json y su .png) a la carpeta de datos de prueba, con la fecha de ahora (la primera de la lista) */
 	static function saveCopy( path : String ) {
@@ -801,6 +921,8 @@ class Dev {
 						case "view": k.devView();
 						default: Sys.println("kube: orden desconocida " + a[1]);
 					}
+				case "edkube":
+					editorKube(app, g, a);
 				case "winsize":
 					// winsize ANCHO ALTO: tamano de la ventana, para probar ventanas mas anchas o mas altas que 16:9
 					hxd.Window.getInstance().resize(Std.parseInt(a[1]), Std.parseInt(a[2]));
@@ -1347,6 +1469,10 @@ class Dev {
 		case "menu":
 			// botones del menu abierto (etiqueta y y), de arriba abajo
 			Sys.println("menu: " + (@:privateAccess app.current == null ? "cerrado" : [for( wd in @:privateAccess app.current.widgets ) @:privateAccess wd.label.text + "@" + Std.int(wd.y)].join(" | ")));
+		case "edkubes":
+			Sys.println(EditorKubes.devInfo());
+		case "edsave":
+			editorSave(app);
 		case "palnames":
 			// nombres de los bloques que deja la busqueda de la paleta
 			Sys.println("paleta: " + (app.palette == null ? "cerrada" : app.palette.devNames()));
@@ -1382,7 +1508,7 @@ class Dev {
 			// lo que vende el robot, en el orden de su parte de la tienda
 			Sys.println("shelf: " + [for( m in Market.shelf ) Std.string(m.block.k)].join(" "));
 		case "inv":
-			Sys.println("inv: " + [for( s in g.inv.inv.t ) s == null ? "-" : Block.all[s.k].k + "x" + s.n].join(" ") + "  casilla=" + g.inv.blockIndex);
+			Sys.println("inv: " + [for( s in g.inv.inv.t ) s == null ? "-" : EditorKubes.label(Block.all[s.k]) + "x" + s.n].join(" ") + "  casilla=" + g.inv.blockIndex);
 		case "pos":
 			Sys.println("pos: " + g.px + "," + g.py + "," + g.pz + "  yaw=" + g.yaw + " pitch=" + g.pitch + "  suelo=" + (g.standingBlock == null ? "-" : "" + g.standingBlock.k));
 		case "keys":
@@ -1443,7 +1569,7 @@ class Dev {
 				+ (d.z >= World.SHIP_Z ? " local " + (Math.round((d.x - w.shipDX) * 100) / 100) + "," + (Math.round((d.y - w.shipDY) * 100) / 100) : "")].join(" "));
 		case "chest":
 			// ventana de la cantina (abierta o no) y las cantinas de la partida con lo que tienen
-			inline function items( t : Protocol.BlockInventory ) return [for( s in t ) s == null ? "-" : Block.all[s.k].k + "x" + s.n].join(" ");
+			inline function items( t : Protocol.BlockInventory ) return [for( s in t ) s == null ? "-" : EditorKubes.label(Block.all[s.k]) + "x" + s.n].join(" ");
 			var c = app.chest;
 			Sys.println("cantina: " + (c == null ? "cerrada" : "abierta [" + items(c.box) + "]") + "  guardadas: " + (g.info.chests == null ? "" : [for( e in g.info.chests ) e.key + " [" + items(e.t) + "]"].join(", ")));
 		case "shake":
@@ -1484,7 +1610,7 @@ class Dev {
 			// blockl: coordenadas locales de la nave
 			var l = a[1] == "blockl";
 			var b = w.block(Std.parseInt(a[2]) + (l ? w.shipDX : 0), Std.parseInt(a[3]) + (l ? w.shipDY : 0), Std.parseInt(a[4]) + (l ? World.SHIP_Z : 0));
-			Sys.println("bloque: " + (b == null ? "nada" : "" + b.k));
+			Sys.println("bloque: " + (b == null ? "nada" : EditorKubes.label(b)));
 		case "around":
 			// print around X Y Z R: bloques en el cubo de lado 2R+1 (planeta, nave y roca madre) y bombas por explotar
 			var x = Std.parseInt(a[2]), y = Std.parseInt(a[3]), z = Std.parseInt(a[4]), r = Std.parseInt(a[5]);
