@@ -1,0 +1,105 @@
+# cantina (cofre) con arrastrar y soltar (SlotGrid), como la pantalla de inventario: casilla = zona:N, zona 0 = la cantina
+# (4 casillas), zona 1 = el inventario (10). "print slots" muestra lo que se ve (la pila del cursor sigue en su casilla hasta
+# dejarla) y "print chest" / "print inv" lo que hay de verdad. Entre dos clics en la misma casilla se espera (si no, doble clic).
+wait 3
+planet
+wait 30
+tp 130.5 24.5 top 0 -0.25
+wait 20
+setp 132 24 top BChest
+contracts empty
+give BWood 40
+give BGlass 10
+print inv
+activate 132 24 36
+wait 5
+print slots
+# arrastrar del inventario a una casilla vacia de la cantina: la madera (1:0) pasa entera a 0:0
+slots drag 1:0 0:0
+print chest
+print inv
+# arrastrar sobre otro bloque: se intercambian las dos casillas (el cristal 1:1 <-> la madera 0:0)
+slots drag 1:1 0:0
+print chest
+print inv
+# clic derecho: la mitad al cursor (40 -> 20); clic en una vacia de la cantina: se deja alli
+slots click 1:1 r
+print slots
+slots click 0:2
+print chest
+print inv
+# arrastrar sobre el mismo bloque: se juntan (la madera de 0:2 vuelve a 1:1)
+slots drag 0:2 1:1
+print chest
+print inv
+# clic sin arrastrar: la pila se queda en el cursor; clic en otro bloque: se cambian y el cursor se queda con el otro
+slots click 1:1
+print slots
+slots click 0:0
+print slots
+slots click 0:3
+print chest
+print inv
+# clic derecho mantenido arrastrado por 0:1 y 0:2: una unidad en cada una; clic en su casilla: el resto se queda alli
+wait 40
+slots click 0:0
+slots rdrag 0:1 0:2
+print slots
+wait 40
+slots click 0:0
+print chest
+# doble clic: junta en la casilla las otras pilas del mismo bloque, de la cantina y del inventario
+wait 40
+slots dbl 0:0
+print chest
+print inv
+# soltar fuera de las casillas: la pila vuelve a su casilla (no se tira)
+slots drag 0:0 out
+print chest
+print loose
+# Mayus + arrastrar: la mitad; Ctrl + clic: una al cursor, clic en una vacia: se deja alli
+press shift
+slots drag 0:0 1:4
+release shift
+print chest
+print inv
+press ctrl
+slots click 1:4
+release ctrl
+print slots
+slots click 1:5
+print inv
+# mando: flechas, A (coger y dejar), X (la mitad); arriba y abajo cambian de fila (cantina / inventario)
+slots nav right
+print slots
+slots nav down
+print slots
+slots nav a
+slots nav up
+slots nav a
+print chest
+print inv
+slots nav x
+print slots
+# A sobre otro bloque con la pila entera: se cambian y el cursor se queda con el otro (el cristal, ahora en 0:2)
+slots nav right
+slots nav a
+print chest
+print slots
+# B/Esc con una pila en el cursor: la suelta (el cristal se queda en 0:2) y la ventana sigue abierta; otra vez: se cierra
+tap esc
+wait 2
+print slots
+tap esc
+wait 2
+print chest
+print menu
+# lo que hay en la cantina se guarda en la partida
+activate 132 24 36
+wait 5
+shot cantine_glisser
+reload
+wait 30
+print chest
+print inv
+quit

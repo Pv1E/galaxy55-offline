@@ -1,5 +1,6 @@
 # ventana de la cantina (cofre): la ayuda de abajo no debe salirse del panel ni pisar el boton Cerrar
-# (idioma: el de settings.json en GALAXY55_DATA). chestfocus marca una casilla: abajo sale "Nombre xN" en lugar de la ayuda.
+# (idioma: el de settings.json en GALAXY55_DATA; -Extra "--lang=fr" para el frances). chestfocus marca una casilla: a la
+# izquierda del boton Cerrar sale "Nombre xN"; la ayuda sigue debajo.
 wait 3
 ship
 wait 10

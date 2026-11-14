@@ -53,6 +53,8 @@ import Common;
  *   print inv|pos|zones|drops|loose|chest|msg|shake|fade|block x y z|blockl x y z|around x y z r|ids x y z r|select|ship|map [z]|palette|invscreen|time|power|life|fov|sky|menu
  *   invscreen ORDEN         pantalla de inventario del modo aventura (anadido del port): open, close, drag A B, click N [r],
  *                           dbl N, rdrag A B..., down|up|move N [r], nav left|right|a|x|y; casillas 0-9, out (fuera), panel
+ *   slots ORDEN             casillas con arrastrar y soltar (SlotGrid: la cantina), como invscreen: click C [r], drag A B, dbl C,
+ *                           rdrag A B..., down|up|move C [r], nav left|right|up|down|a|x; casilla = zona:N, out; print slots
  *   fadelog on|off          fundido de color de pantalla imagen por imagen, tal como lo pinta el HUD (opacidad y color); off
  *                           dice cuantas veces subio (destellos) y cuantas como mucho en un segundo (WCAG 2.3.1: 3)
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
@@ -418,6 +420,60 @@ class Dev {
 		}
 	}
 
+	/** casillas con arrastrar y soltar abiertas (SlotGrid): la de la cantina; null = ninguna */
+	function openGrid( app : GalaxyApp ) : SlotGrid {
+		return app.chest != null ? app.chest.grid : null;
+	}
+
+	/**
+	 * slots ORDEN: las casillas abiertas (SlotGrid) con eventos del raton de verdad, como invscreen. Una casilla es Z:N (zona Z,
+	 * casilla N; en la cantina 0 = la cantina y 1 = el inventario); "out" = un punto fuera de todas. r = boton derecho.
+	 *   move C | down C [r] | up C [r] | click C [r] | drag A B (apretar en A, pasar a B, soltar) | dbl C (doble clic)
+	 *   rdrag A B... (clic derecho apretado en A y arrastrado por las demas) | nav left|right|up|down|a|x (flechas, A, X del mando)
+	 */
+	function slots( app : GalaxyApp, a : Array<String> ) {
+		var g = openGrid(app);
+		if( g == null ) {
+			Sys.println("slots: no hay casillas abiertas");
+			return;
+		}
+		function pt( n : String ) : h2d.col.Point {
+			if( n == "out" ) return g.devPoint(-1, -1);
+			var p = n.split(":");
+			return g.devPoint(Std.parseInt(p[0]), Std.parseInt(p[1]));
+		}
+		var right = a[a.length - 1] == "r" ? 1 : 0;
+		switch( a[1] ) {
+		case "move": mouseAt(pt(a[2]), EMove);
+		case "down":
+			mouseAt(pt(a[2]), EMove);
+			mouseAt(pt(a[2]), EPush, right);
+		case "up":
+			mouseAt(pt(a[2]), EMove);
+			mouseAt(pt(a[2]), ERelease, right);
+		case "click", "dbl":
+			for( i in 0...(a[1] == "dbl" ? 2 : 1) ) {
+				mouseAt(pt(a[2]), EMove);
+				mouseAt(pt(a[2]), EPush, right);
+				mouseAt(pt(a[2]), ERelease, right);
+			}
+		case "drag":
+			mouseAt(pt(a[2]), EMove);
+			mouseAt(pt(a[2]), EPush);
+			mouseAt(pt(a[3]), EMove);
+			mouseAt(pt(a[3]), ERelease);
+		case "rdrag":
+			mouseAt(pt(a[2]), EMove);
+			mouseAt(pt(a[2]), EPush, 1);
+			for( n in a.slice(3) ) mouseAt(pt(n), EMove);
+			mouseAt(pt(a[a.length - 1]), ERelease, 1);
+		case "nav":
+			var k = a[2];
+			g.nav(k == "left" ? -1 : k == "right" ? 1 : 0, k == "up" ? -1 : k == "down" ? 1 : 0, k == "a", k == "x");
+		default: Sys.println("slots: orden desconocida " + a[1]);
+		}
+	}
+
 	/** evento del raton de verdad en el punto p de la zona W x H (como la orden mouse) */
 	function mouseAt( p : h2d.col.Point, kind : hxd.Event.EventKind, button = 0 ) {
 		var area = Ui.Theme.visibleArea(), eng = h3d.Engine.getCurrent();
@@ -725,6 +781,8 @@ class Dev {
 					if( app.palette != null ) app.palette.devHover(Std.parseInt(a[1]), a[2] != "out");
 				case "invscreen":
 					invScreen(app, a);
+				case "slots":
+					slots(app, a);
 				case "row":
 					// row X1 X2 Y Z: nivel del agua en una fila (m = mar, p = puesta, 1..4 = pasos, . = sin agua)
 					var y = Std.parseInt(a[3]), z = Std.parseInt(a[4]), out = [];
@@ -1042,7 +1100,9 @@ class Dev {
 					w.setBlock(x, y, z + 1, bk(a[3]));
 					Sys.println("settop " + x + "," + y + "," + (z + 1));
 				case "hangarexit": if( g != null && g.onHangarExit != null ) g.onHangarExit(); // sin partida (en el mapa) no hace nada
-				case "chestclick": if( app.chest != null ) app.chest.click(Std.parseInt(a[1]), Std.parseInt(a[2]));
+				case "chestclick":
+					// chestclick LADO N: clic de verdad en la casilla N de la cantina (0) o del inventario (1), como slots click
+					if( app.chest != null ) slots(app, ["slots", "click", a[1] + ":" + a[2]]);
 				case "chestfocus": if( app.chest != null ) app.chest.devFocus(Std.parseInt(a[1]), Std.parseInt(a[2]));
 				case "shopclose": if( app.shop != null ) @:privateAccess app.closeShop();
 				case "contracts":
@@ -1567,6 +1627,10 @@ class Dev {
 			var w = g.world;
 			Sys.println("sueltos: " + [for( d in @:privateAccess g.drops.list ) d.block.k + "x" + d.n + "@" + Math.round(d.x * 100) / 100 + "," + Math.round(d.y * 100) / 100 + "," + Math.round(d.z * 100) / 100
 				+ (d.z >= World.SHIP_Z ? " local " + (Math.round((d.x - w.shipDX) * 100) / 100) + "," + (Math.round((d.y - w.shipDY) * 100) / 100) : "")].join(" "));
+		case "slots":
+			// casillas con arrastrar y soltar abiertas (SlotGrid): lo que se ve en cada zona, el cursor y la linea de informacion
+			var sg = openGrid(app);
+			Sys.println("casillas: " + (sg == null ? "cerradas" : sg.devInfo()));
 		case "chest":
 			// ventana de la cantina (abierta o no) y las cantinas de la partida con lo que tienen
 			inline function items( t : Protocol.BlockInventory ) return [for( s in t ) s == null ? "-" : EditorKubes.label(Block.all[s.k]) + "x" + s.n].join(" ");
