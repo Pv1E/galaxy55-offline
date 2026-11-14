@@ -2,8 +2,9 @@
 # panel; ocupa una linea del tablero (el tablero ofrece una menos), sigue tras el cambio de periodo, se le dan mas bloques y
 # con el ultimo se cobra entera la recompensa (su linea queda "Entregado" si el tablero sigue siendo el suyo). Con 3 en curso
 # el tablero esta lleno. Abandonar pide confirmacion (No lo deja como estaba; Si lo quita: los bloques se pierden, no se cobra
-# y la linea queda "Abandonado" hasta el cambio de tablero). Teclado: abajo (Dar), Intro, abajo (Abandonar), Intro, abajo (Si),
-# Intro. Se guarda y se recarga; una partida de antes (contracts old) se sigue leyendo. Unos 2 minutos: -Timeout 240
+# y la linea queda "Abandonado" hasta el cambio de tablero). Teclado: abajo (el contrato especial, el primero), abajo (Dar),
+# Intro, abajo (Abandonar), Intro, abajo (Si), Intro. Se guarda y se recarga; una partida de antes (contracts old) se sigue
+# leyendo. Unos 2 minutos: -Timeout 240
 # Tableros: 1000000 = BWood x48 +216, BChampiLight x12 +126, BAcidWood x48 +216; 1000001 = BSoil x64 +192, BAcidWall x12 +156,
 # BLamp x6 +225; 1000002 = BWinterSoil x64 +192, BLamp x6 +225, BMinIron x12 +366
 wait 3
@@ -104,12 +105,15 @@ wait 3
 print credits
 print contracts
 shot contrats_abandonado
-# con el teclado: don parcial a la linea 2 (4 de 6); abajo (Dar 1) e Intro: 5 / 6; abajo (Abandonar) e Intro abren la
-# confirmacion; abajo (Si) e Intro lo abandonan
+# con el teclado: don parcial a la linea 2 (4 de 6); abajo (el contrato especial, el primero), abajo (Dar 1) e Intro: 5 / 6;
+# abajo (Abandonar) e Intro abren la confirmacion; abajo (Si) e Intro lo abandonan
 contracts fill 2 4
 deliver 2
 contracts fill a 0 1
 wait 2
+tap down
+wait 2
+print contracts
 tap down
 wait 2
 print contracts

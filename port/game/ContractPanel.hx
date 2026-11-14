@@ -17,8 +17,9 @@ private enum ContractAction {
  * Contratos de la ESCorp (anadido del port, ver Contracts): una linea por contrato con el bloque, lo que llevas de lo que
  * piden, la recompensa y el boton de entregar (o de dar los bloques que haya, y el contrato queda en curso). Arriba van los
  * contratos en curso, con dos botones: dar lo que llevas y abandonar (con confirmacion, onAbandon). Encima, el tiempo que
- * falta para el tablero siguiente; al cumplirse, el panel se rehace solo. Debajo del tablero, el contrato especial (sin plazo,
- * una vez por partida), con su rotulo y en dorado; tras cobrarlo sigue en el panel como Entregado hasta cerrarlo.
+ * falta para el tablero siguiente; al cumplirse, el panel se rehace solo. El contrato especial (sin plazo, una vez por partida)
+ * va el primero, encima de todos, con su rotulo y en dorado; el tiempo que falta baja entonces entre el y los demas contratos.
+ * Tras cobrarlo sigue en el panel como Entregado hasta cerrarlo.
  */
 class ContractPanel extends h2d.Object {
 
@@ -34,8 +35,8 @@ class ContractPanel extends h2d.Object {
 	static inline var BTN_H = 44;
 	/** botones apilados de los contratos en curso */
 	static inline var BTN2_H = 36;
-	/** rotulo del contrato especial, entre el tablero y su linea */
-	static inline var HEAD = 34;
+	/** hueco entre el contrato especial y los demas contratos, para el tiempo que falta (y alto del rotulo del especial) */
+	static inline var HEAD = 40;
 
 	var atlas : h3d.mat.Texture;
 	var info : SaveInfo;
@@ -43,7 +44,7 @@ class ContractPanel extends h2d.Object {
 	var slot : Int;
 	/** lineas del panel: contratos en curso y luego los del tablero que se ofrecen (el especial va aparte) */
 	var count = -1;
-	/** el contrato especial sale en el panel: sin cumplir al abrirlo */
+	/** el contrato especial sale en el panel, el primero: sin cumplir al abrirlo */
 	var special : Bool;
 	var px : Float;
 	var py : Float;
@@ -83,9 +84,9 @@ class ContractPanel extends h2d.Object {
 		refresh();
 	}
 
-	/** alto segun el numero de lineas del tablero (470 con 3), mas el contrato especial con su rotulo (596 con 3) */
+	/** alto segun el numero de lineas del tablero (470 con 3), mas el contrato especial y el hueco del tiempo (602 con 3) */
 	function layout( n : Int ) {
-		var PH = 194 + Std.int(Math.max(ROW, n * ROW + (special ? HEAD + ROW : 0)));
+		var PH = 194 + Std.int(Math.max(ROW, n * ROW + (special ? ROW + HEAD : 0)));
 		py = (Theme.H - PH) * 0.5;
 		bg.clear();
 		Theme.fullRect(bg, 0x000000, 0.55);
@@ -93,8 +94,10 @@ class ContractPanel extends h2d.Object {
 		Theme.rect(bg, px, py, PW, 4, Theme.ACCENT);
 		title.setPosition(px + 24, py + 20);
 		creditsText.setPosition(px + PW - 300, py + 22);
-		timerText.setPosition(px + 24, py + 70);
 		rows.setPosition(px + 24, py + 108);
+		// con el contrato especial, su rotulo ocupa el sitio del tiempo que falta y este baja encima de la linea 1, a la misma
+		// distancia que de la 0 sin el
+		timerText.setPosition(px + 24, rows.y + rowY(special ? 1 : 0) - 38);
 		close.setPosition(px + PW - 184, py + PH - 52);
 	}
 
@@ -104,19 +107,19 @@ class ContractPanel extends h2d.Object {
 		rows.removeChildren();
 		items = [];
 		var active = Contracts.active(info).copy(), offered = Contracts.offered(info), board = Contracts.board(slot);
-		var n = active.length + offered.length;
+		var n = active.length + offered.length, top = special ? 1 : 0;
 		if( n != count ) layout(n);
 		count = n;
-		for( k in 0...active.length ) activeRow(k, active[k]);
-		for( k in 0...offered.length ) boardRow(active.length + k, offered[k], board[offered[k]]);
-		if( special ) specialRow(n);
+		if( special ) specialRow(0);
+		for( k in 0...active.length ) activeRow(top + k, active[k]);
+		for( k in 0...offered.length ) boardRow(top + active.length + k, offered[k], board[offered[k]]);
 		if( focus >= items.length ) focus = items.length - 1;
 		updateTimer();
 		drawFocus();
 	}
 
-	/** altura de la linea r en el panel: la del contrato especial (r = count) va debajo de su rotulo */
-	function rowY( r : Int ) : Float return r * ROW + (r >= count ? HEAD : 0);
+	/** altura de la linea r en el panel: con el contrato especial (r = 0), las demas van debajo del hueco del tiempo que falta */
+	function rowY( r : Int ) : Float return r * ROW + (special && r > 0 ? HEAD : 0);
 
 	/** fondo, icono, nombre (con la etiqueta tag detras, si la hay), cantidad y recompensa (en creditos si no se da) de una linea */
 	function rowBase( r : Int, c : Contracts.Contract, dim : Bool, tint : Int, progress : String, progressCol : Int, ?tag : String, ?reward : String ) : h2d.Object {
@@ -183,7 +186,7 @@ class ContractPanel extends h2d.Object {
 	}
 
 	/**
-	 * contrato especial (Contracts.giveSpecial), debajo del tablero: rotulo, fondo y marco dorados y la etiqueta Especial. Sin
+	 * contrato especial (Contracts.giveSpecial), el primero: rotulo encima, fondo y marco dorados y la etiqueta Especial. Sin
 	 * plazo y sin abandonar: entregar con lo que falta, dar los que haya con parte (como un contrato en curso), inventario lleno
 	 * si con el ultimo bloque no cabe el conteneur, o entregado (hasta cerrar el panel)
 	 */
