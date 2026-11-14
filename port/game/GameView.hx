@@ -228,6 +228,8 @@ class GameView {
 			yaw = info.yaw;
 			pitch = info.pitch;
 		}
+		// el equipo dejado aqui al morir o con Mayus+K, en el planeta o la cometa y en la nave
+		DeathDrops.spawnAll(this);
 	}
 
 	/** mercado del robot comerciante (se crea al abrir la tienda por primera vez) */
@@ -688,16 +690,23 @@ class GameView {
 
 	/** Game.returnToShip (modo local): fundido sin controles, rojo al morir y blanco con Mayus+K; al acabar, de vuelta en la
 	    nave con la vida y el oxigeno llenos; los ojos bajan 0.8 al morir y suben 0.5 con Mayus+K. Sustituye a un fundido de
-	    golpe o de curacion */
-	public function returnToShip( manual : Bool ) {
+	    golpe o de curacion. Como en el juego en linea (CReturnShip), el equipo se queda en el sitio (DeathDrops); lose = false
+	    para la vuelta de emergencia de la cometa */
+	public function returnToShip( manual : Bool, lose = true ) {
 		if( fadeFX != null && fadeFX.lock ) return; // hero.lock: ya se esta volviendo
+		var left = lose ? DeathDrops.leave(this, manual) : null;
+		if( left != null ) onEquipmentLeft();
 		fadeFX = { t : 0., col : manual ? 0xFFFFFF : 0xFF0000, speed : 2., alpha : null, lock : true, dz : manual ? -0.5 : 0.8, done : function() {
 			life = 100;
 			oxygen = 100;
 			gravity = 0;
 			gotoShip(true);
+			if( left != null ) DeathDrops.spawn(this, left);
 		} };
 	}
+
+	/** el equipo se acaba de quedar en el sitio (DeathDrops.leave), al empezar el fundido */
+	public dynamic function onEquipmentLeft() {}
 
 	// ---------------------------------------------------------------- cometa (Comets, añadido del port)
 
@@ -744,7 +753,7 @@ class GameView {
 			cometBeamWait = COMET_OVER_TOAST;
 			onCometOver();
 		}
-		if( pz < World.SHIP_Z ) returnToShip(true);
+		if( pz < World.SHIP_Z ) returnToShip(true, false);
 	}
 
 	/** Hero.heal */

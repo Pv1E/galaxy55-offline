@@ -15,6 +15,8 @@ class Drop {
 	public var active = true;
 	/** vista previa del sintetizador: quieto, no se recoge */
 	public var fixed = false;
+	/** contenedor del equipo dejado al morir o con Mayus+K (DeathDrops): lleva bloques y cargas, no `block` x `n` */
+	public var loot : DeathDrops.DeathDropInfo;
 	public var delay = 0.;
 	public var light = 0.;
 	public var obj : h3d.scene.Object;
@@ -218,14 +220,22 @@ class Drops {
 			} else
 				dz = 0;
 			var dd = Math.sqrt(dx * dx + dy * dy + dz * dz);
-			var picked = false;
-			if( dd < 1.5 && d.active && g.inv.canAddBlock(d.block) ) {
+			var picked = false, got = false;
+			if( dd < 1.5 && d.active && (d.loot != null ? DeathDrops.canGet(g.inv, d.loot) : g.inv.canAddBlock(d.block)) ) {
 				var s = 0.2 * dt / (dd * dd + 1e-6);
+				// el contenedor del equipo no pasa de largo al jugador (con un tmod alto salia despedido): si se queda con algo que
+				// no cabe, se queda a sus pies
+				if( d.loot != null && s > 1 ) s = 1;
 				d.x += dx * s;
 				d.y += dy * s;
 				d.z += dz * s;
 				if( dd < 0.4 ) {
-					if( d.n <= 1 ) picked = g.inv.addBlock(d.block) >= 0;
+					if( d.loot != null ) {
+						// SAddLoot: lo que cabe; si queda algo, el contenedor sigue ahi
+						got = DeathDrops.take(g.inv, d.loot);
+						picked = DeathDrops.isEmpty(d.loot);
+						if( picked ) DeathDrops.done(g.info, d.loot);
+					} else if( d.n <= 1 ) picked = g.inv.addBlock(d.block) >= 0;
 					else {
 						var c = g.inv.addBlocks(d.block, d.n);
 						d.n -= c;
@@ -233,7 +243,8 @@ class Drops {
 					}
 				}
 			}
-			if( picked ) Snd.play("pickupBlock", 0.3);
+			if( d.loot != null && !picked ) DeathDrops.follow(g, d);
+			if( picked || got ) Snd.play("pickupBlock", 0.3);
 			if( picked || d.time <= 0 ) {
 				if( d.obj != null ) {
 					for( c in d.obj.getMeshes() ) c.primitive.dispose();

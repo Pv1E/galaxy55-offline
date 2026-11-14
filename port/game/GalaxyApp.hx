@@ -1940,6 +1940,12 @@ class GalaxyApp extends hxd.App {
 		game.onComputer = openComputer;
 		game.onTalk = openRobotTalk;
 		game.onCometOver = function() showToast(Lang.t("comet.over"), GameView.COMET_OVER_TOAST);
+		game.onEquipmentLeft = function() {
+			// el inventario se acaba de vaciar: fuera la pantalla de inventario y la cantina
+			closeInventory();
+			closeChest();
+			showToast(Lang.t("deathdrop.left"), 4);
+		};
 		game.onChest = openChest;
 		game.onChestBreak = function(t) if( chest != null && chest.box == t ) closeChest();
 		if( game.info.mothership == true ) game.onHangarExit = backFromMothership;

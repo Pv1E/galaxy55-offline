@@ -65,6 +65,11 @@ class UnknownBlocks {
 			}
 			return n;
 		}
+		// el equipo dejado al morir (DeathDrops); un contenedor que se queda sin nada no se podria recoger nunca
+		if( info.deathDrops != null ) {
+			for( d in info.deathDrops ) slots(d.t);
+			if( fix ) info.deathDrops = info.deathDrops.filter(d -> !DeathDrops.isEmpty(d));
+		}
 		if( info.inv != null ) slots(info.inv.t);
 		if( info.chests != null ) for( c in info.chests ) slots(c.t);
 		r.world += edits(info.edits);

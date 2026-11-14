@@ -20,6 +20,9 @@ import Common;
  *   dockp dz Bloque|none    poner o romper (como al jugar) en la columna del rayo; dz = 0 es su bloque de arriba
  *   slot N                  elegir casilla (0 = excavador)
  *   give Bloque [n]         meter n bloques (50) en el inventario
+ *   charge CPink N          dejar N cargas de ese tipo (CYellow, CBlue, CPink, CBonus; 0 = ninguna)
+ *   print deathdrops        equipo dejado al morir o con Mayus+K (DeathDrops): inventario y cargas, creditos, contenedores
+ *                           guardados en la partida y los que hay en el mundo
  *   drop x y z Bloque [vida] soltar un bloque quieto (vida en segundos, 180)
  *   hand Bloque             poner ese bloque en la casilla elegida (como la paleta creativa)
  *   creative                pasar a creativo solo el modo de juego (la partida no cambia ni se guarda asi)
@@ -617,6 +620,13 @@ class Dev {
 				case "give":
 					var b = bk(a[1]);
 					g.inv.addBlocks(b, a.length > 2 ? Std.parseInt(a[2]) : 50);
+				case "charge":
+					// charge CPink N: deja N cargas de ese tipo (0 = ninguna)
+					var ck = Type.enumIndex(Type.createEnum(ChargeKind, a[1])), n = Std.parseInt(a[2]);
+					var cs = g.inv.inv.charges;
+					for( c in cs.copy() ) if( c.c == ck ) cs.remove(c);
+					if( n > 0 ) cs.push({ c : ck, n : n });
+					g.inv.display();
 				case "hand": g.setSlot(bk(a[1])); // hand Bloque: lo pone en la casilla elegida, como la paleta creativa
 				case "set", "setl":
 					var l = a[0] == "setl";
@@ -1572,6 +1582,7 @@ class Dev {
 			inline function items( t : Protocol.BlockInventory ) return [for( s in t ) s == null ? "-" : EditorKubes.label(Block.all[s.k]) + "x" + s.n].join(" ");
 			var c = app.chest;
 			Sys.println("cantina: " + (c == null ? "cerrada" : "abierta [" + items(c.box) + "]") + "  guardadas: " + (g.info.chests == null ? "" : [for( e in g.info.chests ) e.key + " [" + items(e.t) + "]"].join(", ")));
+		case "deathdrops": Sys.println("dejado: " + DeathDrops.devInfo(g));
 		case "shake":
 			// temblor, subida de la camara y del HUD (en pixeles de la ventana) de este fotograma, y segundos de juego
 			inline function r( v : Float ) return Math.round(v * 1000) / 1000;

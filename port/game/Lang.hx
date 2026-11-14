@@ -325,6 +325,8 @@ class Lang {
 		"exp.comet.info" => ["Amarre limitado: %t%", "Docking limited: %t%", "Amarrage limité : %t%"],
 		"exp.comet.gone" => ["El cometa se ha alejado.", "The comet has drifted away.", "La comète s'est éloignée."],
 		"comet.timer" => ["Cometa: %t%", "Comet: %t%", "Comète : %t%"],
+		// el equipo se queda en el sitio al morir o con Mayus+K (DeathDrops)
+		"deathdrop.left" => ["El equipo ha caído al suelo.", "The equipment fell to the ground.", "L'équipement est tombé à terre."],
 		"comet.over" => ["Se acabó el tiempo: el cometa se aleja, vuelta de emergencia automática a la nave.", "Time's up: the comet is drifting away, automatic emergency return to the ship.", "Temps écoulé : la comète s'éloigne, rapatriement d'urgence automatique au vaisseau."],
 		"comet.beamoff" => ["El cometa se aleja: el teletransportador no funciona", "The comet is drifting away: the teleporter does not work", "La comète s'éloigne : le téléporteur ne fonctionne pas"],
 		"abandon.ask" => ["¿Abandonar %name%?", "Abandon %name%?", "Abandonner %name% ?"],
