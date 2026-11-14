@@ -296,7 +296,8 @@ class KubeEditor extends Screen {
 
 	/** bloques de la lista del juego: todos los que se ven, sin las variantes giradas o abiertas (salen con su bloque) */
 	static function listed( b : Block ) : Bool {
-		if( b.index == 0 || b.type == BTInvisible || b.type == BTWater || b.propagate != null ) return false;
+		// ni los kubes del editor puestos en una partida (EditorKubes): ya estan en Mis kubes
+		if( b.index == 0 || b.type == BTInvisible || b.type == BTWater || b.propagate != null || b.k == BKubeEditor ) return false;
 		if( b.flip != null && b.flip.index < b.index ) return false;
 		if( b.toggle != null && b.toggle.index < b.index ) return false;
 		return true;

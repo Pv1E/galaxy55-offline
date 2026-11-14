@@ -165,7 +165,9 @@ class BlockNames {
 		if( cache[lang] != null ) return cache[lang];
 		var out = new Array<Names.NameData>();
 		for( b in Block.all ) {
-			if( b == null ) continue;
+			// los kubes del editor (EditorKubes, al final de Block.all) se quedan fuera de la tabla: Block.getName da su nombre, el
+			// del editor, aunque cambie despues de hacer la tabla
+			if( b == null || EditorKubes.isEditor(b) ) continue;
 			var key = Type.enumConstructor(b.k);
 			var es = NamesGen.ES[b.index] != null ? NamesGen.ES[b.index].name : null;
 			var n : String = switch( lang ) {
@@ -186,6 +188,7 @@ class BlockNames {
 		for( i in 0...out.length ) if( out[i] == null ) out[i] = { name : "-" };
 		// el original solo nombraba lo que cabe en el inventario (getDrop ya da el bloque base); aqui se apunta a todo
 		for( b in Block.all ) {
+			if( EditorKubes.isEditor(b) ) continue;
 			var m = b, n = 0;
 			while( m != null && out[m.index].name == "-" && n++ < 8 ) m = base(m);
 			if( m != null && m != b ) out[b.index] = { name : out[m.index].name };

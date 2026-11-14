@@ -1022,8 +1022,19 @@ class World {
 	/** id local (de este planeta) de un bloque global; lo da de alta si el mundo no lo tenia */
 	public function localId( b : Block ) : Int {
 		if( b == null ) return 0;
-		var id = gen.alloc(b.k);
+		var id = EditorKubes.isEditor(b) ? editorId(b) : gen.alloc(b.k);
 		for( i in idTag.length...gen.blocks.length ) registerId(i);
+		return id;
+	}
+
+	/** los kubes del editor (EditorKubes) comparten BlockKind: gen.alloc los confundiria; se dan de alta por su indice global */
+	function editorId( b : Block ) : Int {
+		var id = gen.hblocks.get(b.index);
+		if( id != null ) return id;
+		id = gen.blocks.length;
+		gen.blocks.push(b);
+		gen.btrans.push(b.type != BTFull && b.type != BTAlpha);
+		gen.hblocks.set(b.index, id);
 		return id;
 	}
 

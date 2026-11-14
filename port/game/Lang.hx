@@ -104,6 +104,7 @@ class Lang {
 		"hangar.separate_part" => ["Hay partes separadas: todos los bloques deben estar unidos.", "There are separate parts: all blocks must be connected.", "Il y a des parties séparées : tous les kubes doivent être reliés."],
 		"hangar.no_liquid" => ["Los líquidos no están permitidos a bordo de la nave.", "Liquids are not allowed on board the ship.", "Les liquides ne sont pas autorisés à bord du vaisseau."],
 		"hangar.no_bomb" => ["La bomba exótica no está permitida a bordo de la nave.", "The Ancient Bomb is not allowed on board the ship.", "La bombe antique n'est pas autorisée à bord du vaisseau."],
+		"hangar.no_editor_kube" => ["Los kubes del editor de kubes no se ponen en la nave.", "Kube editor kubes can't be placed on the ship.", "Les kubes de l'Éditeur de Kubes ne se posent pas dans le vaisseau."],
 		"hangar.exit_ship_no_save" => ["La nave no es válida: los cambios no se guardarán. ¿Salir?", "The ship is not valid: changes will not be saved. Leave?", "Le vaisseau n'est pas valide : les modifications ne seront pas sauvegardées. Quitter ?"],
 		"hangar.help" => ["HANGAR - rompe y coloca bloques para rehacer tu nave. Sal por las casillas de teletransporte para guardar.", "HANGAR - break/place blocks to rebuild your ship. Leave through the teleporter tiles to save.", "HANGAR - retire et pose des kubes pour refaire ton vaisseau. Sors par les téléporteurs pour sauvegarder."],
 		"helptext" => ["Ayuda en pantalla", "On-screen help", "Aide à l'écran"],
@@ -136,6 +137,9 @@ class Lang {
 		// busqueda por nombre de la paleta (vacia) y sin resultados (%q% = lo buscado)
 		"palette.search" => ["Buscar (Tab)", "Search (Tab)", "Rechercher (Tab)"],
 		"palette.none" => ["Ningún bloque se llama \"%q%\"", "No block is called \"%q%\"", "Aucun bloc ne s'appelle \"%q%\""],
+		// kubes del editor de kubes al final de la paleta (EditorKubes): al pasar por encima, despues del nombre; y los que no caben
+		"palette.editor" => ["Editor de kubes", "Kube editor", "Éditeur de Kubes"],
+		"palette.editor.over" => ["%n% kubes del editor no caben (%max% como mucho)", "%n% editor kubes don't fit (%max% at most)", "%n% kubes de l'éditeur ne tiennent pas (%max% au plus)"],
 		// %move%, %palette%... = las teclas elegidas (Keys.fill)
 		"palette.hint" => ["Clic / A: poner en la casilla elegida   Rueda / LB RB: cambiar de pagina   %palette% / Esc / B: cerrar", "Click / A: put in the selected slot   Wheel / LB RB: change page   %palette% / Esc / B: close", "Clic / A : mettre dans la case choisie   Molette / LB RB : changer de page   %palette% / Échap / B : fermer"],
 		"hud.pilot" => ["Pilotando: %move% mover la nave   Ratón girar la cámara   %leave% / Esc dejar la nave aquí", "Piloting: %move% move the ship   Mouse turn the camera   %leave% / Esc leave the ship here", "Pilotage : %move% déplacer le vaisseau   Souris tourner la caméra   %leave% / Échap laisser le vaisseau ici"],

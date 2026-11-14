@@ -35,6 +35,7 @@ class Palette extends h2d.Object {
 	var page = 0;
 	var grid : h2d.Object;
 	var info : h2d.Text;
+	var over : h2d.Text;
 	var pageText : h2d.Text;
 	var none : h2d.Text;
 	var x0 : Float;
@@ -62,6 +63,8 @@ class Palette extends h2d.Object {
 		// los datos y ya esta en la lista: no se repite
 		for( k in [BWater, BDarkWater, BAcidWater, BWinterWater] )
 			if( all.indexOf(Block.get(k)) < 0 ) all.push(Block.get(k));
+		// al final, los kubes del editor de kubes (EditorKubes, solo en las partidas creativas), con una marca en la esquina
+		for( b in EditorKubes.palette() ) all.push(b);
 		blocks = all.copy();
 		names = [for( b in all ) fold(b.getName())];
 
@@ -82,6 +85,10 @@ class Palette extends h2d.Object {
 		var t = Theme.text(this, Lang.t("palette.title"), 2.6, Theme.TEXT, px + 24, py + 22);
 		pageText = Theme.text(this, "", 1.8, Theme.DIM, px + w - 150, py + 30);
 		info = Theme.text(this, "", 2.0, Theme.CYAN, px + 24, py + h - 66);
+		// kubes del editor que no caben (mas de EditorKubes.MAX): en la fila del nombre, cuando no hay ninguno
+		over = Theme.text(this, "", 1.6, Theme.DIM, px + 24, py + h - 62);
+		if( EditorKubes.enabled && EditorKubes.skipped > 0 )
+			over.text = Lang.t("palette.editor.over").split("%n%").join("" + EditorKubes.skipped).split("%max%").join("" + EditorKubes.MAX);
 		addChild(hint);
 		// la busqueda va entre el titulo y el numero de pagina
 		var sx = Std.int(t.x + t.textWidth * t.scaleX + 30);
@@ -312,14 +319,34 @@ class Palette extends h2d.Object {
 			it.onOver = function(_) {
 				g.clear();
 				Theme.rect(g, 1, 1, CELL - 2, CELL - 2, Theme.ACCENT, 0.3);
-				info.text = b.getName();
+				setInfo(label(b));
 			};
 			it.onOut = function(_) drawFocus();
 			it.onClick = function(_) {
 				if( onPick != null ) onPick(b);
 			};
+			// kube del editor de kubes: esquina cian arriba a la derecha (despues del Interactive: devHover lo busca el tercero)
+			if( EditorKubes.isEditor(b) ) {
+				var m = new h2d.Graphics(cell);
+				m.beginFill(Theme.CYAN, 0.9);
+				m.moveTo(CELL - 15, 1);
+				m.lineTo(CELL - 1, 1);
+				m.lineTo(CELL - 1, 15);
+				m.endFill();
+			}
 		}
 		drawFocus();
+	}
+
+	/** nombre de un bloque en la fila de abajo; los kubes del editor llevan detras de donde vienen */
+	static function label( b : Block ) : String {
+		return EditorKubes.isEditor(b) ? b.getName() + "  ·  " + Lang.t("palette.editor") : b.getName();
+	}
+
+	/** la fila del nombre; vacia, el aviso de los kubes del editor que no caben (si lo hay) */
+	function setInfo( s : String ) {
+		info.text = s;
+		over.visible = s == "" && over.text != "";
 	}
 
 	function pageCount() {
@@ -339,7 +366,7 @@ class Palette extends h2d.Object {
 				Theme.rect(g, 1, 1, CELL - 2, CELL - 2, 0xFFFFFF, 0.06);
 		}
 		// sin casilla elegida no queda abajo el nombre del ultimo bloque que tuvo el raton encima
-		info.text = focus >= 0 && focus < pageCount() ? blocks[page * COLS * ROWS + focus].getName() : "";
+		setInfo(focus >= 0 && focus < pageCount() ? label(blocks[page * COLS * ROWS + focus]) : "");
 	}
 
 	/** boton abajo a la derecha, en la fila del nombre del bloque y alineado con la cuadricula (la bascula a supervivencia,
@@ -361,6 +388,7 @@ class Palette extends h2d.Object {
 		var s = "pagina " + (page + 1) + "/" + pages() + " foco " + focus + " nombre '" + info.text + "'";
 		s += " busqueda '" + search.text + "' bloques " + blocks.length + "/" + all.length + (search.hasFocus() ? " escribiendo" : "");
 		if( none.visible ) s += " aviso '" + none.text + "'";
+		if( over.visible ) s += " kubes de mas '" + over.text + "'";
 		// el centro del campo y la cruz, en la zona 1280x720 (orden mouse)
 		var p = searchBg.localToGlobal(new h2d.col.Point(searchW * 0.5, SEARCH_H * 0.5));
 		s += " campo " + Std.int(p.x) + "," + Std.int(p.y);

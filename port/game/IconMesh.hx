@@ -303,6 +303,14 @@ class Icons {
 		return bm;
 	}
 
+	/**
+	 * Olvida el icono de b (un kube del editor que ha cambiado, EditorKubes): el siguiente bitmap lo vuelve a hacer. La textura
+	 * vieja no se libera: algun h2d.Bitmap de la interfaz aun puede tenerla
+	 */
+	public static function forget( b : Block ) {
+		hiresCache.remove(b.index);
+	}
+
 	/** iconos grandes de reserva (los de la Base de datos ESCorp, antes de abrirla): pump los hace despues de los pedidos */
 	public static function warm( list : Array<Block>, atlas : h3d.mat.Texture ) {
 		hiresAtlas = atlas;

@@ -1,0 +1,170 @@
+# Kubes del editor de kubes puestos en el mundo (EditorKubes, anadido del port). Solo en las partidas creativas: los .kube de la
+# carpeta kubes (creados en el editor o dejados alli) salen al final de la paleta, con una esquina cian, y se ponen y se rompen
+# como los demas bloques. La partida los guarda por el nombre de su archivo en un campo aparte (editorKubes): en los campos de
+# siempre quedan aire y casillas vacias, lo que ve una version sin ellos. Al cargar, un kube retocado sale con su dibujo nuevo
+# y uno borrado pasa a aire. En supervivencia de una partida creativa son bloques como los demas; en aventura no estan.
+# Uso: powershell -File port/dev/devrun.ps1 -Script port/dev/kubes_editeur_monde.txt -Timeout 900 -Extra "--lang=fr"
+# Capturas port/out/edkubes_*.png
+wait 3
+# la carpeta kubes de los datos de prueba: un kube de Kube importado (hojas rosas, caladas), un cristal translucido, una puerta,
+# una reja (plano, gira con el jugador) y una piedra gris
+edkube clear
+edkube import port/kubes/feuilles-roses.kube test-feuilles
+edkube make test-verre cube blend 80409CFF Verre bleu test
+edkube make test-porte door opaque FFC08040 Porte orange test
+edkube make test-grille plane cutout FF30C030 Grille verte test
+edkube make test-pierre cube opaque FFB0B0B0 Pierre grise test
+planet
+wait 30
+# 1) la partida de prueba es de aventura: ningun kube del editor cargado y la tecla de la paleta no abre nada
+print edkubes
+palette
+print palette
+close
+# 2) pasa a creativa y se vuelve a cargar: los kubes se cargan al empezar a jugar
+creativegame
+reload
+waitfor planet 6000
+wait 30
+print edkubes
+# la paleta: al final, en la ultima pagina, con su esquina cian; la busqueda los encuentra por su nombre
+palette 2
+wait 10
+print palette
+print paldup
+shot edkubes_paleta
+tap tab
+type test
+wait 10
+print palnames
+palhover 0
+wait 2
+print palette
+shot edkubes_busqueda
+close
+# 3) se ponen: la piedra con la mano (como al jugar, no se gasta) y los demas con set
+filla 54 54 76 76 57 110 none
+filla 54 54 76 76 56 56 BRock
+wait 20
+tp 60.5 60.5 57.01 0 0
+waitfor ground
+wait 10
+slot 1
+hand kube:test-pierre
+lookat 62.5 60.5 56.5
+key place
+wait 8
+unkey
+wait 5
+print block 62 60 57
+print inv
+set 64 62 57 kube:test-feuilles
+set 64 64 57 kube:test-verre
+set 64 65 57 kube:test-verre
+set 64 64 58 kube:test-verre
+set 66 62 57 kube:test-porte
+set 66 62 58 kube:test-porte
+set 68 62 57 kube:test-grille
+set 68 64 57 kube:test-grille/1
+set 62 64 57 kube:test-pierre
+set 62 64 58 kube:test-feuilles
+slot 2
+hand kube:test-verre
+slot 3
+hand kube:test-porte
+wait 20
+tp 59.5 70.5 59 0 0
+lookat 65.5 62.5 57.5
+wait 20
+shot edkubes_monde
+# la puerta se abre (las dos celdas de la columna) y se cierra
+activate 66 62 57
+wait 10
+print block 66 62 57
+print block 66 62 58
+shot edkubes_puerta
+# 4) se rompen: en creativo, al momento y sin soltar nada (de cerca: el laser rompe lo primero que encuentra)
+tp 64.5 60.5 57.01 0 0
+wait 10
+mine 64 62 57
+wait 30
+print block 64 62 57
+print drops
+# 5) se guardan aparte: aire en los campos de siempre y ningun bloque desconocido sin ellos
+savegame
+print edsave
+print inv
+# 6) se vuelven a cargar con la partida
+reload
+waitfor planet 6000
+wait 30
+print edkubes
+print block 62 60 57
+print block 64 64 57
+print block 66 62 57
+print block 68 64 57
+print inv
+tp 59.5 70.5 59 0 0
+lookat 65.5 62.5 57.5
+wait 20
+shot edkubes_recarga
+# 7) retocado en el editor (otro color y otro nombre, el mismo archivo) y otro borrado: al cargar, la piedra sale naranja y el
+# cristal desaparece del terreno y del inventario
+edkube make test-pierre cube opaque FFFF8020 Pierre orange test
+edkube delete test-verre
+reload
+waitfor planet 6000
+wait 30
+print edkubes
+print block 62 60 57
+print block 64 64 57
+print block 64 64 58
+print inv
+tp 59.5 70.5 59 0 0
+lookat 65.5 62.5 57.5
+wait 20
+shot edkubes_retocado
+savegame
+print edsave
+# 8) supervivencia de la partida creativa: romper tarda y suelta el kube, que se recoge
+mode survival
+tp 60.5 60.5 57.01 0 0
+wait 10
+mine 62 60 57
+wait 60
+print block 62 60 57
+print drops
+wait 60
+print inv
+mode creative
+# 9) mas de 128 kubes en la carpeta: se cargan 128, primero los que tiene la partida; la paleta dice cuantos no caben
+edkube fill 130
+reload
+waitfor planet 6000
+wait 30
+print edkubes
+print block 62 64 57
+palette 3
+wait 10
+print palette
+shot edkubes_de_mas
+close
+# 10) una partida de aventura (devsaves: la primera de la lista): ningun kube del editor, ni paleta, ni en la partida guardada
+menu
+waitfor menu
+devsaves 3
+tap enter
+wait 5
+print menu
+tap enter
+waitfor ready 6000
+wait 30
+print mode
+print edkubes
+palette
+print palette
+savegame
+print edsave
+# la carpeta kubes de los datos de prueba queda vacia (kubes.txt carga el mas reciente)
+edkube clear
+quit
