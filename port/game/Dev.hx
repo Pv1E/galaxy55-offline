@@ -22,6 +22,8 @@ import Common;
  *   give Bloque [n]         meter n bloques (50) en el inventario
  *   drop x y z Bloque [vida] soltar un bloque quieto (vida en segundos, 180)
  *   hand Bloque             poner ese bloque en la casilla elegida (como la paleta creativa)
+ *   charge Tipo N           contador de cargas de ese tipo (CYellow, CBlue, CPink, CBonus) a N; 0 lo quita (print charges)
+ *   tploose Bloque          poner al jugador a un bloque (x - 1) del primer suelto de ese bloque
  *   creative                pasar a creativo solo el modo de juego (la partida no cambia ni se guarda asi)
  *   creativegame            la partida de prueba pasa a ser creativa, como creada en creativo (se guarda asi)
  *   mode survival|creative  bascula de una partida creativa, como el boton de la paleta (GalaxyApp.switchMode); print mode
@@ -618,6 +620,26 @@ class Dev {
 					var b = bk(a[1]);
 					g.inv.addBlocks(b, a.length > 2 ? Std.parseInt(a[2]) : 50);
 				case "hand": g.setSlot(bk(a[1])); // hand Bloque: lo pone en la casilla elegida, como la paleta creativa
+				case "charge":
+					// charge Tipo N: pone el contador de cargas de ese tipo (CYellow, CBlue, CPink, CBonus) a N; 0 lo quita
+					var ck = Type.enumIndex(Type.createEnum(ChargeKind, a[1])), n = Std.parseInt(a[2]);
+					var t = g.inv.inv.charges, e = Lambda.find(t, c -> c.c == ck);
+					if( e == null ) {
+						if( n > 0 ) t.push({ c : ck, n : n });
+					} else if( n > 0 ) e.n = n;
+					else t.remove(e);
+					g.inv.display();
+				case "tploose":
+					// tploose Bloque: pone al jugador a un bloque (x - 1) del primer suelto de ese bloque, como si llegara andando (justo
+					// encima, la atraccion 0.2 / d^2 lo lanzaria lejos)
+					var b = bk(a[1]);
+					for( d in @:privateAccess g.drops.list )
+						if( d.block == b ) {
+							g.px = d.x - 1;
+							g.py = d.y;
+							g.pz = d.z + 0.01;
+							break;
+						}
 				case "set", "setl":
 					var l = a[0] == "setl";
 					var x = Std.parseInt(a[1]) + (l ? sdx : 0), y = Std.parseInt(a[2]) + (l ? sdy : 0), z = Std.parseInt(a[3]) + (l ? sz : 0);
@@ -1555,6 +1577,9 @@ class Dev {
 			Sys.println("celdas de la zona: " + out.join("  ") + "   texto: " + c.curText);
 		case "mode": Sys.println("modo: " + modeInfo(app, g));
 		case "hit": Sys.println(g.debugPick());
+		case "charges":
+			// contadores de cargas (cantidad / maximo)
+			Sys.println("cargas: " + [for( c in g.inv.inv.charges ) { var k = Type.createEnumIndex(ChargeKind, c.c); k + "x" + c.n + "/" + Data.getCharge(k).max; }].join(" "));
 		case "power":
 			// potencia de excavacion (turbo minero) y el icono "power" del casco
 			var ic = @:privateAccess app.statusIcon;

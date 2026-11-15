@@ -227,7 +227,11 @@ class Drops {
 				if( dd < 0.4 ) {
 					if( d.n <= 1 ) picked = g.inv.addBlock(d.block) >= 0;
 					else {
-						var c = g.inv.addBlocks(d.block, d.n);
+						// cambio del port: una pila de un bloque-carga (Carga rosa...; en creativo puede estar en una casilla: L3 / clic
+						// central) tirada con R, desde el inventario o al romper una cantina: addBlocks no acepta cargas (devuelve 0) y la pila
+						// no se recogia nunca, hasta desaparecer. Como un solo bloque-carga (addBlock), cada uno da una carga, hasta el
+						// maximo del contador; lo que no cabe se queda en el suelo
+						var c = d.block.charge != null ? g.inv.addCharge(d.block.charge, d.n) : g.inv.addBlocks(d.block, d.n);
 						d.n -= c;
 						picked = d.n <= 0;
 					}

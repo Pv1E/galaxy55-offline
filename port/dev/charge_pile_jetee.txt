@@ -1,0 +1,83 @@
+# cambio del port: una pila de bloques-carga (Carga rosa, Charges de Citronox; en creativo puede estar en una casilla: L3 / clic
+# central) tirada al suelo no se recogia nunca: Drops pedia addBlocks, que no acepta cargas, y la pila se quedaba hasta
+# desaparecer. Ahora cada bloque-carga da una carga, como al recoger uno solo, hasta el maximo del contador; lo demas se queda
+# en el suelo y se recoge cuando vuelve a haber sitio. Una pila de BRock tirada igual se recoge como antes.
+# Uso: devrun.ps1 -Script port/dev/charge_pile_jetee.txt -Extra "--lang=fr"
+wait 3
+planet
+wait 30
+filla 54 54 76 76 57 110 none
+filla 54 54 76 76 56 56 BRock
+wait 20
+tp 60.5 60.5 57.01 0 0
+waitfor ground
+wait 10
+# contadores rosa (max 20) y amarillo (max 99) vacios; pilas de 64 en las casillas 1-3
+charge CPink 0
+charge CYellow 0
+slot 1
+hand BPinkCharge
+slot 2
+hand BYellowCharge
+slot 3
+hand BRock
+print inv
+print charges
+invscreen open
+wait 5
+invscreen drag 0 out
+wait 5
+invscreen drag 1 out
+wait 5
+invscreen drag 2 out
+wait 5
+invscreen close
+wait 120
+print loose
+tp 65.9 60.5 57.01 0 0
+waitfor ground
+wait 120
+# esperado: BRockx64 en el inventario, CYellowx64 y CPinkx20 (el maximo); en el suelo solo BPinkChargex44
+print inv
+print charges
+print loose
+# al recoger una parte, lo que queda sale despedido (la atraccion de Dummy.update del original, 0.2 / d^2, se pasa del jugador)
+# y ya no se acerca con el contador lleno. Gastadas las cargas rosas, se vuelve a el y se recogen 20 mas: CPinkx20 y
+# BPinkChargex24 en el suelo
+charge CPink 0
+wait 30
+print loose
+tploose BPinkCharge
+wait 60
+print charges
+print loose
+# con 4 cargas rosas gastadas (16/20) se recogen 4 mas: CPinkx20 y BPinkChargex20 en el suelo
+charge CPink 16
+wait 30
+tploose BPinkCharge
+wait 60
+print charges
+print loose
+# cantina: una pila de 64 cargas amarillas guardada en ella sale suelta al romperla y se recoge igual (CYellowx64 -> x99, el
+# maximo; BYellowChargex29 en el suelo)
+tp 60.5 62.5 57.01 0 0
+waitfor ground
+slot 2
+hand BYellowCharge
+set 62 62 57 BChest
+activate 62 62 57
+wait 5
+chestclick 1 1
+chestclick 0 0
+wait 5
+print chest
+breakp 62 62 57
+wait 60
+print loose
+tp 62.5 62.5 57.01 0 0
+waitfor ground
+wait 120
+print inv
+print charges
+print loose
+quit
