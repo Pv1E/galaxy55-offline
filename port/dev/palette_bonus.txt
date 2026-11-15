@@ -1,0 +1,158 @@
+# paleta del modo creativo (I): los tres cristales de bonus (las gemas verdes: Petit cristal bonus, Cristal bonus y Gros cristal
+# bonus) no tienen precio en los datos y no salian. Ahora estan justo despues de los otros cristales (Etherium bleu), casillas
+# 20 a 22 de la primera pagina, una sola vez. Lanzar con -Extra "--lang=fr".
+# print paldup: 238 bloques (antes 235), 0 repetidos. print palette: nombre de abajo de cada casilla (19 Etherium bleu, 20 a 22
+# los cristales, 23 Mur de rosh). La busqueda "bonus" y "cristal" los encuentra. Se cogen con el mando (casilla 20) y con la
+# busqueda, se ponen en el suelo (print block: BBonusSmall, BBonusMedium, BBonusLarge) y la tienda, los contratos y la base de
+# datos ESCorp se abren con ellos en el inventario (no son mercancia: casilla sin venta en la tienda).
+# Capturas port/out/palette_bonus_*.png
+wait 3
+planet
+wait 30
+creative
+slot 1
+palette
+wait 5
+print paldup
+# los vecinos y los tres cristales
+palhover 19
+print palette
+palhover 19 out
+palhover 20
+print palette
+palhover 20 out
+palhover 21
+print palette
+palhover 21 out
+palhover 23
+print palette
+palhover 23 out
+palhover 22
+wait 2
+print palette
+shot palette_bonus
+palhover 22 out
+# mando: casilla 20 (segunda fila, septima columna) y A lo pone en la casilla 1
+palnav right
+palnav down
+palnav right
+palnav right
+palnav right
+palnav right
+palnav right
+palnav right
+wait 2
+print palette
+shot palette_bonus_mando
+palnav a
+print inv
+# busqueda
+tap tab
+wait 2
+type bonus
+wait 2
+print palette
+print palnames
+shot palette_bonus_recherche
+tap esc
+wait 2
+tap tab
+wait 2
+type cristal
+wait 2
+print palnames
+tap esc
+wait 2
+close
+wait 3
+# el mediano en la casilla 2: "cristal bonus" da los tres, Intro marca el primero y la flecha el segundo
+slot 2
+palette
+wait 5
+tap tab
+wait 2
+type cristal bonus
+wait 2
+print palnames
+tap enter
+wait 2
+palnav right
+print palette
+palnav a
+close
+wait 3
+# el grande en la casilla 3
+slot 3
+palette
+wait 5
+tap tab
+wait 2
+type gros cristal
+wait 2
+print palnames
+tap enter
+wait 2
+tap enter
+wait 2
+print inv
+close
+wait 5
+# se ponen en el suelo como los demas bloques (una pulsacion corta: con la tecla apretada mas tiempo se repite y pone dos, como
+# la roca). print around: 3 bloques mas encima del suelo
+filla 54 54 76 76 57 110 none
+filla 54 54 76 76 56 56 BRock
+wait 20
+tp 60.5 60.5 57.01 0 0
+waitfor ground
+wait 10
+print around 62 60 58 2
+slot 1
+lookat 62.5 60.5 56.5
+wait 2
+key place
+wait 2
+unkey
+wait 5
+slot 2
+lookat 62.5 62.5 56.5
+wait 2
+key place
+wait 2
+unkey
+wait 5
+slot 3
+lookat 62.5 58.5 56.5
+wait 2
+key place
+wait 2
+unkey
+wait 5
+print block 62 60 57
+print block 62 62 57
+print block 62 58 57
+print around 62 60 58 2
+print inv
+# de lejos, con el excavador en la mano
+slot 0
+tp 58.5 60.5 57.01
+waitfor ground
+lookat 62.5 60.5 57
+wait 10
+shot palette_bonus_monde
+# tienda, contratos y base de datos ESCorp con los cristales en el inventario
+shop
+wait 5
+shot palette_bonus_tienda
+shopclose
+wait 3
+contracts
+wait 5
+print contracts
+contracts close
+wait 3
+kub
+wait 5
+print kub
+kub close
+wait 3
+quit
