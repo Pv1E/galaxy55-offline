@@ -376,7 +376,14 @@ class Screen extends h2d.Object {
 	public var widgets = new Array<Widget>();
 	public var focus(default, null) = 0;
 	public var onBack : Void -> Void;
-	public var active = true;
+	/**
+	 * false mientras hay una ventana encima (GalaxyApp: renombrar, borrar, confirmar...): la pantalla no atiende al teclado ni al
+	 * mando (update) y, cambio del port, tampoco al raton: un Interactive que la tapa entera se queda con los clics y el paso del
+	 * puntero. Sin el, un clic fuera de los controles de la ventana llegaba al control de debajo (sobre una fila de la lista de
+	 * partidas, la jugaba; sobre Volver, volvia al menu) y el raton movia el foco de la pantalla de detras.
+	 */
+	public var active(default, set) = true;
+	var blocker : h2d.Interactive;
 	var navCooldown = 0.;
 	/** punto de la ventana donde se ha dejado el puntero (holdHover) */
 	var heldX = -1;
@@ -384,6 +391,24 @@ class Screen extends h2d.Object {
 
 	public function new( parent : h2d.Object ) {
 		super(parent);
+	}
+
+	function set_active( v : Bool ) {
+		active = v;
+		if( v ) {
+			if( blocker != null ) {
+				blocker.remove();
+				blocker = null;
+			}
+		} else if( blocker == null ) {
+			// encima de todo lo de esta pantalla y mas grande que cualquier ventana (las que son mas anchas o altas que 16:9)
+			blocker = new h2d.Interactive(Theme.W * 5, Theme.H * 5, this);
+			blocker.x = -Theme.W * 2;
+			blocker.y = -Theme.H * 2;
+			blocker.enableRightButton = true;
+			blocker.cursor = Default;
+		}
+		return v;
 	}
 
 	/** el control que queda bajo el puntero no se lleva el foco hasta que se mueva el raton (GalaxyApp.centerMouse) */

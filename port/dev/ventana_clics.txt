@@ -1,0 +1,60 @@
+# Ventanas encima de un menu (renombrar, borrar, confirmar...): el raton fuera de sus controles no llega al menu de debajo. Antes
+# un clic fuera de la ventana de Renombrar, sobre una fila de la lista, jugaba esa partida (y sobre Volver, volvia al menu).
+# Zona 1280x720: filas de la lista en y 140-243, 252-355, 364-467, 476-579 (miniatura en x 138-298); Volver en 490-790 x 604-652;
+# la ventana de Renombrar en 290-990 x 220-490 y la de Borrar en 390-890 x 250-470
+wait 3
+devsaves 3
+menu
+waitfor menu
+tap enter
+wait 2
+print menu
+# 1) Renombrar (derecha + Intro); Esc deja de escribir
+tap right
+tap enter
+wait 2
+tap esc
+wait 2
+print menu
+# clic en la cuarta fila, a la izquierda de la ventana: no se juega
+mouse 200 530 click
+wait 10
+print menu
+# clic en la ventana, fuera de sus controles (su titulo): nada
+mouse 640 250 click
+wait 10
+print menu
+# el raton encima de la segunda fila: el foco de la lista no cambia
+mouse 200 300
+wait 2
+print menu
+# clic en Volver, debajo de la ventana: no se vuelve al menu
+mouse 640 628 click
+wait 5
+print menu
+shot ventana_clics_renombrar
+# Esc cierra la ventana (antes el raton se aparta: ya sin la ventana, encima de Volver le daria el foco)
+mouse 20 700
+wait 2
+tap esc
+wait 2
+print menu
+# 2) Borrar (la accion de al lado + Intro): un clic en una fila no la juega ni borra nada
+tap right
+tap enter
+wait 2
+print menu
+mouse 200 530 click
+wait 10
+print menu
+print saves
+tap esc
+wait 2
+print menu
+# 3) con la ventana cerrada la lista vuelve a responder al raton: un clic en la segunda fila la juega
+mouse 200 300 click
+wait 2
+waitfor ready
+wait 10
+print menu
+quit
