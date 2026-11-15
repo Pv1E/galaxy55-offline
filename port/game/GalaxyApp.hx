@@ -530,6 +530,8 @@ class GalaxyApp extends hxd.App {
 				case "mappause": buildMapPause();
 				case "computer": buildComputer();
 				case "licenses": buildLicenses();
+				case "escorp": buildEscorp();
+				case "upgrades": buildUpgrades();
 				case "kubes": buildKubes();
 				default: null;
 			}
@@ -1060,7 +1062,7 @@ class GalaxyApp extends hxd.App {
 		var pilotOk = pilotOffered();
 		computerPilot = pilotOk;
 		// botones antes de Cerrar; con todos (solo al editar la nodriza) se juntan un poco para que el panel quepa
-		var n = 6 + (pilotOk ? 1 : 0) + (mother ? 1 : 0);
+		var n = 5 + (pilotOk ? 1 : 0) + (mother ? 1 : 0);
 		var step = n > 7 ? 48 : n > 6 ? 56 : 62;
 		var h = 312 + n * step;
 		var s = panelFor(640, h, Lang.t("computer.title"));
@@ -1068,14 +1070,12 @@ class GalaxyApp extends hxd.App {
 		var y = (H - h) * 0.5 + 135;
 		var takeoff = new Button(s, Lang.t("computer.takeoff"));
 		var edit = new Button(s, Lang.t("computer.edit"));
-		var trade = new Button(s, Lang.t("computer.trade"));
-		// en el tutorial no se comercia (como los contratos); se vuelve a mirar en openComputer: el menu se guarda
-		trade.enabled = !Tutorial.active(game.info);
-		computerTrade = trade;
-		var contracts = new Button(s, Lang.t("computer.contracts"));
-		// en el tutorial los contratos se ven pero no se abren hasta su paso (se vuelve a mirar en openComputer: el menu se guarda)
-		contracts.enabled = Tutorial.contractsAllowed(game.info);
-		computerContracts = contracts;
+		// Contactar con la ESCorp (anadido del port), encima de la Base de datos ESCorp: submenu con Comerciar, los contratos y las
+		// mejoras. En el tutorial, como los contratos: se ve pero no se abre hasta su paso (se vuelve a mirar en openComputer: el
+		// menu se guarda)
+		var escorp = new Button(s, Lang.t("computer.escorp"));
+		escorp.enabled = Tutorial.contractsAllowed(game.info);
+		computerEscorp = escorp;
 		// licencias de la ESCorp y planeta principal (Licenses, anadido del port): como los contratos
 		var licenses = new Button(s, Lang.t("computer.licenses"));
 		licenses.enabled = !Tutorial.active(game.info);
@@ -1094,7 +1094,7 @@ class GalaxyApp extends hxd.App {
 				game.startPiloting();
 			};
 		}
-		rows = rows.concat([edit, database, trade, contracts, licenses]);
+		rows = rows.concat([edit, escorp, database, licenses]);
 		if( mother ) {
 			var visit = new Button(s, Lang.t("computer.mothership"));
 			rows.push(visit);
@@ -1120,9 +1120,10 @@ class GalaxyApp extends hxd.App {
 			s.add(skip, x, close.y + 62);
 			skip.onActivate = function() askSkip(s);
 		}
+		// tutorial: Modificar la nave se marca en su paso (markTutoButton)
+		computerEdit = edit;
 		edit.onActivate = startHangar;
-		trade.onActivate = function() if( !Tutorial.active(game.info) ) openShop();
-		contracts.onActivate = openContracts;
+		escorp.onActivate = openEscorp;
 		licenses.onActivate = openLicenses;
 		database.onActivate = openDatabase;
 		close.onActivate = function() resume();
@@ -1195,6 +1196,177 @@ class GalaxyApp extends hxd.App {
 		back.onActivate = leave;
 		s.onBack = leave;
 		return s;
+	}
+
+	/** Contactar con la ESCorp desde el ordenador de a bordo: el submenu se rehace cada vez (en el tutorial cambia lo que se abre) */
+	function openEscorp() {
+		if( game == null || !Tutorial.contractsAllowed(game.info) ) return;
+		var old = screens.get("escorp");
+		if( old != null ) old.remove();
+		screens.remove("escorp");
+		show("escorp");
+	}
+
+	/** boton Mejoras ESCorp del submenu: al volver de su pantalla, el foco vuelve a el */
+	var escorpUpgrades : Button;
+
+	/**
+	 * Submenu Contactar con la ESCorp (anadido del port), como el menu del ordenador de a bordo: Comerciar (la tienda, que antes
+	 * estaba en el ordenador), los Contratos ESCorp (ContractPanel, como antes desde el ordenador) y las Mejoras ESCorp
+	 * (EscorpUpgrades). En el tutorial no se comercia, los contratos se abren desde su paso (openEscorp ya lo mira) y las mejoras
+	 * no. Volver o Esc vuelven al ordenador, con el foco en Contactar con la ESCorp
+	 */
+	function buildEscorp() : Screen {
+		var h = 250 + 3 * 62;
+		var s = panelFor(640, h, Lang.t("escorp.title"));
+		var x = (W - 540) * 0.5;
+		var y = (H - h) * 0.5 + 135;
+		var trade = new Button(s, Lang.t("computer.trade"));
+		trade.enabled = !Tutorial.active(game.info);
+		var contracts = new Button(s, Lang.t("escorp.contracts"));
+		contracts.enabled = Tutorial.contractsAllowed(game.info);
+		var upgrades = new Button(s, Lang.t("escorp.upgrades"));
+		upgrades.enabled = Tutorial.upgradesAllowed(game.info);
+		escorpUpgrades = upgrades;
+		var back = new Button(s, Lang.t("back"));
+		s.add(trade, x, y);
+		s.add(contracts, x, y + 62);
+		s.add(upgrades, x, y + 2 * 62);
+		s.add(back, x, y + 3 * 62 + 14);
+		trade.onActivate = function() if( !Tutorial.active(game.info) ) openShop();
+		contracts.onActivate = openContracts;
+		upgrades.onActivate = openUpgrades;
+		// tutorial: en el paso de los contratos se marcan los Contratos ESCorp (Comerciar esta desactivado: show les da el foco)
+		if( Tutorial.active(game.info) && game.info.tuto.step == Tutorial.CONTRACTS ) markTutoButton(s, contracts);
+		var leave = function() {
+			showComputer();
+			current.setFocus(current.widgets.indexOf(computerEscorp));
+		};
+		back.onActivate = leave;
+		s.onBack = leave;
+		return s;
+	}
+
+	/** Mejoras ESCorp: la pantalla se rehace cada vez (las cargas de bonus que llevas y lo desbloqueado) */
+	function openUpgrades() {
+		if( game == null || !Tutorial.upgradesAllowed(game.info) ) return;
+		var old = screens.get("upgrades");
+		if( old != null ) old.remove();
+		screens.remove("upgrades");
+		show("upgrades");
+	}
+
+	/**
+	 * Mejoras ESCorp (EscorpUpgrades, anadido del port): las cargas de bonus que llevas y un boton por mejora con su precio
+	 * (desbloquear, con confirmacion); sin ninguna, el aviso. Se compone como las licencias (desde arriba y centrada en alto).
+	 * Volver o Esc vuelven al submenu Contactar con la ESCorp, con el foco en Mejoras ESCorp
+	 */
+	function buildUpgrades() : Screen {
+		var PW = 860;
+		var s = new Screen(ui);
+		var bg = new h2d.Graphics(s);
+		var title = Theme.text(s, Lang.t("upgrades.title"), 3.2, Theme.TEXT);
+		var px = (W - PW) * 0.5 + 40, y = 100.;
+		var info = Theme.text(s, Lang.t("upgrades.info"), 1.6, Theme.DIM, px, y);
+		info.maxWidth = (PW - 80) / info.scaleX;
+		y += info.textHeight * info.scaleY + 18;
+		// las cargas de bonus: el icono de la barra del inventario (InvBar) y cuantas llevas, en su verde
+		var have = EscorpUpgrades.bonus(game.inv);
+		var icon = new h2d.Bitmap(EscorpUpgrades.icon(), s);
+		icon.setScale(2.5);
+		icon.setPosition(px, y);
+		Theme.text(s, Lang.t("upgrades.balance").split("%n%").join("" + have), 2.0, EscorpUpgrades.COLOR, px + 54, y + 6);
+		y += 40 + 16;
+		var sep = new h2d.Graphics(s);
+		Theme.rect(sep, px, y, PW - 80, 1, 0xFFFFFF, 0.12);
+		y += 22;
+		if( EscorpUpgrades.ALL.length == 0 ) {
+			var none = Theme.text(s, Lang.t("upgrades.none"), 1.8, Theme.TEXT, px, y + 10);
+			none.maxWidth = (PW - 80) / none.scaleX;
+			none.textAlign = Center;
+			y += none.textHeight * none.scaleY + 34;
+		}
+		for( u in EscorpUpgrades.ALL ) {
+			var bought = EscorpUpgrades.has(game.info, u.id);
+			var price = bought ? Lang.t("upgrades.bought") : Lang.t("upgrades.cost").split("%n%").join("" + u.cost);
+			var b = new Button(s, Lang.t("upgrade." + u.id) + "  ·  " + price, PW - 80, 54);
+			b.enabled = EscorpUpgrades.canBuy(game.info, game.inv, u);
+			b.onActivate = function() askUpgrade(s, u);
+			s.add(b, px, y);
+			y += 62;
+		}
+		var back = new Button(s, Lang.t("back"));
+		s.add(back, (W - 460) * 0.5, y + 14);
+		var h = Std.int(y + 14 + 54 + 30);
+		var top = (H - h) * 0.5;
+		for( c in s ) if( c != bg && c != title ) c.y += top;
+		drawPanel(bg, title, PW, h);
+		var leave = function() {
+			show("escorp");
+			current.setFocus(current.widgets.indexOf(escorpUpgrades));
+		};
+		back.onActivate = leave;
+		s.onBack = leave;
+		return s;
+	}
+
+	/** desbloquear una mejora: con confirmacion (precio en cargas de bonus); hecho, la pantalla se rehace */
+	function askUpgrade( parent : Screen, u : EscorpUpgrades.EscorpUpgrade ) {
+		var name = Lang.t("upgrade." + u.id);
+		askConfirm(parent, Lang.t("upgrades.ask").split("%name%").join(name), Lang.t("upgrades.ask.cost").split("%n%").join("" + u.cost), Theme.ACCENT, function() {
+			if( !EscorpUpgrades.buy(game.info, game.inv, u) ) {
+				showToast(Lang.t("upgrades.missing").split("%n%").join("" + u.cost), 4);
+				return;
+			}
+			openUpgrades();
+		});
+	}
+
+	static inline var TUTO_MARK = "tutoMark";
+
+	/**
+	 * Tutorial: con un menu abierto no se ve el objetivo (updateTutorial), asi que el boton que toca se marca con un marco y la
+	 * flecha verdes del tutorial (TutoGuide) y se lleva el foco. Ordenador de a bordo (openComputer): tutoComputerButton;
+	 * Contactar con la ESCorp (buildEscorp): Contratos ESCorp. Quita la marca que hubiera en esa pantalla; b null: ninguna
+	 */
+	function markTutoButton( s : Screen, b : Button ) {
+		if( s == null ) return;
+		for( w in s.widgets ) {
+			var old = w.getObjectByName(TUTO_MARK);
+			if( old != null ) old.remove();
+		}
+		if( b == null || !b.enabled || s.widgets.indexOf(b) < 0 ) return;
+		var c = TutoGuide.GREEN;
+		var g = new h2d.Graphics(b);
+		g.name = TUTO_MARK;
+		// por fuera del boton: con los botones juntos (Stockage, Pilotar) apenas pisa el de al lado
+		var m = 3, t = 2;
+		Theme.rect(g, -m, -m, b.w + 2 * m, t, c);
+		Theme.rect(g, -m, b.h + m - t, b.w + 2 * m, t, c);
+		Theme.rect(g, -m, -m, t, b.h + 2 * m, c);
+		Theme.rect(g, b.w + m - t, -m, t, b.h + 2 * m, c);
+		// la flecha de TutoGuide, a la izquierda y hacia el boton
+		var ax = -m - 8., ay = b.h * 0.5;
+		g.beginFill(c, 0.9);
+		g.moveTo(ax, ay);
+		g.lineTo(ax - 24, ay - 12);
+		g.lineTo(ax - 18, ay);
+		g.lineTo(ax - 24, ay + 12);
+		g.lineTo(ax, ay);
+		g.endFill();
+		g.filter = new h2d.filter.Glow(c, 0.6, 6, 1, 1, true);
+		s.setFocus(s.widgets.indexOf(b));
+	}
+
+	/** tutorial: el boton del ordenador de a bordo que toca: Base de datos ESCorp, Contactar con la ESCorp o Modificar la nave */
+	function tutoComputerButton() : Button {
+		if( game == null || !Tutorial.active(game.info) ) return null;
+		return switch( game.info.tuto.step ) {
+			case Tutorial.DATABASE: computerDatabase;
+			case Tutorial.CONTRACTS: computerEscorp;
+			case Tutorial.COMPUTER: computerEdit;
+			default: null;
+		}
 	}
 
 	/** confirmar el cambio de planeta principal (gratis la primera vez); hecho, la pantalla de licencias se rehace */
@@ -1678,10 +1850,10 @@ class GalaxyApp extends hxd.App {
 		hud.visible = false; msgText.visible = false;
 		showComputer();
 		centerMouse();
-		computerContracts.enabled = Tutorial.contractsAllowed(game.info);
+		computerEscorp.enabled = Tutorial.contractsAllowed(game.info);
 		computerLicenses.enabled = !Tutorial.active(game.info);
-		computerTrade.enabled = !Tutorial.active(game.info);
 		computerDatabase.enabled = Tutorial.databaseAllowed(game.info);
+		markTutoButton(current, tutoComputerButton());
 	}
 
 	/** el ordenador de a bordo ofrece Pilotar la nave: donde se puede pilotar (GameView.canPilot) y, en aventura, solo sobre el
@@ -1707,11 +1879,11 @@ class GalaxyApp extends hxd.App {
 
 	/** boton de la Base de datos ESCorp del ordenador de a bordo (en el tutorial, desde su paso) */
 	var computerDatabase : Button;
-	/** boton Comerciar del ordenador de a bordo (desactivado durante el tutorial) */
-	var computerTrade : Button;
 
-	/** boton de los contratos del ordenador de a bordo (desactivado durante el tutorial) */
-	var computerContracts : Button;
+	/** boton Contactar con la ESCorp del ordenador de a bordo (en el tutorial, desde el paso de los contratos) */
+	var computerEscorp : Button;
+	/** boton Modificar la nave del ordenador de a bordo (el tutorial lo marca en su paso) */
+	var computerEdit : Button;
 
 	/** Esc en el mapa de estrellas: el mapa se para y se abre este menu */
 	function openMapPause() {
@@ -2615,6 +2787,10 @@ class GalaxyApp extends hxd.App {
 			out += "; filas " + l.rows.length + ", a la vista " + [for( r in l.rows ) if( r.visible ) r.info.name].join(" | ");
 		} else if( s == current && currentName == "new" ) {
 			out += "; filas " + [for( w in s.widgets ) if( w.visible ) desc(w)].join(" | ") + "; panel " + Std.int(s.widgets[0].y - 120) + ".." + Std.int(s.widgets[s.widgets.length - 1].y + 88);
+		} else if( s == current && (currentName == "computer" || currentName == "escorp" || currentName == "upgrades") ) {
+			// ordenador de a bordo y Contactar con la ESCorp: los botones, entre corchetes los desactivados y con VERDE el que marca
+			// el tutorial (markTutoButton)
+			out += "; botones " + [for( w in s.widgets ) (w.enabled ? desc(w) : "[" + desc(w) + "]") + (w.getObjectByName(TUTO_MARK) != null ? " VERDE" : "")].join(" | ");
 		}
 		return out;
 	}

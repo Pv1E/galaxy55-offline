@@ -1,5 +1,5 @@
 # botones del ordenador de a bordo sin la precision entre parentesis ("Despegar", "Modificar la nave", "Pilotar la nave",
-# "Comerciar", "Contratos") en los 3 idiomas: caben en su boton y nada se sale del panel. Despues el titulo de la paleta
+# "Contactar con la ESCorp") en los 3 idiomas: caben en su boton y nada se sale del panel. Despues el titulo de la paleta
 # del creativo ("Bloques") y, con el tutorial en curso, el texto del paso del ordenador (elige "Modificar la nave") y su
 # menu (sin pilotar, con "Saltar el tutorial"). Capturas port/out/menu_<idioma>.png, paleta_<idioma>.png y menu_tuto_<idioma>.png
 wait 3
