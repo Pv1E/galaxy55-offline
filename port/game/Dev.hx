@@ -95,6 +95,8 @@ import Common;
  *   type TEXTO              escribir el resto de la linea en el campo de texto en el que se esta escribiendo
  *   print palnames          bloques que deja la busqueda de la paleta creativa (Tab o clic en ella para escribir, y type)
  *   wheel N                 rueda del raton (N > 0 = hacia abajo), donde lo dejo la ultima orden mouse
+ *   wheelwrap 0|1|old       opcion Rueda del raton en bucle (se guarda); old quita el campo de settings.json, como el de una version
+ *                           anterior (vale al abrir el juego la proxima vez); print wheelwrap: la opcion y lo que dice settings.json
  *   mouse X Y [click|down|up] llevar el raton a ese punto de la zona 1280x720 (y hacer clic, o solo apretar o soltar: arrastrar)
  *   print menu|saves        pantalla de menu abierta y su foco / partidas guardadas (waitfor menu: el menu y su fondo listos)
  *   print mouse             donde cree el juego que esta el puntero (pixeles de la ventana, zona 1280x720) y el cursor del sistema
@@ -977,6 +979,18 @@ class Dev {
 				case "maxfps": Settings.maxFps = Std.parseInt(a[1]);
 				case "fps": Sys.println("fps " + Std.int(hxd.Timer.fps()));
 				case "helptext": Settings.showHelp = a[1] == "1"; // helptext 0|1: opcion de ayuda en pantalla
+				case "wheelwrap":
+					// wheelwrap 0|1: opcion Rueda del raton en bucle (se guarda); wheelwrap old: quita el campo de settings.json, como el
+					// de una version anterior (la proxima vez que se abra el juego, la opcion vuelve a la de por defecto)
+					if( a[1] == "old" ) {
+						var path = Settings.dir() + "/settings.json";
+						var o : Dynamic = haxe.Json.parse(sys.io.File.getContent(path));
+						Reflect.deleteField(o, "wheelWrap");
+						sys.io.File.saveContent(path, haxe.Json.stringify(o, null, "  "));
+					} else {
+						Settings.wheelWrap = a[1] == "1";
+						Settings.save();
+					}
 				case "hangar": app.startHangar();
 				case "talk":
 					// talk: como el clic sobre el robot comerciante: dice si se le apunta (GameView.aimedMerchant) y, si si, abre el panel
@@ -1509,6 +1523,11 @@ class Dev {
 			Sys.println("shelf: " + [for( m in Market.shelf ) Std.string(m.block.k)].join(" "));
 		case "inv":
 			Sys.println("inv: " + [for( s in g.inv.inv.t ) s == null ? "-" : EditorKubes.label(Block.all[s.k]) + "x" + s.n].join(" ") + "  casilla=" + g.inv.blockIndex);
+		case "wheelwrap":
+			// opcion Rueda del raton en bucle y lo que dice settings.json (sin el campo: ajustes de una version anterior)
+			var path = Settings.dir() + "/settings.json";
+			var o : Dynamic = sys.FileSystem.exists(path) ? haxe.Json.parse(sys.io.File.getContent(path)) : null;
+			Sys.println("wheelwrap=" + (Settings.wheelWrap ? 1 : 0) + " settings.json=" + (o == null ? "no existe" : o.wheelWrap == null ? "sin campo" : "" + o.wheelWrap));
 		case "pos":
 			Sys.println("pos: " + g.px + "," + g.py + "," + g.pz + "  yaw=" + g.yaw + " pitch=" + g.pitch + "  suelo=" + (g.standingBlock == null ? "-" : "" + g.standingBlock.k));
 		case "keys":

@@ -948,7 +948,7 @@ class GalaxyApp extends hxd.App {
 	function buildOptionsSection( sec : String ) : Screen {
 		var rows : Array<Ui.Widget> = [];
 		var onOff = [Lang.t("off"), Lang.t("on")];
-		var count = switch( sec ) { case "general": 2; case "controls": 4; case "graphics": 5; default: 3; };
+		var count = switch( sec ) { case "general": 2; case "controls": 5; case "graphics": 5; default: 3; };
 		var h = 170 + (count + 1) * 60;
 		var s = panelFor(860, h, Lang.t("options." + sec).toUpperCase());
 		var x = (W - 660) * 0.5;
@@ -988,6 +988,8 @@ class GalaxyApp extends hxd.App {
 			tk.index = Settings.turnKeys ? 1 : 0;
 			tk.onChange = function(i) Settings.turnKeys = i == 1;
 			rows.push(tk);
+			// la rueda da la vuelta a la barra de inventario (anadido del port)
+			sel("wheelwrap", Settings.wheelWrap, v -> Settings.wheelWrap = v);
 			var keys = new Button(s, Lang.t("options.keys"), 660);
 			keys.onActivate = function() {
 				Settings.save();
@@ -2034,8 +2036,8 @@ class GalaxyApp extends hxd.App {
 		hxd.Window.getInstance().mouseMode = on ? Relative(onMouse, true) : Absolute;
 	}
 
-	/** rueda del raton: cambia de casilla (en el original, bajar la rueda pasa a la siguiente); con la paleta abierta, de pagina;
-	    en la lista de partidas la desplaza */
+	/** rueda del raton: cambia de casilla (en el original, bajar la rueda pasa a la siguiente; con la opcion Rueda del raton en
+	    bucle da la vuelta en los extremos); con la paleta abierta, de pagina; en la lista de partidas la desplaza */
 	function onWindowEvent( e : hxd.Event ) {
 		if( e.kind != EWheel ) return;
 		// la lista de teclas (Opciones, desde el menu, la pausa o el mapa)

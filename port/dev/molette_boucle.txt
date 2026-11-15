@@ -1,0 +1,92 @@
+# Rueda del raton en bucle (Opciones > Controles, anadido del port): la rueda da la vuelta a la barra de inventario.
+# Casilla 0 = excavador, 1..10 = bloques (teclas 1-9 y 0); rueda abajo (wheel 1) = casilla siguiente.
+# Lanzar con -Extra "--lang=fr" para ver la opcion en frances (molette_options_*.png).
+# Al abrir el juego, unos ajustes sin el campo (version anterior: wheelwrap old al final de la pasada anterior) o sin settings.json
+# dejan la opcion activada: el primer print dice wheelwrap=1
+wait 3
+print wheelwrap
+planet
+wait 30
+# --- activada: del excavador hacia arriba, la ultima casilla; de la ultima hacia abajo, el excavador
+slot 0
+wheel -1
+print inv
+shot molette_excavador_arriba
+wheel 1
+print inv
+wheel 1
+print inv
+wheel -1
+wheel -1
+print inv
+slot 9
+wheel 1
+print inv
+wheel 1
+print inv
+# las teclas no cambian: 0 = la ultima casilla, 5 = la quinta, Tab = el excavador
+tap 0
+wait 3
+print inv
+tap 5
+wait 3
+print inv
+tap tab
+wait 3
+print inv
+# la pantalla de inventario (aventura): la rueda sigue cambiando la casilla de la barra, ahora en bucle
+slot 10
+invscreen open
+wait 5
+wheel 1
+print inv
+print invscreen
+close
+wait 5
+# --- desactivada: se para en los extremos, como el original
+wheelwrap 0
+print wheelwrap
+slot 0
+wheel -1
+print inv
+slot 10
+wheel 1
+print inv
+wheel -1
+print inv
+# --- la opcion en Opciones > Controles: 0 sensibilidad, 1 eje, 2 izquierda/derecha, 3 rueda en bucle, 4 teclas, 5 volver
+screen pause
+wait 5
+screen options.controls
+wait 5
+print menu
+shot molette_options_off
+button 3
+wait 3
+print wheelwrap
+shot molette_options_on
+# Volver guarda los ajustes
+button 5
+wait 3
+print wheelwrap
+close
+wait 5
+slot 10
+wheel 1
+print inv
+# --- la paleta creativa: la rueda cambia de pagina, no de casilla
+creative
+slot 3
+palette
+wait 5
+print palette
+wheel 1
+wait 3
+print palette
+print inv
+close
+wait 5
+# ajustes como los de una version anterior para la proxima pasada (la opcion vuelve a la de por defecto)
+wheelwrap old
+print wheelwrap
+quit

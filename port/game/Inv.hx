@@ -33,10 +33,15 @@ class Inv extends Inventory {
 		if( onChange != null ) onChange();
 	}
 
-	/** rueda del raton (InterfInvent.scrollInventory) */
-	public function scroll( delta : Int ) {
+	/** rueda del raton (InterfInvent.scrollInventory) y LB / RB del mando. El original se paraba en los extremos; con wrap (rueda
+	    con Settings.wheelWrap, anadido del port) da la vuelta: tras el ultimo bloque, el excavador, y antes del excavador, el ultimo */
+	public function scroll( delta : Int, wrap = false ) {
 		var index = blockIndex;
 		if( delta < 0 ) index++ else index--;
+		if( wrap ) {
+			var n = inv.t.length + 1;
+			index = (index % n + n) % n;
+		}
 		select(index);
 	}
 
