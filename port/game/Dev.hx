@@ -21,6 +21,7 @@ import Common;
  *   slot N                  elegir casilla (0 = excavador)
  *   give Bloque [n]         meter n bloques (50) en el inventario
  *   charge CPink N          dejar N cargas de ese tipo (CYellow, CBlue, CPink, CBonus; 0 = ninguna)
+ *   deathdrop on|off        opcion de la partida en curso: dejar el equipo en el suelo al morir y con Mayus+K (SaveInfo.dropOnDeath)
  *   print deathdrops        equipo dejado al morir o con Mayus+K (DeathDrops): inventario y cargas, creditos, contenedores
  *                           guardados en la partida y los que hay en el mundo
  *   drop x y z Bloque [vida] soltar un bloque quieto (vida en segundos, 180)
@@ -620,6 +621,7 @@ class Dev {
 				case "give":
 					var b = bk(a[1]);
 					g.inv.addBlocks(b, a.length > 2 ? Std.parseInt(a[2]) : 50);
+				case "deathdrop": g.info.dropOnDeath = a[1] == "on"; // deathdrop on|off: la opcion de la partida en curso
 				case "charge":
 					// charge CPink N: deja N cargas de ese tipo (0 = ninguna)
 					var ck = Type.enumIndex(Type.createEnum(ChargeKind, a[1])), n = Std.parseInt(a[2]);
@@ -1213,7 +1215,7 @@ class Dev {
 	function newGame( app : GalaxyApp, args : Array<String> ) @:privateAccess {
 		if( app.game != null || app.explorer != null ) app.toMainMenu();
 		app.show("new");
-		var biome : Ui.Selector = null, seed : Ui.TextField = null, create : Ui.Widget = null;
+		var biome : Ui.Selector = null, create : Ui.Widget = null;
 		for( w in app.current.widgets ) {
 			// el bioma solo se elige en creativo (PR 54): se pasa el modo a Creativo antes
 			if( Std.isOfType(w, Ui.Selector) && cast(w, Ui.Selector).title == Lang.t("mode") ) {
@@ -1222,10 +1224,11 @@ class Dev {
 				m.onChange(1);
 			}
 			if( Std.isOfType(w, Ui.Selector) && cast(w, Ui.Selector).title == Lang.t("biome") ) biome = cast w;
-			else if( Std.isOfType(w, Ui.TextField) && cast(w, Ui.TextField).title == Lang.t("seed") ) seed = cast w;
 			else if( w.label.text == Lang.t("create") ) create = w;
 		}
-		seed.input.text = args[0];
+		// la semilla se elige en Personalizar (askCustom): aqui se deja como si se hubiera aceptado alli
+		app.nSeed = args[0];
+		app.refreshCustom();
 		// un clic del raton en la fila del bioma a la altura x (h2d.Interactive.onClick con relX)
 		function click( x : Float ) {
 			app.current.setFocus(app.current.widgets.indexOf(biome));
@@ -1245,7 +1248,7 @@ class Dev {
 			}
 			Sys.println("newgame " + act + ": " + before + " -> " + biome.choices[biome.index]);
 		}
-		Sys.println("formulario: bioma " + biome.choices[biome.index] + " (" + biome.index + "), semilla " + seed.input.text);
+		Sys.println("formulario: bioma " + biome.choices[biome.index] + " (" + biome.index + "), semilla " + app.nSeed);
 		create.activate();
 		Sys.println("partida creada: " + app.loadInfo.name + " bioma " + app.loadInfo.biome + " semilla " + app.loadInfo.seed);
 	}

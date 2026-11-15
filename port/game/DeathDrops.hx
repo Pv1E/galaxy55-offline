@@ -26,11 +26,16 @@ typedef DeathDropInfo = {
  *   - no caduca (el original si, con un tiempo del servidor que se ha perdido): se guarda en la partida y solo desaparece al
  *     vaciarlo o con su planeta (abandonado: Licenses.abandon; cometa dejada: Comets.leave)
  *   - nada en creativo, en el tutorial, en el hangar ni en la nave nodriza; Mayus+K a bordo de la nave tampoco (morir a bordo si)
+ *   - es una opcion de la partida (SaveInfo.dropOnDeath, enabled), activada si no se cambia: sin ella, como en el modo local del
+ *     original, no se pierde nada (los contenedores que ya hubiera se quedan y se pueden recoger)
  */
 class DeathDrops {
 
 	/** el bloque que se ve */
 	public static function block() : Block return Block.get(BChest);
+
+	/** la partida deja el equipo en el suelo (opcion de la partida; las partidas de antes de la opcion, si) */
+	public static function enabled( info : SaveInfo ) : Bool return info.dropOnDeath != false;
 
 	/** clave de un planeta: la de las cantinas sin la celda (GameView.chestKey) */
 	public static function planetKey( info : SaveInfo ) : String return "p" + (info.uni != null ? info.uni.planetId : 0);
@@ -52,7 +57,7 @@ class DeathDrops {
 	 */
 	public static function leave( g : GameView, manual : Bool ) : DeathDropInfo {
 		var info = g.info;
-		if( g.creative || info.tuto != null || g.hangar != null || info.mothership == true || g.ship == null ) return null;
+		if( !enabled(info) || g.creative || info.tuto != null || g.hangar != null || info.mothership == true || g.ship == null ) return null;
 		var aboard = g.pz >= World.SHIP_Z;
 		if( manual && aboard ) return null;
 		var inv = g.inv.inv;
@@ -203,7 +208,7 @@ class DeathDrops {
 		function charges( c : Protocol.UserCharges ) return [for( x in c ) Type.enumConstructor(Type.createEnumIndex(ChargeKind, x.c)) + "x" + x.n].join(" ");
 		var l = g.info.deathDrops == null ? [] : g.info.deathDrops;
 		var live = [for( d in @:privateAccess g.drops.list ) if( d.loot != null ) d];
-		return "inv [" + items(g.inv.inv.t) + "] cargas [" + charges(g.inv.inv.charges) + "] creditos " + g.info.credits
+		return "opcion " + (enabled(g.info) ? "si" : "no") + " inv [" + items(g.inv.inv.t) + "] cargas [" + charges(g.inv.inv.charges) + "] creditos " + g.info.credits
 			+ "\n  guardados " + l.length + ": " + [for( d in l ) "#" + d.id + " " + d.key + "@" + r(d.x) + "," + r(d.y) + "," + r(d.z) + " [" + items(d.t) + "] cargas [" + charges(d.charges) + "]"].join("  ")
 			+ "\n  en el mundo " + live.length + ": " + [for( d in live ) "#" + d.loot.id + " " + d.block.k + "@" + r(d.x) + "," + r(d.y) + "," + r(d.z)].join("  ");
 	}

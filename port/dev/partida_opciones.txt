@@ -1,0 +1,178 @@
+# Opcion de la partida: dejar el equipo en el suelo al morir y con Mayus+K (DeathDrops, SaveInfo.dropOnDeath). En Nueva partida
+# la semilla y la opcion pasan a Personalizar (la semilla ya no esta en el formulario); en Continuar, Renombrar pasa a Modificar
+# (nombre y opcion). Marcada si no se cambia y en las partidas de antes de la opcion. Capturas port/out/opciones_*.png
+#   powershell -File port/dev/devrun.ps1 -Script port/dev/partida_opciones.txt -Timeout 600 -Extra "--lang=fr"
+wait 3
+devsaves 2
+menu
+waitfor menu
+# las partidas de ejemplo no tienen el campo (como las de antes): equipo_suelo=si
+print saves
+# 1) Nueva partida: Nombre, Modo, Tutorial, Personalizar (a la derecha, "equipo conservado" si se desmarca la casilla), Crear, Volver
+tap down
+tap enter
+wait 2
+print menu
+shot opciones_nueva
+# 2) Personalizar: la semilla y la casilla, marcada
+tap down
+tap down
+tap down
+tap enter
+wait 2
+print menu
+shot opciones_personalizar
+winsize 1600 600
+wait 5
+cover personalizar_ancha
+winsize 800 900
+wait 5
+cover personalizar_alta
+winsize 1280 720
+wait 5
+# otra semilla (Intro empieza a escribir, Ctrl+A y borrar, Intro deja de escribir) y la casilla desmarcada (Intro); Aceptar
+tap enter
+press ctrl
+tap a
+release ctrl
+tap backspace
+type 4242
+tap enter
+wait 2
+tap down
+tap enter
+wait 2
+print menu
+shot opciones_personalizar_desmarcada
+tap down
+tap down
+tap enter
+wait 2
+print menu
+shot opciones_nueva_personalizada
+# Cancelar (Esc) no cambia nada: se marca la casilla y se sale con Esc
+tap enter
+wait 2
+tap down
+tap enter
+tap esc
+wait 2
+print menu
+# 3) Modo -> Creativo y Crear: partida con la semilla 4242 y sin equipo en el suelo
+tap up
+tap up
+tap right
+wait 2
+print menu
+tap down
+tap down
+tap down
+tap down
+wait 2
+print menu
+tap enter
+waitfor planet
+wait 30
+print deathdrops
+# en supervivencia, morir no deja nada: el inventario se queda
+mode survival
+give BIron 5
+tp 60.5 60.5 top 0 0
+wait 5
+hurt 500
+wait 120
+vitals
+print deathdrops
+savegame
+menu
+waitfor menu
+print saves
+# 4) Continuar > Modificar (la primera fila, la que se acaba de jugar): nombre y casilla (desmarcada)
+tap enter
+wait 2
+print menu
+tap right
+wait 2
+print menu
+shot opciones_fila_modificar
+tap enter
+wait 2
+print menu
+shot opciones_modificar
+winsize 1600 600
+wait 5
+cover modificar_ancha
+winsize 800 900
+wait 5
+cover modificar_alta
+winsize 1280 720
+wait 5
+# se escribe otro nombre (sustituye al que habia), Esc deja de escribir, se marca la casilla y Aceptar
+type Base option
+tap esc
+wait 2
+tap down
+tap enter
+wait 2
+print menu
+shot opciones_modificar_marcada
+tap down
+tap down
+tap enter
+wait 3
+print menu
+print saves
+# 5) jugarla: ahora morir si deja el equipo
+tap enter
+waitfor planet
+wait 30
+print deathdrops
+mode survival
+give BIron 5
+tp 60.5 60.5 top 0 0
+wait 5
+hurt 500
+wait 120
+print deathdrops
+# 6) una partida de antes de la opcion (de ejemplo): Modificar la muestra marcada; Esc deja de escribir, otra vez Esc cierra
+menu
+waitfor menu
+tap enter
+wait 2
+tap down
+tap right
+tap enter
+wait 2
+tap esc
+tap down
+wait 2
+print menu
+tap esc
+wait 2
+print menu
+print saves
+# 7) textos en espanol y en ingles: el formulario (resumen de Personalizar) y la ventana
+setlang es
+screen new
+wait 3
+shot opciones_nueva_es
+tap down
+tap down
+tap down
+tap enter
+wait 2
+shot opciones_personalizar_es
+tap esc
+setlang en
+screen new
+wait 3
+shot opciones_nueva_en
+tap down
+tap down
+tap down
+tap enter
+wait 2
+shot opciones_personalizar_en
+tap esc
+setlang es
+quit
