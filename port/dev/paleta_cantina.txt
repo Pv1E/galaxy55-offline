@@ -1,14 +1,14 @@
 # paleta del modo creativo: la cantina (BChest, sin precio en los datos) sale ahora, en su sitio entre los bloques de Galaxy
-# 55 (casilla 107 de la primera pagina). print palette: el nombre de abajo. Captura port/out/paleta_cantina.png
+# 55 (casilla 1 de la segunda pagina). print palette: el nombre de abajo. Captura port/out/paleta_cantina.png
 wait 3
 planet
 wait 30
 creative
 setlang fr
 slot 1
-palette
+palette 1
 wait 5
-palhover 107
+palhover 1
 wait 2
 print palette
 shot paleta_cantina

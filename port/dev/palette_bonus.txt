@@ -1,10 +1,11 @@
 # paleta del modo creativo (I): los tres cristales de bonus (las gemas verdes: Petit cristal bonus, Cristal bonus y Gros cristal
 # bonus) no tienen precio en los datos y no salian. Ahora estan justo despues de los otros cristales (Etherium bleu), casillas
 # 20 a 22 de la primera pagina, una sola vez. Lanzar con -Extra "--lang=fr".
-# print paldup: 238 bloques (antes 235), 0 repetidos. print palette: nombre de abajo de cada casilla (19 Etherium bleu, 20 a 22
-# los cristales, 23 Mur de rosh). La busqueda "bonus" y "cristal" los encuentra. Se cogen con el mando (casilla 20) y con la
-# busqueda, se ponen en el suelo (print block: BBonusSmall, BBonusMedium, BBonusLarge) y la tienda, los contratos y la base de
-# datos ESCorp se abren con ellos en el inventario (no son mercancia: casilla sin venta en la tienda).
+# print paldup: 244 bloques, 0 repetidos. print palette: nombre de abajo de cada casilla (19 Etherium bleu, 20 a 22 los
+# cristales, 23 la planta de citronox: siguen los otros bloques que dan cargas, palette_charges.txt). La busqueda "bonus" y
+# "cristal" los encuentra. Se cogen con el mando (casilla 20) y con la busqueda, se ponen en el suelo (print block:
+# BBonusSmall, BBonusMedium, BBonusLarge) y la tienda, los contratos y la base de datos ESCorp se abren con ellos en el
+# inventario (no son mercancia: casilla sin venta en la tienda).
 # Capturas port/out/palette_bonus_*.png
 wait 3
 planet
