@@ -110,8 +110,9 @@ class InvScreen extends h2d.Object {
 		super.onRemove();
 	}
 
-	/** parte la ayuda entre sus partes (separadas por 3 espacios) para que ninguna linea pase de maxW (como Palette.hintLines) */
-	static function hintLines( t : h2d.Text, s : String, maxW : Float ) : Array<String> {
+	/** parte la ayuda entre sus partes (separadas por 3 espacios) para que ninguna linea pase de maxW (como Palette.hintLines;
+	    tambien la de la cantina, Chest) */
+	public static function hintLines( t : h2d.Text, s : String, maxW : Float ) : Array<String> {
 		var lines : Array<String> = [];
 		for( part in s.split("   ") ) {
 			var n = lines.length;
