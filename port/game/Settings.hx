@@ -9,6 +9,9 @@ class Settings {
 	public static var invertY = false;
 	/** true: A/D y flechas izquierda/derecha giran al personaje (como el original); false: se desplaza de lado */
 	public static var turnKeys = false;
+	/** la rueda del raton da la vuelta a la barra de inventario (tras el ultimo bloque, el excavador, y al reves); false: se para en
+	    los extremos, como el original. Los ajustes de antes no lo tienen: activada */
+	public static var wheelWrap = true;
 	/** ayuda de controles en pantalla (arriba a la izquierda) */
 	public static var showHelp = true;
 	/** sombra del bloque de la mano en la celda donde se pondra */
@@ -52,6 +55,7 @@ class Settings {
 			if( o.fullscreen != null ) fullscreen = o.fullscreen;
 			if( o.invertY != null ) invertY = o.invertY;
 			if( o.turnKeys != null ) turnKeys = o.turnKeys;
+			if( o.wheelWrap != null ) wheelWrap = o.wheelWrap;
 			if( o.showHelp != null ) showHelp = o.showHelp;
 			if( o.placePreview != null ) placePreview = o.placePreview;
 			if( o.selectBox != null ) selectBox = o.selectBox;
@@ -66,7 +70,7 @@ class Settings {
 	}
 
 	public static function save() {
-		var o = { lang : lang, mouseSens : mouseSens, fov : fov, volume : volume, fullscreen : fullscreen, invertY : invertY, turnKeys : turnKeys, showHelp : showHelp, placePreview : placePreview, selectBox : selectBox, waterWaves : waterWaves, targetName : targetName, vsync : vsync, maxFps : maxFps, keys : Keys.save() };
+		var o = { lang : lang, mouseSens : mouseSens, fov : fov, volume : volume, fullscreen : fullscreen, invertY : invertY, turnKeys : turnKeys, wheelWrap : wheelWrap, showHelp : showHelp, placePreview : placePreview, selectBox : selectBox, waterWaves : waterWaves, targetName : targetName, vsync : vsync, maxFps : maxFps, keys : Keys.save() };
 		try sys.io.File.saveContent(dir() + "/settings.json", haxe.Json.stringify(o, null, "  ")) catch( e : Dynamic ) {}
 	}
 }

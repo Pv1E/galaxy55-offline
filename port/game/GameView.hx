@@ -2032,9 +2032,9 @@ class GameView {
 		inv.display();
 	}
 
-	/** rueda del raton */
+	/** rueda del raton: da la vuelta en los extremos si la opcion Rueda del raton en bucle (Settings.wheelWrap) esta activada */
 	public function scrollInventory( delta : Int ) {
-		inv.scroll(delta);
+		inv.scroll(delta, Settings.wheelWrap);
 	}
 
 	// ---------------------------------------------------------------- camara

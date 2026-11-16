@@ -210,6 +210,8 @@ class Lang {
 		"turnkeys" => ["Izquierda y derecha", "Left and right", "Gauche et droite"],
 		"turnkeys.strafe" => ["Desplazarse de lado", "Strafe", "Se déplacer de côté"],
 		"turnkeys.turn" => ["Girar (como el original)", "Turn (like the original)", "Tourner (comme l'original)"],
+		// la rueda del raton da la vuelta a la barra de inventario (Settings.wheelWrap)
+		"wheelwrap" => ["Rueda del ratón en bucle", "Mouse wheel wraps around", "Molette en boucle"],
 		// teclas configurables (Keys, KeysScreen; anadido del port)
 		"options.keys" => ["Configurar las teclas", "Customize keys", "Personnaliser les touches"],
 		"keys.title" => ["TECLAS", "KEYS", "TOUCHES"],
