@@ -131,6 +131,8 @@ typedef SaveInfo = {
 	 * disco: al empezar a jugar pasan a esos campos (EditorKubes.attach) y SaveData.write los vuelve a sacar (EditorKubes.encode)
 	 */
 	@:optional var editorKubes : EditorKubes.EditorKubesSave;
+	/** stockage de la nave (ShipStorage, anadido del port): bloques y cargas guardados; null = aun vacio (y en las partidas de antes) */
+	@:optional var storage : ShipStorage.StorageInfo;
 }
 
 /** Guardado en disco: %APPDATA%\Galaxy55\saves\<id>.json (+ <id>.png con la miniatura). */
@@ -344,6 +346,7 @@ class SaveData {
 					survival : o.creative == true && o.survival == true ? true : null,
 					tuto : readTuto(o.tuto), shipAt : readSpot(o.shipAt), comet : readComet(o.comet), kub : readKub(o.kub),
 					inMother : readMotherPos(o.inMother), editorKubes : EditorKubes.readSave(o.editorKubes),
+					storage : ShipStorage.read(o.storage),
 			};
 		} catch( e : Dynamic ) {
 			return null;

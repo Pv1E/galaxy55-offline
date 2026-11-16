@@ -55,6 +55,9 @@ import Common;
  *                           dbl N, rdrag A B..., down|up|move N [r], nav left|right|a|x|y; casillas 0-9, out (fuera), panel
  *   slots ORDEN             casillas con arrastrar y soltar (SlotGrid: la cantina), como invscreen: click C [r], drag A B, dbl C,
  *                           rdrag A B..., down|up|move C [r], nav left|right|up|down|a|x; casilla = zona:N, out; print slots
+ *   storage ORDEN           stockage de la nave (ShipStorage): open, close, put Bloque n (al stockage), charge K n (cargas del
+ *                           stockage), invcharge K n (cargas del inventario), forget (sin stockage, como una partida de antes);
+ *                           K = yellow|blue|pink|bonus; zonas de slots: 0 bloques, 1 cargas, 2 inventario, 3 sus cargas; print storage
  *   fadelog on|off          fundido de color de pantalla imagen por imagen, tal como lo pinta el HUD (opacidad y color); off
  *                           dice cuantas veces subio (destellos) y cuantas como mucho en un segundo (WCAG 2.3.1: 3)
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
@@ -282,7 +285,8 @@ class Dev {
 		var u = UnknownBlocks.count(old);
 		Sys.println("edsave: kubes " + raw.ids.join(",") + " | terreno " + cells.join(" ") + " | inventario " + slots.join(" ")
 			+ " | nave " + (raw.shipEdits == null ? 0 : raw.shipEdits.length >> 1) + " planetas " + (raw.planets == null ? 0 : raw.planets.length)
-			+ " cantinas " + (raw.chests == null ? 0 : raw.chests.length) + " | sin ellos: desconocidos " + UnknownBlocks.total(u));
+			+ " cantinas " + (raw.chests == null ? 0 : raw.chests.length) + " stockage " + (raw.storage == null ? 0 : Std.int(raw.storage.length / 3))
+			+ " | sin ellos: desconocidos " + UnknownBlocks.total(u));
 	}
 
 	/** savecopy: copia una partida (.json y su .png) a la carpeta de datos de prueba, con la fecha de ahora (la primera de la lista) */
@@ -420,9 +424,51 @@ class Dev {
 		}
 	}
 
-	/** casillas con arrastrar y soltar abiertas (SlotGrid): la de la cantina; null = ninguna */
+	/** casillas con arrastrar y soltar abiertas (SlotGrid): las del stockage de la nave o las de la cantina; null = ninguna */
 	function openGrid( app : GalaxyApp ) : SlotGrid {
-		return app.chest != null ? app.chest.grid : null;
+		return app.storage != null ? app.storage.grid : app.chest != null ? app.chest.grid : null;
+	}
+
+	/** tipo de carga de un nombre: yellow|blue|pink|bonus o el de ChargeKind (CYellow...); -1 = ninguno */
+	static function chargeOf( n : String ) : Int {
+		var i = ["yellow", "blue", "pink", "bonus"].indexOf(n);
+		return i >= 0 ? i : Type.getEnumConstructs(ChargeKind).indexOf(n);
+	}
+
+	/** deja n cargas de tipo k en la lista (0 = la quita) */
+	static function setCharge( list : Protocol.UserCharges, k : Int, n : Int ) {
+		for( c in list.copy() ) if( c.c == k ) list.remove(c);
+		if( n > 0 ) list.push({ c : k, n : n });
+	}
+
+	/** storage ORDEN: stockage de la nave (ShipStorage), ver la cabecera */
+	function storage( app : GalaxyApp, a : Array<String> ) {
+		var info = app.curInfo();
+		switch( a[1] ) {
+		case "open":
+			app.openStorage();
+			if( app.storage == null ) Sys.println("storage: no se ha abierto");
+		case "close": app.closeStorage();
+		case "forget": if( info != null ) info.storage = null;
+		case "put":
+			var st = ShipStorage.ensure(info);
+			var n = a.length > 3 ? Std.parseInt(a[3]) : 1;
+			var got = new Inventory({ maxWeight : 64, t : st.t, charges : st.charges }).addBlocks(bk(a[2]), n);
+			if( got < n ) Sys.println("storage put: solo caben " + got);
+		case "charge", "invcharge":
+			var k = chargeOf(a[2]);
+			if( k < 0 ) {
+				Sys.println("storage: carga desconocida " + a[2]);
+				return;
+			}
+			var g = @:privateAccess app.game;
+			if( a[1] == "charge" ) setCharge(ShipStorage.ensure(info).charges, k, Std.parseInt(a[3]));
+			else if( g != null ) {
+				setCharge(g.inv.inv.charges, k, Std.parseInt(a[3]));
+				g.inv.display();
+			}
+		default: Sys.println("storage: orden desconocida " + a[1]);
+		}
 	}
 
 	/**
@@ -783,6 +829,8 @@ class Dev {
 					invScreen(app, a);
 				case "slots":
 					slots(app, a);
+				case "storage":
+					storage(app, a);
 				case "row":
 					// row X1 X2 Y Z: nivel del agua en una fila (m = mar, p = puesta, 1..4 = pasos, . = sin agua)
 					var y = Std.parseInt(a[3]), z = Std.parseInt(a[4]), out = [];
@@ -991,6 +1039,7 @@ class Dev {
 					// close: cierra la tienda, el cofre, el inventario, la paleta, el mapa de estrellas o el menu abierto (como Esc)
 					@:privateAccess {
 						app.closeChest();
+						app.closeStorage();
 						app.closeInventory();
 						app.closeShop();
 						app.closeContracts();
@@ -1627,6 +1676,13 @@ class Dev {
 			var w = g.world;
 			Sys.println("sueltos: " + [for( d in @:privateAccess g.drops.list ) d.block.k + "x" + d.n + "@" + Math.round(d.x * 100) / 100 + "," + Math.round(d.y * 100) / 100 + "," + Math.round(d.z * 100) / 100
 				+ (d.z >= World.SHIP_Z ? " local " + (Math.round((d.x - w.shipDX) * 100) / 100) + "," + (Math.round((d.y - w.shipDY) * 100) / 100) : "")].join(" "));
+		case "storage":
+			// stockage de la nave guardado en la partida, las cargas del inventario y si el boton del ordenador esta activo
+			var cs = g.inv.inv.charges.copy();
+			cs.sort(function(a, b) return a.c - b.c);
+			var btn = @:privateAccess app.computerStorage;
+			Sys.println("stockage: " + ShipStorage.devInfo(g.info.storage) + (app.storage == null ? " (cerrado)" : " (abierto)") + "  inv cargas ["
+				+ [for( c in cs ) Type.getEnumConstructs(ChargeKind)[c.c] + "x" + c.n].join(" ") + "]  boton=" + (btn == null ? "-" : "" + btn.enabled));
 		case "slots":
 			// casillas con arrastrar y soltar abiertas (SlotGrid): lo que se ve en cada zona, el cursor y la linea de informacion
 			var sg = openGrid(app);

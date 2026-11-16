@@ -529,6 +529,7 @@ class GalaxyApp extends hxd.App {
 				case "pause": buildPause();
 				case "mappause": buildMapPause();
 				case "computer": buildComputer();
+				case "mothercomputer": buildMotherComputer();
 				case "licenses": buildLicenses();
 				case "kubes": buildKubes();
 				default: null;
@@ -1059,44 +1060,49 @@ class GalaxyApp extends hxd.App {
 		// sobre el planeta principal: en los demas no sale)
 		var pilotOk = pilotOffered();
 		computerPilot = pilotOk;
-		// botones antes de Cerrar; con todos (solo al editar la nodriza) se juntan un poco para que el panel quepa
-		var n = 6 + (pilotOk ? 1 : 0) + (mother ? 1 : 0);
-		var step = n > 7 ? 48 : n > 6 ? 56 : 62;
+		// botones antes de Cerrar; con muchos se juntan para que el panel quepa, y con todos (solo al editar la nodriza) son mas bajos
+		var n = 7 + (pilotOk ? 1 : 0) + (mother ? 1 : 0);
+		var step = n > 8 ? 44 : n > 7 ? 48 : n > 6 ? 56 : 62;
+		var bh = Std.int(Math.min(54, step - 2));
 		var h = 312 + n * step;
 		var s = panelFor(640, h, Lang.t("computer.title"));
 		var x = (W - 540) * 0.5;
 		var y = (H - h) * 0.5 + 135;
-		var takeoff = new Button(s, Lang.t("computer.takeoff"));
-		var edit = new Button(s, Lang.t("computer.edit"));
-		var trade = new Button(s, Lang.t("computer.trade"));
+		var takeoff = new Button(s, Lang.t("computer.takeoff"), 460, bh);
+		var edit = new Button(s, Lang.t("computer.edit"), 460, bh);
+		// stockage de la nave (ShipStorage, anadido del port): tambien en creativo; en el tutorial, como Comerciar
+		var storageBtn = new Button(s, Lang.t("computer.storage"), 460, bh);
+		storageBtn.enabled = !Tutorial.active(game.info);
+		computerStorage = storageBtn;
+		var trade = new Button(s, Lang.t("computer.trade"), 460, bh);
 		// en el tutorial no se comercia (como los contratos); se vuelve a mirar en openComputer: el menu se guarda
 		trade.enabled = !Tutorial.active(game.info);
 		computerTrade = trade;
-		var contracts = new Button(s, Lang.t("computer.contracts"));
+		var contracts = new Button(s, Lang.t("computer.contracts"), 460, bh);
 		// en el tutorial los contratos se ven pero no se abren hasta su paso (se vuelve a mirar en openComputer: el menu se guarda)
 		contracts.enabled = Tutorial.contractsAllowed(game.info);
 		computerContracts = contracts;
 		// licencias de la ESCorp y planeta principal (Licenses, anadido del port): como los contratos
-		var licenses = new Button(s, Lang.t("computer.licenses"));
+		var licenses = new Button(s, Lang.t("computer.licenses"), 460, bh);
 		licenses.enabled = !Tutorial.active(game.info);
 		computerLicenses = licenses;
 		// Base de datos ESCorp (Kubindex, anadido del port): tambien durante el tutorial, que la presenta
-		var database = new Button(s, KubText.get("computer.database"));
+		var database = new Button(s, KubText.get("computer.database"), 460, bh);
 		database.enabled = Tutorial.databaseAllowed(game.info);
 		computerDatabase = database;
 		var close = new Button(s, Lang.t("computer.close"));
 		var rows : Array<Button> = [takeoff];
 		if( pilotOk ) {
-			var pilot = new Button(s, Lang.t("computer.pilot"));
+			var pilot = new Button(s, Lang.t("computer.pilot"), 460, bh);
 			rows.push(pilot);
 			pilot.onActivate = function() {
 				resume();
 				game.startPiloting();
 			};
 		}
-		rows = rows.concat([edit, database, trade, contracts, licenses]);
+		rows = rows.concat([edit, storageBtn, database, trade, contracts, licenses]);
 		if( mother ) {
-			var visit = new Button(s, Lang.t("computer.mothership"));
+			var visit = new Button(s, Lang.t("computer.mothership"), 460, bh);
 			rows.push(visit);
 			visit.onActivate = startMothership;
 		}
@@ -1121,10 +1127,35 @@ class GalaxyApp extends hxd.App {
 			skip.onActivate = function() askSkip(s);
 		}
 		edit.onActivate = startHangar;
+		storageBtn.onActivate = openStorage;
 		trade.onActivate = function() if( !Tutorial.active(game.info) ) openShop();
 		contracts.onActivate = openContracts;
 		licenses.onActivate = openLicenses;
 		database.onActivate = openDatabase;
+		close.onActivate = function() resume();
+		s.onBack = function() resume();
+		return s;
+	}
+
+	/** ordenador de tu nave aparcada en la nave nodriza (anadido del port): volver a la nave o abrir su stockage */
+	function buildMotherComputer() : Screen {
+		var h = 312 + 2 * 62;
+		var s = panelFor(640, h, Lang.t("computer.title"));
+		var x = (W - 540) * 0.5;
+		var y = (H - h) * 0.5 + 135;
+		var back = new Button(s, Lang.t("computer.back"));
+		var storageBtn = new Button(s, Lang.t("computer.storage"));
+		var close = new Button(s, Lang.t("computer.close"));
+		s.add(back, x, y);
+		s.add(storageBtn, x, y + 62);
+		s.add(close, x, y + 2 * 62 + 14);
+		back.onActivate = function() {
+			current = null;
+			ui.removeChildren();
+			screens = new Map();
+			backFromMothership();
+		};
+		storageBtn.onActivate = openStorage;
 		close.onActivate = function() resume();
 		s.onBack = function() resume();
 		return s;
@@ -1311,6 +1342,7 @@ class GalaxyApp extends hxd.App {
 
 	function leaveGame() {
 		closeInventory();
+		closeStorage();
 		closePalette();
 		closeShop();
 		closeContracts();
@@ -1422,6 +1454,8 @@ class GalaxyApp extends hxd.App {
 		hangarReturn.inv = Inv.copy(game.inv.inv);
 		hangarReturn.credits = m.credits;
 		hangarReturn.market = Market.copy(m.market);
+		// el stockage abierto aqui por primera vez (ShipStorage.ensure) se crea en la copia: pasa a la partida
+		if( m.storage != null ) hangarReturn.storage = m.storage;
 	}
 
 	/** la partida a la que se vuelve del hangar o de la nodriza (o que se guarda estando dentro): el tiempo jugado dentro tambien cuenta */
@@ -1669,7 +1703,16 @@ class GalaxyApp extends hxd.App {
 		game.stopSounds();
 		// en la nave nodriza: el ordenador del puesto del robot abre la tienda; el de tu nave aparcada te devuelve a ella
 		if( game != null && game.info.mothership == true ) {
-			if( game.isRobotComputer() ) openShop() else backFromMothership();
+			if( game.isRobotComputer() ) {
+				openShop();
+				return;
+			}
+			// el de tu nave aparcada: volver a ella o abrir su stockage (ShipStorage), en un menu como el del ordenador de a bordo
+			state = Paused;
+			captureMouse(false);
+			hud.visible = false; msgText.visible = false;
+			show("mothercomputer");
+			centerMouse();
 			return;
 		}
 		// Paused deja los controles al menu, pero el juego sigue (update)
@@ -1681,6 +1724,7 @@ class GalaxyApp extends hxd.App {
 		computerContracts.enabled = Tutorial.contractsAllowed(game.info);
 		computerLicenses.enabled = !Tutorial.active(game.info);
 		computerTrade.enabled = !Tutorial.active(game.info);
+		computerStorage.enabled = !Tutorial.active(game.info);
 		computerDatabase.enabled = Tutorial.databaseAllowed(game.info);
 	}
 
@@ -1709,6 +1753,8 @@ class GalaxyApp extends hxd.App {
 	var computerDatabase : Button;
 	/** boton Comerciar del ordenador de a bordo (desactivado durante el tutorial) */
 	var computerTrade : Button;
+	/** boton Stockage del ordenador de a bordo (desactivado durante el tutorial) */
+	var computerStorage : Button;
 
 	/** boton de los contratos del ordenador de a bordo (desactivado durante el tutorial) */
 	var computerContracts : Button;
@@ -2238,6 +2284,34 @@ class GalaxyApp extends hxd.App {
 		}
 	}
 
+	/** stockage de la nave (ShipStorage, anadido del port), desde el ordenador de a bordo o el de tu nave en la nodriza */
+	public var storage : ShipStorage;
+
+	public function openStorage() {
+		// en el hangar no (su ordenador no se activa: WInShip): solo a bordo y en la nave nodriza
+		if( game == null || storage != null || game.hangar != null || Tutorial.active(game.info) ) return;
+		if( current != null ) resume();
+		storage = new ShipStorage(s2d, atlas, game.inv, ShipStorage.ensure(game.info));
+		storage.onClose = closeStorage;
+		paletteOpen = true;
+		captureMouse(false);
+		// el panel tiene su ayuda: la de las teclas del juego (hud) no se ve detras
+		hud.visible = false;
+	}
+
+	public function closeStorage() {
+		if( storage == null ) return;
+		// la pila del cursor no ha salido nunca de su casilla (SlotGrid): no hay nada que devolver
+		storage.remove();
+		storage = null;
+		paletteOpen = false;
+		if( game != null && state == Playing ) {
+			hud.visible = true;
+			captureMouse(true);
+			game.releaseAction();
+		}
+	}
+
 	public function closeContracts() {
 		if( contracts == null ) return;
 		contracts.remove();
@@ -2734,6 +2808,8 @@ class GalaxyApp extends hxd.App {
 					contracts.update(dt, pad);
 				} else if( database != null ) {
 					database.update(dt, pad);
+				} else if( storage != null ) {
+					storage.update(dt, pad);
 				} else if( invScreen != null ) {
 					// Select del mando: la bascula a creativo (el boton de arriba a la derecha); Y tira, como al jugar
 					if( pad != null && pad.isPressed(pad.config.back) && game.canSwitchMode() ) switchMode();
@@ -2745,7 +2821,7 @@ class GalaxyApp extends hxd.App {
 				} else if( K.isPressed(K.ESCAPE) || Keys.pressed("palette") ) closePalette();
 				// la tienda y los contratos salen del ordenador de a bordo: tampoco paran el juego (ver abajo, state == Paused); la
 				// barra de vida se ve bajo el panel
-				if( shop != null || contracts != null || database != null || invScreen != null ) {
+				if( shop != null || contracts != null || database != null || invScreen != null || storage != null ) {
 					game.update(dt, false, pad);
 					if( game == null || state != Playing ) return;
 					updateJetHud(game);
@@ -3322,7 +3398,7 @@ class GalaxyApp extends hxd.App {
 	    el casco y el HUD se ocultan un momento) y mira si queda magenta en algun punto de los cuatro bordes de la ventana. Se
 	    usa un color y no el alfa porque el mapa de estrellas suma sus capas (blend Add): su alfa es 1 aunque deje ver el fondo. */
 	public function devCover( ?name : String ) : String {
-		var top : h2d.Object = shop != null ? shop : contracts != null ? contracts : database != null ? database : invScreen != null ? invScreen : chest != null ? chest : palette != null ? palette : explorer != null ? explorer : current != null ? ui : null;
+		var top : h2d.Object = shop != null ? shop : contracts != null ? contracts : database != null ? database : invScreen != null ? invScreen : storage != null ? storage : chest != null ? chest : palette != null ? palette : explorer != null ? explorer : current != null ? ui : null;
 		if( top == null ) return "nada abierto";
 		IconMesh.Icons.flush();
 		var hidden = [];
