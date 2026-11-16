@@ -1,9 +1,11 @@
-# contrato especial (anadido del port): 16 de tierra roja por un Conteneur ESCorp, una vez por partida y sin plazo, debajo del
-# tablero (rotulo, dorado, etiqueta Especial). Sin tierra: rechazado; con 10: "Donner 10" y queda 10 / 16; con el inventario
-# lleno el ultimo don se rechaza ("Inventaire plein", el conteneur no cabe); con sitio se entrega con el teclado (abajo, arriba
-# = la linea especial; Intro), se cobra el conteneur sin creditos y la linea queda "Livre" hasta cerrar el panel. El aviso de
-# arriba a la derecha espera a que se cierre el panel (avisos=... esperan 1) y sale al volver al juego (captura special_aviso).
-# Se guarda y se recarga: sigue cumplido y el panel ya no lo ofrece. Despues, el tutorial: el boton Contratos sigue
+# contrato especial (anadido del port): 16 de tierra roja por un Conteneur ESCorp, una vez por partida y sin plazo, el primero
+# del panel, encima del tablero (rotulo "Contrat special", dorado, etiqueta Especial; el tiempo que falta va entre el y el
+# tablero). Sin tierra: rechazado; con 10: "Donner 10" y queda 10 / 16; con el inventario lleno el ultimo don se rechaza
+# ("Inventaire plein", el conteneur no cabe); con sitio se entrega con el teclado (abajo = la linea especial, la primera; abajo
+# pasa al tablero y arriba vuelve; Intro), se cobra el conteneur sin creditos y la linea queda "Livre" hasta cerrar el panel; el
+# tablero sigue debajo (captura special_livre). El aviso de arriba a la derecha espera a que se cierre el panel (avisos=...
+# esperan 1) y sale al volver al juego (captura special_aviso). Se guarda y se recarga: sigue cumplido y el panel ya no lo
+# ofrece (el tablero vuelve arriba, captura special_recarga). Despues, el tutorial: el boton Contratos sigue
 # desactivado en el paso de la Base de datos (13), se activa al abrirla (paso 14, texto "contracts") y abrir los contratos
 # pasa al paso del ordenador (9). Con -Extra "--lang=fr". Unos 3 minutos: -Timeout 300
 wait 3
@@ -31,12 +33,16 @@ print contracts
 shot special_lleno
 deliver s
 print contracts
-# con sitio: abajo elige la linea 0, arriba pasa a la ultima (la especial); Intro entrega
+# con sitio: abajo elige la primera linea (la especial), abajo pasa a la linea 0 del tablero y arriba vuelve; Intro entrega
 contracts empty
 contracts fill s 6
 wait 2
 tap down
 wait 2
+print contracts
+tap down
+wait 2
+print contracts
 tap up
 wait 2
 print contracts

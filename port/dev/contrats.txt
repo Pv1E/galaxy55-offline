@@ -23,7 +23,9 @@ contracts
 wait 5
 print contracts
 shot contrats
-# teclado: abajo elige la linea 0, 1 y 2; Intro entrega la 2
+# teclado: abajo elige el contrato especial (el primero, encima del tablero) y luego la linea 0, 1 y 2; Intro entrega la 2
+tap down
+wait 2
 tap down
 wait 2
 tap down

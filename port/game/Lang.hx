@@ -66,7 +66,7 @@ class Lang {
 		"contracts.full" => ["Tablero lleno: termina o abandona un contrato en curso.", "Board full: finish or abandon a contract in progress.", "Tableau plein : termine ou abandonne un contrat en cours."],
 		// contrato especial (anadido del port, Contracts): rotulo encima de su linea, recompensa (%name% = el conteneur), boton con el
 		// inventario lleno y aviso al cobrarlo (arriba a la derecha, KubNotify)
-		"contracts.special" => ["Contrato especial: sin límite de tiempo, una sola vez", "Special contract: no time limit, one time only", "Contrat spécial : sans limite de temps, une seule fois"],
+		"contracts.special" => ["Contrato especial", "Special contract", "Contrat spécial"],
 		"contracts.special.tag" => ["Especial", "Special", "Spécial"],
 		"contracts.special.reward" => ["Recompensa: 1 %name%", "Reward: 1 %name%", "Récompense : 1 %name%"],
 		"contracts.invfull" => ["Inventario lleno", "Inventory full", "Inventaire plein"],
