@@ -67,6 +67,14 @@ quiere respuestas cortas y sin emojis, y que se **copie el original de Motion Tw
    - Se visita acoplándose al robot en el mapa; el atajo del ordenador "Visitar la nave nodriza (prueba)" solo sale con `editar_nodriza.bat`. Mayús+K vuelve. Nada se guarda dentro.
    - `Mothership.hx` conserva el diseño generado antiguo como reserva, si no hay `mothership.bin`.
 
+## PRs 130-139 acoplados (2026-11-16, cambio del port)
+- Acoplados en orden 130..139 sobre `main` (que ya tenia 126-129). Solo choco 139 en `GalaxyApp.hx` (buildComputer, openComputer):
+  se deja el boton Almacen de 132 y Comerciar/Contratos quedan solo en el submenu "Contactar con la ESCorp" de 139
+  (n = 6 botones + Pilotar + Nodriza, mismo alto bh). Se quitan `computerTrade` y `computerContracts`.
+- `Dev.hx`: 136 y 138 anadian cada uno la orden `charge`; se deja la de 136 (la de 138 quedaba inalcanzable, aviso WUnusedPattern).
+- Verificado: compilan SDL y DX; pasan los scripts `port/dev/` de los PRs (cantine_glisser, charge_pile_jetee, molette_boucle,
+  mort_conteneur, palette_bonus, palette_charges, partida_opciones, stockage_vaisseau, ventana_clics). 139 no trae script.
+
 ## PR de Cornor923 integrados (2026-10-21, cambio del port)
 Los PR 17-30 se fusionaron en local en `port-hashlink`, en orden (publicados en GitHub el 2026-10-22). Un solo conflicto: `Dev.hx` entre el PR 20
 (`palette`) y el 26 (`time`); se conservaron ambos comandos. Cada PR trae su guion en `port/dev/`. Compila sin errores

@@ -80,6 +80,9 @@ import Common;
  *                           exploran el planeta, identifican, recuperan o rompen un bloque como al jugar, o leen otro kubindex.json;
  *                           kub anomaly ID cruza una anomalia, kub goanomaly N lleva junto a la N del planeta, kub all lo da todo
  *                           por recuperado; print kub|kubdata|kuborder (orden de las fichas y las recetas)
+ *   escorp [upgrades]       ordenador de a bordo > Contactar con la ESCorp (anadido del port) y, con upgrades, su pantalla de
+ *                           Mejoras ESCorp (close lo cierra todo; print menu); escorp button pulsa Contactar con la ESCorp en el
+ *                           ordenador abierto; escorp bonus N deja N cargas de bonus; print upgrades
  *   savegame                guardar la partida (como F5, sin aviso)
  *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
  *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
@@ -736,15 +739,6 @@ class Dev {
 					if( n > 0 ) cs.push({ c : ck, n : n });
 					g.inv.display();
 				case "hand": g.setSlot(bk(a[1])); // hand Bloque: lo pone en la casilla elegida, como la paleta creativa
-				case "charge":
-					// charge Tipo N: pone el contador de cargas de ese tipo (CYellow, CBlue, CPink, CBonus) a N; 0 lo quita
-					var ck = Type.enumIndex(Type.createEnum(ChargeKind, a[1])), n = Std.parseInt(a[2]);
-					var t = g.inv.inv.charges, e = Lambda.find(t, c -> c.c == ck);
-					if( e == null ) {
-						if( n > 0 ) t.push({ c : ck, n : n });
-					} else if( n > 0 ) e.n = n;
-					else t.remove(e);
-					g.inv.display();
 				case "tploose":
 					// tploose Bloque: pone al jugador a un bloque (x - 1) del primer suelto de ese bloque, como si llegara andando (justo
 					// encima, la atraccion 0.2 / d^2 lo lanzaria lejos)
@@ -1146,6 +1140,25 @@ class Dev {
 					// el menu del ordenador de a bordo, como al activarlo (el guion sigue; close lo cierra)
 					@:privateAccess app.openComputer();
 					inPause = true;
+				case "escorp":
+					// escorp [upgrades]: el submenu Contactar con la ESCorp abierto desde el ordenador de a bordo, como el jugador (y su
+					// pantalla de Mejoras ESCorp); el guion sigue, close lo cierra. escorp button: pulsa el boton Contactar con la ESCorp
+					// del ordenador abierto (su sitio cambia con Pilotar la nave). escorp bonus N: deja N cargas de bonus (CBonus)
+					if( a[1] == "bonus" ) {
+						while( g.inv.useCharge(CBonus) ) {}
+						if( Std.parseInt(a[2]) > 0 ) g.inv.addCharge(CBonus, Std.parseInt(a[2]));
+					} else if( a[1] == "button" ) {
+						var b = @:privateAccess app.computerEscorp;
+						if( b != null && @:privateAccess app.current != null && @:privateAccess app.current.widgets.indexOf(b) >= 0 ) b.activate();
+						else Sys.println("escorp button: el ordenador de a bordo no esta abierto");
+					} else {
+						@:privateAccess {
+							app.openComputer();
+							app.openEscorp();
+							if( a[1] == "upgrades" ) app.openUpgrades();
+						}
+						inPause = true;
+					}
 				case "tuto":
 					// tuto new|notuto [semilla]: partida de aventura nueva, en el espacio (con o sin tutorial); tuto step N; tuto skip
 					switch( a[1] ) {
@@ -1571,6 +1584,12 @@ class Dev {
 			Sys.println("luz " + s + " huecos a oscuras " + dark);
 		case "credits":
 			Sys.println("creditos: " + g.info.credits);
+		case "upgrades":
+			// Mejoras ESCorp: cargas de bonus, cada mejora (precio, desbloqueada o se puede), las desbloqueadas y si se abren
+			Sys.println("mejoras: cargas de bonus " + EscorpUpgrades.bonus(g.inv) + " | lista " + (EscorpUpgrades.ALL.length == 0 ? "vacia"
+				: [for( u in EscorpUpgrades.ALL ) u.id + " " + u.cost + (EscorpUpgrades.has(g.info, u.id) ? " DESBLOQUEADA" : EscorpUpgrades.canBuy(g.info, g.inv, u) ? " se puede" : "")].join(", "))
+				+ " | desbloqueadas " + (g.info.upgrades == null ? "-" : g.info.upgrades.join(",")) + " | se abren " + Tutorial.upgradesAllowed(g.info)
+				+ " tuto=" + (g.info.tuto == null ? "-" : "" + g.info.tuto.step));
 		case "contracts":
 			// periodo, tablero (bloque, cantidad, recompensa, lo que llevas, entregado, abandonado, en curso u oculto por los
 			// contratos en curso), contratos en curso (bloque, dado / pedido, recompensa, periodo y linea de origen), tiempo hasta
@@ -1582,7 +1601,7 @@ class Dev {
 					+ (Contracts.isAbandoned(g.info, i) ? " ABANDONADO" : "") + (Contracts.isActive(g.info, i) ? " EN CURSO" : offered.indexOf(i) < 0 ? " OCULTO" : "");
 			}].join(" | ") + " | en curso: " + [for( ac in Contracts.active(g.info) ) ac.block + " " + ac.given + "/" + ac.n + " +" + ac.reward + " (periodo " + ac.slot + " linea " + ac.index + ")"].join(", ")
 				+ " | quedan " + Std.int(Contracts.remaining()) + " s creditos=" + g.info.credits + " panel=" + (app.contracts == null ? "no" : "si foco " + app.contracts.devFocus() + (app.contracts.paused ? " (confirmando)" : ""))
-				+ " boton=" + (@:privateAccess app.computerContracts == null ? "-" : "" + @:privateAccess app.computerContracts.enabled)
+				+ " boton=" + (@:privateAccess app.computerEscorp == null ? "-" : "" + @:privateAccess app.computerEscorp.enabled)
 				+ " | especial " + Contracts.specialGiven(g.info) + "/" + Contracts.SPECIAL_N + (Contracts.specialDone(g.info) ? " CUMPLIDO" : "")
 				+ " llevas " + Contracts.have(g.inv, Contracts.specialBlock()) + " conteneurs " + Contracts.have(g.inv, Contracts.specialReward())
 				+ " tuto=" + (g.info.tuto == null ? "-" : "" + g.info.tuto.step) + " avisos=" + app.kubNotify.devInfo());

@@ -67,9 +67,9 @@ class TutoText {
 			"Activate the on-board computer (in green) and open the \"ESCorp database\": it keeps the kubes you have identified with your laser and the ones you have collected, the planets you have explored and the recipes you have discovered.",
 			"Active l'ordinateur de bord (en vert) et ouvre la \"Base de données ESCorp\" : elle garde les kubes identifiés avec ton laser et ceux que tu as récupérés, les planètes explorées et les recettes découvertes."],
 		"contracts" => [
-			"Activa el ordenador de a bordo (en verde) y abre los \"Contratos\": son encargos de la ESCorp que te cambian bloques por créditos, y pagan mucho más que vendérselos al robot comerciante. El contrato especial no caduca y te da una %chest%.",
-			"Activate the on-board computer (in green) and open \"Contracts\": these are ESCorp missions that trade your blocks for credits, and they pay much more than selling them to the merchant robot. The special contract never expires and gives you an %chest%.",
-			"Active l'ordinateur de bord (en vert) et ouvre les \"Contrats\" : ce sont des missions de l'ESCorp qui échangent tes blocs contre des crédits, bien plus rentables que de les vendre au robot marchand. Le contrat spécial n'expire pas et te donne un %chest%."],
+			"Activa el ordenador de a bordo (en verde), abre \"Contactar con la ESCorp\" y luego \"Contratos ESCorp\": son encargos de la ESCorp que te cambian bloques por créditos, y pagan mucho más que vendérselos al robot comerciante. El contrato especial no caduca y te da una %chest%.",
+			"Activate the on-board computer (in green), open \"Contact ESCorp\", then \"ESCorp contracts\": these are ESCorp missions that trade your blocks for credits, and they pay much more than selling them to the merchant robot. The special contract never expires and gives you an %chest%.",
+			"Active l'ordinateur de bord (en vert), ouvre \"Contacter l'ESCorp\" puis \"Contrats ESCorp\" : ce sont des missions de l'ESCorp qui échangent tes blocs contre des crédits, bien plus rentables que de les vendre au robot marchand. Le contrat spécial n'expire pas et te donne un %chest%."],
 		"computer" => [
 			"Activa el ordenador de a bordo (en verde) y elige \"Modificar la nave\".",
 			"Activate the on-board computer (in green) and choose \"Modify the ship\".",

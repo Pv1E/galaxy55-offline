@@ -338,6 +338,22 @@ class Lang {
 		"licenses.notyours" => ["Ese planeta no puede ser tu planeta principal.", "That planet cannot be your main planet.", "Cette planète ne peut pas devenir ta planète principale."],
 		"license.full" => ["No te queda ninguna licencia libre.\nAbandona uno de tus planetas para liberar una.", "You have no free license left.\nAbandon one of your planets to free one.", "Tu n'as plus de licence libre.\nAbandonne une de tes planètes pour en libérer une."],
 		"license.keepmain" => ["No puedes abandonar tu planeta principal.", "You cannot abandon your main planet.", "Tu ne peux pas abandonner ta planète principale."],
+		// Contactar con la ESCorp (anadido del port): submenu del ordenador de a bordo con los contratos y las mejoras (EscorpUpgrades)
+		"computer.escorp" => ["Contactar con la ESCorp", "Contact ESCorp", "Contacter l'ESCorp"],
+		"escorp.title" => ["CONTACTAR CON LA ESCORP", "CONTACT ESCORP", "CONTACTER L'ESCORP"],
+		"escorp.contracts" => ["Contratos ESCorp", "ESCorp contracts", "Contrats ESCorp"],
+		"escorp.upgrades" => ["Mejoras ESCorp", "ESCorp upgrades", "Améliorations ESCorp"],
+		"upgrades.title" => ["MEJORAS ESCORP", "ESCORP UPGRADES", "AMÉLIORATIONS ESCORP"],
+		"upgrades.info" => ["Mejoras para el juego, el personaje o el equipo, a cambio de cargas de bonus.", "Upgrades for the game, your character or your equipment, in exchange for bonus charges.", "Des améliorations pour le jeu, le personnage ou l'équipement, en échange de charges bonus."],
+		// %n% = cargas de bonus (CBonus) del inventario
+		"upgrades.balance" => ["Tus cargas de bonus: %n%", "Your bonus charges: %n%", "Tes charges bonus : %n%"],
+		"upgrades.none" => ["No hay ninguna mejora ESCorp disponible.", "No ESCorp upgrades available.", "Aucune amélioration ESCorp disponible."],
+		// boton de una mejora: su nombre (Lang "upgrade.<id>"), seguido del precio o de upgrades.bought
+		"upgrades.cost" => ["%n% cargas de bonus", "%n% bonus charges", "%n% charges bonus"],
+		"upgrades.bought" => ["Desbloqueada", "Unlocked", "Débloquée"],
+		"upgrades.ask" => ["¿Desbloquear %name%?", "Unlock %name%?", "Débloquer %name% ?"],
+		"upgrades.ask.cost" => ["Cuesta %n% cargas de bonus.", "It costs %n% bonus charges.", "Coût : %n% charges bonus."],
+		"upgrades.missing" => ["Te faltan cargas de bonus: la mejora cuesta %n%.", "Not enough bonus charges: the upgrade costs %n%.", "Pas assez de charges bonus : l'amélioration en coûte %n%."],
 		// cometas (Comets, añadido del port). %t% = 2:15
 		"exp.comet" => ["Cometa", "Comet", "Comète"],
 		"exp.comet.scan" => ["Escanear", "Scan", "Scanner cette comète"],

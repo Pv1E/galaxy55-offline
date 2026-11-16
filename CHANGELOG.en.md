@@ -2,6 +2,14 @@
 
 [Español: `CHANGELOG.md`](CHANGELOG.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
+## Unreleased
+- PRs 130-139 merged: special contract listed first (130), ESCorp Container drag and drop (131), ship storage on the board
+  computer (132), dying leaves your gear in a container plus an option to turn it off (133), clicks outside a dialog no longer
+  reach the menu below (134), green bonus crystals and other charge blocks in the creative palette (135, 136), mouse wheel wraps
+  around (137), a thrown stack of charge blocks can be picked up (138) and a "Contact ESCorp" menu with trade, contracts and
+  upgrades (139). All port additions or changes.
+- Board computer (port change, merging 132 and 139): Storage keeps its own button; Trade and Contracts move into the ESCorp submenu.
+
 ## v0.8.1 — pre-release
 - **Inventory screen** (port addition, PR 125): in adventure, I (or R3) opens a panel with the 10 slots of the bar: drag, split
   stacks, throw outside the panel, Minecraft style. In creative, I still opens the palette.

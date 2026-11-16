@@ -105,6 +105,8 @@ typedef SaveInfo = {
 	@:optional var contracts : Contracts.ContractsInfo;
 	/** contrato especial de la ESCorp (Contracts, anadido del port); null = sin empezar (y en las partidas antiguas) */
 	@:optional var special : Contracts.SpecialInfo;
+	/** mejoras de la ESCorp desbloqueadas (EscorpUpgrades, anadido del port): sus id; null = ninguna (y en las partidas de antes) */
+	@:optional var upgrades : Array<String>;
 	/** nave editada en el hangar (zlib en base64); null = la de serie */
 	@:optional var shipData : String;
 	/** solo mientras se esta en el hangar (no se guarda) */
@@ -252,6 +254,15 @@ class SaveData {
 		}
 	}
 
+	static function readUpgrades( o : Dynamic ) : Array<String> {
+		try {
+			if( o == null ) return null;
+			return [for( v in (o : Array<Dynamic>) ) Std.string(v)];
+		} catch( e : Dynamic ) {
+			return null;
+		}
+	}
+
 	static function readChests( o : Dynamic ) : Array<{ key : String, t : Protocol.BlockInventory }> {
 		try {
 			if( o == null ) return [];
@@ -347,6 +358,7 @@ class SaveData {
 				px : o.px != null ? o.px : -1, py : o.py != null ? o.py : -1, pz : o.pz != null ? o.pz : -1,
 				yaw : o.yaw != null ? o.yaw : 0, pitch : o.pitch != null ? o.pitch : 0, fly : o.fly == true, life : o.life != null ? o.life : 100,
 					creative : o.creative == true, tutorial : o.tutorial == null ? null : o.tutorial == true, inv : readInv(o.inv), uni : uni, credits : o.credits != null ? Std.int(o.credits) : Market.START_CREDITS, market : readMarket(o.market), contracts : readContracts(o.contracts), special : readSpecial(o.special), chests : readChests(o.chests), shipData : o.shipData,
+					upgrades : readUpgrades(o.upgrades),
 					shipEdits : o.shipEdits != null ? [for( v in (o.shipEdits : Array<Dynamic>) ) Std.int(v)] : [], edits : o.edits != null ? [for( v in (o.edits : Array<Dynamic>) ) Std.int(v)] : [],
 					deathDrops : DeathDrops.read(o.deathDrops), dropOnDeath : o.dropOnDeath != false,
 					survival : o.creative == true && o.survival == true ? true : null,

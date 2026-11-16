@@ -28,6 +28,18 @@ wait 5
 cover contratos_ancha
 close
 wait 5
+# Contactar con la ESCorp y su pantalla de Mejoras ESCorp (menus del ordenador de a bordo)
+escorp
+wait 5
+cover escorp_ancha
+close
+wait 5
+escorp upgrades
+wait 5
+cover mejoras_ancha
+shot fullwindow_mejoras_ancha
+close
+wait 5
 activate 64 64 120
 wait 5
 shot fullwindow_cofre_ancha
@@ -86,6 +98,18 @@ wait 5
 contracts
 wait 5
 cover contratos_alta
+close
+wait 5
+# Contactar con la ESCorp y su pantalla de Mejoras ESCorp (menus del ordenador de a bordo)
+escorp
+wait 5
+cover escorp_alta
+close
+wait 5
+escorp upgrades
+wait 5
+cover mejoras_alta
+shot fullwindow_mejoras_alta
 close
 wait 5
 activate 64 64 120

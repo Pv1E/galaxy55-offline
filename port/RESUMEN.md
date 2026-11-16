@@ -352,6 +352,10 @@ Crear un **zip portátil** (no instalador todavía) y publicarlo como **pre-rele
 6. (HECHO el 2026-10-14) Fusionar `port-hashlink` en `main` ("hacerlo oficial"); la rama `port-hashlink` se borró el 2026-11-12.
 
 
+## PRs 130-139 (2026-11-16, cambio del port)
+Acoplados en `main`. El ordenador de a bordo queda: Despegar, Modificar, Almacen (132), Contactar con la ESCorp (139: Comerciar,
+contratos y mejoras), Base de datos, Licencias, Cerrar. Detalle del conflicto en `port/TRASPASO.md`.
+
 ## Cómo retomar
     . ..\tools-portable\env.ps1         (Haxe 4.3.7, HashLink 1.16, Neko)
     haxe port\game.hxml                 compila el juego

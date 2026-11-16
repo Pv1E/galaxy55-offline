@@ -8,7 +8,8 @@ import Ui;
  */
 class TutoGuide {
 
-	static inline var GREEN = 0x80FF00;
+	/** tambien el del boton que toca en los menus del ordenador de a bordo (GalaxyApp.markTutoButton) */
+	public static inline var GREEN = 0x80FF00;
 	static inline var PANEL_W = 700;
 
 	var root : h2d.Object;

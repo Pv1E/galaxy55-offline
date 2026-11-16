@@ -2,6 +2,15 @@
 
 [Español : `CHANGELOG.md`](CHANGELOG.md) · [English: `CHANGELOG.en.md`](CHANGELOG.en.md)
 
+## Non publié
+- PR 130-139 intégrées : contrat spécial en premier (130), Conteneur ESCorp en glisser-déposer (131), stockage du vaisseau sur
+  l'ordinateur de bord (132), à la mort l'équipement reste dans un conteneur, avec une option pour l'enlever (133), les clics hors
+  d'une fenêtre n'atteignent plus le menu dessous (134), cristaux verts de bonus et autres blocs de charge dans la palette créative
+  (135, 136), molette en boucle (137), une pile jetée de blocs de charge se ramasse (138) et menu « Contacter l'ESCorp » avec
+  commerce, contrats et améliorations (139). Tout est ajout ou changement du port.
+- Ordinateur de bord (changement du port, fusion de 132 et 139) : Stockage garde son bouton ; Commerce et Contrats passent dans le
+  sous-menu ESCorp.
+
 ## v0.8.1 — pre-release
 - **Écran d'inventaire** (ajout du port, PR 125) : en aventure, I (ou R3) ouvre un panneau avec les 10 cases de la barre :
   glisser, partager les piles, jeter hors du panneau, comme dans Minecraft. En créatif, I ouvre toujours la palette.

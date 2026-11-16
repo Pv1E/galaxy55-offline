@@ -12,7 +12,8 @@ typedef TutoTarget = { x : Int, y : Int, z : Int };
  * BAUXITE  minar 2 bauxitas                        RETURN   volver a la nave por el rayo
  * ALU      bauxita -> aluminio en el sintetizador  PLATES   aluminio -> blindaje
  * DATABASE ordenador de a bordo, Base de datos ESCorp (Kubindex: lo que ya has localizado y recuperado)
- * CONTRACTS ordenador de a bordo, Contratos: basta con abrirlos (encargos de la ESCorp, y el contrato especial)
+ * CONTRACTS ordenador de a bordo, Contactar con la ESCorp, Contratos ESCorp: basta con abrirlos (encargos de la ESCorp, y el
+ *          contrato especial)
  * COMPUTER ordenador de a bordo, Modificar la nave HANGAR   tapar los agujeros (solo ahi y solo blindaje)
  * LEAVE    salir del hangar con la nave estanca    DONE     la ESCorp envia cargas y creditos, el planeta pasa a ser el
  *                                                           principal (Licenses) y se acaba
@@ -127,13 +128,17 @@ class Tutorial {
 	public static function databaseOpened( info : SaveInfo ) if( active(info) && info.tuto.step == DATABASE ) info.tuto.step = CONTRACTS;
 
 	/**
-	 * Los Contratos se abren desde su paso (CONTRACTS, tras la Base de datos ESCorp) hasta el final: COMPUTER y los numeros de
-	 * despues menos DATABASE. Antes, el boton sale desactivado. No hace falta cumplir ninguno: el paso solo los presenta.
+	 * Los Contratos ESCorp, y el boton Contactar con la ESCorp que lleva a ellos, se abren desde su paso (CONTRACTS, tras la Base
+	 * de datos ESCorp) hasta el final: COMPUTER y los numeros de despues menos DATABASE. Antes, los botones salen desactivados.
+	 * No hace falta cumplir ninguno: el paso solo los presenta.
 	 */
 	public static function contractsAllowed( info : SaveInfo ) return !active(info) || (info.tuto.step >= COMPUTER && info.tuto.step != DATABASE);
 
-	/** se abren los Contratos: el paso CONTRACTS esta hecho */
+	/** se abren los Contratos ESCorp: el paso CONTRACTS esta hecho (abrir solo Contactar con la ESCorp no basta) */
 	public static function contractsOpened( info : SaveInfo ) if( active(info) && info.tuto.step == CONTRACTS ) info.tuto.step = COMPUTER;
+
+	/** las Mejoras ESCorp (EscorpUpgrades) no se abren durante el tutorial: el boton se ve, desactivado */
+	public static function upgradesAllowed( info : SaveInfo ) return !active(info);
 
 	/** al salir del hangar con la nave guardada (valida y cambiada): se acaba en la siguiente actualizacion */
 	public static function repaired( info : SaveInfo ) if( active(info) ) info.tuto.step = DONE;

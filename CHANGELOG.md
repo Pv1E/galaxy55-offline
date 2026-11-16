@@ -2,6 +2,15 @@
 
 [English: `CHANGELOG.en.md`](CHANGELOG.en.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
+## Sin publicar
+- PRs 130-139 acoplados: contrato especial el primero en Contratos (130), Contenedor ESCorp con arrastrar y soltar (131),
+  almacén de la nave en el ordenador de a bordo (132), al morir lo que llevas queda en un contenedor y opción para quitarlo (133),
+  los clics fuera de una ventana ya no llegan al menú de debajo (134), cristales verdes de bonus y demás bloques de carga en la
+  paleta creativa (135, 136), rueda del ratón en bucle (137), la pila tirada de bloques de carga se puede recoger (138) y menú
+  "Contactar con la ESCorp" con Comerciar, contratos y mejoras (139). Todo añadido o cambio del port.
+- Ordenador de a bordo (cambio del port, al acoplar 132 y 139): Almacén queda como botón propio y Comerciar y Contratos pasan al
+  submenú de la ESCorp.
+
 ## v0.8.1 — pre-release
 - **Pantalla de inventario** (añadido del port, PR 125): en aventura, I (o R3) abre un panel con las 10 casillas de la barra:
   arrastrar, partir montones, tirar fuera del panel, como en Minecraft. En creativo, I sigue abriendo la paleta.
