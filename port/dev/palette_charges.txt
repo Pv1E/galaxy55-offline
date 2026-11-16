@@ -1,0 +1,249 @@
+# paleta del modo creativo (I): los bloques que dan cargas y no tienen precio en los datos no salian. Ahora van con los cristales
+# de bonus, justo despues de los otros cristales: casillas 23 a 28 de la primera pagina, una sola vez (Plante a citronox,
+# Stalactite de citronox, Tortillant fleuri, Plante a etherium, Meteorite d'etherium y Charge rose, la carga misma). Lanzar con
+# -Extra "--lang=fr".
+# print paldup: 244 bloques, 0 repetidos. print palette: nombre de abajo de las casillas 19 a 29 (29 Mur de rosh). La busqueda
+# los encuentra ("citronox", "etherium", "charge", "tortillant"). Se cogen con la busqueda en las casillas 1 a 6 y se ponen:
+# las plantas, el cactus florido, el meteorito y la carga rosa en el suelo; la estalactita (se sujeta arriba) debajo de un bloque
+# en el aire y, ademas, en el suelo (print block). print around: 7 bloques mas, y el del techo. La tienda, los contratos y la
+# base de datos ESCorp se abren con ellos en el inventario (no son mercancia). Capturas port/out/palette_charges_*.png
+wait 3
+planet
+wait 30
+creative
+slot 1
+palette
+wait 5
+print paldup
+# Etherium bleu, los tres cristales de bonus, los seis nuevos y Mur de rosh
+palhover 19
+print palette
+palhover 19 out
+palhover 23
+print palette
+palhover 23 out
+palhover 24
+print palette
+palhover 24 out
+palhover 25
+print palette
+palhover 25 out
+palhover 26
+print palette
+palhover 26 out
+palhover 27
+print palette
+palhover 27 out
+palhover 29
+print palette
+palhover 29 out
+palhover 28
+wait 2
+print palette
+shot palette_charges
+palhover 28 out
+# busqueda
+tap tab
+wait 2
+type citronox
+wait 2
+print palnames
+shot palette_charges_citronox
+tap esc
+wait 2
+tap tab
+wait 2
+type etherium
+wait 2
+print palnames
+tap esc
+wait 2
+tap tab
+wait 2
+type charge
+wait 2
+print palnames
+tap esc
+wait 2
+tap tab
+wait 2
+type tortillant
+wait 2
+print palnames
+tap esc
+wait 2
+close
+wait 3
+# cada uno en su casilla (Intro deja la busqueda y marca el primero, Intro otra vez lo pone)
+slot 1
+palette
+wait 5
+tap tab
+wait 2
+type plante citronox
+wait 2
+tap enter
+wait 2
+tap enter
+wait 2
+close
+wait 3
+slot 2
+palette
+wait 5
+tap tab
+wait 2
+type stalactite
+wait 2
+tap enter
+wait 2
+tap enter
+wait 2
+close
+wait 3
+slot 3
+palette
+wait 5
+tap tab
+wait 2
+type tortillant fleuri
+wait 2
+tap enter
+wait 2
+tap enter
+wait 2
+close
+wait 3
+slot 4
+palette
+wait 5
+tap tab
+wait 2
+type plante etherium
+wait 2
+tap enter
+wait 2
+tap enter
+wait 2
+close
+wait 3
+slot 5
+palette
+wait 5
+tap tab
+wait 2
+type meteorite
+wait 2
+tap enter
+wait 2
+tap enter
+wait 2
+close
+wait 3
+slot 6
+palette
+wait 5
+tap tab
+wait 2
+type charge rose
+wait 2
+tap enter
+wait 2
+tap enter
+wait 2
+close
+wait 3
+print inv
+# se ponen alrededor del jugador, cada uno en una direccion (una pulsacion corta: con la tecla apretada mas tiempo se repite)
+filla 54 54 76 76 57 110 none
+filla 54 54 76 76 56 56 BRock
+set 58 62 59 BRock
+wait 20
+tp 60.5 60.5 57.01 0 0
+waitfor ground
+wait 10
+print around 60 60 58 3
+slot 1
+lookat 62.5 60.5 56.5
+wait 2
+key place
+wait 2
+unkey
+wait 5
+# la estalactita, debajo del bloque en el aire
+slot 2
+lookat 58.5 62.5 59
+wait 2
+key place
+wait 2
+unkey
+wait 5
+slot 3
+lookat 60.5 62.5 56.5
+wait 2
+key place
+wait 2
+unkey
+wait 5
+slot 4
+lookat 58.5 60.5 56.5
+wait 2
+key place
+wait 2
+unkey
+wait 5
+slot 5
+lookat 60.5 58.5 56.5
+wait 2
+key place
+wait 2
+unkey
+wait 5
+slot 6
+lookat 62.5 62.5 56.5
+wait 2
+key place
+wait 2
+unkey
+wait 5
+# la estalactita en el suelo
+slot 2
+lookat 62.5 58.5 56.5
+wait 2
+key place
+wait 2
+unkey
+wait 30
+print block 62 60 57
+print block 58 62 58
+print block 60 62 57
+print block 58 60 57
+print block 60 58 57
+print block 62 62 57
+print block 62 58 57
+print around 60 60 58 3
+print inv
+# de lejos, con el excavador en la mano
+slot 0
+tp 66.5 66.5 57.01
+waitfor ground
+lookat 60.5 60.5 57.5
+wait 10
+shot palette_charges_monde
+# tienda, contratos y base de datos ESCorp con ellos en el inventario
+shop
+wait 5
+shot palette_charges_tienda
+shopclose
+wait 3
+contracts
+wait 5
+print contracts
+contracts close
+wait 3
+kub
+wait 5
+print kub
+kub close
+wait 3
+quit

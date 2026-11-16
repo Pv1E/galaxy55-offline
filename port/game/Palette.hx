@@ -59,10 +59,12 @@ class Palette extends h2d.Object {
 			if( b.index > 0 && (b.basePrice != null || b.k == BChest) && b.charge == null && b.type != BTInvisible )
 				(KubeData.isKube(b.k) ? kubes : all).push(b);
 		for( b in kubes ) all.push(b);
-		// los tres cristales de bonus (las gemas verdes: 1, 5 y 25 cargas de bonus al romperlos) no tienen precio en los datos;
-		// en creativo se pueden poner, justo despues de los otros cristales (citronox y etherium)
+		// lo que da cargas al romperlo y no tiene precio en los datos: los tres cristales de bonus (las gemas verdes: 1, 5 y 25
+		// cargas de bonus), lo que da citronox (planta, estalactita, cactus florido) o etherium (planta, meteorito) y la carga
+		// rosa (la carga misma, que en el mundo es un bloque: como al copiarla con L3). En creativo se pueden poner, justo despues
+		// de los otros cristales (citronox y etherium)
 		var at = all.indexOf(Block.get(BBlueCrystalDense)) + 1;
-		for( k in [BBonusSmall, BBonusMedium, BBonusLarge] )
+		for( k in [BBonusSmall, BBonusMedium, BBonusLarge, BYellowPlant, BYellowCeil, BMarsCactusFlower, BBluePlant, BMarsBlueRock, BPinkCharge] )
 			if( all.indexOf(Block.get(k)) < 0 ) all.insert(at++, Block.get(k));
 		// el agua de cada planeta no se vendia; en creativo se puede poner (fluye como en Minecraft). El agua acida si tiene precio en
 		// los datos y ya esta en la lista: no se repite
