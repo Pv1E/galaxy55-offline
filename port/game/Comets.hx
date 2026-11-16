@@ -105,6 +105,7 @@ class Comets {
 		// sus cambios y sus cantinas se tiran; la nave sigue en el sistema
 		var key = "p" + idOf(c.sys) + ":";
 		if( info.chests != null ) info.chests = info.chests.filter(function(ch) return !StringTools.startsWith(ch.key, key));
+		DeathDrops.forget(info, "p" + idOf(c.sys));
 		info.edits = [];
 		info.shipAt = null;
 		uni.pos = [1, c.sys];

@@ -102,6 +102,7 @@ class Licenses {
 			info.shipAt = null;
 		}
 		if( info.chests != null ) info.chests = info.chests.filter(function(c) return !StringTools.startsWith(c.key, "p" + p.id + ":"));
+		DeathDrops.forget(info, "p" + p.id);
 		p.status = PAbandonned;
 		if( Lambda.exists(s.planets, function(q) return !isAbandoned(uni, q.id)) ) return false;
 		uni.gone.push(s.id);

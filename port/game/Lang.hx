@@ -19,8 +19,14 @@ class Lang {
 		// nombre por defecto de una partida nueva (%n% = partidas + 1, o el siguiente que este libre)
 		"newgame.name" => ["Partida %n%", "Game %n%", "Partie %n%"],
 		"tutorial" => ["Tutorial", "Tutorial", "Tutoriel"],
-		"seed" => ["Semilla", "Seed", "Graine"],
+		// "Seed" tambien en espanol y en frances (a peticion de los jugadores)
+		"seed" => ["Seed", "Seed", "Seed"],
 		"seed.random" => ["Aleatoria", "Random", "Aléatoire"],
+		// Nueva partida > Personalizar y Continuar > Modificar (anadido del port)
+		"custom" => ["Personalizar", "Customize", "Personnaliser"],
+		"custom.title" => ["PERSONALIZAR PARTIDA", "CUSTOMIZE GAME", "PERSONNALISER LA PARTIE"],
+		"custom.kept" => ["equipo conservado", "equipment kept", "équipement gardé"],
+		"deathdrop.option" => ["Equipo al suelo", "Drop equipment", "Équipement à terre"],
 		"biome" => ["Bioma", "Biome", "Biome"],
 		"size" => ["Tamaño", "Size", "Taille"],
 		"size.small" => ["Pequeño (128)", "Small (128)", "Petit (128)"],
@@ -175,8 +181,8 @@ class Lang {
 		"save.versions" => ["Versiones %c% a %v%", "Versions %c% to %v%", "Versions %c% à %v%"],
 		"nosaves" => ["No hay partidas guardadas", "No saved games", "Aucune partie sauvegardée"],
 		"play" => ["Jugar", "Play", "Jouer"],
-		"rename" => ["Renombrar", "Rename", "Renommer"],
-		"rename.title" => ["RENOMBRAR PARTIDA", "RENAME GAME", "RENOMMER LA PARTIE"],
+		"edit" => ["Modificar", "Edit", "Modifier"],
+		"edit.title" => ["MODIFICAR PARTIDA", "EDIT GAME", "MODIFIER LA PARTIE"],
 		"delete" => ["Borrar", "Delete", "Supprimer"],
 		"delete.ask" => ["¿Borrar esta partida?", "Delete this save?", "Supprimer cette partie ?"],
 		// partida con bloques que esta version no conoce (UnknownBlocks, GalaxyApp.playSave): %n% = cuantos, %where% = donde
@@ -336,6 +342,8 @@ class Lang {
 		"exp.comet.info" => ["Amarre limitado: %t%", "Docking limited: %t%", "Amarrage limité : %t%"],
 		"exp.comet.gone" => ["El cometa se ha alejado.", "The comet has drifted away.", "La comète s'est éloignée."],
 		"comet.timer" => ["Cometa: %t%", "Comet: %t%", "Comète : %t%"],
+		// el equipo se queda en el sitio al morir o con Mayus+K (DeathDrops)
+		"deathdrop.left" => ["El equipo ha caído al suelo.", "The equipment fell to the ground.", "L'équipement est tombé à terre."],
 		"comet.over" => ["Se acabó el tiempo: el cometa se aleja, vuelta de emergencia automática a la nave.", "Time's up: the comet is drifting away, automatic emergency return to the ship.", "Temps écoulé : la comète s'éloigne, rapatriement d'urgence automatique au vaisseau."],
 		"comet.beamoff" => ["El cometa se aleja: el teletransportador no funciona", "The comet is drifting away: the teleporter does not work", "La comète s'éloigne : le téléporteur ne fonctionne pas"],
 		"abandon.ask" => ["¿Abandonar %name%?", "Abandon %name%?", "Abandonner %name% ?"],

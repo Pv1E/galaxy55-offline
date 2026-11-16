@@ -18,6 +18,8 @@ typedef EditorKubesSave = {
 	@:optional var planets : Array<{ id : Int, edits : Array<Int> }>;
 	/** inventario: [casilla, n, cantidad, ...] */
 	@:optional var inv : Array<Int>;
+	/** equipo dejado al morir (id de SaveInfo.deathDrops): [casilla, n, cantidad, ...] */
+	@:optional var drops : Array<{ id : Int, t : Array<Int> }>;
 	/** cantinas (clave de SaveInfo.chests): [casilla, n, cantidad, ...] */
 	@:optional var chests : Array<{ key : String, t : Array<Int> }>;
 	/** stockage de la nave (SaveInfo.storage): [casilla, n, cantidad, ...] */
@@ -409,6 +411,7 @@ class EditorKubes {
 		edits(info.edits);
 		edits(info.shipEdits);
 		if( info.uni != null && info.uni.planets != null ) for( p in info.uni.planets ) edits(p.edits);
+		if( info.deathDrops != null ) for( d in info.deathDrops ) slotsOf(d.t);
 		if( info.inv != null ) slotsOf(info.inv.t);
 		if( info.chests != null ) for( c in info.chests ) slotsOf(c.t);
 		if( info.storage != null ) slotsOf(info.storage.t);
@@ -465,6 +468,10 @@ class EditorKubes {
 			for( rp in raw.planets )
 				for( p in info.uni.planets )
 					if( p.id == rp.id ) p.edits = edits(p.edits, rp.edits);
+		if( raw.drops != null && info.deathDrops != null )
+			for( rd in raw.drops )
+				for( d in info.deathDrops )
+					if( d.id == rd.id ) slotsOf(d.t, rd.t);
 		if( info.inv != null ) slotsOf(info.inv.t, raw.inv);
 		if( raw.chests != null && info.chests != null )
 			for( rc in raw.chests )
@@ -541,6 +548,15 @@ class EditorKubes {
 				c;
 			}];
 		}
+		if( info.deathDrops != null )
+			out.deathDrops = [for( d in info.deathDrops ) {
+				var c : DeathDrops.DeathDropInfo = Reflect.copy(d);
+				c.t = slotsOf(d.t, function(m) {
+					if( raw.drops == null ) raw.drops = [];
+					raw.drops.push({ id : d.id, t : m });
+				});
+				c;
+			}];
 		if( info.inv != null ) {
 			out.inv = Inv.copy(info.inv);
 			out.inv.t = slotsOf(info.inv.t, function(m) raw.inv = m);
@@ -565,6 +581,7 @@ class EditorKubes {
 			r.edits = ints(o.edits);
 			r.shipEdits = ints(o.shipEdits);
 			r.inv = ints(o.inv);
+			if( o.drops != null ) r.drops = [for( d in (o.drops : Array<Dynamic>) ) { id : Std.int(d.id), t : ints(d.t) }];
 			if( o.planets != null ) r.planets = [for( p in (o.planets : Array<Dynamic>) ) { id : Std.int(p.id), edits : ints(p.edits) }];
 			if( o.chests != null ) r.chests = [for( c in (o.chests : Array<Dynamic>) ) { key : Std.string(c.key), t : ints(c.t) }];
 			r.storage = ints(o.storage);

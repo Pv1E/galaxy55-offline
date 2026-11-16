@@ -11,11 +11,11 @@ enum State {
 }
 
 /**
- * Fila de la lista de partidas guardadas: miniatura, nombre y datos. Con el foco muestra sus acciones (jugar, renombrar, borrar):
+ * Fila de la lista de partidas guardadas: miniatura, nombre y datos. Con el foco muestra sus acciones (jugar, modificar, borrar):
  * izquierda/derecha eligen una e Intro (o A) la hace; un clic en un boton hace lo suyo y uno en el resto de la fila juega.
  */
 class SaveRow extends Widget {
-	public static var ACTIONS = ["play", "rename", "delete"];
+	public static var ACTIONS = ["play", "edit", "delete"];
 	public static inline var W = 1000;
 	static inline var BW = 132;
 	static inline var BH = 36;
@@ -306,7 +306,10 @@ class GalaxyApp extends hxd.App {
 
 	// formulario de nueva partida
 	var nName : TextField;
-	var nSeed : TextField;
+	/** Personalizar (anadido del port): la semilla y la opcion del equipo en el suelo; a la derecha, si se desmarca (refreshCustom) */
+	var nCustom : InfoButton;
+	var nSeed : String;
+	var nDrop = true;
 	var nBiome : Selector;
 	var nSize : Selector;
 	var nMode : Selector;
@@ -607,8 +610,9 @@ class GalaxyApp extends hxd.App {
 		return name(n);
 	}
 
-	/** Nueva partida: nombre, semilla y modo; en creativo tambien bioma y tamano, en aventura si se juega el tutorial.
-	    Las filas del otro modo se ocultan y se desactivan (el foco las salta) y el panel cambia de alto. */
+	/** Nueva partida: nombre y modo; en creativo tambien bioma y tamano, en aventura si se juega el tutorial; Personalizar abre
+	    la semilla y las opciones de la partida (askCustom). Las filas del otro modo se ocultan y se desactivan (el foco las salta) y
+	    el panel cambia de alto. */
 	function buildNew() : Screen {
 		var s = new Screen(ui);
 		var bg = new h2d.Graphics(s);
@@ -616,9 +620,12 @@ class GalaxyApp extends hxd.App {
 		var x = (W - 560) * 0.5;
 		var defName = defaultGameName();
 		nName = new TextField(s, Lang.t("name"), defName, 560, 54, 340);
-		nSeed = new TextField(s, Lang.t("seed"), "" + randomSeed(), 560, 54, 340);
-		nSeed.numeric = true;
-		nSeed.maxLen = 9;
+		// la semilla ya no esta siempre a la vista: sale al azar y se cambia en Personalizar, con la opcion del equipo
+		nSeed = "" + randomSeed();
+		nDrop = true;
+		nCustom = new InfoButton(s, Lang.t("custom"), 560);
+		nCustom.onActivate = function() askCustom(s);
+		refreshCustom();
 		nMode = new Selector(s, Lang.t("mode"), [Lang.t("mode.adventure"), Lang.t("mode.creative")]);
 		var names = [Lang.t("biome.random")];
 		for( b in BIOMES.concat(EXTRA_BIOMES) ) names.push(Lang.t("biome." + b));
@@ -628,13 +635,13 @@ class GalaxyApp extends hxd.App {
 		nTutorial = new Selector(s, Lang.t("tutorial"), [Lang.t("yes"), Lang.t("no")]);
 		var create = new Button(s, Lang.t("create"), 560);
 		var back = new Button(s, Lang.t("back"), 560);
-		var all : Array<Widget> = [nName, nSeed, nMode, nBiome, nSize, nTutorial, create, back];
+		var all : Array<Widget> = [nName, nMode, nBiome, nSize, nTutorial, nCustom, create, back];
 		for( w in all ) s.add(w, x, 0);
 		var layout = function() {
 			var creative = nMode.index == 1;
 			for( w in [nBiome, nSize] ) w.visible = w.enabled = creative;
 			nTutorial.visible = nTutorial.enabled = !creative;
-			var rows : Array<Widget> = creative ? [nName, nSeed, nMode, nBiome, nSize] : [nName, nSeed, nMode, nTutorial];
+			var rows : Array<Widget> = creative ? [nName, nMode, nBiome, nSize, nCustom] : [nName, nMode, nTutorial, nCustom];
 			var h = 290 + rows.length * 66;
 			drawPanel(bg, title, 760, h);
 			var y = (H - h) * 0.5 + 120;
@@ -645,17 +652,63 @@ class GalaxyApp extends hxd.App {
 		nMode.onChange = function(_) layout();
 		layout();
 		create.onActivate = function() {
-			var seed = Std.parseInt(nSeed.text);
+			var seed = Std.parseInt(nSeed);
 			if( seed == null || seed <= 0 ) seed = randomSeed();
 			var biome = nBiome.index == 0 ? BIOMES[seed % BIOMES.length] : BIOMES.concat(EXTRA_BIOMES)[nBiome.index - 1];
 			var name = StringTools.trim(nName.text);
 			if( name == "" ) name = defName;
 			var creative = nMode.index == 1;
-			startNewGame(name, seed, creative, !creative && nTutorial.index == 0, biome, nSize.index + 1);
+			startNewGame(name, seed, creative, !creative && nTutorial.index == 0, biome, nSize.index + 1, nDrop);
 		};
 		back.onActivate = function() show("main");
 		s.onBack = function() show("main");
 		return s;
+	}
+
+	/** a la derecha del boton Personalizar: nada si no se cambia la opcion; desmarcada, que el equipo se conserva (la semilla no) */
+	function refreshCustom() {
+		nCustom.setValue(nDrop ? "" : Lang.t("custom.kept"));
+	}
+
+	/**
+	 * Nueva partida > Personalizar (anadido del port): la semilla del mundo (vacia o 0 = otra al azar al crear) y la opcion de dejar
+	 * el equipo en el suelo al morir y con Mayus+K (DeathDrops), marcada si no se cambia. Aceptar las deja en el formulario.
+	 */
+	function askCustom( parent : Screen ) {
+		if( modal != null && modal.parent != null ) return;
+		parent.active = false;
+		var m = new Screen(ui);
+		var bg = new h2d.Graphics(m);
+		Theme.fullRect(bg, 0x000000, 0.55);
+		Theme.rect(bg, 290, 190, 700, 340, Theme.PANEL, 1);
+		Theme.rect(bg, 290, 190, 700, 4, Theme.ACCENT);
+		var t = Theme.text(m, Lang.t("custom.title"), 2.4, Theme.TEXT, 0, 218);
+		t.x = (W - t.textWidth * t.scaleX) * 0.5;
+		var seed = new TextField(m, Lang.t("seed"), nSeed, 620, 54, 250);
+		seed.numeric = true;
+		seed.maxLen = 9;
+		var drop = new CheckBox(m, Lang.t("deathdrop.option"), nDrop, 620, 54);
+		var cancel = new Button(m, Lang.t("cancel"), 250, 52);
+		var ok = new Button(m, Lang.t("accept"), 250, 52);
+		m.add(seed, 330, 276);
+		m.add(drop, 330, 342);
+		m.add(cancel, 380, 440);
+		m.add(ok, 650, 440);
+		var close = function() {
+			m.remove();
+			parent.active = true;
+		};
+		ok.onActivate = function() {
+			nSeed = seed.text;
+			nDrop = drop.checked;
+			refreshCustom();
+			close();
+		};
+		cancel.onActivate = close;
+		m.onBack = close;
+		m.setFocus(0);
+		// el modal se actualiza desde update()
+		modal = m;
 	}
 
 	/**
@@ -663,15 +716,17 @@ class GalaxyApp extends hxd.App {
 	 * Aventura: en el espacio, en el sistema 0, con o sin el tutorial (TutoSetup.newGame: con el, su planeta es Terres Rouges
 	 * pequeno). La eleccion del tutorial queda en la partida (SaveInfo.tutorial).
 	 */
-	public function startNewGame( name : String, seed : Int, creative : Bool, tutorial : Bool, biome : String, size : Int ) {
+	public function startNewGame( name : String, seed : Int, creative : Bool, tutorial : Bool, biome : String, size : Int, dropOnDeath = true ) {
 		if( !creative ) {
-			startAdventure(name, seed, tutorial);
+			startAdventure(name, seed, tutorial, dropOnDeath);
 			return;
 		}
-		startGame(SaveData.create(name, seed, biome, size, true));
+		var info = SaveData.create(name, seed, biome, size, true);
+		info.dropOnDeath = dropOnDeath;
+		startGame(info);
 	}
 
-	/** Partidas guardadas (Continuar): jugar, renombrar o borrar cada una */
+	/** Partidas guardadas (Continuar): jugar, modificar o borrar cada una */
 	function buildLoad() : Screen {
 		var s = new LoadScreen(ui);
 		var bg = new h2d.Graphics(s);
@@ -687,7 +742,7 @@ class GalaxyApp extends hxd.App {
 			s.add(row, s.listX, s.listY);
 			var inf = info;
 			row.onAction = function( a ) switch( SaveRow.ACTIONS[a] ) {
-				case "rename": askRename(s, inf);
+				case "edit": askEdit(s, inf);
 				case "delete": askDelete(s, inf);
 				default: playSave(s, inf);
 			};
@@ -704,7 +759,7 @@ class GalaxyApp extends hxd.App {
 		return s;
 	}
 
-	/** vuelve a hacer la lista de partidas (tras renombrar o borrar) desplazada como estaba y con el foco en la fila `at` (o en la
+	/** vuelve a hacer la lista de partidas (tras modificar o borrar) desplazada como estaba y con el foco en la fila `at` (o en la
 	    ultima que quede) */
 	function reopenLoad( at : Int ) {
 		var old = screens.get("load");
@@ -751,35 +806,42 @@ class GalaxyApp extends hxd.App {
 	/** aviso que se muestra al terminar de cargar la partida (playSave) */
 	var loadToast : String;
 
-	/** ventana para cambiar el nombre de una partida (solo el nombre: SaveData.rename); Intro en el campo acepta */
-	function askRename( parent : LoadScreen, info : SaveInfo ) {
+	/**
+	 * Continuar > Modificar (antes Renombrar): el nombre de la partida y sus opciones (dejar el equipo en el suelo, DeathDrops;
+	 * marcada en las partidas de antes de la opcion). SaveData.edit no toca la fecha de guardado ni la miniatura. Intro en el nombre
+	 * acepta; un nombre vacio deja el que tenia.
+	 */
+	function askEdit( parent : LoadScreen, info : SaveInfo ) {
 		if( modal != null && modal.parent != null ) return;
 		parent.active = false;
 		var m = new Screen(ui);
 		var bg = new h2d.Graphics(m);
 		Theme.fullRect(bg, 0x000000, 0.55);
-		Theme.rect(bg, 290, 220, 700, 270, Theme.PANEL, 1);
-		Theme.rect(bg, 290, 220, 700, 4, Theme.ACCENT);
-		var t = Theme.text(m, Lang.t("rename.title"), 2.4, Theme.TEXT, 0, 248);
+		Theme.rect(bg, 290, 190, 700, 340, Theme.PANEL, 1);
+		Theme.rect(bg, 290, 190, 700, 4, Theme.ACCENT);
+		var t = Theme.text(m, Lang.t("edit.title"), 2.4, Theme.TEXT, 0, 218);
 		t.x = (W - t.textWidth * t.scaleX) * 0.5;
 		var field = new TextField(m, Lang.t("name"), info.name, 620, 54, 380);
+		var drop = new CheckBox(m, Lang.t("deathdrop.option"), DeathDrops.enabled(info), 620, 54);
 		var cancel = new Button(m, Lang.t("cancel"), 250, 52);
 		var ok = new Button(m, Lang.t("accept"), 250, 52);
-		m.add(field, 330, 310);
-		m.add(cancel, 380, 400);
-		m.add(ok, 650, 400);
+		m.add(field, 330, 276);
+		m.add(drop, 330, 342);
+		m.add(cancel, 380, 440);
+		m.add(ok, 650, 440);
 		var close = function() {
 			m.remove();
 			parent.active = true;
 		};
 		var accept = function() {
 			var name = StringTools.trim(field.text);
-			if( name == "" || name == info.name ) {
+			if( name == "" ) name = info.name;
+			if( name == info.name && drop.checked == DeathDrops.enabled(info) ) {
 				close();
 				return;
 			}
 			var at = parent.focus;
-			SaveData.rename(info.id, name);
+			SaveData.edit(info.id, name, drop.checked);
 			m.remove();
 			reopenLoad(at);
 		};
@@ -880,9 +942,11 @@ class GalaxyApp extends hxd.App {
 	}
 
 	/** partida de aventura nueva: empieza en el espacio, con o sin tutorial (TutoSetup.newGame) */
-	function startAdventure( name : String, seed : Int, tutorial : Bool ) {
+	function startAdventure( name : String, seed : Int, tutorial : Bool, dropOnDeath = true ) {
 		saveOnMap = true;
-		startGame(TutoSetup.newGame(name, seed, tutorial));
+		var info = TutoSetup.newGame(name, seed, tutorial);
+		info.dropOnDeath = dropOnDeath;
+		startGame(info);
 	}
 
 	/** pruebas: partida de aventura nueva desde un guion (deja la que haya) */
@@ -1986,6 +2050,12 @@ class GalaxyApp extends hxd.App {
 		game.onComputer = openComputer;
 		game.onTalk = openRobotTalk;
 		game.onCometOver = function() showToast(Lang.t("comet.over"), GameView.COMET_OVER_TOAST);
+		game.onEquipmentLeft = function() {
+			// el inventario se acaba de vaciar: fuera la pantalla de inventario y la cantina
+			closeInventory();
+			closeChest();
+			showToast(Lang.t("deathdrop.left"), 4);
+		};
 		game.onChest = openChest;
 		game.onChestBreak = function(t) if( chest != null && chest.box == t ) closeChest();
 		if( game.info.mothership == true ) game.onHangarExit = backFromMothership;
@@ -2656,7 +2726,8 @@ class GalaxyApp extends hxd.App {
 			for( c in i.inv.charges ) charges += c.n;
 			out.push("'" + i.name + "' " + (i.creative == true ? (i.survival == true ? "creativo(supervivencia)" : "creativo") : "aventura") + " tutorial=" + i.tutorial + " " + i.biome + "/" + i.sizeChunks
 				+ " bloques=" + blocks + " cargas=" + charges + " miniatura=" + (SaveData.thumb(i.id) != null ? "si" : "no") + " guardado=" + DateTools.format(Date.fromTime(i.saved), "%d/%m %H:%M:%S")
-				+ " version=" + i.createdWith + "/" + i.savedWith + " fila='" + SaveRow.versions(i) + "'");
+				+ " version=" + i.createdWith + "/" + i.savedWith + " fila='" + SaveRow.versions(i) + "'"
+				+ " semilla=" + (i.uni != null ? i.uni.seed : i.seed) + " equipo_suelo=" + (DeathDrops.enabled(i) ? "si" : "no"));
 		}
 		return out.length + " partidas:\n  " + out.join("\n  ");
 	}
@@ -2681,6 +2752,8 @@ class GalaxyApp extends hxd.App {
 				var t = cast(w, TextField);
 				return t.title + " = '" + t.text + "'" + (t.typing ? " (escribiendo)" : "");
 			}
+			if( Std.isOfType(w, CheckBox) ) return "'" + @:privateAccess w.label.text + "' " + (cast(w, CheckBox).checked ? "[x]" : "[ ]");
+			if( Std.isOfType(w, InfoButton) ) return "'" + @:privateAccess w.label.text + "' (" + cast(w, InfoButton).getValue() + ")";
 			return "'" + @:privateAccess w.label.text + "'";
 		}
 		var out = "pantalla " + currentName + (s == modal ? " + ventana" : "") + ", foco " + desc(s.widgets[s.focus]);

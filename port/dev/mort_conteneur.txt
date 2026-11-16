@@ -1,0 +1,153 @@
+# equipo dejado al morir y con Mayus+K (DeathDrops): todo el inventario (bloques, gemas y cargas) pasa a un Conteneur ESCorp
+# pequeno en el sitio y los creditos no se tocan; se guarda con la partida y se recupera pasando a su lado (lo que cabe: el resto
+# se queda dentro). El inventario de prueba (Inv.defaults) pasa de los maximos: 50 bauxitas (pila de 32) y 30 cargas rosas
+# (maximo 20): al recogerlo, las 18 bauxitas y las 10 cargas rosas que no caben se quedan en el contenedor
+wait 3
+# un kube del editor (seccion 7: en la supervivencia de una partida creativa es un bloque mas)
+edkube clear
+edkube make test-pierre cube opaque FFB0B0B0 Pierre grise test
+planet
+wait 30
+filla 54 54 76 76 57 90 none
+filla 54 54 76 76 56 56 BRock
+give BKubeRubis 2
+print deathdrops
+# 1) morir: inventario y cargas vacios al empezar el fundido (con el aviso); el contenedor se ve al acabar (antes lo recogeria)
+tp 60.5 60.5 57.01 0 0
+wait 5
+hurt 500
+wait 5
+print deathdrops
+wait 55
+shot mort_aviso
+wait 55
+vitals
+print deathdrops
+# 2) guardar (la X de la ventana) y volver a cargar: sigue ahi, en el mismo sitio y con todo
+closewin
+reload
+wait 30
+print deathdrops
+# 3) foto: desde 3 bloques (a menos de 1.5 se acerca y se recoge)
+tp 57.5 60.5 57.01 0 0
+lookat 60.5 60.5 57.2
+wait 10
+shot mort_conteneur
+# 4) recogerlo: cada pila vuelve a su casilla y las cargas a las suyas; lo que no cabe se queda dentro, a los pies. Con 94
+# cargas amarillas encima (maximo 99), de las 30 del contenedor solo entran 5: las otras 25 se quedan dentro
+charge CYellow 94
+tp 60.5 60.5 57.01 0 0
+wait 40
+print deathdrops
+# con sitio (cargas gastadas, casillas vacias) se recoge el resto y el contenedor desaparece
+charge CPink 0
+charge CYellow 50
+wait 20
+print deathdrops
+contracts empty
+wait 20
+print deathdrops
+# 5) inventario lleno al volver: se coge lo que cabe (las cargas) y los bloques se quedan dentro; con sitio, se recoge todo
+tp 62.5 62.5 57.01 0 0
+wait 5
+# con la pantalla de inventario abierta: se cierra al vaciarse el inventario
+invscreen open
+wait 2
+hurt 500
+wait 2
+print invscreen
+wait 118
+contracts full
+tp 62.5 62.5 57.01 0 0
+wait 40
+print deathdrops
+contracts empty
+wait 40
+print deathdrops
+print inv
+# 6) Mayus+K en el planeta: un contenedor; a bordo de la nave, nada (el inventario se queda)
+tp 64.5 64.5 57.01 0 0
+wait 5
+press shift k
+wait 2
+release shift k
+wait 120
+vitals
+print deathdrops
+give BIron 7
+press shift k
+wait 2
+release shift k
+wait 120
+vitals
+print deathdrops
+# 7) supervivencia de una partida creativa: como la aventura, tambien con un kube del editor (va aparte en el guardado,
+# EditorKubes: en deathDrops queda una casilla vacia) y al morir a bordo de la nave (en coordenadas de la nave)
+creativegame
+reload
+waitfor planet 6000
+wait 30
+mode survival
+give kube:test-pierre 6
+tp 66.5 66.5 57.01 0 0
+wait 5
+hurt 500
+wait 120
+print deathdrops
+savegame
+print edsave
+reload
+waitfor planet 6000
+wait 30
+print deathdrops
+mode survival
+tp 66.5 66.5 57.01 0 0
+wait 30
+print inv
+tpl 60.5 63.5 3.01 0 0
+wait 5
+print pos
+hurt 500
+wait 120
+print deathdrops
+closewin
+reload
+waitfor planet 6000
+wait 30
+print deathdrops
+mode survival
+tpl 60.5 63.5 3.01 0 0
+wait 30
+print deathdrops
+# morir en el aire junto a la nave, fuera del casco: el contenedor cae y, por debajo de la nave, pasa a ser del planeta
+tpl 61.5 60.5 3.01 0 0
+wait 3
+hurt 500
+wait 200
+print deathdrops
+# 8) creativo: Mayus+K no deja nada
+mode creative
+give BGlass 4
+tp 68.5 68.5 57.01 0 0
+wait 5
+press shift k
+wait 2
+release shift k
+wait 120
+print deathdrops
+# 9) tutorial: morir no deja nada
+tuto new 4242
+waitfor map
+expplanet 0
+waitfor window
+expbutton
+waitfor planet
+wait 30
+planet
+wait 20
+give BIron 5
+hurt 500
+wait 120
+vitals
+print deathdrops
+quit

@@ -1,5 +1,6 @@
-# Menu de inicio: Continuar abre la lista de partidas (desplazamiento con flechas, rueda, Re Pag / Av Pag; renombrar, borrar) y
-# Nueva partida en los dos modos (aventura con Tutorial, creativo con Bioma y Tamano). devsaves borra las partidas de port/out/testdata
+# Menu de inicio: Continuar abre la lista de partidas (desplazamiento con flechas, rueda, Re Pag / Av Pag; modificar, borrar) y
+# Nueva partida en los dos modos (aventura con Tutorial, creativo con Bioma y Tamano; la semilla, en Personalizar).
+# Modificar y Personalizar con la opcion del equipo en el suelo: partida_opciones.txt. devsaves borra las partidas de port/out/testdata
 # y crea 7 de ejemplo; la partida de prueba se guarda al ir al menu (8 partidas, la primera con miniatura). Mira los menu_*.png
 wait 3
 devsaves 7
@@ -34,7 +35,7 @@ print menu
 tap pgup
 wait 2
 print menu
-# raton: encima de la segunda fila se ven sus acciones; encima de Renombrar se elige; clic abre la ventana
+# raton: encima de la segunda fila se ven sus acciones; encima de Modificar se elige; clic abre la ventana
 mouse 400 300
 wait 2
 print menu
@@ -45,7 +46,7 @@ shot menu_fila_acciones
 mouse 922 280 click
 wait 2
 print menu
-shot menu_renombrar
+shot menu_modificar
 # lo escrito sustituye al nombre (esta todo elegido); Intro acepta
 type Mi base
 wait 2
@@ -72,7 +73,7 @@ tap enter
 wait 3
 print menu
 print saves
-# teclado: Re Pag hasta la primera fila (la partida de prueba, con miniatura), derecha = Renombrar, Intro; lo escrito sustituye al
+# teclado: Re Pag hasta la primera fila (la partida de prueba, con miniatura), derecha = Modificar, Intro; lo escrito sustituye al
 # nombre e Intro acepta: cambia solo el nombre (la fecha de guardado, el orden y la miniatura siguen igual)
 tap pgup
 tap pgup
@@ -105,7 +106,7 @@ wait 5
 cover lista_alta
 winsize 1280 720
 wait 5
-# textos en frances e ingles (lista con Renombrar elegido, ventana de renombrar, formulario); luego otra vez en espanol
+# textos en frances e ingles (lista con Modificar elegido, ventana de Modificar, formulario); luego otra vez en espanol
 setlang fr
 screen load
 wait 3
@@ -121,12 +122,11 @@ wait 3
 tap right
 tap enter
 wait 2
-shot menu_renombrar_en
+shot menu_modificar_en
 tap esc
 tap esc
 screen new
 wait 3
-tap down
 tap down
 tap right
 wait 2
@@ -141,7 +141,6 @@ wait 2
 print menu
 shot menu_nueva_aventura
 # Modo -> Creativo: aparecen Bioma y Tamano y el panel crece; Tutorial desaparece
-tap down
 tap down
 tap right
 wait 2
@@ -161,7 +160,6 @@ wait 2
 print menu
 # nombre vacio: se usa el de por defecto
 tap up
-tap up
 tap enter
 wait 2
 press ctrl
@@ -173,7 +171,7 @@ print menu
 tap enter
 wait 2
 print menu
-# Crear (aventura, tutorial Si): Nombre -> Semilla -> Modo -> Tutorial -> Crear
+# Crear (aventura, tutorial Si): Nombre -> Modo -> Tutorial -> Personalizar -> Crear
 tap down
 tap down
 tap down
@@ -185,17 +183,17 @@ waitfor map
 wait 30
 print tuto
 print saves
-# otra partida, creativa en Otono: Modo -> Creativo, Bioma -> Otono, Tamano, Crear
+# otra partida, creativa en Otono: Modo -> Creativo, Bioma -> Otono, Tamano, Personalizar, Crear
 menu
 waitfor menu
 tap down
 tap enter
 wait 2
 tap down
-tap down
 tap right
 tap down
 tap right
+tap down
 tap down
 tap down
 wait 2

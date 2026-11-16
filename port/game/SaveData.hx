@@ -118,6 +118,11 @@ typedef SaveInfo = {
 	@:optional var inMother : MotherPos;
 	/** contenido de las cantinas (cofres): clave "s:x,y,z" en la nave o "p<planeta>:x,y,z" en un planeta */
 	@:optional var chests : Array<{ key : String, t : Protocol.BlockInventory }>;
+	/** equipo dejado al morir o con Mayus+K (DeathDrops, anadido del port): un Conteneur ESCorp pequeno en el sitio, sin caducar */
+	@:optional var deathDrops : Array<DeathDrops.DeathDropInfo>;
+	/** opcion de la partida (Nueva partida > Personalizar, Continuar > Modificar): false = morir y Mayus+K no dejan el equipo en
+	    el suelo; null en las partidas de antes = si lo dejan (DeathDrops.enabled) */
+	@:optional var dropOnDeath : Null<Bool>;
 	/** tutorial en curso (null: sin tutorial, terminado o pasado) */
 	@:optional var tuto : TutoInfo;
 	/** donde se dejo la nave en el planeta actual pilotandola (anadido del port); null = el sitio de aterrizaje de siempre */
@@ -343,6 +348,7 @@ class SaveData {
 				yaw : o.yaw != null ? o.yaw : 0, pitch : o.pitch != null ? o.pitch : 0, fly : o.fly == true, life : o.life != null ? o.life : 100,
 					creative : o.creative == true, tutorial : o.tutorial == null ? null : o.tutorial == true, inv : readInv(o.inv), uni : uni, credits : o.credits != null ? Std.int(o.credits) : Market.START_CREDITS, market : readMarket(o.market), contracts : readContracts(o.contracts), special : readSpecial(o.special), chests : readChests(o.chests), shipData : o.shipData,
 					shipEdits : o.shipEdits != null ? [for( v in (o.shipEdits : Array<Dynamic>) ) Std.int(v)] : [], edits : o.edits != null ? [for( v in (o.edits : Array<Dynamic>) ) Std.int(v)] : [],
+					deathDrops : DeathDrops.read(o.deathDrops), dropOnDeath : o.dropOnDeath != false,
 					survival : o.creative == true && o.survival == true ? true : null,
 					tuto : readTuto(o.tuto), shipAt : readSpot(o.shipAt), comet : readComet(o.comet), kub : readKub(o.kub),
 					inMother : readMotherPos(o.inMother), editorKubes : EditorKubes.readSave(o.editorKubes),
@@ -373,11 +379,12 @@ class SaveData {
 		}
 	}
 
-	/** cambia solo el nombre de la partida: la fecha de guardado y la miniatura no se tocan */
-	public static function rename( id : String, name : String ) : Bool {
+	/** Continuar > Modificar: cambia el nombre y las opciones de la partida; la fecha de guardado y la miniatura no se tocan */
+	public static function edit( id : String, name : String, dropOnDeath : Bool ) : Bool {
 		var info = read(id);
 		if( info == null ) return false;
 		info.name = name;
+		info.dropOnDeath = dropOnDeath;
 		return write(info, null, false);
 	}
 
