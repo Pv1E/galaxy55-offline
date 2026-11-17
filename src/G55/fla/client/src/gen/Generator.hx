@@ -50,7 +50,22 @@ class Generator {
 	static inline var HBITS = Const.ZBITS;
 	static inline var HEIGHT = Const.ZSIZE;
 
+	/**
+	 * Anadido del port: version de la generacion. Las partidas solo guardan los cambios del jugador y rehacen el planeta con su
+	 * semilla: cada planeta se genera siempre con la version con la que se visito por primera vez (SaveInfo.genVersion), asi lo
+	 * que se anada al generador solo sale en los planetas nuevos y no cambia el terreno bajo lo ya construido. Reglas:
+	 * - un cambio de lo que genera el generador (anomalia, bioma, minerales...) sube VERSION y solo se aplica con version >= la
+	 *   nueva (las anomalias: since en su linea de DetailsGenerator);
+	 * - lo de una version que ya ha salido no se cambia, quita ni reordena: para retocar una anomalia, una funcion nueva con since
+	 *   y la vieja con until;
+	 * - port/headless/gen_ref.txt: las lineas de las versiones que ya han salido no cambian nunca; con una version nueva se anaden
+	 *   las suyas (haxe port/headless.hxml, hl port/out/gen.hl --check port/headless/gen_ref.txt).
+	 */
+	public static inline var VERSION = 0;
+
 	public var size(default,null) : Int;
+	/** anadido del port: version con la que se genera este planeta (VERSION si no se dice otra) */
+	public var version : Int;
 	var seed : Int;
 	var genStep : Int;
 	var rnd : mt.Rand;
@@ -86,6 +101,7 @@ class Generator {
 	public function new(size,seed) {
 		this.size = size;
 		this.seed = seed;
+		version = VERSION;
 		genStep = 0;
 		models = new Hash();
 		perlin = new FPerlin(size);

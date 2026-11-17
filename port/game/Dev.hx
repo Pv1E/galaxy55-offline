@@ -84,6 +84,8 @@ import Common;
  *                           Mejoras ESCorp (close lo cierra todo; print menu); escorp button pulsa Contactar con la ESCorp en el
  *                           ordenador abierto; escorp bonus N deja N cargas de bonus; print upgrades
  *   savegame                guardar la partida (como F5, sin aviso)
+ *   genversion N            el planeta actual pasa a ser de la version N del generador (SaveInfo.genVersion; se nota al volver a
+ *                           el); print gen: la del mundo cargado, la actual, la de la partida y las de los planetas visitados
  *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
  *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
  *   print paldup            paleta creativa abierta: bloques y paginas, los que salen mas de una vez y donde estan las aguas
@@ -1312,6 +1314,7 @@ class Dev {
 					default:
 					}
 				case "savegame": @:privateAccess app.saveGame(false); // guardar la partida como F5 (sin aviso)
+				case "genversion": app.curInfo().genVersion = Std.parseInt(a[1]);
 				case "deliver":
 					// deliver i: da lo que llevas a la linea i del tablero; deliver a J: al contrato en curso J (con el panel abierto, como
 					// su boton)
@@ -1855,6 +1858,11 @@ class Dev {
 				Sys.println("cielo: " + (flat == null ? "degradado" : "color " + StringTools.hex(flat.color.toColor() & 0xFFFFFF, 6))
 					+ ", estrellas " + (st != null && st.visible ? "si" : "no"));
 			}
+		case "gen":
+			var u = g.info.uni;
+			var visited = u == null ? "-" : [for( p in u.planets ) p.id + ":" + SaveData.genVersion(p.genVersion)].join(" ");
+			Sys.println("generador: mundo " + @:privateAccess w.gen.version + " actual " + gen.Generator.VERSION + " partida " + g.info.genVersion
+				+ " planeta " + (u == null ? "-" : "" + u.planetId) + " visitados " + (visited == "" ? "-" : visited));
 		case "biome":
 			// bioma del mundo cargado, el de la partida y el de salida del universo; y el suelo que mas se ve (una columna de cada 8x8)
 			var u = g.info.uni;
