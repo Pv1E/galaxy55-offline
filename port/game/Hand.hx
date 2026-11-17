@@ -8,6 +8,10 @@ import Common;
  */
 class Hand {
 
+	/** tamano de un tableau en la mano (anadido del port) */
+	static inline var PAINTING_SCALE = 0.6;
+	static inline var PAINTING_RISE = 0.35;
+
 	var world : World;
 	var atlas : h3d.mat.Texture;
 	public var frame(default, null) : h3d.scene.Object;
@@ -47,10 +51,16 @@ class Hand {
 			// el Kube invisible y los que el recorte borraria enteros: translucidos como su icono (IconMesh.seeThrough), con sus 6
 			// caras; con el recorte la mano se quedaba vacia
 			var clear = b != null && IconMesh.seeThrough(b);
-			var poly = b == null ? null : IconMesh.polygon(b, true, 1.0, clear);
+			// un tableau: de frente y con su placa en el centro (Painting.inHand), no por detras en el borde de la celda
+			var shown = b == null ? null : Painting.inHand(b);
+			var poly = shown == null ? null : IconMesh.polygon(shown, true, 1.0, clear);
 			if( poly != null ) {
 				mesh = new h3d.scene.Mesh(poly, mat, turn);
-				mesh.setPosition(-0.5, -0.5, -0.5);
+				// de frente, un tableau entero tapaba la esquina de la pantalla: mas pequeno que un cubo
+				// y mas arriba: con el centro de la placa donde va el del cubo, se quedaba casi fuera de la pantalla
+				var c = Painting.center(shown), s = shown.wall >= 0 ? PAINTING_SCALE : 1.;
+				mesh.setScale(s);
+				mesh.setPosition(-c.x * s, -c.y * s, -c.z * s + (shown.wall >= 0 ? PAINTING_RISE : 0));
 				// los cubos son convexos: sin profundidad basta con no dibujar las caras de atras
 				mat.mainPass.culling = clear || b.type == BTModel || b.type == BTModel2Side || b.type == BTSprite ? None : Back;
 				// en la misma pasada (additive, delante de todo): mainPass.setBlendMode no la cambia, Material.blendMode si

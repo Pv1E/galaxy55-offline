@@ -17,6 +17,12 @@ class Models {
 	static inline var STRIDE = 6;
 	static var cache = new Map<Int, ModelData>();
 
+	/** la malla de un bloque dibujado como modelo: la de su BFModel (MCross si no tiene), o la de su placa si es un tableau */
+	public static function of( b : Block ) : ModelData {
+		if( b.wall >= 0 && b.size != null ) return Painting.model(b);
+		return get(b.model != null ? b.model : MCross);
+	}
+
 	public static function get( m : BlockModel ) : ModelData {
 		var i = Type.enumIndex(m);
 		var d = cache.get(i);

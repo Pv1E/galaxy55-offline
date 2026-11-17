@@ -340,7 +340,7 @@ enum BlockKind {
 	// se apunta (BFNoPick: el puntero y el laser la atraviesan). Sin precio y kubindex.json hidden
 	BShopBarrier;
 	// kubes del editor de kubes puestos en una partida creativa (EditorKubes): todos comparten este BlockKind y cada uno tiene sus
-	// bloques al final de Block.all, despues de este (que no se pone nunca). Sin precio ni ficha en la Base de datos ESCorp
+	// bloques al final de Block.all, despues de los de este enum (este no se pone nunca). Sin precio ni ficha en la Base de datos ESCorp
 	BKubeEditor;
 }
 
@@ -419,6 +419,9 @@ enum BlockFlag {
 	BFContainer( size : Int );
 	// anadido del port: la textura corre por su casilla, como el agua y la lava de Kube (pixeles de la casilla por segundo, ver World.TileScroll)
 	BFScroll( speed : Float );
+	// anadido del port: tableau colgado de una pared (Painting). Son 4 bloques seguidos, uno por pared; turn = cuartos de vuelta
+	// desde el primero, que tiene la pared detras en +y (0: pared en +y, 1: en -x, 2: en -y, 3: en +x). BFSize: la placa en la celda
+	BFOnWall( turn : Int );
 }
 
 typedef BlockData = {

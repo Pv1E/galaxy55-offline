@@ -34,7 +34,7 @@ private class Slot {
 	public var stamp : Float = -1;
 	public var crc = 0;
 	public var kube : KubeData;
-	/** PER bloques seguidos de Block.all: el bloque, su giro (Y), y la puerta abierta en X y en Y */
+	/** PER bloques seguidos de Block.all: el bloque, su giro (Y), y la puerta abierta en X y en Y; o los 4 de un tableau */
 	public var blocks : Array<Block>;
 	public var active = false;
 	/** casilla del atlas de cada cara de KubeData.FACES (-1 = la forma no la usa) */
@@ -46,8 +46,14 @@ private class Slot {
 		tiles = [for( _ in KubeData.FACES ) -1];
 	}
 
-	/** variantes que tiene la forma: la puerta 4 (cerrada X, cerrada Y, abierta X, abierta Y), el plano 2 (X e Y), el resto 1 */
-	public function variants() : Int return kube == null ? 0 : kube.shape.id == "door" ? 4 : kube.shape.id == "plane" ? 2 : 1;
+	/**
+	 * variantes que tiene la forma: la puerta 4 (cerrada X, cerrada Y, abierta X, abierta Y), el tableau 4 (uno por pared), el plano 2
+	 * (X e Y), el resto 1
+	 */
+	public function variants() : Int {
+		if( kube == null ) return 0;
+		return switch( kube.shape.id ) { case "door", "painting": 4; case "plane": 2; default: 1; };
+	}
 }
 
 /**
@@ -341,6 +347,17 @@ class EditorKubes {
 			ox.toggle = b;
 			y.toggle = oy;
 			oy.toggle = y;
+		case "painting":
+			// 4 bloques, uno por pared (Painting, BFOnWall): el primero con la pared en +y, cada uno girado un cuarto de vuelta
+			var sizes = Painting.sizes(k.box);
+			for( t in 0...PER ) {
+				var c = s.blocks[t], z = sizes[t];
+				c.type = BTModel;
+				c.tlr = c.tu = c.td = b.tlr;
+				c.size = z;
+				c.wall = t;
+				common(c, [BFOnWall(t), BFSize(z.x1, z.y1, z.z1, z.x2, z.y2, z.z2), BFMagnet(None)]);
+			}
 		case "plane":
 			// como BWoodWindow: la X gira a la Y con BFFlip
 			var y = s.blocks[1];
@@ -380,6 +397,7 @@ class EditorKubes {
 		b.propagate = null;
 		b.anchors = 0;
 		b.magnets = 7;
+		b.wall = -1;
 		b.props = new haxe.EnumFlags<Block.BlockProp>();
 		b.props.set(PCanPick);
 		b.props.set(PCollide);

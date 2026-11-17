@@ -45,6 +45,16 @@ class Parts {
 
 	/** Particles.doBreak (count: intentos, 75 en el original) */
 	public function doBreak( x : Int, y : Int, z : Int, b : Block, count = 75 ) {
+		// cambio del port: un tableau (BFOnWall) salta en trozos desde su placa, no desde toda la celda como un bloque
+		if( b.wall >= 0 && b.size != null ) {
+			var s = b.size;
+			for( i in 0...Std.int(count / 3) ) {
+				var fx = x + s.x1 + Math.random() * (s.x2 - s.x1), fy = y + s.y1 + Math.random() * (s.y2 - s.y1);
+				var fz = z + s.z1 + Math.random() * (s.z2 - s.z1);
+				if( world.lightAt(x, y, z) > 0 ) add(fx, fy, fz, b, x, y, z, 2.);
+			}
+			return;
+		}
 		var h = b.getHeight();
 		for( i in 0...count ) {
 			var fx : Float = x, fy : Float = y, fz : Float = z;

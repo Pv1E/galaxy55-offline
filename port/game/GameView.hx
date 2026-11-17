@@ -1493,7 +1493,7 @@ class GameView {
 	 * en coordenadas de la celda, cruza alguna cara del modelo en un pixel no transparente de su textura.
 	 */
 	static function modelHit( b : Block, ax : Float, ay : Float, az : Float, bx : Float, by : Float, bz : Float ) : Bool {
-		var md = Models.get(b.model != null ? b.model : MCross);
+		var md = Models.of(b);
 		var v = md.v, pix = Atlas.pixels;
 		var n = Std.int(v.length / 24);
 		for( q in 0...n ) {
@@ -1547,7 +1547,7 @@ class GameView {
 		if( b.type != BTModel && b.type != BTModel2Side && b.type != BTSprite ) return null;
 		var c = pickBoxes.get(b.index);
 		if( c != null ) return c;
-		var v = Models.get(b.model != null ? b.model : MCross).v;
+		var v = Models.of(b).v;
 		var x1 = 1., y1 = 1., z1 = 1., x2 = 0., y2 = 0., z2 = 0.;
 		var i = 0;
 		while( i < v.length ) {
@@ -1602,7 +1602,9 @@ class GameView {
 			// cascada y la arena movediza si lo paran: se pone contra ellas (Render.pick del original)
 			// la celda de la camara no cuenta: el original empieza el rayo en su borde (Render.pick), asi con la cabeza dentro de
 			// una fuente de cascada o de arena movediza se apunta a lo de delante
-			var b = ix == sx && iy == sy && iz == sz ? null : world.block(ix, iy, iz);
+			// cambio del port: salvo un tableau (BFOnWall), una placa contra la pared: se puede estar en su celda, pegado a el, y apuntarlo
+			var b = world.block(ix, iy, iz);
+			if( ix == sx && iy == sy && iz == sz && (b == null || b.wall < 0) ) b = null;
 			// con un bloque en la mano tampoco lo paran las hierbas ni las estalactitas: se pisan al poner (Block.canOverride), como
 			// en el original, donde BFDetail les quita PCanPick (aqui se apuntan para romperlas, PortRules)
 			if( b != null && hand != null && b.canOverride() ) b = null;
@@ -1716,7 +1718,8 @@ class GameView {
 		}
 		if( s != null ) {
 			var cx = hand == null ? s.x : s.tx, cy = hand == null ? s.y : s.ty, cz = hand == null ? s.z : s.tz;
-			if( cx == Std.int(px) && cy == Std.int(py) && (cz == Std.int(pz) || cz == Std.int(pz) + 1) ) s = null;
+			// cambio del port: un tableau en la celda del jugador se puede romper (no se pone nada en ella)
+			if( cx == Std.int(px) && cy == Std.int(py) && (cz == Std.int(pz) || cz == Std.int(pz) + 1) && (hand != null || s.b.wall < 0) ) s = null;
 		}
 		if( s != null && prev != null && prev.x == s.x && prev.y == s.y && prev.z == s.z && prev.b == s.b ) {
 			// misma celda: se conserva lo acumulado
@@ -1857,6 +1860,9 @@ class GameView {
 	 */
 	public function canPlace( s : Select, hand : Block ) : Bool {
 		var x = s.tx, y = s.ty, z = s.tz;
+		// un tableau solo va contra una pared apuntada, que lo sujeta (y en la nave, contra lo que sea)
+		var put = placedBlock(s, hand);
+		if( put == null ) return false;
 		// en la nave solo se coloca dentro de las zonas de sintetizador (el casco se edita en el hangar) y alli no hace falta apoyo
 		var inShip = z >= World.SHIP_Z;
 		if( inShip && !ship.inCraft(x, y, z) ) return false;
@@ -1867,6 +1873,7 @@ class GameView {
 		if( here != null && !overridable(here) ) return false;
 		if( inShip ) return true; // select.ignoreMagnets del original
 		var tmp : Block;
+		if( put.wall >= 0 ) return (tmp = world.block(s.x, s.y, s.z)) != null && tmp.hasMagnet(LeftRight);
 		if( hand.canPut(Up) && (tmp = world.block(x, y, z + 1)) != null && tmp.hasMagnet(Down) ) return true;
 		if( hand.canPut(Down) && (tmp = world.block(x, y, z - 1)) != null && tmp.hasMagnet(Up) ) return true;
 		if( hand.canPut(LeftRight) ) {
@@ -1876,6 +1883,17 @@ class GameView {
 			if( (tmp = world.block(x, y + 1, z)) != null && tmp.hasMagnet(LeftRight) ) return true;
 		}
 		return false;
+	}
+
+	/**
+	 * El bloque que pondria place: el de la mano, girado segun hacia donde mira el jugador si tiene BFFlip. Un tableau (BFOnWall)
+	 * cuelga de la cara apuntada: el de sus 4 bloques que tiene la pared en ese lado, o null si no es la de una pared (el suelo,
+	 * un techo o el rayo que llega en diagonal por una esquina).
+	 */
+	public function placedBlock( s : Select, hand : Block ) : Block {
+		if( hand.wall < 0 ) return hand.getFlip(yaw);
+		if( s.z != s.tz ) return null;
+		return hand.onWall(Std.int(wrapDist(s.x - s.tx)), Std.int(wrapDist(s.y - s.ty)));
 	}
 
 	/** Game.checkAction con un bloque en la mano: se coloca si algo lo sujeta (anclas e imanes). */
@@ -1891,8 +1909,8 @@ class GameView {
 			}
 			return;
 		}
-		var put = hand.getFlip(yaw);
 		if( !canPlace(s, hand) || actionPause > 0 ) return;
+		var put = placedBlock(s, hand);
 		var x = s.tx, y = s.ty, z = s.tz;
 		var inShip = z >= World.SHIP_Z;
 		var here = world.block(x, y, z);
@@ -2013,7 +2031,8 @@ class GameView {
 	function copyTarget() {
 		if( !creative ) return;
 		var s = pick(null);
-		if( s != null && s.b != null ) setSlot(s.b);
+		// un tableau se copia como el de la paleta (el primero de sus 4 bloques), que se cuelga de la pared que se apunte
+		if( s != null && s.b != null ) setSlot(s.b.wall > 0 ? s.b.getMain() : s.b);
 	}
 
 	/** Paleta creativa: pone el bloque en la casilla elegida (o en la primera libre si esta el excavador). */

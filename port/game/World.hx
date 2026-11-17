@@ -563,6 +563,11 @@ class World {
 		if( b == null || !b.collide ) return false;
 		if( b.size == null ) return true;
 		var fz = z - iz;
+		// cambio del port: un tableau (BFOnWall) solo choca con su placa; los demas bloques parciales, con todo el ancho de la celda
+		if( b.wall >= 0 ) {
+			var fx = x - ix, fy = y - iy;
+			if( fx < b.size.x1 || fx >= b.size.x2 || fy < b.size.y1 || fy >= b.size.y2 ) return false;
+		}
 		return fz >= b.size.z1 && fz < b.size.z2;
 	}
 
@@ -1781,8 +1786,7 @@ class World {
 
 	/** modelos de Builder.hx (plantas en cruz, planos, columnas, cajas): se copia la geometria del original */
 	function addModel( m : MeshBuf, b : Block, x : Int, y : Int, z : Int ) {
-		var mk = b.model != null ? b.model : MCross;
-		var md = Models.get(mk);
+		var md = Models.of(b);
 		var v = md.v;
 		var n = Std.int(v.length / 24);
 		// los modelos usan la luz de su propia celda (Builder: getLight(p) / LBASE)
