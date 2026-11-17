@@ -484,9 +484,9 @@ class KubeData {
 			// como BShipDoor: cerrada X (gira a Y con BFFlip), cerrada Y, abierta X y abierta Y; cada cerrada alterna con su abierta
 			var hold = ["BFMagnet(UpDown)", "BFAnchor(Up)", "BFAnchor(Down)"];
 			lines.push(line(id, BTReduced, tile(SIDE), tile(UP), tile(DOWN), flags.concat(hold).concat(["BFSize(" + sz.join(",") + ")", "BFFlip", 'BFToggle(${id}Open)']), quoted));
-			lines.push(line(id + "Y", BTReduced, tile(SIDE), tile(UP), tile(DOWN), flags.concat(hold).concat(["BFSize(" + szY.join(",") + ")", 'BFToggle(${id}YOpen)']), '"-"'));
-			lines.push(line(id + "Open", BTModel, tile(OPEN), "[]", "[]", flags.concat(hold).concat(["BFModel(MDoorOpenX)", "BFNoCollide"]), '"-"'));
-			lines.push(line(id + "YOpen", BTModel, tile(OPEN), "[]", "[]", flags.concat(hold).concat(["BFModel(MDoorOpenY)", "BFNoCollide"]), '"-"'));
+			lines.push(line(id + "Y", BTReduced, tile(SIDE), tile(UP), tile(DOWN), flags.concat(hold).concat(["BFSize(" + szY.join(",") + ")", 'BFToggle(${id}YOpen)']), '"-"', "null"));
+			lines.push(line(id + "Open", BTModel, tile(OPEN), "[]", "[]", flags.concat(hold).concat(["BFModel(MDoorOpenX)", "BFNoCollide"]), '"-"', "null"));
+			lines.push(line(id + "YOpen", BTModel, tile(OPEN), "[]", "[]", flags.concat(hold).concat(["BFModel(MDoorOpenY)", "BFNoCollide"]), '"-"', "null"));
 		case "painting":
 			// 4 bloques seguidos, uno por pared (BFOnWall): el primero con la pared en +y, cada uno girado un cuarto de vuelta
 			var sizes = Painting.sizes(box);
@@ -499,7 +499,7 @@ class KubeData {
 		case "plane":
 			// como BWoodWindow: la X gira a la Y (la siguiente) con BFFlip
 			lines.push(line(id, BTModel2Side, tile(SIDE), "[]", "[]", flags.concat(["BFModel(MPlanX)", "BFFlip"]), quoted));
-			lines.push(line(id + "Y", BTModel2Side, tile(SIDE), "[]", "[]", flags.concat(["BFModel(MPlanY)"]), '"-"'));
+			lines.push(line(id + "Y", BTModel2Side, tile(SIDE), "[]", "[]", flags.concat(["BFModel(MPlanY)"]), '"-"', "null"));
 		default:
 			var multi = shape.faces.length > 1;
 			lines.push(line(id, shape.type, tile(SIDE), multi ? tile(UP) : "[]", multi && usesFace(DOWN) ? tile(DOWN) : "[]", flags.concat(["BFModel(" + shape.model + ")"]), quoted));

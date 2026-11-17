@@ -1,0 +1,27 @@
+# Editor de kubes: en el datagen.txt de una puerta y de un plano solo el primer bloque lleva precio. Sus variantes ("-": puerta Y,
+# abierta X, abierta Y, plano Y) van con basePrice : null, como BShipDoorY, BShipDoorOpen o BWoodWindowY en DataGen. Con precio,
+# al seguir la receta salian tambien en la paleta creativa (Palette: basePrice != null), una entrada de mas por variante.
+# Comprobar el datagen.txt de port/out/testdata/Galaxy55/kubes/porte-prix.kube y vitre-prix.kube (son zip): 1 basePrice : 100
+# y 3 basePrice : null en la puerta, 1 y 1 en el plano
+wait 3
+setlang fr
+menu
+waitfor menu
+tap down
+tap down
+tap enter
+wait 30
+kube shape door
+kube name Porte prix
+wait 5
+print kube
+kube save
+wait 5
+# un bloque del juego cargado es un kube nuevo (sin archivo): el guardado no pisa el de la puerta
+kube load BWoodWindow
+kube name Vitre prix
+wait 5
+print kube
+kube save
+wait 5
+quit
