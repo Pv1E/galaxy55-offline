@@ -432,9 +432,9 @@ class KubeData {
 	 * Una linea de DataGen.BLOCKS. Las casillas del atlas van como [?,?] con el png al lado: hay que copiar cada png en una casilla
 	 * libre de texture.png y poner su columna y su fila (de 0 a 63). Mismo orden de campos que las del juego.
 	 */
-	static function line( id : String, type : BlockType, tex : String, up : String, down : String, flags : Array<String>, name : String ) : String {
+	static function line( id : String, type : BlockType, tex : String, up : String, down : String, flags : Array<String>, name : String, price = "100" ) : String {
 		return '\t\t{ id : $id, type : $type, texture : $tex, texUp : $up, texDown : $down, shadeX : null, shadeY : null, shadeUp : null, '
-			+ 'shadeDown : null, power : null, weight : null, flags : [${flags.join(",")}], matter : null, name : $name, basePrice : 100 },';
+			+ 'shadeDown : null, power : null, weight : null, flags : [${flags.join(",")}], matter : null, name : $name, basePrice : $price },';
 	}
 
 	public function dataGen() : String {
@@ -463,13 +463,13 @@ class KubeData {
 			// como BShipDoor: cerrada X (gira a Y con BFFlip), cerrada Y, abierta X y abierta Y; cada cerrada alterna con su abierta
 			var hold = ["BFMagnet(UpDown)", "BFAnchor(Up)", "BFAnchor(Down)"];
 			lines.push(line(id, BTReduced, tile(SIDE), tile(UP), tile(DOWN), flags.concat(hold).concat(["BFSize(" + sz.join(",") + ")", "BFFlip", 'BFToggle(${id}Open)']), quoted));
-			lines.push(line(id + "Y", BTReduced, tile(SIDE), tile(UP), tile(DOWN), flags.concat(hold).concat(["BFSize(" + szY.join(",") + ")", 'BFToggle(${id}YOpen)']), '"-"'));
-			lines.push(line(id + "Open", BTModel, tile(OPEN), "[]", "[]", flags.concat(hold).concat(["BFModel(MDoorOpenX)", "BFNoCollide"]), '"-"'));
-			lines.push(line(id + "YOpen", BTModel, tile(OPEN), "[]", "[]", flags.concat(hold).concat(["BFModel(MDoorOpenY)", "BFNoCollide"]), '"-"'));
+			lines.push(line(id + "Y", BTReduced, tile(SIDE), tile(UP), tile(DOWN), flags.concat(hold).concat(["BFSize(" + szY.join(",") + ")", 'BFToggle(${id}YOpen)']), '"-"', "null"));
+			lines.push(line(id + "Open", BTModel, tile(OPEN), "[]", "[]", flags.concat(hold).concat(["BFModel(MDoorOpenX)", "BFNoCollide"]), '"-"', "null"));
+			lines.push(line(id + "YOpen", BTModel, tile(OPEN), "[]", "[]", flags.concat(hold).concat(["BFModel(MDoorOpenY)", "BFNoCollide"]), '"-"', "null"));
 		case "plane":
 			// como BWoodWindow: la X gira a la Y (la siguiente) con BFFlip
 			lines.push(line(id, BTModel2Side, tile(SIDE), "[]", "[]", flags.concat(["BFModel(MPlanX)", "BFFlip"]), quoted));
-			lines.push(line(id + "Y", BTModel2Side, tile(SIDE), "[]", "[]", flags.concat(["BFModel(MPlanY)"]), '"-"'));
+			lines.push(line(id + "Y", BTModel2Side, tile(SIDE), "[]", "[]", flags.concat(["BFModel(MPlanY)"]), '"-"', "null"));
 		default:
 			var multi = shape.faces.length > 1;
 			lines.push(line(id, shape.type, tile(SIDE), multi ? tile(UP) : "[]", multi && usesFace(DOWN) ? tile(DOWN) : "[]", flags.concat(["BFModel(" + shape.model + ")"]), quoted));
