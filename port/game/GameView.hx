@@ -40,6 +40,8 @@ class GameView {
 	static inline var CAMERA_GAP = 0.12;
 	/** con los pies en la arena movediza todo va a 0.3 (Hero.doMove: dt *= 0.3) */
 	static inline var SAND_SLOW = 0.3;
+	/** escalon mas alto que se sube andando (cambio del port, canStepOn): media altura, la de una dalle */
+	static inline var STEP_UP = 0.5;
 
 	public var world(default, null) : World;
 	public var info(default, null) : SaveInfo;
@@ -872,6 +874,19 @@ class GameView {
 		return -1;
 	}
 
+	/**
+	 * Escalon (cambio del port): lo que una sonda de las paredes toca en (x, y) a la altura de los pies se sube andando si acaba
+	 * como mucho STEP_UP mas arriba y deja sitio encima para el cuerpo (las otras sondas) y la cabeza. El original paraba contra
+	 * cualquier bloque, tambien uno de media altura, y habia que saltar. Una dalle y luego un bloque entero, medio bloque mas alto
+	 * cada uno, se suben seguidos; un bloque entero desde el suelo no.
+	 */
+	function canStepOn( x : Float, y : Float ) : Bool {
+		var top = pz + STEP_UP + 0.01;
+		for( dz in [0., 0.5, 1., 1.3, VIEW_Z + 0.13] )
+			if( collide(x, y, top + dz) ) return false;
+		return true;
+	}
+
 	function doMove( dt : Float, speed : Float, strafe : Float, useJetpack : Bool ) {
 		if( stun > 0 ) stun -= dt;
 
@@ -995,6 +1010,9 @@ class GameView {
 					if( !found ) break;
 					h += 1 / 32;
 				}
+				// cambio del port: al subir un escalon andando (canStepOn) los ojos se quedan a la misma altura y luego suben despacio
+				// hasta la de siempre (updateViewZ), en vez de saltar de golpe con los pies. Al aterrizar (sin suelo antes) no
+				if( standingBlock != null && h > pz ) viewZ -= h - pz;
 				pz = h;
 			}
 			if( jetpack < 1 ) jetpack += jconsume * 7 * dt;
@@ -1079,6 +1097,9 @@ class GameView {
 					var a2 = a + ((k & 1) * 2 - 0.99) * (k >> 1) * Math.PI / 8;
 					var px2 = px + Math.cos(a2) * 0.45, py2 = py + Math.sin(a2) * 0.45;
 					if( collide(px2, py2, qz) == (dz < 0) ) continue;
+					// cambio del port: con los pies en el suelo, un escalon no frena; el cuerpo pasa por encima hasta que los pies lo
+					// pisan y suben (recolocar los pies sobre el suelo)
+					if( dz == 0 && col && canStepOn(px2, py2) ) continue;
 					px -= Math.cos(a2) * dist / 20;
 					py -= Math.sin(a2) * dist / 20;
 					pushPower += dist / 20;

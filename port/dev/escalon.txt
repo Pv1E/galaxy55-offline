@@ -1,0 +1,103 @@
+# escalon (cambio del port, GameView.canStepOn): andando se sube sin saltar lo que mide como mucho medio bloque mas que los
+# pies (una dalle de madera o blindada) si queda sitio encima para la cabeza; una dalle y luego un bloque entero se suben
+# seguidos. Un bloque entero desde el suelo sigue parando. Al subir, los ojos se quedan a la misma altura y suben despacio.
+# Suelo de roca en z=56 (los pies a 57); cada caso en su carril (y), andando hacia +x desde x=60.5 hasta una pared alta.
+wait 3
+planet
+wait 30
+filla 54 54 76 79 57 90 none
+filla 54 54 76 79 56 56 BRock
+# carril 1 (y=58): dos dalles y la pared -> encima de la dalle, pies a 57.5
+filla 62 58 63 58 57 57 BWoodPlate
+filla 64 58 64 58 57 61 BRock
+# carril 2 (y=61): una dalle y luego bloques enteros -> encima del bloque, pies a 58
+filla 62 61 62 61 57 57 BWoodPlate
+filla 63 61 64 61 57 57 BRock
+filla 65 61 65 61 57 62 BRock
+# carril 3 (y=64): un bloque entero desde el suelo -> parado delante (x ~61.55), pies a 57
+filla 62 64 62 64 57 57 BRock
+filla 63 64 63 64 57 61 BRock
+# carril 4 (y=67): dalles con un techo a z=59 encima (la cabeza no cabria arriba) -> parado delante, pies a 57
+filla 62 67 63 67 57 57 BWoodPlate
+filla 62 67 63 67 59 59 BRock
+filla 64 67 64 67 57 61 BRock
+# carril 5 (y=70): escalera de medio bloque en medio bloque -> arriba del todo, pies a 59.5
+filla 62 70 62 70 57 57 BWoodPlate
+filla 63 70 66 70 57 57 BRock
+filla 64 70 64 70 58 58 BWoodPlate
+filla 65 70 66 70 58 58 BRock
+filla 66 70 66 70 59 59 BWoodPlate
+filla 67 70 67 70 57 63 BRock
+# carril 6 (y=73): bloque de 0.65 (BWinterHidden) -> parado delante, pies a 57
+filla 62 73 63 73 57 57 BWinterHidden
+filla 64 73 64 73 57 61 BRock
+# carril 7 (y=76): dalles blindees (las de la nave) -> encima, pies a 57.5
+filla 62 76 63 76 57 57 BShipPlate
+filla 64 76 64 76 57 61 BRock
+tp 60.5 58.5 57.01 0 0
+waitfor ground
+walk 1
+wait 120
+walk 0
+print pos
+tp 60.5 61.5 57.01 0 0
+waitfor ground
+walk 1
+wait 120
+walk 0
+print pos
+tp 60.5 64.5 57.01 0 0
+waitfor ground
+walk 1
+wait 120
+walk 0
+print pos
+tp 60.5 67.5 57.01 0 0
+waitfor ground
+walk 1
+wait 120
+walk 0
+print pos
+tp 60.5 70.5 57.01 0 0
+waitfor ground
+walk 1
+wait 160
+walk 0
+print pos
+tp 60.5 73.5 57.01 0 0
+waitfor ground
+walk 1
+wait 120
+walk 0
+print pos
+tp 60.5 76.5 57.01 0 0
+waitfor ground
+walk 1
+wait 120
+walk 0
+print pos
+# los ojos al subir la dalle del carril 1: bajan de 1.5 lo que suben los pies y vuelven a 1.5
+tp 61.2 58.5 57.01 0 0
+waitfor ground
+wait 20
+vitals
+walk 1
+wait 1
+vitals
+wait 1
+vitals
+wait 1
+vitals
+wait 1
+vitals
+wait 1
+vitals
+walk 0
+wait 1
+vitals
+wait 2
+vitals
+wait 4
+vitals
+wait 30
+vitals
