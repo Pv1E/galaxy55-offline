@@ -69,6 +69,7 @@ class TutoSetup {
 		info.seed = uni.start.seed;
 		info.biome = uni.start.biome;
 		info.sizeChunks = uni.start.size;
+		info.genVersion = gen.Generator.VERSION;
 		info.px = info.py = info.pz = -1;
 		info.life = 100;
 	}

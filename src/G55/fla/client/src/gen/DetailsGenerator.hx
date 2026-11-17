@@ -1,6 +1,12 @@
 package gen;
 import Common;
 
+/**
+ * Anadido del port: una linea de las listas de anomalias (addDetails, addCaveDetails). since: primera version del generador que
+ * la tiene; until: primera que ya no (Generator.VERSION); null = desde siempre / sin fin
+ */
+typedef AnomalyDef = { f : Int -> Int -> Int -> Bool, p : Int, n : String, ?since : Null<Int>, ?until : Null<Int> };
+
 class DetailsGenerator extends BiomeGenerator {
 
 	static inline var HEIGHT = Generator.HEIGHT;
@@ -52,8 +58,16 @@ class DetailsGenerator extends BiomeGenerator {
 		}
 	}
 	
+	/**
+	 * Anadido del port: las anomalias de la lista que tiene la version de este planeta, en el mismo orden. Un planeta de una
+	 * version anterior tiene la misma lista que entonces, asi que hace las mismas tiradas de rnd y sale igual.
+	 */
+	function forVersion( det : Array<AnomalyDef> ) : Array<AnomalyDef> {
+		return [for( d in det ) if( (d.since == null || d.since <= version) && (d.until == null || version < d.until) ) d];
+	}
+
 	override function addCaveDetails() {
-		var det = [
+		var det = forVersion([
 			{ f : detCaveField, p : 3, n : "cavegarden" },
 			{ f : detCaveCeilPlant, p : 3, n : "cavegarden" },
 			{ f : detCaveSphere, p : 15, n : "cavesphere" },
@@ -66,7 +80,7 @@ class DetailsGenerator extends BiomeGenerator {
 			{ f : detCaveCeilCharges, p : 3, n : "cavecharges" },
 			{ f : detCaveWallDetails, p : 2, n : "caveveins" },
 			{ f : detCaveHeal, p : 5, n : "cavegarden" },
-		];
+		]);
 		
 		FlashSort.sort(det, function(d1, d2) return Reflect.compare(d2.p, d1.p));
 		var surf = size / 128;
@@ -146,7 +160,7 @@ class DetailsGenerator extends BiomeGenerator {
 	
 	override function addDetails() {
 		// p(X) ~= 1 planete sur X
-		var det = [
+		var det = forVersion([
 			{ f : detBigCrater, p : 100, n : "bigcrater" },
 			{ f : detSmallCrater, p : 10, n : "crater" },
 			{ f : detStrangePilars, p : 200, n : "pillars" },
@@ -169,7 +183,7 @@ class DetailsGenerator extends BiomeGenerator {
 			{ f : detRuin, p : 50, n : "ruins" },
 			{ f : detCascade, p : 7, n : "cascade" },
 			{ f : detHeal, p : 5, n : "heal" },
-		];
+		]);
 		
 		FlashSort.sort(det, function(d1, d2) return Reflect.compare(d2.p, d1.p));
 		var surf = size / 128;

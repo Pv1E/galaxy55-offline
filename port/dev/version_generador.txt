@@ -1,0 +1,42 @@
+# version del generador de cada planeta (anadido del port: Generator.VERSION, SaveInfo.genVersion, UniPlanet.genVersion).
+# Aventura sin tutorial, semilla 4242 (sistema 0: planetas 0 y 1). Al aterrizar en un planeta nuevo: la version actual (mundo =
+# actual = partida). genversion 5 hace del planeta 0 uno visitado con la version 5: al despegar se guarda con ella (visitados 0:5),
+# sigue tras guardar y recargar, y al volver a el su mundo se genera con la 5 (mundo 5, partida 5). -Timeout 600
+wait 3
+tuto notuto 4242
+waitfor map
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+print gen
+genversion 5
+ship
+wait 10
+explore
+waitfor map 6000
+waitfor system
+expplanet 1
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+print gen
+savegame
+reload
+waitfor ready
+print gen
+ship
+wait 10
+explore
+waitfor map 6000
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+print gen
+quit

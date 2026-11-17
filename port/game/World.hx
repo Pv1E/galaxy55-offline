@@ -261,7 +261,8 @@ class World {
 	var wraps = true;
 	var ownSky = true;
 
-	public function new( seed : Int, biomeName : String, sizeChunks : Int, parent : h3d.scene.Object, atlas : h3d.mat.Texture, menuFog = false, ?savedEdits : Array<Int>, ?shipData : ShipData.ShipDataInfo, ?sharedSky : Sky ) {
+	/** genVersion: version del generador del planeta (SaveInfo.genVersion); null = la actual (gen.Generator.VERSION) */
+	public function new( seed : Int, biomeName : String, sizeChunks : Int, parent : h3d.scene.Object, atlas : h3d.mat.Texture, menuFog = false, ?savedEdits : Array<Int>, ?shipData : ShipData.ShipDataInfo, ?sharedSky : Sky, ?genVersion : Null<Int> ) {
 		this.savedEdits = savedEdits;
 		this.seed = seed;
 		this.biomeName = biomeName;
@@ -292,6 +293,7 @@ class World {
 			wave.time = 0;
 		}
 		gen = comet ? new CometGenerator(size, seed) : new gen.DetailsGenerator(size, seed);
+		if( genVersion != null ) gen.version = genVersion;
 		var bd = Data.getBiome(biome);
 		sunP = bd.sunPower;
 		sunF = bd.sunFalloff == null ? 1 : bd.sunFalloff;
