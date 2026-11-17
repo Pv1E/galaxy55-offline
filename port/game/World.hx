@@ -261,7 +261,8 @@ class World {
 	var wraps = true;
 	var ownSky = true;
 
-	public function new( seed : Int, biomeName : String, sizeChunks : Int, parent : h3d.scene.Object, atlas : h3d.mat.Texture, menuFog = false, ?savedEdits : Array<Int>, ?shipData : ShipData.ShipDataInfo, ?sharedSky : Sky ) {
+	/** genVersion: version del generador del planeta (SaveInfo.genVersion); null = la actual (gen.Generator.VERSION) */
+	public function new( seed : Int, biomeName : String, sizeChunks : Int, parent : h3d.scene.Object, atlas : h3d.mat.Texture, menuFog = false, ?savedEdits : Array<Int>, ?shipData : ShipData.ShipDataInfo, ?sharedSky : Sky, ?genVersion : Null<Int> ) {
 		this.savedEdits = savedEdits;
 		this.seed = seed;
 		this.biomeName = biomeName;
@@ -292,6 +293,7 @@ class World {
 			wave.time = 0;
 		}
 		gen = comet ? new CometGenerator(size, seed) : new gen.DetailsGenerator(size, seed);
+		if( genVersion != null ) gen.version = genVersion;
 		var bd = Data.getBiome(biome);
 		sunP = bd.sunPower;
 		sunF = bd.sunFalloff == null ? 1 : bd.sunFalloff;
@@ -563,6 +565,11 @@ class World {
 		if( b == null || !b.collide ) return false;
 		if( b.size == null ) return true;
 		var fz = z - iz;
+		// cambio del port: un tableau (BFOnWall) solo choca con su placa; los demas bloques parciales, con todo el ancho de la celda
+		if( b.wall >= 0 ) {
+			var fx = x - ix, fy = y - iy;
+			if( fx < b.size.x1 || fx >= b.size.x2 || fy < b.size.y1 || fy >= b.size.y2 ) return false;
+		}
 		return fz >= b.size.z1 && fz < b.size.z2;
 	}
 
@@ -1781,8 +1788,7 @@ class World {
 
 	/** modelos de Builder.hx (plantas en cruz, planos, columnas, cajas): se copia la geometria del original */
 	function addModel( m : MeshBuf, b : Block, x : Int, y : Int, z : Int ) {
-		var mk = b.model != null ? b.model : MCross;
-		var md = Models.get(mk);
+		var md = Models.of(b);
 		var v = md.v;
 		var n = Std.int(v.length / 24);
 		// los modelos usan la luz de su propia celda (Builder: getLight(p) / LBASE)

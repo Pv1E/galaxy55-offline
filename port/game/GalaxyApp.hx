@@ -1840,7 +1840,7 @@ class GalaxyApp extends hxd.App {
 		uni.ship = null;
 		// los cambios del planeta del que despegaste se guardan con su id (si aun tiene licencia: abandonado, se pierden)
 		uni.planets = uni.planets.filter(function(q) return q.id != uni.planetId);
-		if( Licenses.has(uni, uni.planetId) ) uni.planets.push({ id : uni.planetId, edits : old.edits, shipAt : old.shipAt });
+		if( Licenses.has(uni, uni.planetId) ) uni.planets.push({ id : uni.planetId, edits : old.edits, shipAt : old.shipAt, genVersion : old.genVersion });
 		var target : SaveData.UniPlanet = null;
 		for( q in uni.planets ) if( q.id == p.id ) target = q;
 		uni.planets = uni.planets.filter(function(q) return q.id != p.id);
@@ -1861,6 +1861,8 @@ class GalaxyApp extends hxd.App {
 		old.sizeChunks = p.size;
 		old.edits = target != null ? target.edits : [];
 		old.shipAt = target != null ? target.shipAt : null; // donde se dejo la nave en ese planeta (anadido del port)
+		// el generador con el que se visito por primera vez; un planeta sin cambios guardados sale con el de ahora (anadido del port)
+		old.genVersion = target != null ? SaveData.genVersion(target.genVersion) : gen.Generator.VERSION;
 		old.px = old.py = old.pz = -1;
 		old.yaw = old.pitch = 0;
 		startGame(old);
@@ -2158,7 +2160,7 @@ class GalaxyApp extends hxd.App {
 			? new World(info.seed, "BIMoon", (Mothership.data() != null ? Mothership.sizeChunks : 1), s3d, atlas, false, null, Mothership.withShip(Hangar.currentShip(info)))
 			: info.hangar == true
 			? new World(info.seed, "BIShed", 1, s3d, atlas, false, null, TutoSetup.holed(info, Hangar.shedData(Hangar.currentShip(info))))
-			: new World(info.seed, info.biome, info.sizeChunks, s3d, atlas, false, info.edits);
+			: new World(info.seed, info.biome, info.sizeChunks, s3d, atlas, false, info.edits, null, null, SaveData.genVersion(info.genVersion));
 		if( info.mothership == true ) {
 			loadWorld.sky.fog.curve = 0.00001;
 			loadWorld.lightTop = Mothership.Z0 + Mothership.LZ + 4;

@@ -75,8 +75,7 @@ class IconMesh {
 	}
 
 	static function model( m : MeshBuf, b : Block ) {
-		var mk = b.model != null ? b.model : MCross;
-		var md = Models.get(mk);
+		var md = Models.of(b);
 		var v = md.v;
 		for( q in 0...Std.int(v.length / 24) ) {
 			var sel = Std.int(v[q * 24 + 3]);
@@ -231,6 +230,8 @@ class Icons {
 	static var scene : h3d.scene.Scene;
 	/** el icono del original (45 px) por dos: el contorno se calcula en proporcion */
 	static inline var SIZE = 90;
+	/** lado mayor de un tableau en su icono, en bloques (anadido del port) */
+	static inline var PAINTING_SPAN = 1.45;
 	/** tamano de los iconos: 256 px con mipmaps, para dibujarlos lisos a cualquier tamano */
 	static inline var HIRES = 256;
 
@@ -469,7 +470,17 @@ class Icons {
 			mat.textureShader.killAlpha = true;
 			mat.textureShader.killAlphaThreshold = 0.5;
 		}
-		var mesh = new h3d.scene.Mesh(poly, mat, scene);
+		// tableau (BFOnWall): de frente, girado hacia la camara, con su placa en el centro y del tamano de un cubo (de lado, en el
+		// fondo de la celda, salia diminuto)
+		var pivot = new h3d.scene.Object(scene);
+		var mesh = new h3d.scene.Mesh(poly, mat, pivot);
+		if( b.wall >= 0 && b.size != null ) {
+			var c = Painting.center(b), s = b.size;
+			pivot.setPosition(0.5, 0.5, 0.5);
+			pivot.setRotation(0, 0, Math.PI * 0.25 - Math.PI * 0.5 * b.wall);
+			pivot.setScale(Math.min(2.5, PAINTING_SPAN / Math.max(Math.max(s.x2 - s.x1, s.y2 - s.y1), s.z2 - s.z1)));
+			mesh.setPosition(-c.x, -c.y, -c.z);
+		}
 		var cam = scene.camera;
 		// vista isometrica aproximada: perspectiva con angulo muy estrecho, desde +x, -y y arriba
 		cam.orthoBounds = null;
@@ -484,7 +495,7 @@ class Icons {
 		engine.clear(0x00000000, 1, 0);
 		scene.render(engine);
 		engine.popTarget();
-		mesh.remove();
+		pivot.remove();
 		poly.dispose();
 		return true;
 	}

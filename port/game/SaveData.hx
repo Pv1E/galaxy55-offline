@@ -4,6 +4,8 @@ typedef UniPlanet = {
 	var edits : Array<Int>;
 	/** donde se dejo la nave pilotandola (anadido del port); null = el sitio de aterrizaje de siempre */
 	@:optional var shipAt : { x : Int, y : Int };
+	/** version del generador del planeta (anadido del port, SaveInfo.genVersion); null = 0 */
+	@:optional var genVersion : Null<Int>;
 }
 
 /**
@@ -87,6 +89,11 @@ typedef SaveInfo = {
 	@:optional var inv : Protocol.InventoryInfos;
 	/** cambios del terreno: pares [celda, bloque global]; con clave negativa, el nivel del mar y su contador (World.SEA_LEVEL) */
 	@:optional var edits : Array<Int>;
+	/**
+	 * version del generador del planeta actual (anadido del port, gen.Generator.VERSION): la que habia al visitarlo por primera
+	 * vez, para que el terreno bajo edits no cambie. null = 0 (las partidas de antes, generadas como la version 0)
+	 */
+	@:optional var genVersion : Null<Int>;
 	/** cambios en la nave (bloques puestos en las zonas de sintetizador, puertas abiertas): igual que edits pero en el volumen de la nave */
 	@:optional var shipEdits : Array<Int>;
 	/** modo creativo: bloques sin limite, rotura instantanea y jetpack infinito (no existe en el original) */
@@ -165,7 +172,13 @@ class SaveData {
 		return {
 			version : VERSION, id : newId(), name : name, seed : seed, biome : biome, sizeChunks : sizeChunks,
 			created : now, saved : now, createdWith : GalaxyApp.VERSION, savedWith : GalaxyApp.VERSION, playSeconds : 0, px : -1, py : -1, pz : -1, yaw : 0, pitch : 0, fly : false, inv : creative ? Inv.defaults() : Inv.empty(), edits : [], shipEdits : [], creative : creative, credits : Market.START_CREDITS,
+			genVersion : gen.Generator.VERSION,
 		};
+	}
+
+	/** version del generador guardada (SaveInfo.genVersion, UniPlanet.genVersion, tambien recien leida del json): null = 0 */
+	public static function genVersion( v : Dynamic ) : Int {
+		return v == null ? 0 : Std.int(v);
 	}
 
 	static function readUni( o : Dynamic ) : UniInfo {
@@ -174,7 +187,7 @@ class SaveData {
 			return {
 				seed : Std.int(o.seed), planetId : Std.int(o.planetId), pos : [for( v in (o.pos : Array<Dynamic>) ) Std.int(v)],
 				start : { seed : Std.int(o.start.seed), biome : o.start.biome, size : Std.int(o.start.size) },
-				planets : [for( p in (o.planets : Array<Dynamic>) ) { id : Std.int(p.id), edits : [for( v in (p.edits : Array<Dynamic>) ) Std.int(v)], shipAt : readSpot(p.shipAt) }],
+				planets : [for( p in (o.planets : Array<Dynamic>) ) { id : Std.int(p.id), edits : [for( v in (p.edits : Array<Dynamic>) ) Std.int(v)], shipAt : readSpot(p.shipAt), genVersion : genVersion(p.genVersion) }],
 				robot : o.robot != null ? { x : (o.robot.x : Float), y : (o.robot.y : Float) } : null,
 				space : o.space == true ? true : null,
 				ship : o.ship != null ? { x : (o.ship.x : Float), y : (o.ship.y : Float) } : null,
@@ -360,6 +373,7 @@ class SaveData {
 					creative : o.creative == true, tutorial : o.tutorial == null ? null : o.tutorial == true, inv : readInv(o.inv), uni : uni, credits : o.credits != null ? Std.int(o.credits) : Market.START_CREDITS, market : readMarket(o.market), contracts : readContracts(o.contracts), special : readSpecial(o.special), chests : readChests(o.chests), shipData : o.shipData,
 					upgrades : readUpgrades(o.upgrades),
 					shipEdits : o.shipEdits != null ? [for( v in (o.shipEdits : Array<Dynamic>) ) Std.int(v)] : [], edits : o.edits != null ? [for( v in (o.edits : Array<Dynamic>) ) Std.int(v)] : [],
+					genVersion : genVersion(o.genVersion),
 					deathDrops : DeathDrops.read(o.deathDrops), dropOnDeath : o.dropOnDeath != false,
 					survival : o.creative == true && o.survival == true ? true : null,
 					tuto : readTuto(o.tuto), shipAt : readSpot(o.shipAt), comet : readComet(o.comet), kub : readKub(o.kub),

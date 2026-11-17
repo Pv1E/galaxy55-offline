@@ -10,7 +10,7 @@ import Block;
  * - los liquidos con BFPropagate (cascada, lava) caen y se extienden con su bloque de "flujo"; si pierden la fuente,
  *   desaparecen (updatePropagate, cada 0,1 s con un retraso de 2 a 4 pasos);
  * - la hierba se cubre al quedar al aire (covered) y se descubre al taparla (uncover);
- * - al quitar un bloque se rompen los detalles de encima y lo anclado arriba o abajo;
+ * - al quitar un bloque se rompen los detalles de encima, lo anclado arriba o abajo y los tableaux colgados de el (anadido del port);
  * - congelador (BFreezer): el agua cercana pasa a hielo y la lava a roca; BFTransform cambia el bloque al quitarlo;
  * - bloques con BFTrack (PTrack: el turbo minero): con el jugador dentro de su radio, la potencia de excavacion pasa a 3;
  * - cada bloque del agua del bioma que se pone aqui cuenta para bajar el nivel del mar (api.processBlock de Process.set, que
@@ -256,6 +256,12 @@ class WorldProcess {
 				breakFn(real(x), real(y), z + 1, over);
 			if( under != null && under.hasAnchor(Up) )
 				breakFn(real(x), real(y), z - 1, under);
+			// cambio del port: los tableaux (BFOnWall) colgados de este bloque
+			for( d in DIRS ) {
+				var p = get(x + d[0], y + d[1], z);
+				if( p != null && p.wall >= 0 && Block.WALL_DX[p.wall] == -d[0] && Block.WALL_DY[p.wall] == -d[1] )
+					breakFn(real(x + d[0]), real(y + d[1]), z, p);
+			}
 		} else {
 			// cubrir si se pone bajo un hueco o algo transparente
 			if( b.covered != null && (over == null || over.isTransparent()) )

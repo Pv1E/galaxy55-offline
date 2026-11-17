@@ -223,6 +223,11 @@ class KubeEditor extends Screen {
 	var boxRoot : h2d.Object;
 	var boxBars = new Array<h2d.Graphics>();
 	var boxTexts = new Array<h2d.Text>();
+	/** botones de las cajas de ejemplo: los de la caja (dalla, neon...) o los tres modelos de tableau */
+	var boxPresets = new Array<KButton>();
+	/** titulo de la caja: el de un tableau dice que es cada eje */
+	var boxTitle : h2d.Text;
+	var paintingPresets = new Array<KButton>();
 	var doorButton : KButton;
 	var tileButton : KButton;
 	var spinButton : KButton;
@@ -300,6 +305,7 @@ class KubeEditor extends Screen {
 		if( b.index == 0 || b.type == BTInvisible || b.type == BTWater || b.propagate != null || b.k == BKubeEditor ) return false;
 		if( b.flip != null && b.flip.index < b.index ) return false;
 		if( b.toggle != null && b.toggle.index < b.index ) return false;
+		if( b.wall > 0 ) return false;
 		return true;
 	}
 
@@ -478,6 +484,9 @@ class KubeEditor extends Screen {
 		shapeChoice.onChange = function(i) {
 			var s = KubeData.SHAPES[i];
 			if( s.id == "door" && kube.shape.id != "door" ) kube.box = KubeData.BOXES.get("door").copy();
+			// la caja de un tableau va en pixeles de la imagen vista de frente: al entrar o salir se pone una de ejemplo
+			if( (s.id == "painting") != (kube.shape.id == "painting") )
+				kube.box = KubeData.BOXES.get(s.id == "painting" ? "pcenter" : s.id == "door" ? "door" : "slab").copy();
 			kube.shape = s;
 			kube.fillMissingFaces();
 			if( !kube.usesFace(face) ) face = s.faces[0];
@@ -522,7 +531,7 @@ class KubeEditor extends Screen {
 		shapeInfo = Theme.text(this, "", 1.2, Theme.DIM, RX + 10, 276);
 		shapeInfo.maxWidth = (RW - 20) / shapeInfo.scaleX;
 		boxRoot = new h2d.Object(this);
-		Theme.text(boxRoot, Lang.t("kube.box"), 1.2, Theme.DIM, RX + 10, 270);
+		boxTitle = Theme.text(boxRoot, Lang.t("kube.box"), 1.2, Theme.DIM, RX + 10, 270);
 		for( a in 0...3 ) {
 			var y = 286 + a * 24;
 			Theme.text(boxRoot, ["X", "Y", "Z"][a], 1.4, Theme.TEXT, RX + 10, y + 3);
@@ -536,6 +545,8 @@ class KubeEditor extends Screen {
 				var v = Math.round(e.relX / 240 * S);
 				var lo = Math.abs(v - kube.box[a]) <= Math.abs(v - kube.box[a + 3]);
 				if( kube.box[a] == kube.box[a + 3] ) lo = v < kube.box[a];
+				// tableau: Y es el grosor, desde la pared (0)
+				if( a == 1 && kube.shape.id == "painting" ) lo = false;
 				var set = function(mx : Float, _ : Float) {
 					var v = Math.round((mx - g.x) / 240 * S);
 					if( lo ) v = Std.int(Math.max(0, Math.min(kube.box[a + 3] - 1, v))) else v = Std.int(Math.max(kube.box[a] + 1, Math.min(S, v)));
@@ -555,12 +566,16 @@ class KubeEditor extends Screen {
 		for( i in 0...presets.length ) {
 			var b = new KButton(boxRoot, Lang.t("kube.box." + presets[i]), 68, 22, 1.2);
 			b.setPosition(RX + i * 73, 360);
-			b.onClick = function() {
-				kube.box = KubeData.BOXES.get(presets[i]).copy();
-				changed();
-				rebuildPreview();
-				drawBox();
-			};
+			b.onClick = function() setBox(presets[i]);
+			boxPresets.push(b);
+		}
+		// los tres modelos de tableau: cuadrado en el centro, pared entera, media altura de lado a lado
+		var paint = KubeData.PAINTING_BOXES;
+		for( i in 0...paint.length ) {
+			var b = new KButton(boxRoot, Lang.t("kube.box." + paint[i]), 116, 22, 1.2);
+			b.setPosition(RX + i * 122, 360);
+			b.onClick = function() setBox(paint[i]);
+			paintingPresets.push(b);
 		}
 
 		var pv = new h2d.Bitmap(h2d.Tile.fromTexture(previewTex), this);
@@ -652,6 +667,10 @@ class KubeEditor extends Screen {
 		collideButton.selected = kube.noCollide;
 		boxRoot.visible = kube.shape.box;
 		shapeInfo.visible = !kube.shape.box;
+		var painting = kube.shape.id == "painting";
+		for( b in boxPresets ) b.visible = !painting;
+		for( b in paintingPresets ) b.visible = painting;
+		boxTitle.text = Lang.t(painting ? "kube.box.painting" : "kube.box");
 		refreshShapeInfo();
 		doorButton.visible = kube.shape.id == "door";
 		refreshTileButton();
@@ -666,6 +685,14 @@ class KubeEditor extends Screen {
 
 	function changed() {
 		dirty = true;
+	}
+
+	/** una de las cajas de ejemplo (KubeData.BOXES) */
+	function setBox( id : String ) {
+		kube.box = KubeData.BOXES.get(id).copy();
+		changed();
+		rebuildPreview();
+		drawBox();
 	}
 
 	function refreshLight() {
@@ -718,6 +745,7 @@ class KubeEditor extends Screen {
 	function faceLabel( f : Int ) : String {
 		var id = kube.shape.id;
 		var key = switch( f ) {
+			case KubeData.SIDE if( id == "painting" ): "painting";
 			case KubeData.SIDE if( kube.shape.faces.length == 1 ): "pattern";
 			case KubeData.SIDE if( id == "door" ): "closed";
 			case KubeData.UP if( id == "pipe" ): "end1";

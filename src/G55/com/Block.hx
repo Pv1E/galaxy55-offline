@@ -40,6 +40,13 @@ class Block {
 
 	public var anchors : Int;
 	public var magnets : Int;
+	/**
+	 * Anadido del port: tableau colgado de una pared (BFOnWall): cuartos de vuelta desde el primero de sus 4 bloques seguidos
+	 * (-1: no lo es). La pared esta en WALL_DX/WALL_DY[wall] desde su celda
+	 */
+	public var wall : Int;
+	public static var WALL_DX = [0, -1, 0, 1];
+	public static var WALL_DY = [1, 0, -1, 0];
 
 	public var requiredPower : Null<Float>;
 	/** precio base en créditos (los datos originales lo traen; el juego original lo usaba en la tienda ESCorp, web) */
@@ -75,6 +82,7 @@ class Block {
 		weight = 1;
 		anchors = 0;
 		magnets = 7;
+		wall = -1;
 		drop = this;
 		dropCount = 1;
 	}
@@ -134,7 +142,16 @@ class Block {
 
 	public function isSame( b : Block ) {
 		if( b == null ) return index == 0;
+		if( wall >= 0 && b.wall >= 0 && b.index - b.wall == index - wall ) return true;
 		return b == this || covered == b || uncover == b || flip == b || toggle == b;
+	}
+
+	/** tableau (BFOnWall): el de sus 4 bloques que cuelga de la pared que esta en (dx, dy) desde su celda; null si no hay */
+	public function onWall( dx : Int, dy : Int ) : Block {
+		if( wall < 0 ) return null;
+		for( t in 0...4 )
+			if( WALL_DX[t] == dx && WALL_DY[t] == dy ) return all[index - wall + t];
+		return null;
 	}
 
 	public function toString() {
@@ -142,6 +159,7 @@ class Block {
 	}
 
 	public function getMain() {
+		if( wall > 0 ) return all[index - wall].getMain();
 		if( uncover != null ) return uncover.getMain();
 		if( flip != null && flip.index < index ) return flip.getMain();
 		if( toggle != null && toggle.index < index ) return toggle.getMain();
@@ -150,6 +168,7 @@ class Block {
 
 	public function getDrop() {
 		if( !hasProp(PCanPick) ) return null;
+		if( wall > 0 ) return all[index - wall].getDrop();
 		if( uncover != null ) return uncover.getDrop();
 		if( flip != null && flip.index < index ) return flip.getDrop();
 		if( toggle != null && toggle.index < index ) return toggle.getDrop();
@@ -320,6 +339,8 @@ class Block {
 					b.props.set(PTrack);
 				case BFContainer(_):
 					b.props.set(PContainer);
+				case BFOnWall(t):
+					b.wall = t;
 				case BFAlpha(_), BFColor(_), BFDamage(_), BFSlippy, BFHeal(_), BFJump(_), BFNoOptimize, BFScroll(_):
 					// nothing
 				}
