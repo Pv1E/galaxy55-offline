@@ -1,0 +1,323 @@
+# Tableaux (anadido del port, Painting, BFOnWall): una placa pegada a la pared apuntada y vuelta hacia el jugador. Los 16 tableaux
+# de CroqueMotel (BKubePainting*, BKubePortrait*) y tres kubes del editor de forma "painting" (port/dev/tableaux) con los tres
+# modelos: centre = cuadrado en el centro, plein = la pared entera, demi = media altura (este atravesable). En los de prueba la
+# fila de arriba es blanca, la de abajo negra, la columna de la izquierda magenta y la de la derecha cian, con rojo arriba a la
+# izquierda: vistos de frente no salen al reves, y los cantos llevan esos colores.
+# Uso: powershell -File port/dev/devrun.ps1 -Script port/dev/tableaux.txt -Timeout 600 -Extra "--lang=fr"
+# Capturas port/out/tableaux_*.png
+wait 3
+edkube clear
+edkube import port/dev/tableaux/test-centre.kube
+edkube import port/dev/tableaux/test-plein.kube
+edkube import port/dev/tableaux/test-demi.kube
+planet
+wait 30
+creativegame
+reload
+waitfor planet 6000
+wait 30
+print edkubes
+# suelo de roca en z 56, aire encima, una pared de roca en y = 70 (x 52..76, z 57..61) y un pilar en (60, 58)
+filla 52 52 78 78 57 110 none
+filla 52 52 78 78 56 56 BRock
+filla 52 70 76 70 57 61 BRock
+filla 60 58 60 58 57 60 BRock
+wait 20
+# 1) ocho, puestos con la mano contra la pared (celdas y = 69, z = 58): todos el giro 0 (pared en +y)
+slot 1
+hand BKubePaintingFlowerVase
+tp 57.5 66.5 57.01 0 0
+waitfor ground
+lookat 57.5 70.05 58.5
+wait 5
+print select
+key place
+wait 8
+unkey
+wait 5
+hand BKubePaintingPottedPlant
+tp 59.5 66.5 57.01 0 0
+lookat 59.5 70.05 58.5
+wait 5
+key place
+wait 8
+unkey
+wait 5
+hand BKubePortraitMan
+tp 61.5 66.5 57.01 0 0
+lookat 61.5 70.05 58.5
+wait 5
+key place
+wait 8
+unkey
+wait 5
+hand BKubePaintingPyramid
+tp 63.5 66.5 57.01 0 0
+lookat 63.5 70.05 58.5
+wait 5
+key place
+wait 8
+unkey
+wait 5
+hand BKubePaintingFruitBasket
+tp 65.5 66.5 57.01 0 0
+lookat 65.5 70.05 58.5
+wait 5
+key place
+wait 8
+unkey
+wait 5
+hand kube:test-centre
+tp 67.5 66.5 57.01 0 0
+lookat 67.5 70.05 58.5
+wait 5
+key place
+wait 8
+unkey
+wait 5
+hand kube:test-plein
+tp 69.5 66.5 57.01 0 0
+lookat 69.5 70.05 58.5
+wait 5
+key place
+wait 8
+unkey
+wait 5
+hand kube:test-demi
+tp 71.5 66.5 57.01 0 0
+lookat 71.5 70.05 58.5
+wait 5
+key place
+wait 8
+unkey
+wait 5
+print block 57 69 58
+print block 59 69 58
+print block 61 69 58
+print block 63 69 58
+print block 65 69 58
+print block 67 69 58
+print block 69 69 58
+print block 71 69 58
+# los otros once tableaux de CroqueMotel, encima (z = 60), puestos directamente
+set 54 69 60 BKubePaintingYellowFlowers
+set 56 69 60 BKubePaintingSculpture
+set 58 69 60 BKubePaintingBush
+set 60 69 60 BKubePaintingHouse
+set 62 69 60 BKubePaintingBeach
+set 64 69 60 BKubePaintingAlley
+set 66 69 60 BKubePaintingShipwreck
+set 68 69 60 BKubePaintingMeadow
+set 70 69 60 BKubePaintingTree
+set 72 69 60 BKubePortraitWoman
+set 74 69 60 BKubePaintingMoonlight
+wait 20
+tp 64.5 61.5 57.01 0 0
+lookat 64.5 70 59.3
+wait 20
+shot tableaux_mur
+tp 68.5 67.5 57.01 0 0
+lookat 68.5 70 58.5
+wait 20
+shot tableaux_tests
+tp 55.5 66.5 57.01 0 0
+lookat 61 70 58.5
+wait 20
+shot tableaux_biais
+# 2) el pilar: el mismo tableau en sus cuatro caras, desde cada lado; cada una da otro giro (la pared detras: +y 0, -x 1, -y 2, +x 3)
+hand kube:test-plein
+tp 60.5 55.5 57.01 0 0
+lookat 60.5 58.05 58.5
+wait 5
+print select
+key place
+wait 8
+unkey
+wait 5
+tp 63.5 58.5 57.01 0 0
+lookat 60.95 58.5 58.5
+wait 5
+print select
+key place
+wait 8
+unkey
+wait 5
+tp 60.5 61.5 57.01 0 0
+lookat 60.5 58.95 58.5
+wait 5
+print select
+key place
+wait 8
+unkey
+wait 5
+tp 57.5 58.5 57.01 0 0
+lookat 60.05 58.5 58.5
+wait 5
+print select
+key place
+wait 8
+unkey
+wait 5
+print block 60 57 58
+print block 61 58 58
+print block 60 59 58
+print block 59 58 58
+tp 63.5 54.5 57.01 0 0
+lookat 60.5 58.5 58.5
+wait 20
+shot tableaux_pilier_a
+tp 57.5 62.5 57.01 0 0
+lookat 60.5 58.5 58.5
+wait 20
+shot tableaux_pilier_b
+# 3) sin pared no se pone: apuntando al suelo o al techo no hay giro posible
+tp 66.5 60.5 57.01 0 0
+lookat 66.5 62.5 56.9
+wait 5
+print select
+key place
+wait 8
+unkey
+wait 5
+print block 66 62 57
+# 4) la celda del tableau esta ocupada: ni un bloque ni una dalle. Apuntando a la pared por el hueco de alrededor del centrado no
+# se apunta nada (Render.pick: donde iria hay algo que no se pisa); apuntando al tableau, delante de el, pero nada lo sujeta
+# (BFMagnet(None), como el neon)
+hand BRock
+tp 67.5 66.5 57.01 0 0
+lookat 67.1 70.05 58.1
+wait 5
+print select
+lookat 67.5 69.95 58.5
+wait 5
+print select
+key place
+wait 8
+unkey
+wait 5
+print block 67 68 58
+# en la mano: de frente, con la placa en el centro
+hand BKubePortraitMan
+wait 10
+shot tableaux_main
+# 5) choca con la placa, no con toda la celda: se anda hacia la pared hasta tocarla (atravesable: hasta la pared misma)
+tp 57.5 66.5 57.01 1.5708 0
+look 1.5708 0
+waitfor ground
+walk 1 0
+wait 60
+walk 0 0
+print pos
+tp 71.5 66.5 57.01 1.5708 0
+look 1.5708 0
+waitfor ground
+walk 1 0
+wait 60
+walk 0 0
+print pos
+tp 73.5 66.5 57.01 1.5708 0
+look 1.5708 0
+waitfor ground
+walk 1 0
+wait 60
+walk 0 0
+print pos
+# 5b) pegado al tableau (de pie en su celda, contra la placa) se apunta y se rompe con el excavador; con un bloque en la mano no
+# se apunta (no se pone nada en la celda del jugador)
+tp 57.5 66.5 57.01 1.5708 0
+look 1.5708 0
+waitfor ground
+walk 1 0
+wait 60
+walk 0 0
+print pos
+lookat 57.5 70 58.5
+wait 5
+print select
+slot 0
+wait 5
+print select
+key dig
+wait 20
+unkey
+wait 5
+print block 57 69 58
+slot 1
+# 6) se rompe con el excavador (en creativo al momento y sin soltar nada)
+tp 59.5 66.5 57.01 0 0
+slot 0
+mine 59 69 58
+wait 10
+print block 59 69 58
+print drops
+slot 1
+# 7) sin la pared, se cae: en supervivencia suelta el tableau (el primero de los 4, el de la paleta)
+mode survival
+breakp 61 70 58
+wait 10
+print block 61 69 58
+print drops
+breakp 60 58 58
+wait 10
+print block 60 57 58
+print block 61 58 58
+print block 60 59 58
+print block 59 58 58
+print drops
+mode creative
+tp 61.5 66.5 57.01 0 0
+lookat 61 68 57.2
+wait 20
+shot tableaux_sueltos
+# 8) el agua los rompe: agua puesta encima del de la pyramide (cae en su celda) y en el suelo a dos celdas de uno colgado abajo
+# (se extiende hasta el)
+set 73 69 57 kube:test-plein
+setp 63 69 59 BWater
+setp 73 67 57 BWater
+wait 160
+print block 63 69 58
+print block 73 69 57
+tp 64.5 62.5 57.01 0 0
+lookat 64.5 70 58.5
+wait 20
+shot tableaux_agua
+# 9) la paleta creativa: los 16 tableaux de CroqueMotel, sin sus giros (Turn1..3: basePrice null)
+palette
+tap tab
+type tableau
+wait 10
+print palnames
+shot tableaux_palette
+close
+palette
+tap tab
+type portrait
+wait 10
+print palnames
+close
+# 10) el editor de kubes: la forma Tableau y sus tres modelos; un tableau del juego se copia con su caja (marco naranja: 28x23)
+menu
+waitfor menu
+tap down
+tap down
+tap enter
+wait 30
+kube shape painting
+kube view
+wait 5
+print kube
+shot tableaux_editeur_centre
+mouse 1084 371 click
+wait 5
+print kube
+shot tableaux_editeur_plein
+mouse 1206 371 click
+wait 5
+print kube
+shot tableaux_editeur_demi
+kube load BKubePaintingPyramid
+wait 5
+print kube
+shot tableaux_editeur_pyramide
+edkube clear
+quit

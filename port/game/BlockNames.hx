@@ -95,6 +95,15 @@ class BlockNames {
 		"BKubeMystery" => "Mystery Kube",
 		"BShipGlassRed" => "Red Tinted Toughened Glass", "BShipGlassBlue" => "Blue Tinted Toughened Glass",
 		"BShipGlassGreen" => "Green Tinted Toughened Glass", "BShipGlassPink" => "Pink Tinted Toughened Glass", "BShopBarrier" => "-",
+		// tableaux de CroqueMotel (anadidos del port)
+		"BKubePaintingYellowFlowers" => "Yellow Flowers Painting", "BKubePaintingSculpture" => "Sculpture Painting",
+		"BKubePaintingBush" => "Bush Painting", "BKubePaintingPottedPlant" => "Potted Plant Painting",
+		"BKubePaintingFlowerVase" => "Flower Vase Painting", "BKubePaintingFruitBasket" => "Fruit Basket Painting",
+		"BKubePaintingHouse" => "House Painting", "BKubePaintingBeach" => "Beach Painting",
+		"BKubePaintingPyramid" => "Pyramid Painting", "BKubePaintingAlley" => "Alley Painting",
+		"BKubePaintingShipwreck" => "Shipwreck Painting", "BKubePaintingMeadow" => "Meadow Painting",
+		"BKubePaintingMoonlight" => "Moonlight Painting", "BKubePortraitMan" => "Portrait of a Man",
+		"BKubePaintingTree" => "Tree Painting", "BKubePortraitWoman" => "Portrait of a Woman",
 	];
 
 	/** espanol: lo que falta en NamesGen.ES (bloques anadidos despues) y alguna correccion */
@@ -140,6 +149,16 @@ class BlockNames {
 		"BKubeMystery" => "Kube misterioso",
 		"BShipGlassRed" => "Vidrio blindado rojo", "BShipGlassBlue" => "Vidrio blindado azul",
 		"BShipGlassGreen" => "Vidrio blindado verde", "BShipGlassPink" => "Vidrio blindado rosa", "BShopBarrier" => "-",
+		// tableaux de CroqueMotel (anadidos del port)
+		"BKubePaintingYellowFlowers" => "Cuadro de las flores amarillas",
+		"BKubePaintingSculpture" => "Cuadro de la escultura", "BKubePaintingBush" => "Cuadro del arbusto",
+		"BKubePaintingPottedPlant" => "Cuadro de la maceta", "BKubePaintingFlowerVase" => "Cuadro del jarrón con flores",
+		"BKubePaintingFruitBasket" => "Cuadro del frutero", "BKubePaintingHouse" => "Cuadro de la casa",
+		"BKubePaintingBeach" => "Cuadro de la playa", "BKubePaintingPyramid" => "Cuadro de la pirámide",
+		"BKubePaintingAlley" => "Cuadro del callejón", "BKubePaintingShipwreck" => "Cuadro del naufragio",
+		"BKubePaintingMeadow" => "Cuadro de la pradera", "BKubePaintingMoonlight" => "Cuadro del claro de luna",
+		"BKubePortraitMan" => "Retrato de hombre", "BKubePaintingTree" => "Cuadro del árbol",
+		"BKubePortraitWoman" => "Retrato de mujer",
 	];
 
 	/** frances: los bloques anadidos despues y algun cambio (BChest: en DataGen "Cantine de l'EScorp") */

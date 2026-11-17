@@ -72,9 +72,11 @@ class Drops {
 			d.mat = mat;
 			d.obj = new h3d.scene.Object(world.root);
 			d.obj.setScale(SCALE);
-			// Render (dummies): centrado en x e y, apoyado por debajo (initTranslate(-0.5, -0.5) sin z)
+			// Render (dummies): centrado en x e y, apoyado por debajo (initTranslate(-0.5, -0.5) sin z). Un tableau gira sobre el
+			// centro de su placa (Painting.center) y se apoya en su borde de abajo
 			var m = new h3d.scene.Mesh(poly, mat, d.obj);
-			m.setPosition(-0.5, -0.5, 0);
+			var c = Painting.center(b);
+			m.setPosition(-c.x, -c.y, b.wall >= 0 && b.size != null ? -b.size.z1 : 0);
 		}
 		d.light = world.lightAt(Std.int(x), Std.int(y), Std.int(z)) / World.LBASE;
 		list.push(d);

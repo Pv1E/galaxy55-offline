@@ -212,6 +212,7 @@ class Dev {
 			if( k.render < 0 ) k.render = 0;
 			if( k.shape.id == "door" ) k.box = KubeData.BOXES.get("door").copy();
 			if( k.shape.id == "box" ) k.box = KubeData.BOXES.get("slab").copy();
+			if( k.shape.id == "painting" ) k.box = KubeData.BOXES.get("pcenter").copy();
 			var c = (Std.parseInt("0x" + a[5].substr(0, 2)) << 24) | Std.parseInt("0x" + a[5].substr(2));
 			var edge = (c & 0xFF000000) | ((c >> 1) & 0x7F7F7F);
 			for( f in 0...KubeData.FACES.length )
@@ -1841,7 +1842,11 @@ class Dev {
 			inline function r( v : Float ) return Math.round(v * 1000) / 1000;
 			Sys.println("aterrizaje: suelo " + (g.standingBlock == null ? "-" : "" + g.standingBlock.k) + " gravedad " + r(g.gravity) + " aturdido " + r(@:privateAccess g.stun)
 				+ " casco " + r(g.bobY) + " temblor " + r(g.shake) + " fundido " + r(g.fadeAlpha()) + " vida " + r(g.life) + " creativo " + g.creative);
-		case "select": Sys.println("select: " + (g.select == null ? "ninguno" : g.select.b.k + " @" + g.select.x + "," + g.select.y + "," + g.select.z + " poner=" + g.select.tx + "," + g.select.ty + "," + g.select.tz + " poder=" + g.select.power));
+		case "select":
+			// con un bloque en la mano: el que pondria (el giro de BFFlip o, un tableau, el de la pared apuntada) y si se puede
+			var s = g.select, hand = g.inv.getCurrentBlock(), put = s == null || hand == null ? null : g.placedBlock(s, hand);
+			Sys.println("select: " + (s == null ? "ninguno" : EditorKubes.label(s.b) + " @" + s.x + "," + s.y + "," + s.z + " poner=" + s.tx + "," + s.ty + "," + s.tz + " poder=" + s.power
+				+ (hand == null ? "" : " pone=" + (put == null ? "nada" : EditorKubes.label(put)) + " puede=" + g.canPlace(s, hand))));
 		case "sky":
 			// giro de las estrellas (Sky.follow): a donde apuntan los ejes x y z del cubo de estrellas
 			var m = @:privateAccess w.sky.starRot;

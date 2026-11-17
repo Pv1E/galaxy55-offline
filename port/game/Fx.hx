@@ -174,7 +174,7 @@ class Fx {
 
 		// cubo que se resalta: el bloque (excavando) o la celda donde se pondra el de la mano
 		var x = hand == null ? sel.x : sel.tx, y = hand == null ? sel.y : sel.ty, z = hand == null ? sel.z : sel.tz;
-		var b = hand == null ? sel.b : hand.getFlip(g.yaw);
+		var b = hand == null ? sel.b : g.placedBlock(sel, hand);
 		var fx = near(x, g.px), fy = near(y, g.py), fz = z;
 		var bx = 0., by = 0., bz = 0., sx = 1., sy = 1., sz = 1.;
 		// la misma caja con la que se apunta (plantas y modelos: la de su dibujo)
@@ -209,7 +209,9 @@ class Fx {
 			if( overlay != null ) {
 				overlay.visible = true;
 				var s = 1 + 0.015 + Math.random() * 0.075;
-				overlay.setPosition(fx - (s - 1) * 0.5, fy - (s - 1) * 0.5, fz - (s - 1) * 0.5);
+				// crece alrededor del centro de la celda; un tableau, del de su placa (si no, se metia en la pared)
+				var c = Painting.center(sel.b);
+				overlay.setPosition(fx - (s - 1) * c.x, fy - (s - 1) * c.y, fz - (s - 1) * c.z);
 				overlay.setScale(s);
 			}
 			denied.visible = false;
