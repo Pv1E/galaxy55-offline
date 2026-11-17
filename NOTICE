@@ -10,3 +10,9 @@ Add the full license text (e.g. GitHub "Add file > Create new file > LICENSE" an
 Kube blocks (BKube* in src/G55/com/DataGen.hx, rows 40 and 41 of src/G55/fla/client/gfx/texture.png, port/kubes/*.kube):
 the 77 kubes of Kube, (c) Motion Twin, CC BY-NC-SA 4.0, https://github.com/motion-twin/WebGamesArchives (Muxxu/Kube:
 textures from client/gfx.swf, names from client2/client.xml and client2/blocks.ods), textures scaled from 16x16 to 32x32.
+
+CroqueMotel paintings (BKubePainting* and BKubePortrait* in src/G55/com/DataGen.hx, row 43 of
+src/G55/fla/client/gfx/texture.png, port/kubes/tableau-*.kube and portrait-*.kube): the 16 paintings of CroqueMotel,
+(c) Motion Twin, CC BY-NC-SA 4.0, https://github.com/motion-twin/WebGamesArchives (Muxxu/Hotel/flash/gfx/sceneries:
+paintXl_01.png to paintXl_06.png and paint_01.png to paint_10.png), each centred on a transparent 32x32 tile; the six
+paintXl frames (29x35) lose three frame rows to fit (29x32), the pictures are untouched.
