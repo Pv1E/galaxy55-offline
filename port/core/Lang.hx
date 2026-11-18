@@ -483,6 +483,8 @@ class Lang {
 		"mp.act.explorer" => ["Explorador", "Explorer", "Explorateur"],
 		"mp.act.visitor" => ["Visitante", "Visitor", "Visiteur"],
 		"mp.act.remove" => ["Quitar", "Remove", "Retirer"],
+		"mp.upnp.ok" => ["Partida abierta en Internet: los demás pueden unirse con la dirección %n%", "Game open to the Internet: others can join with the address %n%", "Partie ouverte sur Internet : les autres peuvent rejoindre avec l'adresse %n%"],
+		"mp.upnp.fail" => ["UPnP no disponible: para abrir la partida en Internet, redirige el puerto %n% (TCP y UDP) en tu router.", "UPnP unavailable: to open the game to the Internet, forward port %n% (TCP and UDP) on your router.", "UPnP indisponible : pour ouvrir la partie sur Internet, redirige le port %n% (TCP et UDP) sur ta box."],
 		"mp.join" => ["%n% ha entrado.", "%n% joined.", "%n% a rejoint la partie."],
 		"mp.leave" => ["%n% se ha ido.", "%n% left.", "%n% est parti."],
 		// editor de kubes (anadido del port, KubeEditor)

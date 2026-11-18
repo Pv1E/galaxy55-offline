@@ -66,6 +66,8 @@ class GameServer {
 	var keys : { pk : Bytes, sk : Bytes };
 	public var fingerprint(default, null) : String;
 	var listener : sys.net.Socket;
+	var upnp : Upnp;
+	var upnpNotice : ServerMsg;
 	/** escucha en la red (false: solo el juego del anfitrion, una partida guardada jugada sin red) */
 	public var listening(get, never) : Bool;
 	inline function get_listening() return listener != null;
@@ -107,6 +109,11 @@ class GameServer {
 		listener.setBlocking(false);
 		this.port = port;
 		files.log("escuchando en " + host + ":" + port);
+		// abrir el puerto en el router (UPnP), en un hilo: el resultado lo recoge pump
+		if( files.options.upnp ) {
+			upnp = new Upnp();
+			upnp.start(port, files.options.name);
+		}
 		if( files.options.lanVisible ) {
 			try {
 				udp = new sys.net.UdpSocket();
@@ -149,6 +156,19 @@ class GameServer {
 	// ---------------------------------------------------------------- bucle
 
 	public function pump( dt : Float ) {
+		if( upnp != null ) {
+			var r = upnp.poll();
+			if( r != null ) {
+				files.log(r.ok ? "UPnP: abierto en " + r.external + ":" + port : "UPnP: " + r.error + " (IP local " + r.local + ")");
+				upnpNotice = r.ok ? SNotice("mp.upnp.ok", [(r.external != "" ? r.external : "?") + ":" + port]) : SNotice("mp.upnp.fail", [port + " → " + r.local]);
+			}
+		}
+		// el resultado de UPnP, al propietario en cuanto esta (aviso, y la ayuda para abrirlo a mano si no se pudo)
+		if( upnpNotice != null ) for( o in sessions ) if( o.state == SPlay && o.role == Owner ) {
+			o.send(upnpNotice);
+			upnpNotice = null;
+			break;
+		}
 		if( stopped ) return;
 		if( listener != null ) {
 			while( true ) {
@@ -191,6 +211,7 @@ class GameServer {
 
 	/** el anfitrion o el servidor dedicado se paran: avisa y cierra todo */
 	public function stop() {
+		if( upnp != null ) upnp.close();
 		if( stopped ) return;
 		for( s in sessions.copy() ) if( s.state != SClosed ) drop(s, RServerStop, "");
 		for( s in sessions ) s.channel.flush();
