@@ -52,6 +52,10 @@ class NetTest {
 		hangarTest(Sys.args().length > 0 ? Sys.args()[0] + "_hangar" : "port/out/net_test_hangar");
 		cometTest(Sys.args().length > 0 ? Sys.args()[0] + "_comete" : "port/out/net_test_comete");
 		tutoTest(Sys.args().length > 0 ? Sys.args()[0] + "_tuto" : "port/out/net_test_tuto");
+		// endurance: 30 s por defecto; --soak=S para mas (port/headless: net_test.hl DIR --soak=600)
+		var soak = 30.;
+		for( a in Sys.args() ) if( StringTools.startsWith(a, "--soak=") ) soak = Std.parseFloat(a.substr(7));
+		soakTest(Sys.args().length > 0 ? Sys.args()[0] + "_endurance" : "port/out/net_test_endurance", soak, 6);
 		var dir = Sys.args().length > 0 ? Sys.args()[0] : "port/out/net_test";
 		deleteDir(dir);
 		sys.FileSystem.createDirectory(dir);
@@ -829,6 +833,143 @@ class NetTest {
 		u.client.send(CEcon(1, ESkipTutorial, "", 0));
 		check("tutorial: pasarlo deja la partida como sin el (y se manda de nuevo)", until(() -> Lambda.count(u.msgs, m -> m.match(SRecord(_))) > records)
 			&& us.record.tuto == null && us.record.credits == Market.START_CREDITS && us.record.uni.space == true);
+		server.stop();
+	}
+
+	static function lastChest( c : TestClient ) : { ver : Int, t : Array<Null<{ k : Int, n : Int }>> } {
+		var r = null;
+		for( m in c.msgs ) switch( m ) { case SChest(_, _, _, ver, t, busy) if( busy == "" ): r = { ver : ver, t : t }; default: }
+		return r;
+	}
+
+	/**
+	 * Endurance (M8): robots en el planeta de uno, con 120 rocas y una cantina para todos, tiran, recogen (a la vez lo mismo),
+	 * ordenan, mueven entre inventario y cantina, se desconectan y vuelven, al azar y sin esperar respuestas. Al final, el grand
+	 * livre: rocas de los inventarios + la cantina + los sueltos y contenedores = 120, y ninguna pila vacia ni por encima de su
+	 * maximo. Asi se ve que ni las carreras ni los mensajes viejos o repetidos crean o pierden nada.
+	 */
+	static function soakTest( dir : String, secs : Float, nbots : Int ) {
+		deleteDir(dir);
+		sys.FileSystem.createDirectory(dir);
+		server = new GameServer(dir);
+		server.genBudgetMs = 50;
+		server.listen("127.0.0.1", 55091);
+		clients = [];
+		var rock = Block.get(BRock);
+		var bots = [for( i in 0...nbots ) add(new TestClient("Bot" + i, secret(80 + i)))];
+		for( b in bots ) b.tcp(55091);
+		until(() -> Lambda.foreach(bots, b -> b.welcome != null), 10);
+		bots[0].client.send(CSetMode(false));
+		for( b in bots ) b.client.send(CNewGame(false));
+		until(() -> Lambda.foreach(bots, b -> b.has(m -> m.match(SRecord(_)))), 20);
+		var pid = TutoSetup.PLANET;
+		var owner = @:privateAccess server.sessionById(bots[0].id);
+		var pub = server.db.pubOf(owner.uid);
+		bots[0].client.send(CLand("", pid));
+		var inst : PlanetInstance = null;
+		until(() -> { inst = owner.instance; inst != null && inst.ready(); }, 40);
+		// el planeta existe en el servidor desde el aterrizaje: ahora se abre
+		bots[0].client.send(CAccess(pid, true, false, false, 0));
+		for( i in 1...nbots ) bots[0].client.send(CInvite(pid, bots[i].id, 0));
+		until(() -> false, 0.3);
+		for( i in 1...nbots ) bots[i].client.send(CLand(pub, pid));
+		until(() -> Lambda.foreach(bots, b -> @:privateAccess server.sessionById(b.id).instance == inst), 20);
+		var w = inst.world;
+		var sp = w.spawnPoint();
+		var st = { id : 0, x : sp.x, y : sp.y, z : sp.z, yaw : 0., pitch : 0., flags : 0, charge : -1, hx : 0., hy : 0., hz : 0. };
+		var cx = Std.int(sp.x) + 2, cy = Std.int(sp.y);
+		var cz = w.topCollide(cx, cy);
+		w.setBlock(cx, cy, cz, Block.get(BChest));
+		var seqs = [for( _ in 0...nbots ) 1000];
+		for( b in bots ) {
+			b.client.send(CState(st));
+			server.worlds.items.devGive(@:privateAccess server.sessionById(b.id), rock, 20);
+		}
+		var given = until(() -> Lambda.foreach(bots, b -> count(lastInv(b), rock.index) == 20), 10);
+		check("endurance: cada robot empieza con 20 rocas en el planeta", given && Lambda.foreach(bots, b -> @:privateAccess server.sessionById(b.id).instance == inst),
+			[for( b in bots ) b.name + "=" + count(lastInv(b), rock.index) + (@:privateAccess server.sessionById(b.id).instance == inst ? "" : "(fuera)")].join(" "));
+		var actions = 0, reconnects = 0;
+		var t0 = haxe.Timer.stamp();
+		while( haxe.Timer.stamp() - t0 < secs ) {
+			for( i in 0...nbots ) {
+				var b = bots[i];
+				var inv = lastInv(b);
+				if( inv == null ) continue;
+				var r = Math.random();
+				var seq = ++seqs[i];
+				if( r < 0.22 ) {
+					var slots = [for( k in 0...inv.t.length ) if( inv.t[k] != null ) k + 1];
+					if( slots.length > 0 ) {
+						var s = slots[Std.random(slots.length)];
+						b.client.send(CThrow(seq, s, 1 + Std.random(inv.t[s - 1].n)));
+					}
+				} else if( r < 0.5 ) {
+					var ids = [for( id in loots(b).keys() ) id];
+					if( ids.length > 0 ) b.client.send(CPick(seq, ids[Std.random(ids.length)]));
+				} else if( r < 0.62 ) {
+					var t = [for( s in inv.t ) s == null ? null : { k : s.k, n : s.n }];
+					for( k in 0...t.length ) {
+						var j = Std.random(t.length), x = t[k];
+						t[k] = t[j];
+						t[j] = x;
+					}
+					b.client.send(CInvLayout(seq, { t : t, charges : inv.charges }));
+				} else if( r < 0.85 ) {
+					var c = lastChest(b);
+					if( c == null || Math.random() < 0.3 ) b.client.send(CChestOpen(cx, cy, cz));
+					else {
+						// pasar una pila de un lado al otro (sobre lo ultimo que sabe: si ya no vale, el servidor lo rechaza)
+						var nc = [for( s in c.t ) s == null ? null : { k : s.k, n : s.n }];
+						var ni = [for( s in inv.t ) s == null ? null : { k : s.k, n : s.n }];
+						var from = Math.random() < 0.5 ? nc : ni, to = from == nc ? ni : nc;
+						var fs = [for( k in 0...from.length ) if( from[k] != null ) k], ts = [for( k in 0...to.length ) if( to[k] == null ) k];
+						if( fs.length > 0 && ts.length > 0 ) {
+							var a = fs[Std.random(fs.length)], z = ts[Std.random(ts.length)];
+							to[z] = from[a];
+							from[a] = null;
+							b.client.send(CChestMove(cx, cy, cz, c.ver, nc, { t : ni, charges : inv.charges }));
+						}
+						if( Math.random() < 0.2 ) b.client.send(CChestClose);
+					}
+				} else if( r < 0.87 ) {
+					// se va y vuelve (lo que tenia pedido se pierde o llega tarde)
+					b.client.close();
+					clients.remove(b);
+					var nb = add(new TestClient("Bot" + i, secret(80 + i)));
+					nb.tcp(55091);
+					bots[i] = nb;
+					reconnects++;
+					until(() -> nb.welcome != null, 5);
+					nb.client.send(CLand(i == 0 ? "" : pub, pid));
+					until(() -> @:privateAccess server.sessionById(nb.id) != null && @:privateAccess server.sessionById(nb.id).instance == inst, 5);
+					nb.client.send(CState(st));
+				}
+				actions++;
+			}
+			until(() -> false, 0.01);
+		}
+		for( b in bots ) b.client.send(CChestClose);
+		until(() -> false, 2);
+		// el grand livre, en el servidor
+		var total = 0, bad = [];
+		inline function slotsOk( t : Array<Null<{ k : Int, n : Int }>>, where : String ) {
+			for( s in t ) if( s != null ) {
+				if( s.n <= 0 || s.n > Block.all[s.k].getMax(9999) ) bad.push(where + " " + s.k + "x" + s.n);
+				if( s.k == rock.index ) total += s.n;
+			}
+		}
+		for( b in bots ) {
+			var s = @:privateAccess server.sessionById(b.id);
+			if( s != null && s.record != null ) slotsOk(s.record.inv.t, "inv " + s.display);
+		}
+		for( k => c in inst.items.chests ) slotsOk(c, "cantina " + k);
+		for( d in inst.items.drops ) {
+			if( d.loot != null ) slotsOk(d.loot.t, "contenedor");
+			else if( d.b == rock ) total += d.n;
+		}
+		if( total != 20 * nbots ) Sys.println("  cantinas " + [for( k => c in inst.items.chests ) k + ":" + count({ t : c, charges : [] }, rock.index)].join(",") + " sueltos " + [for( d in inst.items.drops ) d.b.k + "x" + d.n].join(","));
+		check("endurance: " + actions + " acciones de " + nbots + " robots (" + reconnects + " reconexiones) en " + Std.int(secs) + " s, ni se crea ni se pierde nada",
+			total == 20 * nbots && bad.length == 0, "rocas " + total + " de " + (20 * nbots) + (bad.length > 0 ? ", pilas raras: " + bad.join(", ") : ""));
 		server.stop();
 	}
 

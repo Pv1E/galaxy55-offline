@@ -349,6 +349,9 @@ class ServerWorlds {
 			saveRecord(s);
 		}
 		leaveInstance(s);
+		// su partida y lo que ha cambiado en el mundo se guardan ya, juntos: si vuelve a entrar enseguida (antes del commit de cada
+		// segundo) leeria una partida vieja, y lo recogido se perderia o lo tirado estaria dos veces
+		commit();
 	}
 
 

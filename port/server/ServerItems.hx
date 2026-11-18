@@ -278,12 +278,14 @@ class ServerItems {
 		var t = s.record.inv.t;
 		var st = slot >= 1 && slot <= t.length ? t[slot - 1] : null;
 		if( st == null || n <= 0 || n > st.n ) return;
+		var inst = s.instance, p = s.pos;
+		// sin sitio donde caer (en el espacio, sin posicion): no se tira nada (un juego normal no lo pide; asi nada se pierde)
+		if( !s.creative && (p == null || (p.z < WorldData.SHIP_Z && inst == null)) ) return;
 		var b = Block.all[st.k];
 		st.n -= n;
 		if( st.n <= 0 ) t[slot - 1] = null;
 		worlds.markRecord(s);
-		// en creativo, o fuera de un planeta, tirar solo vacia la casilla (GameView.throwStack)
-		var inst = s.instance, p = s.pos;
+		// en creativo tirar solo vacia la casilla (GameView.throwStack)
 		if( !s.creative && p != null && p.z >= WorldData.SHIP_Z ) {
 			// a bordo: en su nave (ServerShip)
 			worlds.shipOf(s).throwBlocks(b, n);
