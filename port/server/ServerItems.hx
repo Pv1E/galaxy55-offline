@@ -96,21 +96,21 @@ class ServerItems {
 	}
 
 	/** totales por bloque (y por carga, con clave negativa) de un inventario: lo que no puede cambiar al ordenarlo */
-	static function totals( t : Array<Null<{ k : Int, n : Int }>>, charges : Array<{ c : Int, n : Int }>, ?into : Map<Int, Int> ) : Map<Int, Int> {
+	public static function totals( t : Array<Null<{ k : Int, n : Int }>>, charges : Array<{ c : Int, n : Int }>, ?into : Map<Int, Int> ) : Map<Int, Int> {
 		var m = into == null ? new Map<Int, Int>() : into;
 		for( s in t ) if( s != null && s.n > 0 ) m.set(s.k, (m.exists(s.k) ? m.get(s.k) : 0) + s.n);
 		if( charges != null ) for( c in charges ) if( c.n > 0 ) m.set(-1 - c.c, (m.exists(-1 - c.c) ? m.get(-1 - c.c) : 0) + c.n);
 		return m;
 	}
 
-	static function sameTotals( a : Map<Int, Int>, b : Map<Int, Int> ) : Bool {
+	public static function sameTotals( a : Map<Int, Int>, b : Map<Int, Int> ) : Bool {
 		for( k => v in a ) if( b.get(k) != v ) return false;
 		for( k => v in b ) if( a.get(k) != v ) return false;
 		return true;
 	}
 
 	/** cada casilla con un bloque que existe y sin pasar de su maximo */
-	static function validSlots( t : Array<Null<{ k : Int, n : Int }>>, maxWeight : Int ) : Bool {
+	public static function validSlots( t : Array<Null<{ k : Int, n : Int }>>, maxWeight : Int ) : Bool {
 		for( s in t ) {
 			if( s == null ) continue;
 			if( s.k <= 0 || s.k >= Block.all.length || s.n <= 0 ) return false;
@@ -284,6 +284,11 @@ class ServerItems {
 		worlds.markRecord(s);
 		// en creativo, o fuera de un planeta, tirar solo vacia la casilla (GameView.throwStack)
 		var inst = s.instance, p = s.pos;
+		if( !s.creative && p != null && p.z >= WorldData.SHIP_Z ) {
+			// a bordo: en su nave (ServerShip)
+			worlds.shipOf(s).throwBlocks(b, n);
+			return;
+		}
 		if( s.creative || inst == null || p == null ) return;
 		var d = spawn(inst, p.x + Math.cos(p.yaw), p.y + Math.sin(p.yaw), p.z + 1.2, b, n, Math.cos(p.yaw) * 0.3, Math.sin(p.yaw) * 0.3);
 		d.active = false;
@@ -334,7 +339,7 @@ class ServerItems {
 	static inline function chestKey( x : Int, y : Int, z : Int ) return x + "," + y + "," + z;
 
 	/** slots de una cantina (BFContainer del bloque) */
-	static function chestSlots( b : Block ) : Int {
+	public static function chestSlots( b : Block ) : Int {
 		for( f in b.flags ) switch( f ) { case BFContainer(n): return n; default: }
 		return 4;
 	}
@@ -498,7 +503,7 @@ class ServerItems {
 			}
 		case CPick(seq, id):
 			s.ack = seq;
-			pick(s, id);
+			if( id >= ServerShip.LOOT_BASE ) worlds.shipOf(s).pick(id) else pick(s, id);
 			sendInv(s);
 		case CThrow(seq, slot, n):
 			s.ack = seq;
@@ -516,14 +521,24 @@ class ServerItems {
 			creativeSet(s, slot, gi, n);
 			sendInv(s);
 		case CChestOpen(x, y, z):
-			chestOpen(s, x, y, z);
+			// z de la nave + SHIP_Z: una cantina de su nave (ServerShip)
+			if( z >= WorldData.SHIP_Z ) worlds.shipOf(s).chestOpen(x, y, z - WorldData.SHIP_Z) else chestOpen(s, x, y, z);
 		case CChestMove(x, y, z, ver, chest, ni):
-			chestMove(s, x, y, z, ver, chest, ni);
+			if( z >= WorldData.SHIP_Z ) worlds.shipOf(s).chestMove(x, y, z - WorldData.SHIP_Z, ver, chest, ni) else chestMove(s, x, y, z, ver, chest, ni);
 			sendInv(s);
 		case CChestClose:
 			release(s);
 		case CActivate(x, y, z):
 			activate(s, x, y, z);
+		case CShipOffset(dx, dy):
+			s.shipDX = dx;
+			s.shipDY = dy;
+		case CShipSet(seq, x, y, z, expect, gi, slot):
+			worlds.shipOf(s).set(seq, x, y, z, expect, gi, slot);
+		case CShipCraft(x, y, z):
+			worlds.shipOf(s).craft(x, y, z);
+		case CStorage(seq, st, ni):
+			worlds.shipOf(s).storage(seq, st, ni);
 		default:
 			return false;
 		}

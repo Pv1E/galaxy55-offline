@@ -16,7 +16,7 @@ typedef PlanetAccess = { open : Bool, allVisitors : Bool, serverVisit : Bool, vr
  */
 class ServerWorlds {
 
-	var server : GameServer;
+	public var server(default, null) : GameServer;
 	var db : ServerDb;
 	var instances = new Map<String, PlanetInstance>();
 	var dirtyRecords = new Map<String, Session>();
@@ -61,6 +61,7 @@ class ServerWorlds {
 		if( s.record != null ) return;
 		var seed = fixedSeed != null ? fixedSeed : 1 + SecureRandom.int(999998);
 		s.record = TutoSetup.newGame(s.display, seed, tuto);
+		s.ship = null;
 		s.record.dropOnDeath = server.files.options.deathDrop;
 		saveRecord(s);
 		server.files.log(s.display + " empieza en el sector " + seed + (tuto ? " con el tutorial" : ""));
@@ -96,8 +97,8 @@ class ServerWorlds {
 	 * La partida que manda el cliente (al guardar, al despegar): solo se toma lo que no da nada, donde esta y lo que ha visto.
 	 * Lo demas es del servidor, que lo cambia con sus reglas: inventario y contenedores (ServerItems), creditos, mercado,
 	 * contratos y planeta principal (ServerEcon), licencias (land, CAbandon), terreno (planet_edits), modo y tiempo de juego.
-	 * Provisional hasta que el servidor lleve tambien la nave (sus cambios, cantinas y stockage), el hangar, la nodriza, la
-	 * cometa y el tutorial: eso aun se toma del cliente.
+	 * La nave (sus cambios, cantinas, stockage y sueltos) es de ServerShip. Provisional hasta que el servidor lleve tambien el
+	 * hangar, la nodriza, la cometa y el tutorial: eso aun se toma del cliente.
 	 */
 	function clientRecord( s : Session, data : haxe.io.Bytes ) {
 		var o : Dynamic;
@@ -115,14 +116,15 @@ class ServerWorlds {
 		r.saved = info.saved;
 		r.savedWith = info.savedWith;
 		r.kub = info.kub;
-		r.shipEdits = info.shipEdits;
-		r.shipData = info.shipData;
-		r.storage = info.storage;
+		// la nave nueva del hangar (provisional: el hangar aun no pasa por el servidor): a bordo, todo como nuevo
+		if( info.shipData != r.shipData ) {
+			r.shipData = info.shipData;
+			r.shipEdits = [];
+			s.ship = null;
+		}
 		r.hangar = info.hangar;
 		r.mothership = info.mothership;
 		r.inMother = info.inMother;
-		// las cantinas de los planetas son del servidor (planet_chests): de la partida, solo las de la nave
-		r.chests = info.chests == null ? null : info.chests.filter(c -> StringTools.startsWith(c.key, "s:"));
 		r.comet = info.comet;
 		r.tuto = info.tuto;
 		r.tutorial = info.tutorial;
@@ -269,6 +271,7 @@ class ServerWorlds {
 			return;
 		}
 		var inst = enterRow(s, row);
+		if( s.ship != null ) s.ship.clearLoot();
 		if( galaxy == "" ) {
 			var uni = s.record.uni;
 			uni.planetId = pid;
@@ -282,8 +285,15 @@ class ServerWorlds {
 			server.db.displayOf(row.owner), s.rights));
 	}
 
+	/** la nave del jugador en el servidor (ServerShip): se hace la primera vez que la usa */
+	public function shipOf( s : Session ) : ServerShip {
+		if( s.ship == null ) s.ship = new ServerShip(s, this);
+		return s.ship;
+	}
+
 	function takeoff( s : Session ) {
 		leaveInstance(s);
+		if( s.ship != null ) s.ship.clearLoot();
 		if( s.record != null && s.record.uni != null ) {
 			s.record.uni.space = true;
 			saveRecord(s);

@@ -48,6 +48,7 @@ class NetTest {
 		world(Sys.args().length > 0 ? Sys.args()[0] + "_monde" : "port/out/net_test_monde");
 		itemsTest(Sys.args().length > 0 ? Sys.args()[0] + "_objets" : "port/out/net_test_objets");
 		econTest(Sys.args().length > 0 ? Sys.args()[0] + "_eco" : "port/out/net_test_eco");
+		shipTest(Sys.args().length > 0 ? Sys.args()[0] + "_nave" : "port/out/net_test_nave");
 		var dir = Sys.args().length > 0 ? Sys.args()[0] : "port/out/net_test";
 		deleteDir(dir);
 		sys.FileSystem.createDirectory(dir);
@@ -558,6 +559,87 @@ class NetTest {
 		server.stop();
 	}
 
+	/**
+	 * La nave en el servidor (ServerShip): solo se pone y se quita en las zonas del sintetizador, lo que se quita vuelve como
+	 * suelto de a bordo, fabrica el servidor (con los bloques de la zona o del inventario), el stockage no crea nada y lo que se
+	 * tira a bordo queda en la nave.
+	 */
+	static function shipTest( dir : String ) {
+		deleteDir(dir);
+		sys.FileSystem.createDirectory(dir);
+		server = new GameServer(dir);
+		server.listen("127.0.0.1", 55095);
+		clients = [];
+		var f = add(new TestClient("Fia", secret(40)));
+		f.tcp(55095);
+		until(() -> f.welcome != null);
+		f.client.send(CSetMode(false));
+		f.client.send(CNewGame(false));
+		until(() -> f.has(m -> m.match(SRecord(_))) && lastInv(f) != null);
+		var fs = @:privateAccess server.sessionById(f.id);
+		var ship = server.worlds.shipOf(fs);
+		var c = ship.crafts[0];
+		var wood = Block.get(BWood);
+		server.worlds.items.devGive(fs, wood, 2);
+		until(() -> count(lastInv(f), wood.index) == 2);
+		var slot = -1;
+		var fi = lastInv(f);
+		for( i in 0...fi.t.length ) if( fi.t[i] != null && fi.t[i].k == wood.index ) slot = i + 1;
+		var x = c.x, y = c.y, z = c.z;
+		var here = ship.world.block(x, y, z);
+		f.client.send(CShipSet(1, x, y, z, here == null ? 0 : here.index, wood.index, slot));
+		check("nave: poner en la zona del sintetizador gasta el bloque", until(() -> f.has(m -> m.match(SSetResult(1, true, _))))
+			&& until(() -> count(lastInv(f), wood.index) == 1) && ship.world.block(x, y, z) == wood && fs.record.shipEdits.length > 0);
+		f.client.send(CShipSet(2, c.x - 3 < 0 ? c.x + c.w + 3 : c.x - 3, c.y, c.z, 0, wood.index, slot));
+		check("nave: fuera de las zonas no se pone nada", until(() -> f.has(m -> m.match(SSetResult(2, false, _)))) && until(() -> count(lastInv(f), wood.index) == 1));
+		f.client.send(CShipSet(3, x, y, z, wood.index, 0, 0));
+		var lid = -1;
+		check("nave: quitar suelta el bloque a bordo", until(() -> { for( l in loots(f) ) if( l.id >= ServerShip.LOOT_BASE && l.gi == wood.index ) lid = l.id; lid >= 0; }) && ship.world.block(x, y, z) == null);
+		f.client.send(CPick(4, lid));
+		check("nave: recogerlo lo devuelve al inventario", until(() -> count(lastInv(f), wood.index) == 2 && !loots(f).exists(lid)));
+		// receta con el bloque de la zona (el inventario no tiene bastante: se gasta el de la zona)
+		f.client.send(CShipSet(5, x, y, z, 0, wood.index, slot));
+		until(() -> f.has(m -> m.match(SSetResult(5, true, _))));
+		var r = c.engine.checkAll();
+		var before = Lambda.count(loots(f));
+		if( r != null ) {
+			// sin madera en el inventario, la receta gasta la de la zona
+			var ws = -1;
+			var li = lastInv(f);
+			for( i in 0...li.t.length ) if( li.t[i] != null && li.t[i].k == wood.index ) ws = i + 1;
+			fs.record.inv.t[ws - 1] = null;
+			f.client.send(CShipCraft(c.out.x, c.out.y, c.out.z));
+			check("nave: el servidor fabrica con la zona (la vacia y suelta el resultado)", until(() -> f.has(m -> m.match(SShipCells(_))) && Lambda.count(loots(f)) > before)
+				&& ship.world.block(x, y, z) == null);
+		} else check("nave: hay receta para un bloque de madera", false);
+		// stockage: mover del inventario al stockage vale; inventar algo no
+		server.worlds.items.devGive(fs, Block.get(BRock), 5);
+		until(() -> count(lastInv(f), Block.get(BRock).index) == 5);
+		var inv = lastInv(f);
+		var st = StorageData.ensure(fs.record);
+		var nst : NetInv = { t : [for( s in st.t ) s], charges : [] };
+		var ninv : NetInv = { t : [for( s in inv.t ) s == null ? null : { k : s.k, n : s.n }], charges : inv.charges };
+		for( i in 0...ninv.t.length ) if( ninv.t[i] != null && ninv.t[i].k == Block.get(BRock).index ) { nst.t[0] = { k : ninv.t[i].k, n : ninv.t[i].n }; ninv.t[i] = null; }
+		f.client.send(CStorage(6, nst, ninv));
+		check("nave: el stockage guarda lo que sale del inventario", until(() -> f.has(m -> m.match(SInventory(6, _)))) && count(lastInv(f), Block.get(BRock).index) == 0
+			&& fs.record.storage.t[0] != null && fs.record.storage.t[0].n == 5);
+		var cheat : NetInv = { t : [for( s in st.t ) s == null ? null : { k : s.k, n : s.n }], charges : [] };
+		cheat.t[1] = { k : Block.get(BChest).index, n : 1 };
+		f.client.send(CStorage(7, cheat, ninv));
+		check("nave: el stockage no crea nada", until(() -> f.has(m -> m.match(SInventory(7, _)))) && fs.record.storage.t[1] == null);
+		// tirar a bordo: queda en la nave
+		server.worlds.items.devGive(fs, wood, 3);
+		until(() -> count(lastInv(f), wood.index) == 3);
+		f.client.send(CState({ id : 0, x : c.x + 0.5, y : c.y + 0.5, z : c.z + WorldData.SHIP_Z, yaw : 0., pitch : 0., flags : 0, charge : -1, hx : 0., hy : 0., hz : 0. }));
+		var ts = -1;
+		var ti = lastInv(f);
+		for( i in 0...ti.t.length ) if( ti.t[i] != null && ti.t[i].k == wood.index ) ts = i + 1;
+		var n0 = Lambda.count(ship.loot);
+		f.client.send(CThrow(8, ts, 3));
+		check("nave: lo tirado a bordo es un suelto de la nave", until(() -> f.has(m -> m.match(SInventory(8, _)))) && count(lastInv(f), wood.index) == 0 && Lambda.count(ship.loot) == n0 + 1);
+		server.stop();
+	}
+
 	static function add( c : TestClient ) {
 		clients.push(c);
 		return c;
@@ -582,7 +664,8 @@ class NetTest {
 			CAccess(3, true, false, true, 4), CInvite(3, 2, 1), CGuest(3, "ab12cd34", -1), CTransfer(3, 2), CAbandon(3), CGetAccess(3),
 			CCharge(1), CPick(4, 9), CThrow(5, 2, 3), CInvLayout(6, { t : [null, { k : 5, n : 2 }], charges : [{ c : 1, n : 3 }] }), CDeath(true),
 			CCreative(7, 1, 5, 9), CChestOpen(1, 2, 3), CChestMove(1, 2, 3, 4, [{ k : 5, n : 1 }, null], { t : [null], charges : [] }), CChestClose,
-			CActivate(4, 5, 6), CEcon(9, EBuy, "b12", 3)];
+			CActivate(4, 5, 6), CEcon(9, EBuy, "b12", 3), CShipOffset(-37, 34), CShipSet(3, 4, 5, 6, 7, 8, 2), CShipCraft(1, 2, 3),
+			CStorage(4, { t : [null, { k : 3, n : 2 }], charges : [{ c : 1, n : 4 }] }, { t : [{ k : 5, n : 1 }], charges : [] })];
 		var ss : Array<ServerMsg> = [SServerHello("srv", b32, b32, b64, true), SWelcome(3, "Bob#2", Manager, true, 123.5, false),
 			SRefuse(RBanned, "x"), SPong(1.25, 2.5), SPlayers([{ id : 1, name : "a", role : 2, place : "" }]),
 			SUserJoin({ id : 2, name : "b", role : 0, place : "Planète de X" }), SUserLeave(9), STalk(-1, "srv", CServer, "m"),
@@ -596,7 +679,7 @@ class NetTest {
 			SInventory(3, { t : [{ k : 5, n : 2 }, null], charges : [{ c : 0, n : 4 }] }),
 			SAddLoot({ id : 1, x : 1.5, y : 2.5, z : 3.5, vx : 0.25, vy : -0.25, vz : 0, gi : 5, n : 2, delay : 0, container : true }),
 			SDeleteLoot(1), SLootCount(1, 2), SLootRest(1, 1.5, 2.5, 3.5), SChest(1, 2, 3, 4, [null, { k : 5, n : 1 }], "Bob"), SHit(20), SBomb(1.5, 2.5, 3.5),
-			SPatch("credits", "120")];
+			SPatch("credits", "120"), SShipCells([{ key : 77, v : 3 }])];
 		var names = [for( c in cs ) Type.enumConstructor(c)];
 		for( n in Type.getEnumConstructs(ClientMsg) ) check("muestra de " + n, names.indexOf(n) >= 0);
 		names = [for( s in ss ) Type.enumConstructor(s)];

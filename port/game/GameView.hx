@@ -1406,12 +1406,13 @@ class GameView {
 			if( !ok ) return;
 			switch( b.k ) {
 			case BShipComputer: lastComputer = { x : x, y : y, z : z }; onComputer();
-			case BCrafterComputer: if( ship != null ) ship.activateCraft(x, y, z, this);
+			// multijugador: fabrica el servidor (ServerShip.craft); el resultado llega como sueltos de la nave
+			case BCrafterComputer: if( ship != null ) { if( net != null ) net.sentShipCraft(x, y, z) else ship.activateCraft(x, y, z, this); }
 			// cambio del port: en el hangar (EditShip) y en la nave nodriza no explota, para no romper la nave
 			case BArtiBomb: if( net != null && z < World.SHIP_Z ) net.sentActivate(x, y, z) else if( hangar == null && info.mothership != true ) explodeBomb(x, y, z);
 			default:
-				// multijugador: las cantinas del planeta son del servidor (una persona a la vez)
-				if( b.hasProp(PContainer) && net != null && z < World.SHIP_Z ) net.sentChestOpen(x, y, z);
+				// multijugador: las cantinas son del servidor (las del planeta, una persona a la vez; las de la nave, ServerShip)
+				if( b.hasProp(PContainer) && net != null ) net.sentChestOpen(x, y, z);
 				else if( b.hasProp(PContainer) && onChest != null ) onChest(chestBox(x, y, z, b));
 			}
 		} else if( b.toggle != null && net != null && z < World.SHIP_Z ) {
@@ -2002,7 +2003,10 @@ class GameView {
 			if( net != null ) net.sentPlace(x, y, z, put, put.type == BTWater && hangar == null ? WorldProcess.PLACED : 0, @:privateAccess inv.blockIndex);
 			else process.onSet(x, y, z, here, put);
 		}
-		if( inShip ) ship.craft(x, y, z, put, this);
+		if( inShip ) {
+			ship.craft(x, y, z, put, this);
+			if( net != null ) net.sentShipSet(x, y, z, null, put, @:privateAccess inv.blockIndex);
+		}
 		Kubindex.placed(info, put);
 		select = null;
 	}
@@ -2055,10 +2059,10 @@ class GameView {
 
 	public function breakBlock( x : Int, y : Int, z : Int, b : Block, isProcess = false ) {
 		shake += 0.05 * Math.random(); // temblor (Game.blockBreak)
-		if( b.hasProp(PContainer) && (net == null || z >= World.SHIP_Z) ) breakChest(x, y, z);
+		if( b.hasProp(PContainer) && net == null ) breakChest(x, y, z);
 		var get = b.getDrop();
-		// multijugador: en el planeta lo que se suelta lo crea el servidor
-		if( get != null && !creative && (net == null || z >= World.SHIP_Z) ) {
+		// multijugador: lo que se suelta lo crea el servidor (en el planeta, ServerItems; en la nave, ServerShip)
+		if( get != null && !creative && net == null ) {
 			// cambio del port: lo que suelta con probabilidad (BFDropChance: BCoal, BBlackIce, hierbas...) se recupera
 			// siempre en una zona de sintetizador y en el hangar; si no, puesto alli para fabricar o rehacer la nave, se perdia al quitarlo
 			var chance = inCraftZone(x, y, z) ? 100 : b.getMain().getDropChance();
@@ -2071,8 +2075,10 @@ class GameView {
 		}
 		world.setBlock(x, y, z, null);
 		parts.doBreak(x, y, z, b);
-		if( z >= World.SHIP_Z ) ship.craft(x, y, z, null, this);
-		else if( net != null ) { if( !isProcess ) net.sentBreak(x, y, z, b); }
+		if( z >= World.SHIP_Z ) {
+			ship.craft(x, y, z, null, this);
+			if( net != null ) net.sentShipSet(x, y, z, b, null, 0);
+		} else if( net != null ) { if( !isProcess ) net.sentBreak(x, y, z, b); }
 		else process.onSet(x, y, z, b, null);
 	}
 
@@ -2087,7 +2093,8 @@ class GameView {
 		var index = inv.blockIndex - 1;
 		var s = inv.drop(index);
 		// multijugador: en el planeta lo tira el servidor (el suelto es suyo)
-		if( s != null && net != null && pz < World.SHIP_Z ) net.sentThrow(index + 1, s.n);
+		// multijugador: lo tira el servidor (en el planeta o en la nave)
+		if( s != null && net != null ) net.sentThrow(index + 1, s.n);
 		else if( s != null ) throwStack(Block.all[s.k], s.n);
 	}
 

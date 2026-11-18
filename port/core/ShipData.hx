@@ -164,4 +164,13 @@ class ShipData {
 				}
 		return crafts;
 	}
+
+	/** bloque de la nave tal como se guarda: una puerta abierta vuelve cerrada al rehacer la nave (Hangar.shipId; tambien ServerShip) */
+	public static function shipId( b : Block ) : Int {
+		if( b == null ) return 0;
+		return switch( b.k ) {
+			case BShipDoorOpen, BShipDoorYOpen: b.toggle.index;
+			default: b.index;
+		}
+	}
 }

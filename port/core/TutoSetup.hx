@@ -94,4 +94,11 @@ class TutoSetup {
 	}
 
 
+
+	/** en el tutorial solo se fabrican el aluminio y el blindaje que pide (Tutorial.craftAllowed; tambien el servidor, ServerShip) */
+	public static function craftAllowed( info : SaveInfo, r : CraftRule ) : Bool {
+		if( info == null || info.tuto == null ) return true;
+		var out = Block.get(r.out).k;
+		return out == BAluminium || out == BShipHull;
+	}
 }

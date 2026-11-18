@@ -112,11 +112,7 @@ class Tutorial {
 	 * PLATES). Si no, el aluminio se podia gastar en otra receta (tubos, malla, dalle blindados...) y el tutorial se quedaba sin
 	 * salida: no hay mas bauxita que la que pone.
 	 */
-	public static function craftAllowed( info : SaveInfo, r : CraftRule ) : Bool {
-		if( !active(info) ) return true;
-		var out = Block.get(r.out).k;
-		return out == BAluminium || out == BShipHull;
-	}
+	public static function craftAllowed( info : SaveInfo, r : CraftRule ) : Bool return TutoSetup.craftAllowed(info, r);
 
 	/**
 	 * La Base de datos ESCorp se abre desde su paso (DATABASE, tras fabricar el blindaje) hasta el final: COMPUTER y los numeros

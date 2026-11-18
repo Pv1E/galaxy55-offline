@@ -38,6 +38,10 @@ class Session {
 	public var ack = 0;
 	/** cantina que tiene abierta ("x,y,z" del planeta donde esta) */
 	public var chest : String;
+	/** su nave (ServerShip), mientras esta conectado; y donde esta en el planeta en el que juega (CShipOffset) */
+	public var ship : ServerShip;
+	public var shipDX = 0;
+	public var shipDY = 0;
 
 	public function new( id : Int, t : Transport ) {
 		this.id = id;

@@ -187,6 +187,14 @@ enum ClientMsg {
 	CActivate( x : Int, y : Int, z : Int );
 	/** progresion: la operacion op (EconOp) con sus argumentos */
 	CEcon( seq : Int, op : Int, a : String, n : Int );
+	/** su nave: donde esta en el planeta (shipDX, shipDY), para pasar sus coordenadas a las del planeta (sueltos de la nave) */
+	CShipOffset( dx : Int, dy : Int );
+	/** su nave: poner (gi) o quitar (gi = 0) en (x, y, z) de la nave, donde habia expect, desde la casilla slot */
+	CShipSet( seq : Int, x : Int, y : Int, z : Int, expect : Int, gi : Int, slot : Int );
+	/** su nave: el ordenador del sintetizador de (x, y, z) de la nave */
+	CShipCraft( x : Int, y : Int, z : Int );
+	/** su nave: nuevo contenido del stockage y del inventario (lo movido entre los dos) */
+	CStorage( seq : Int, store : NetInv, inv : NetInv );
 }
 
 enum ServerMsg {
@@ -240,6 +248,8 @@ enum ServerMsg {
 	SBomb( x : Float, y : Float, z : Float );
 	/** un campo de la partida tal como lo tiene el servidor (credits, market, contracts, special, upgrades, licenses), en JSON */
 	SPatch( key : String, json : String );
+	/** su nave: celdas cambiadas por el servidor (clave de la nave, como SChanges) */
+	SShipCells( list : Array<NetChange> );
 }
 
 /**
@@ -249,7 +259,7 @@ enum ServerMsg {
  */
 class Msg {
 
-	public static inline var PROTOCOL = 4;
+	public static inline var PROTOCOL = 5;
 	/** cambios de celdas en un mensaje, y bytes de un terreno descomprimido */
 	public static inline var CHANGES_MAX = 1 << 16;
 	public static inline var EDITS_MAX = 64 << 20;
@@ -402,6 +412,14 @@ class Msg {
 			w.uint(x); w.uint(y); w.uint(z);
 		case CEcon(seq, op, a, n):
 			w.uint(seq); w.uint(op); w.string(a); w.uint(n);
+		case CShipOffset(dx, dy):
+			w.int(dx); w.int(dy);
+		case CShipSet(seq, x, y, z, expect, gi, slot):
+			w.uint(seq); w.uint(x); w.uint(y); w.uint(z); w.uint(expect); w.uint(gi); w.uint(slot);
+		case CShipCraft(x, y, z):
+			w.uint(x); w.uint(y); w.uint(z);
+		case CStorage(seq, store, inv):
+			w.uint(seq); writeInv(w, store); writeInv(w, inv);
 		}
 		return w.getBytes();
 	}
@@ -482,6 +500,19 @@ class Msg {
 		case 30:
 			var seq = r.uint(); var op = r.uintIn(0, EconOp.MAX); var a = r.string(64); var n = r.uintIn(0, 1 << 20);
 			CEcon(seq, op, a, n);
+		case 31:
+			var dx = r.intIn(-COORD_MAX, COORD_MAX); var dy = r.intIn(-COORD_MAX, COORD_MAX);
+			CShipOffset(dx, dy);
+		case 32:
+			var seq = r.uint(); var x = r.uintIn(0, COORD_MAX); var y = r.uintIn(0, COORD_MAX); var z = r.uintIn(0, Z_MAX);
+			var expect = r.uintIn(0, 0xFFFF); var gi = r.uintIn(0, 0xFFFF); var slot = r.uintIn(0, 255);
+			CShipSet(seq, x, y, z, expect, gi, slot);
+		case 33:
+			var x = r.uintIn(0, COORD_MAX); var y = r.uintIn(0, COORD_MAX); var z = r.uintIn(0, Z_MAX);
+			CShipCraft(x, y, z);
+		case 34:
+			var seq = r.uint(); var store = readInv(r); var inv = readInv(r);
+			CStorage(seq, store, inv);
 		case k: throw new NetReader.NetError("mensaje de cliente desconocido " + k);
 		}
 		r.done();
@@ -547,6 +578,9 @@ class Msg {
 			w.float(x); w.float(y); w.float(z);
 		case SPatch(key, json):
 			w.string(key); w.string(json);
+		case SShipCells(list):
+			w.uint(list.length);
+			for( c in list ) { w.uint(c.key); w.uint(c.v); }
 		case SPlanetLost(reason):
 			w.string(reason);
 		case SPong(t, serverTime):
@@ -661,6 +695,9 @@ class Msg {
 		case 30:
 			var key = r.string(16); var json = r.string(PATCH_MAX);
 			SPatch(key, json);
+		case 31:
+			var n = r.count(CHANGES_MAX, 2);
+			SShipCells([for( _ in 0...n ) { var k = r.uint(); var v = r.uint(); { key : k, v : v }; }]);
 		case k: throw new NetReader.NetError("mensaje de servidor desconocido " + k);
 		}
 		r.done();

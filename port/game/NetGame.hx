@@ -53,7 +53,76 @@ class NetGame {
 			stateAcc = 0;
 			sendState();
 		}
+		// donde esta su nave en el planeta (al llegar y despues de pilotarla): el servidor pasa con ello los sueltos de a bordo
+		var w = g.world;
+		if( w.shipDX != sentDX || w.shipDY != sentDY ) {
+			sentDX = w.shipDX;
+			sentDY = w.shipDY;
+			mp.client.send(CShipOffset(sentDX, sentDY));
+		}
 		remotes.update(dt);
+	}
+
+	var sentDX = -1;
+	var sentDY = -1;
+
+	// ---------------------------------------------------------------- su nave (ServerShip)
+
+	/** coordenadas de la nave de una celda del planeta (z >= SHIP_Z) */
+	function shipCoords( x : Int, y : Int, z : Int ) : { x : Int, y : Int, z : Int } {
+		var w = g.world;
+		return { x : Std.int(@:privateAccess w.shipLocal(x, w.shipDX)), y : Std.int(@:privateAccess w.shipLocal(y, w.shipDY)), z : z - WorldData.SHIP_Z };
+	}
+
+	/** celda del planeta de unas coordenadas de la nave */
+	function planetCoords( lx : Float, ly : Float ) : { x : Float, y : Float } {
+		var w = g.world, s = w.size;
+		var x = (lx + w.shipDX) % s, y = (ly + w.shipDY) % s;
+		if( x < 0 ) x += s;
+		if( y < 0 ) y += s;
+		return { x : x, y : y };
+	}
+
+	/** seq de cada peticion de la nave sin respuesta y su celda (del planeta) */
+	var pendingShip = new Map<Int, { x : Int, y : Int, z : Int }>();
+
+	/** ha puesto (put) o quitado (old) un bloque de una zona del sintetizador; el bloque salio de la casilla slot */
+	public function sentShipSet( x : Int, y : Int, z : Int, old : Block, put : Block, slot : Int ) {
+		var c = shipCoords(x, y, z);
+		pendingShip.set(++seq, { x : x, y : y, z : z });
+		if( put != null && !g.creative ) predicted.push({ seq : seq, slot : slot, n : 1 });
+		mp.client.send(CShipSet(seq, c.x, c.y, c.z, old == null ? 0 : old.index, put == null ? 0 : put.index, slot));
+	}
+
+	/** el ordenador del sintetizador: fabrica el servidor */
+	public function sentShipCraft( x : Int, y : Int, z : Int ) {
+		var c = shipCoords(x, y, z);
+		mp.client.send(CShipCraft(c.x, c.y, c.z));
+	}
+
+	/** el stockage ha cambiado (pantalla ShipStorage): stockage e inventario tal como quedan */
+	public function sentStorage( store : StorageData.StorageInfo ) {
+		predicted = [];
+		mp.client.send(CStorage(++seq, ServerItems.netInv({ maxWeight : 0, t : store.t, charges : store.charges }), ServerItems.netInv(g.inv.inv)));
+	}
+
+	/** celdas de la nave cambiadas por el servidor (receta hecha con los bloques de la zona) */
+	function applyShipCells( list : Array<NetChange> ) {
+		var ss = 1 << Const.BITS;
+		for( c in list ) {
+			var lz = c.key & (WorldData.HEIGHT - 1), col = c.key >> WorldData.ZBITS;
+			var p = planetCoords(col % ss, Std.int(col / ss));
+			var x = Std.int(p.x), y = Std.int(p.y), z = lz + WorldData.SHIP_Z;
+			var gi = c.v & 0xFFFF;
+			var b = gi == 0 || gi >= Block.all.length ? null : Block.all[gi];
+			var old = g.world.block(x, y, z);
+			if( old == b ) continue;
+			applying = true;
+			g.world.setBlock(x, y, z, b);
+			applying = false;
+			if( g.ship != null ) g.ship.craft(x, y, z, b, g);
+			if( b == null && old != null ) @:privateAccess g.parts.doBreak(x, y, z, old);
+		}
 	}
 
 	function sendState() {
@@ -114,7 +183,15 @@ class NetGame {
 	/** progresion (tienda, contratos, planeta principal): ya hecha en la partida; el servidor la repite (ServerEcon) */
 	public function sentEcon( op : EconOp, a : String, n : Int ) mp.client.send(CEcon(++seq, op, a, n));
 
-	public function sentChestOpen( x : Int, y : Int, z : Int ) mp.client.send(CChestOpen(x, y, z));
+	/** abrir una cantina; las de la nave van en sus coordenadas (z con SHIP_Z) */
+	public function sentChestOpen( x : Int, y : Int, z : Int ) {
+		if( z >= WorldData.SHIP_Z ) {
+			var c = shipCoords(x, y, z);
+			x = c.x;
+			y = c.y;
+		}
+		mp.client.send(CChestOpen(x, y, z));
+	}
 
 	/** la cantina abierta ha cambiado (SlotGrid.onChange): cantina e inventario tal como quedan */
 	public function sentChestMove() {
@@ -134,6 +211,16 @@ class NetGame {
 		switch( m ) {
 		case SChanges(list):
 			for( c in list ) apply(c.key, c.v, true);
+		case SSetResult(s, ok, current) if( pendingShip.exists(s) ):
+			// en la nave: si el servidor no lo acepta, la celda vuelve a lo que tiene el
+			var c = pendingShip.get(s);
+			pendingShip.remove(s);
+			if( !ok ) {
+				var cc = shipCoords(c.x, c.y, c.z);
+				applyShipCells([{ key : ((cc.x + cc.y * (1 << Const.BITS)) << WorldData.ZBITS) | cc.z, v : current }]);
+			}
+		case SShipCells(list):
+			applyShipCells(list);
 		case SSetResult(s, ok, current):
 			var key = pending.get(s);
 			pending.remove(s);
@@ -160,7 +247,14 @@ class NetGame {
 			}
 		case SLootCount(id, n):
 			var d = loots.get(id);
-			if( d != null ) d.n = n;
+			if( d != null ) {
+				d.n = n;
+				// pedido y no cogido entero (no cabe): vuelve a verse
+				if( d.pending ) {
+					d.pending = false;
+					if( d.obj != null ) d.obj.visible = true;
+				}
+			}
 		case SLootRest(id, x, y, z):
 			var d = loots.get(id);
 			if( d != null ) {
@@ -218,6 +312,12 @@ class NetGame {
 	}
 
 	function addLoot( l : NetLoot ) {
+		// los de la nave llegan en sus coordenadas (ServerShip): a las del planeta, donde esta la nave
+		if( l.z >= WorldData.SHIP_Z ) {
+			var p = planetCoords(l.x, l.y);
+			l.x = p.x;
+			l.y = p.y;
+		}
 		var old = loots.get(l.id);
 		if( old != null ) {
 			// rechazada la recogida: el suelto vuelve a verse

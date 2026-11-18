@@ -2469,8 +2469,8 @@ class GalaxyApp extends hxd.App {
 		invScreen.onClose = closeInventory;
 		invScreen.onThrow = function(b, n, slot) {
 			if( game == null ) return;
-			// multijugador: en el planeta lo tira el servidor
-			if( game.net != null && game.pz < World.SHIP_Z ) game.net.sentThrow(slot + 1, n) else game.throwStack(b, n);
+			// multijugador: lo tira el servidor (en el planeta o en la nave)
+			if( game.net != null ) game.net.sentThrow(slot + 1, n) else game.throwStack(b, n);
 		};
 		if( game.net != null ) invScreen.onLayout = game.net.sentLayout;
 		if( game.canSwitchMode() ) invScreen.addCornerButton(ModeSwitch.button(null, game.creative, switchMode));
@@ -2632,6 +2632,15 @@ class GalaxyApp extends hxd.App {
 		if( current != null ) resume();
 		storage = new ShipStorage(s2d, atlas, game.inv, StorageData.ensure(game.info));
 		storage.onClose = closeStorage;
+		// multijugador: el stockage es del servidor (ServerShip.storage); cada cambio se le manda con el inventario
+		if( game.net != null ) {
+			var st = storage;
+			st.grid.onChange = function() {
+				if( game == null || game.net == null ) return;
+				game.inv.display();
+				game.net.sentStorage(st.store);
+			};
+		}
 		paletteOpen = true;
 		captureMouse(false);
 		// el panel tiene su ayuda: la de las teclas del juego (hud) no se ve detras
@@ -2823,6 +2832,15 @@ class GalaxyApp extends hxd.App {
 			info.special = v;
 		case "upgrades":
 			info.upgrades = v;
+		case "storage":
+			// en su sitio: la pantalla del stockage abierta sigue con las mismas listas
+			var st = StorageData.ensure(info);
+			if( v != null && v.t != null && v.charges != null ) {
+				var t : Array<Dynamic> = v.t, ch : Array<Dynamic> = v.charges;
+				for( i in 0...st.t.length ) st.t[i] = i < t.length && t[i] != null ? { k : Std.int(t[i].k), n : Std.int(t[i].n) } : null;
+				st.charges.splice(0, st.charges.length);
+				for( c in ch ) st.charges.push({ c : Std.int(c.c), n : Std.int(c.n) });
+			}
 		case "main":
 			if( info.uni != null && v != null ) {
 				info.uni.main = v.main;

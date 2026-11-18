@@ -118,13 +118,7 @@ class Hangar {
 	 * Indice del bloque para guardar y comprobar la nave (0 = nada). Cambio del port: una puerta abierta cuenta como cerrada; el
 	 * original la guardaba abierta y, sin colision, la tomaba por un agujero del casco. Tambien en Ship.new (cambios de a bordo).
 	 */
-	public static function shipId( b : Block ) : Int {
-		if( b == null ) return 0;
-		return switch( b.k ) {
-			case BShipDoorOpen, BShipDoorYOpen: b.toggle.index;
-			default: b.index;
-		}
-	}
+	public static function shipId( b : Block ) : Int return ShipData.shipId(b);
 
 	/** la nave de la zona construible (net/EditShip.getShipData), con las puertas cerradas */
 	public static function shipBytes( w : World ) : haxe.io.Bytes {
