@@ -112,6 +112,7 @@ class ServerWorlds {
 		if( info.uni != null && info.uni.space != true && info.hangar != true && info.mothership != true ) {
 			var inst = enter(s, ownKey(s, info.uni.planetId), info.uni.planetId);
 			if( inst != null ) {
+				s.send(SRights(s.rights));
 				info.edits = currentEdits(inst);
 				info.shipAt = readShipAt(inst.row.shipAt);
 				info.genVersion = inst.row.gen;

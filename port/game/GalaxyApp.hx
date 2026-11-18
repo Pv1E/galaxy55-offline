@@ -552,6 +552,7 @@ class GalaxyApp extends hxd.App {
 				case "kubes": buildKubes();
 				case "multi": buildMulti();
 				case "mpoptions": buildMpOptions();
+				case "mpaccess": buildMpAccess();
 				default: null;
 			}
 			screens.set(name, s);
@@ -937,6 +938,8 @@ class GalaxyApp extends hxd.App {
 	 */
 	function buildMpOptions() : Screen {
 		var s = new ServerListScreen(ui);
+		hud.visible = false;
+		msgText.visible = false;
 		s.listY = 110;
 		s.VISIBLE = 3;
 		var bg = new h2d.Graphics(s);
@@ -1011,6 +1014,159 @@ class GalaxyApp extends hxd.App {
 		screens.remove("mpoptions");
 		if( old != null ) old.remove();
 		show("mpoptions");
+	}
+
+	/** derechos en el planeta en el que se juega (SPlanetData, SRights): con ROwner, la pantalla de accesos en las licencias */
+	var mpRights = 0;
+	/** accesos del planeta propio que se esta mirando (SAccess) */
+	var accessState : { pid : Int, open : Bool, allVisitors : Bool, serverVisit : Bool, vr : Int, guests : Array<NetGuest> };
+	var accessPid = -1;
+	var accessName = "";
+
+	/** Licencias > Abrir a otros exploradores (anadido del port): pide los accesos del planeta pid al servidor y los ensena */
+	function openAccess( pid : Int, name : String ) {
+		if( mp == null || !mp.isPlaying() ) return;
+		accessPid = pid;
+		accessName = name;
+		accessState = null;
+		mp.client.send(CGetAccess(pid));
+		reopenAccess(true);
+	}
+
+	function reopenAccess( force = false ) {
+		if( !force && currentName != "mpaccess" ) return;
+		var old = screens.get("mpaccess");
+		screens.remove("mpaccess");
+		if( old != null ) old.remove();
+		show("mpaccess");
+	}
+
+	/**
+	 * Accesos de un planeta propio: abierto o cerrado a los exploradores (cerrar quita el acceso a todos pero guarda lo demas),
+	 * todos los invitados como visitantes, visita de todo el servidor (solo gestionnaires), lo que pueden hacer los visitantes
+	 * (cantinas, bloques que se activan, recoger: desmarcado de entrada), los invitados con su papel (Explorador o Visitante) y
+	 * quitarlos, invitar a un jugador conectado y ceder el titulo de explotacion. Abandonar esta en el mapa.
+	 */
+	function buildMpAccess() : Screen {
+		var s = new ServerListScreen(ui);
+		// el juego sigue detras (multijugador), sin su ayuda encima
+		hud.visible = false;
+		msgText.visible = false;
+		s.listY = 330;
+		s.VISIBLE = 2;
+		var bg = new h2d.Graphics(s);
+		Theme.fullRect(bg, 0x000000, 0.4);
+		Theme.rect(bg, 110, 30, 1060, 660, Theme.PANEL, 0.96);
+		Theme.rect(bg, 110, 30, 1060, 4, Theme.ACCENT);
+		var t = Theme.text(s, Lang.t("mp.access.title").split("%name%").join(accessName), 2.8, Theme.TEXT, 0, 44);
+		t.x = (W - t.textWidth * t.scaleX) * 0.5;
+		var back = new Button(s, Lang.t("back"), 300, 48);
+		var leave = function() show("licenses");
+		back.onActivate = leave;
+		s.onBack = leave;
+		var a = accessState;
+		if( a == null || a.pid != accessPid || mp == null ) {
+			var w = Theme.text(s, Lang.t("mp.status.wait"), 2.0, Theme.DIM, 0, 300);
+			w.x = (W - w.textWidth * w.scaleX) * 0.5;
+			s.add(back, (W - 300) * 0.5, 620);
+			return s;
+		}
+		var pid = a.pid;
+		function send( open : Bool, allV : Bool, serverV : Bool, vr : Int ) if( mp != null ) mp.client.send(CAccess(pid, open, allV, serverV, vr));
+		var open = new CheckBox(s, Lang.t("mp.access.open"), a.open, 510, 48);
+		var allV = new CheckBox(s, Lang.t("mp.access.allvisitors"), a.allVisitors, 510, 48);
+		s.add(open, 130, 96);
+		s.add(allV, 660, 96);
+		var serverV : CheckBox = null;
+		if( mp.isManager() ) {
+			serverV = new CheckBox(s, Lang.t("mp.access.servervisit"), a.serverVisit, 1040, 48);
+			s.add(serverV, 130, 150);
+		}
+		Theme.text(s, Lang.t("mp.access.visitors"), 1.6, Theme.CYAN, 132, 206);
+		var rc = new CheckBox(s, Lang.t("mp.access.chests"), a.vr & (RChests : Int) != 0, 340, 46);
+		var ra = new CheckBox(s, Lang.t("mp.access.activate"), a.vr & (RActivate : Int) != 0, 340, 46);
+		var rp = new CheckBox(s, Lang.t("mp.access.pickup"), a.vr & (RPickup : Int) != 0, 340, 46);
+		s.add(rc, 130, 232);
+		s.add(ra, 480, 232);
+		s.add(rp, 830, 232);
+		function vr() return (rc.checked ? (RChests : Int) : 0) | (ra.checked ? (RActivate : Int) : 0) | (rp.checked ? (RPickup : Int) : 0);
+		function apply( _ ) send(open.checked, allV.checked, serverV != null ? serverV.checked : a.serverVisit, vr());
+		for( c in [open, allV, rc, ra, rp] ) c.onChange = apply;
+		if( serverV != null ) serverV.onChange = apply;
+		Theme.text(s, Lang.t("mp.access.guests").split("%n%").join("" + a.guests.length), 1.8, Theme.TEXT, 132, 292);
+		for( g in a.guests ) {
+			var role = Lang.t(g.role == 1 ? "mp.access.visitor" : "mp.access.explorer");
+			var row = new ServerRow(s, g.name, role, [g.role == 1 ? "explorer" : "visitor", "remove"], false);
+			row.setInfo(a.allVisitors && g.role != 1 ? Lang.t("mp.access.asvisitor") : "", Theme.DIM);
+			s.rows.push(row);
+			s.add(row, s.listX, s.listY);
+			var pub = g.pub, gname = g.name;
+			row.onAction = function( act ) {
+				if( mp == null ) return;
+				switch( act ) {
+				case "remove":
+					askConfirm(s, Lang.t("mp.access.remove.ask").split("%n%").join(gname), "", Theme.DANGER, function() if( mp != null ) mp.client.send(CGuest(pid, pub, -1)));
+				default:
+					mp.client.send(CGuest(pid, pub, act == "visitor" ? 1 : 0));
+				}
+			};
+		}
+		s.layout();
+		var inv = new Button(s, Lang.t("mp.access.invite"), 300, 48);
+		var give = new Button(s, Lang.t("mp.access.transfer"), 300, 48);
+		s.add(inv, 130, 620);
+		s.add(give, 450, 620);
+		s.add(back, 770, 620);
+		inv.onActivate = function() askPickPlayer(s, Lang.t("mp.access.invite"), true, function( id, role ) if( mp != null ) mp.client.send(CInvite(pid, id, role)));
+		give.onActivate = function() askPickPlayer(s, Lang.t("mp.access.transfer"), false, function( id, _ ) {
+			var name = "";
+			if( mp != null ) for( p in mp.players ) if( p.id == id ) name = p.name;
+			askConfirm(s, Lang.t("mp.access.transfer.ask").split("%n%").join(name), Lang.t("mp.access.transfer.warn"), Theme.DANGER, function() {
+				if( mp != null ) mp.client.send(CTransfer(pid, id));
+				show("licenses");
+			});
+		});
+		return s;
+	}
+
+	/** elegir un jugador conectado (no uno mismo) y, para invitar, su papel; onPick(id, papel: 0 explorador, 1 visitante) */
+	function askPickPlayer( parent : Screen, title : String, withRole : Bool, onPick : Int -> Int -> Void ) {
+		if( modal != null && modal.parent != null || mp == null ) return;
+		var others = [for( p in mp.players ) if( p.id != mp.myId ) p];
+		if( others.length == 0 ) {
+			showToast(Lang.t("mp.access.nobody"), 3);
+			return;
+		}
+		parent.active = false;
+		var m = new Screen(ui);
+		var bg = new h2d.Graphics(m);
+		Theme.fullRect(bg, 0x000000, 0.55);
+		Theme.rect(bg, 290, 210, 700, 300, Theme.PANEL, 1);
+		Theme.rect(bg, 290, 210, 700, 4, Theme.ACCENT);
+		var t = Theme.text(m, title, 2.4, Theme.TEXT, 0, 236);
+		t.x = (W - t.textWidth * t.scaleX) * 0.5;
+		var who = new Selector(m, Lang.t("mp.access.player"), [for( p in others ) p.name], 620, 54);
+		var role = new Selector(m, Lang.t("mp.access.role"), [Lang.t("mp.access.explorer"), Lang.t("mp.access.visitor")], 620, 54);
+		var cancel = new Button(m, Lang.t("cancel"), 250, 52);
+		var ok = new Button(m, Lang.t("accept"), 250, 52);
+		m.add(who, 330, 290);
+		if( withRole ) m.add(role, 330, 350);
+		else role.visible = false;
+		m.add(cancel, 380, 430);
+		m.add(ok, 650, 430);
+		var close = function() {
+			m.remove();
+			parent.active = true;
+		};
+		ok.onActivate = function() {
+			var id = others[who.index].id;
+			close();
+			onPick(id, role.index);
+		};
+		cancel.onActivate = close;
+		m.onBack = close;
+		m.setFocus(0);
+		modal = m;
 	}
 	/** la conexion se ha acabado (cerrada, rechazada, expulsado): al menu Multijugador con el motivo; con contrasena se pide */
 	function endMulti() {
@@ -1867,6 +2023,14 @@ class GalaxyApp extends hxd.App {
 				y += 62;
 			}
 		}
+		// multijugador: el planeta propio en el que estas se abre a otros exploradores (pantalla de accesos)
+		if( mp != null && mp.isPlaying() && mpRights & (ROwner : Int) != 0 && Licenses.has(uni, here) ) {
+			y += 6;
+			var ab = new Button(s, Lang.t("mp.access.button"), PW - 80, 54);
+			ab.onActivate = function() openAccess(here, planets.exists(here) ? planets.get(here).name : "?");
+			s.add(ab, px, y);
+			y += 62;
+		}
 		var back = new Button(s, Lang.t("back"));
 		s.add(back, (W - 460) * 0.5, y + 14);
 		var h = Std.int(y + 14 + 54 + 30);
@@ -2367,6 +2531,7 @@ class GalaxyApp extends hxd.App {
 			// multijugador: el jugador deja el planeta (los demas dejan de verlo)
 			if( mp != null ) mp.client.send(CTakeoff);
 			mpHeld = [];
+			mpRights = 0;
 			tutorial.takeoff();
 			// se guarda en cuanto el mapa se ha dibujado (para la miniatura); si antes se cierra la ventana, se guarda igual
 			takeoffSave = 1.0;
@@ -3364,7 +3529,8 @@ class GalaxyApp extends hxd.App {
 			if( game != null ) leaveGame();
 			saveOnMap = false;
 			startGame(info);
-		case SPlanetData(_, seed, biome, size, gv, shipAt, edits, _, _):
+		case SPlanetData(_, seed, biome, size, gv, shipAt, edits, _, rights):
+			mpRights = rights;
 			var old = pendingLand;
 			if( old == null ) return;
 			pendingLand = null;
@@ -3401,6 +3567,11 @@ class GalaxyApp extends hxd.App {
 				explorer = null;
 				buildExplorer();
 			}
+		case SRights(r):
+			mpRights = r;
+		case SAccess(pid, open, allV, serverV, vr, guests):
+			accessState = { pid : pid, open : open, allVisitors : allV, serverVisit : serverV, vr : vr, guests : guests };
+			reopenAccess();
 		case SPatch(key, json):
 			// un campo de la partida como lo tiene el servidor, tras una compra, un contrato...
 			var info = game != null ? game.info : spaceInfo != null ? spaceInfo : pendingLand != null ? pendingLand : loadInfo;

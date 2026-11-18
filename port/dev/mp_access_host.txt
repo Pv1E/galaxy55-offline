@@ -1,0 +1,27 @@
+# multijugador (anadido del port), con port/dev/mp_chat_guest.txt: Licencias > Abrir a otros exploradores del anfitrion, con
+# el invitado en la lista de invitados. multirun.ps1 -ScriptList "a,b"
+waitfor planet
+mp host 55198
+waitfor map 6000
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+mp access 0 1
+waitfor mpplayers2 9000
+wait 60
+mp invite 0 2 0
+waitfor mpremotes1 9000
+wait 120
+licenses open
+wait 10
+print menu
+shot mp_licencias
+button 0
+wait 60
+print menu
+shot mp_accesos
+wait 200
+mp leave
+waitfor mpend 600
