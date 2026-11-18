@@ -237,6 +237,7 @@ class ContractPanel extends h2d.Object {
 	/** da lo que llevas al contrato especial (Contracts.giveSpecial): con el ultimo bloque se cobra el conteneur */
 	public function giveSpecial() : Bool {
 		if( !Contracts.giveSpecial(info, inv) ) return false;
+		if( onEcon != null ) onEcon(EGiveSpecial, 0);
 		refresh();
 		return true;
 	}
@@ -244,16 +245,25 @@ class ContractPanel extends h2d.Object {
 	/** da lo que llevas a la linea i del tablero (Contracts.deliver): se entrega o queda en curso */
 	public function deliver( i : Int ) : Bool {
 		if( !Contracts.deliver(info, inv, i) ) return false;
+		if( onEcon != null ) onEcon(EDeliver, i);
 		refresh();
 		return true;
 	}
 
 	/** da lo que llevas al contrato en curso a (Contracts.give) */
 	public function give( a : ActiveContract ) : Bool {
+		var j = Contracts.active(info).indexOf(a);
 		if( a == null || !Contracts.give(info, inv, a) ) return false;
+		if( onEcon != null ) onEcon(EGive, j);
 		refresh();
 		return true;
 	}
+
+	/** multijugador: el servidor repite la operacion (ServerEcon) con su numero de linea o de contrato en curso */
+	public var onEcon : Msg.EconOp -> Int -> Void;
+
+	/** multijugador: la partida ha cambiado (SPatch, SInventory): se vuelve a dibujar */
+	public function serverChanged() refresh();
 
 	/** boton Abandonar: la confirmacion (onAbandon) se pide en la siguiente actualizacion */
 	public function askAbandon( a : ActiveContract ) {
@@ -262,7 +272,9 @@ class ContractPanel extends h2d.Object {
 
 	/** abandona el contrato en curso a (ya confirmado): los bloques dados se pierden */
 	public function abandon( a : ActiveContract ) : Bool {
+		var j = Contracts.active(info).indexOf(a);
 		if( !Contracts.abandon(info, a) ) return false;
+		if( onEcon != null ) onEcon(EAbandonContract, j);
 		refresh();
 		return true;
 	}

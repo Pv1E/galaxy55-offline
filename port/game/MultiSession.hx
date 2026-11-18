@@ -41,6 +41,8 @@ class MultiSession {
 	public static function host( dir : String, listenPort : Int, bindHost = "0.0.0.0" ) : MultiSession {
 		var m = new MultiSession();
 		var id = identity();
+		// pruebas: --mpseed=N, la galaxia de los jugadores nuevos (la de siempre, para repetir un caso)
+		for( a in Sys.args() ) if( StringTools.startsWith(a, "--mpseed=") ) ServerWorlds.fixedSeed = Std.parseInt(a.substr(9));
 		m.server = new GameServer(dir);
 		if( listenPort > 0 ) m.server.listen(bindHost, listenPort);
 		m.client = new NetClient(id, Settings.myPseudo(), "", 0, m.server.fingerprint);
@@ -79,6 +81,7 @@ class MultiSession {
 			end("mp.keychanged", null);
 		case EWelcome(id, name, r, c, first):
 			myId = id;
+			Clock.offset = client.clockOffset;
 			myName = name;
 			role = r;
 			creative = c;
@@ -120,6 +123,7 @@ class MultiSession {
 
 	function end( key : String, r : Null<RefuseReason> ) {
 		if( ended != null ) return;
+		Clock.offset = 0;
 		ended = key;
 		endReason = r;
 	}
@@ -130,6 +134,7 @@ class MultiSession {
 
 	/** salir: el cliente se despide y, si hospedaba, el servidor avisa a todos y se para */
 	public function close() {
+		Clock.offset = 0;
 		if( client != null ) client.close();
 		if( server != null ) {
 			server.pump(0);

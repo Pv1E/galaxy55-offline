@@ -21,6 +21,7 @@ class ServerWorlds {
 	var instances = new Map<String, PlanetInstance>();
 	var dirtyRecords = new Map<String, Session>();
 	public var items(default, null) : ServerItems;
+	public var econ(default, null) : ServerEcon;
 	/** pruebas (port/headless/NetTest.hx): semilla de todas las partidas nuevas, para tener siempre el mismo terreno */
 	public static var fixedSeed : Null<Int> = null;
 	var tickAcc = 0.;
@@ -36,6 +37,7 @@ class ServerWorlds {
 		this.server = server;
 		this.db = db;
 		items = new ServerItems(this, server, db);
+		econ = new ServerEcon(this, server);
 	}
 
 	// ---------------------------------------------------------------- partidas de los jugadores
@@ -90,24 +92,52 @@ class ServerWorlds {
 		dirtyRecords.set(s.uid, s);
 	}
 
-	/** provisional (hasta que el servidor lleve inventario y economia): la partida que manda el cliente, sin el terreno */
+	/**
+	 * La partida que manda el cliente (al guardar, al despegar): solo se toma lo que no da nada, donde esta y lo que ha visto.
+	 * Lo demas es del servidor, que lo cambia con sus reglas: inventario y contenedores (ServerItems), creditos, mercado,
+	 * contratos y planeta principal (ServerEcon), licencias (land, CAbandon), terreno (planet_edits), modo y tiempo de juego.
+	 * Provisional hasta que el servidor lleve tambien la nave (sus cambios, cantinas y stockage), el hangar, la nodriza, la
+	 * cometa y el tutorial: eso aun se toma del cliente.
+	 */
 	function clientRecord( s : Session, data : haxe.io.Bytes ) {
 		var o : Dynamic;
 		try o = haxe.Json.parse(NetZip.unpackString(data, 16 << 20)) catch( e : Dynamic ) return;
 		var info = SaveData.parse(o, s.uid);
-		if( info == null ) return;
-		// el terreno es del servidor (planet_edits): no se guarda en la partida
-		info.edits = [];
-		// el inventario y los contenedores los lleva el servidor (ServerItems): no se toman del cliente
-		info.inv = s.record.inv;
-		info.deathDrops = s.record.deathDrops;
-		if( info.uni != null ) for( p in info.uni.planets ) p.edits = [];
-		// en un planeta de otro jugador: su partida sigue en su galaxia (al volver, en el espacio)
-		if( info.uni != null && s.instance != null && s.instance.row.galaxy != s.uid ) {
-			info.uni.space = true;
-			if( s.record != null && s.record.uni != null ) info.uni.planetId = s.record.uni.planetId;
+		var r = s.record;
+		if( info == null || r == null ) return;
+		r.px = info.px;
+		r.py = info.py;
+		r.pz = info.pz;
+		r.yaw = info.yaw;
+		r.pitch = info.pitch;
+		r.fly = info.fly;
+		r.life = info.life;
+		r.saved = info.saved;
+		r.savedWith = info.savedWith;
+		r.kub = info.kub;
+		r.shipEdits = info.shipEdits;
+		r.shipData = info.shipData;
+		r.storage = info.storage;
+		r.hangar = info.hangar;
+		r.mothership = info.mothership;
+		r.inMother = info.inMother;
+		// las cantinas de los planetas son del servidor (planet_chests): de la partida, solo las de la nave
+		r.chests = info.chests == null ? null : info.chests.filter(c -> StringTools.startsWith(c.key, "s:"));
+		r.comet = info.comet;
+		r.tuto = info.tuto;
+		r.tutorial = info.tutorial;
+		var u = info.uni, ru = r.uni;
+		if( u != null && ru != null ) {
+			ru.pos = u.pos;
+			ru.robot = u.robot;
+			ru.ship = u.ship;
+			ru.traveled = u.traveled;
+			ru.comets = u.comets;
+			// en un planeta de otro jugador: su partida sigue en su galaxia (al volver, en el espacio)
+			ru.space = s.instance != null && s.instance.row.galaxy != s.uid ? true : u.space;
+			// los planetas visitados sin sus cambios (estan en planet_edits), y solo los de su galaxia que tiene
+			ru.planets = [for( p in u.planets ) if( Licenses.has(ru, p.id) ) { id : p.id, edits : [], shipAt : p.shipAt, genVersion : p.genVersion }];
 		}
-		s.record = info;
 		saveRecord(s);
 	}
 
@@ -243,7 +273,10 @@ class ServerWorlds {
 			var uni = s.record.uni;
 			uni.planetId = pid;
 			uni.space = null;
+			// escanear gasta una licencia (GalaxyApp.landOnPlanet hace lo mismo en su copia); planetRow ya ha mirado que quede
+			Licenses.claim(s.record, pid);
 			saveRecord(s);
+			s.send(SPatch("licenses", haxe.Json.stringify({ licenses : uni.licenses, main : uni.main })));
 		}
 		s.send(SPlanetData(inst.key, row.seed, row.biome, row.size, row.gen, row.shipAt, NetZip.packInts(currentEdits(inst)),
 			server.db.displayOf(row.owner), s.rights));
@@ -449,6 +482,15 @@ class ServerWorlds {
 			db.begin();
 			db.deletePlanet(row.gkey);
 			db.commit();
+			// un planeta de su galaxia: pierde la licencia y, si era el ultimo del sistema, el sistema (Licenses.abandon, lo mismo
+			// que hace el cliente en su copia); uno cedido por otro solo se borra
+			var uni = s.record == null ? null : s.record.uni;
+			if( uni != null && row.galaxy == s.uid ) {
+				var f = ExpData.ExpOffline.planet(ExpData.ExpOffline.make(uni.seed, uni.start, null, null, null, uni.gone), pid);
+				if( f != null ) Licenses.abandon(s.record, f.p, f.s);
+				saveRecord(s);
+				s.send(SPatch("licenses", haxe.Json.stringify({ licenses : uni.licenses, main : uni.main, abandoned : uni.abandoned, gone : uni.gone })));
+			}
 			server.files.log(s.display + " abandona " + row.gkey);
 			for( p in server.playing() ) sendForeign(p);
 		default:
@@ -544,6 +586,8 @@ class ServerWorlds {
 			if( s.record != null ) accessMessage(s, m);
 		case CSaveRecord(data):
 			if( s.record != null ) clientRecord(s, data);
+		case CEcon(seq, op, a, n):
+			if( s.record != null ) econ.handle(s, seq, op, a, n);
 		default:
 			return items.handle(s, m);
 		}
@@ -582,6 +626,8 @@ class ServerWorlds {
 
 	function tick() {
 		var now = haxe.Timer.stamp();
+		// el tiempo de juego de cada uno (los precios del robot vuelven a lo normal con el: Market.advance); se guarda con lo demas
+		for( s in server.playing() ) if( s.record != null ) s.record.playSeconds += TICK;
 		for( inst in instances.copy() ) {
 			if( inst.players.length == 0 ) {
 				if( now - inst.emptySince > UNLOAD ) unload(inst);

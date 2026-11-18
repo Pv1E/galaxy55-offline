@@ -51,6 +51,8 @@ class ServerItems {
 	var db : ServerDb;
 	/** distancia maxima para recoger (bloques; en el juego 0.4 tras acercarse desde 1.5) */
 	static inline var PICK_REACH = 2.5;
+	/** el fundido de la vuelta a la nave (GameView.returnToShip), en las unidades de Drops (1/32 s) */
+	static inline var DEATH_DELAY = 100.;
 	static inline var USE_REACH = 10.;
 
 	public function new( worlds : ServerWorlds, server : GameServer, db : ServerDb ) {
@@ -71,6 +73,15 @@ class ServerItems {
 	}
 
 	inline function inv( s : Session ) return new Inv(s.record.inv);
+
+	/** solo pruebas del anfitrion (Dev: mp give), nunca desde la red: n bloques (o cargas) en el inventario del jugador */
+	public function devGive( s : Session, b : Block, n : Int ) {
+		if( s.record == null || s.record.inv == null ) return;
+		var i = inv(s);
+		if( b.charge != null ) i.addCharge(b.charge, n) else i.addBlocks(b, n);
+		worlds.markRecord(s);
+		sendInv(s);
+	}
 
 	/** CPlace: el bloque sale de la casilla slot (1 = la primera tras el excavador); false si no lo tiene */
 	public function consumeForPlace( s : Session, slot : Int, gi : Int ) : Bool {
@@ -115,7 +126,7 @@ class ServerItems {
 	}
 
 	/** un suelto nuevo en el planeta (vx, vy null: la deriva al azar de lo que se suelta, Drop.new) */
-	public function spawn( inst : PlanetInstance, x : Float, y : Float, z : Float, b : Block, n = 1, ?vx : Float, ?vy : Float, ?loot : DeathDrops.DeathDropInfo ) : ServerDrop {
+	public function spawn( inst : PlanetInstance, x : Float, y : Float, z : Float, b : Block, n = 1, ?vx : Float, ?vy : Float, ?loot : DeathDrops.DeathDropInfo, delay = 0. ) : ServerDrop {
 		var it = inst.items;
 		var d = new ServerDrop();
 		d.id = it.nextId++;
@@ -128,6 +139,7 @@ class ServerItems {
 		d.vy = vy != null ? vy : (GameRng.int(2) * 2 - 1) * GameRng.float() * 0.04;
 		if( vx != null ) d.active = false;
 		d.loot = loot;
+		d.delay = delay;
 		if( loot != null ) {
 			d.time = Math.POSITIVE_INFINITY;
 			d.vx = d.vy = 0;
@@ -304,7 +316,8 @@ class ServerItems {
 		for( k in 0...i.t.length ) i.t[k] = null;
 		i.charges.splice(0, i.charges.length);
 		worlds.markRecord(s);
-		spawn(inst, p.x, p.y, p.z + 0.5, DeathDrops.block(), 1, 0, 0, d);
+		// como en solo, sale al acabar el fundido de la vuelta a la nave (si no, el que se va lo recogeria al momento)
+		spawn(inst, p.x, p.y, p.z + 0.5, DeathDrops.block(), 1, 0, 0, d, DEATH_DELAY);
 		server.files.log(s.display + (manual ? " vuelve a la nave" : " muere") + " y deja su equipo en " + inst.key);
 	}
 

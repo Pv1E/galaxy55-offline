@@ -1487,6 +1487,7 @@ class GalaxyApp extends hxd.App {
 				showToast(err, 4);
 				return;
 			}
+			if( game.net != null ) game.net.sentEcon(EMainPlanet, "", id);
 			openLicenses();
 		});
 	}
@@ -1507,6 +1508,8 @@ class GalaxyApp extends hxd.App {
 	/** abandona el planeta (Licenses.abandon), lo muestra en el mapa y guarda enseguida: no se puede deshacer recargando */
 	function abandonPlanet( p : ExpData.ExpPlanet, s : ExpData.ExpSystem ) {
 		var uni = universe();
+		// multijugador: el servidor borra el planeta y quita la licencia de la partida de verdad (SPatch "licenses")
+		if( mp != null && mp.isPlaying() ) mp.client.send(CAbandon(p.id));
 		if( Licenses.abandon(spaceInfo, p, s) ) {
 			explorer.abandoned(p, s.id, ExpData.ExpOffline.replaceSystem(explorer.infos, s.id, Licenses.newSystem(uni)));
 			showToast(Lang.t("abandon.gone"), 7);
@@ -2252,7 +2255,20 @@ class GalaxyApp extends hxd.App {
 		}
 		game = new GameView(s3d, loadWorld, loadInfo, atlas, loadShip);
 		// multijugador (anadido del port): lo que hace el jugador va al servidor y lo de los demas llega a este mundo
-		if( mp != null && mp.isPlaying() && loadInfo.mothership != true && loadInfo.hangar != true ) game.net = new NetGame(mp, game, s3d, s2d);
+		if( mp != null && mp.isPlaying() && loadInfo.mothership != true && loadInfo.hangar != true ) {
+			var net = game.net = new NetGame(mp, game, s3d, s2d);
+			game.netSwitch = mp.isManager();
+			game.netSetMode(mp.creative);
+			net.onToast = function(s) showToast(s);
+			net.onCloseChest = closeChest;
+			net.onOpenChest = function( box ) {
+				openChest(box);
+				if( chest != null ) chest.grid.onChange = function() {
+					if( game != null ) game.inv.display();
+					net.sentChestMove();
+				};
+			};
+		}
 		loadWorld = null;
 		loadShip = null;
 		if( loadInfo.uni != null && loadInfo.uni.space == true && loadInfo.hangar != true && loadInfo.mothership != true ) {
@@ -2429,6 +2445,11 @@ class GalaxyApp extends hxd.App {
 	 * de inventario. Cierra lo que estuviera abierto y vuelve al juego.
 	 */
 	public function switchMode() {
+		// multijugador: lo decide el servidor (SMode)
+		if( game != null && game.net != null ) {
+			if( game.canSwitchMode() ) mp.client.send(CSetMode(!game.creative));
+			return;
+		}
 		if( game == null || !game.setSurvival(game.creative) ) return;
 		// en el hangar o la nodriza se juega una copia: el modo pasa tambien a la partida a la que se vuelve
 		if( hangarReturn != null ) hangarReturn.survival = game.info.survival;
@@ -2446,7 +2467,12 @@ class GalaxyApp extends hxd.App {
 		if( paletteOpen || game == null || chest != null || game.piloting ) return;
 		invScreen = new InvScreen(s2d, atlas, game.inv);
 		invScreen.onClose = closeInventory;
-		invScreen.onThrow = function(b, n) if( game != null ) game.throwStack(b, n);
+		invScreen.onThrow = function(b, n, slot) {
+			if( game == null ) return;
+			// multijugador: en el planeta lo tira el servidor
+			if( game.net != null && game.pz < World.SHIP_Z ) game.net.sentThrow(slot + 1, n) else game.throwStack(b, n);
+		};
+		if( game.net != null ) invScreen.onLayout = game.net.sentLayout;
 		if( game.canSwitchMode() ) invScreen.addCornerButton(ModeSwitch.button(null, game.creative, switchMode));
 		paletteOpen = true;
 		captureMouse(false);
@@ -2485,6 +2511,7 @@ class GalaxyApp extends hxd.App {
 
 	function closeChest() {
 		if( chest == null ) return;
+		if( game != null && game.net != null ) game.net.sentChestClose();
 		chest.remove();
 		chest = null;
 		chestDrag = false;
@@ -2516,6 +2543,8 @@ class GalaxyApp extends hxd.App {
 		var m = game.market;
 		shop = new Shop(s2d, atlas, m, game.inv, game.info.credits);
 		shop.onCredits = function(c) game.info.credits = c;
+		// multijugador: el servidor repite la compra o la venta (ServerEcon)
+		if( game.net != null ) shop.onTrade = function( buy, w, n ) if( game != null && game.net != null ) game.net.sentEcon(buy ? EBuy : ESell, w.key, n);
 		shop.onClose = closeShop;
 		paletteOpen = true;
 		captureMouse(false);
@@ -2541,6 +2570,7 @@ class GalaxyApp extends hxd.App {
 		contracts = new ContractPanel(s2d, atlas, game.info, game.inv);
 		contracts.onClose = closeContracts;
 		contracts.onAbandon = askAbandonContract;
+		if( game.net != null ) contracts.onEcon = function( op, n ) if( game != null && game.net != null ) game.net.sentEcon(op, "", n);
 		Tutorial.contractsOpened(game.info);
 		paletteOpen = true;
 		captureMouse(false);
@@ -2704,6 +2734,8 @@ class GalaxyApp extends hxd.App {
 				showToast(Lang.t("mp.badrecord"));
 				return;
 			}
+			// los contenedores del equipo de los planetas los lleva el servidor (ServerItems): no salen de la partida
+			info.deathDrops = null;
 			if( explorer != null ) {
 				explorer.dispose();
 				explorer = null;
@@ -2749,8 +2781,62 @@ class GalaxyApp extends hxd.App {
 				explorer = null;
 				buildExplorer();
 			}
+		case SPatch(key, json):
+			// un campo de la partida como lo tiene el servidor, tras una compra, un contrato...
+			var info = game != null ? game.info : spaceInfo != null ? spaceInfo : pendingLand != null ? pendingLand : loadInfo;
+			if( info != null ) applyPatch(info, key, json);
+			if( shop != null && key == "credits" && game != null ) shop.setCredits(game.info.credits);
+			if( contracts != null ) contracts.serverChanged();
+		case SMode(c):
+			if( game != null && game.net != null && game.creative != c ) {
+				game.netSetMode(c);
+				closePalette();
+				closeInventory();
+				showToast(Lang.t(c ? "mode.now.creative" : "mode.now.survival"));
+			}
+		case SUserJoin(p) if( game != null && game.net != null && p.id == mp.myId ):
+			game.netSwitch = mp.isManager();
+		case SInventory(_, inv) if( game == null || game.net == null ):
+			// en el mapa (o cargando): el inventario de la partida queda como dice el servidor
+			var info = game != null ? game.info : spaceInfo != null ? spaceInfo : pendingLand != null ? pendingLand : loadInfo;
+			if( info != null && info.inv != null ) {
+				var t = info.inv.t;
+				for( k in 0...t.length ) t[k] = k < inv.t.length && inv.t[k] != null ? { k : inv.t[k].k, n : inv.t[k].n } : null;
+				info.inv.charges = [for( c in inv.charges ) { c : c.c, n : c.n }];
+			}
 		default:
 			if( game != null && game.net != null ) game.net.onMessage(m);
+		}
+	}
+
+	/** multijugador: un campo de la partida como lo tiene el servidor (SPatch); lo que no se entiende se deja */
+	function applyPatch( info : SaveInfo, key : String, json : String ) {
+		var v : Dynamic = try haxe.Json.parse(json) catch( e : Dynamic ) return;
+		switch( key ) {
+		case "credits":
+			if( Std.isOfType(v, Int) ) info.credits = v;
+		case "market":
+			if( game != null && game.info == info ) game.market.load(v) else info.market = v;
+		case "contracts":
+			info.contracts = v;
+		case "special":
+			info.special = v;
+		case "upgrades":
+			info.upgrades = v;
+		case "main":
+			if( info.uni != null && v != null ) {
+				info.uni.main = v.main;
+				info.uni.mainTime = v.mainTime;
+				info.uni.mainChanges = v.mainChanges;
+			}
+		case "licenses":
+			if( info.uni != null && v != null ) {
+				if( v.licenses != null ) info.uni.licenses = v.licenses;
+				info.uni.main = v.main;
+				if( v.abandoned != null ) info.uni.abandoned = v.abandoned;
+				if( v.gone != null ) info.uni.gone = v.gone;
+			}
+		default:
 		}
 	}
 

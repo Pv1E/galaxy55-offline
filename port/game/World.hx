@@ -283,6 +283,7 @@ class World extends WorldData {
 
 	/** Avanza la carga durante budgetMs milisegundos; devuelve el progreso de 0 a 1. */
 	public function step( budgetMs : Float ) : Float {
+		if( unbounded ) budgetMs = 1e9;
 		var t0 = haxe.Timer.stamp();
 		if( phase == 0 ) {
 			if( lighting == null ) {
@@ -838,6 +839,7 @@ class World extends WorldData {
 	 * no cruza el aire al sol; cada celda una vez, en el anillo mas cercano. Al acabar pone a rehacer los trozos tocados.
 	 */
 	function stepSeaLight( budget : Float ) {
+		if( unbounded ) budget = 1e9;
 		var j = seaJob;
 		var ts = haxe.Timer.stamp();
 		var sz = size, n = 0;
@@ -1099,13 +1101,15 @@ class World extends WorldData {
 				var id = seaChunks.shift();
 				buildChunk(id % n, Std.int(id / n));
 				k++;
-			} while( seaChunks.length > 0 && haxe.Timer.stamp() - ts < SEA_BUDGET );
+			} while( seaChunks.length > 0 && (unbounded || haxe.Timer.stamp() - ts < SEA_BUDGET) );
 			if( FLUSH_TIME ) Sys.println("flush: " + k + " trozos del mar " + Std.int((haxe.Timer.stamp() - ts) * 1000) + " ms (quedan " + seaChunks.length + ")");
 		}
 	}
 
 	/** tiempo por fotograma para la luz y los trozos de una bajada del mar (s) */
 	static inline var SEA_BUDGET = 0.006;
+	/** --fixeddt (pruebas): la carga y los trabajos repartidos acaban en un paso, sin depender de lo deprisa que va la maquina */
+	public static var unbounded = Lambda.exists(Sys.args(), a -> StringTools.startsWith(a, "--fixeddt="));
 
 	public inline function hasPending() : Bool {
 		return immediate.length > 0 || pendingRelight.length > 0 || lightChunks.length > 0 || seaChunks.length > 0 || seaJob != null;

@@ -1,0 +1,42 @@
+# multijugador (anadido del port), con port/dev/mp_guest4.txt: el anfitrion (en supervivencia) recibe del servidor 20 rocas y una
+# cantina, tira las rocas (R) y vuelve a la nave con Mayus+K: su equipo queda en un contenedor. El invitado lo recoge todo.
+# port/dev/multirun.ps1 -ScriptList port/dev/mp_host4.txt,port/dev/mp_guest4.txt -Timeout 600
+waitfor planet
+mp host 55194
+waitfor map 6000
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+mp mode 0
+mp access 0 1
+tp 64 64 top 0.8 -1.5
+waitfor mpplayers2 9000
+wait 60
+mp invite 0 2 0
+waitfor mpremotes1 9000
+wait 30
+mp give 1 BRock 20
+mp give 1 BChest 1
+wait 30
+print inv
+slot 1
+press r
+wait 2
+release r
+wait 5
+press shift k
+wait 2
+release shift k
+wait 60
+print inv
+print remotes
+print mploots
+wait 1000
+print mploots
+print inv
+print remotes
+mp leave
+waitfor mpend 600

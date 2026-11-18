@@ -47,6 +47,7 @@ class NetTest {
 		ServerWorlds.fixedSeed = 4242;
 		world(Sys.args().length > 0 ? Sys.args()[0] + "_monde" : "port/out/net_test_monde");
 		itemsTest(Sys.args().length > 0 ? Sys.args()[0] + "_objets" : "port/out/net_test_objets");
+		econTest(Sys.args().length > 0 ? Sys.args()[0] + "_eco" : "port/out/net_test_eco");
 		var dir = Sys.args().length > 0 ? Sys.args()[0] : "port/out/net_test";
 		deleteDir(dir);
 		sys.FileSystem.createDirectory(dir);
@@ -498,6 +499,65 @@ class NetTest {
 		clients = [];
 	}
 
+	static function patched( c : TestClient, key : String ) : Dynamic {
+		var r : Dynamic = null;
+		for( m in c.msgs ) switch( m ) { case SPatch(k, j) if( k == key ): r = haxe.Json.parse(j); default: }
+		return r;
+	}
+
+	/**
+	 * Progresion en el servidor: comprar y vender con el robot (creditos e inventario de verdad, sin pasar de lo que se puede
+	 * pagar ni vender lo que no se tiene), un contrato sin bloques no paga, y la partida que manda el cliente no cambia creditos,
+	 * inventario ni licencias (CSaveRecord trucada).
+	 */
+	static function econTest( dir : String ) {
+		deleteDir(dir);
+		sys.FileSystem.createDirectory(dir);
+		server = new GameServer(dir);
+		server.listen("127.0.0.1", 55096);
+		clients = [];
+		var e = add(new TestClient("Eva", secret(30)));
+		e.tcp(55096);
+		until(() -> e.welcome != null);
+		e.client.send(CSetMode(false));
+		e.client.send(CNewGame(false));
+		until(() -> e.has(m -> m.match(SRecord(_))) && lastInv(e) != null);
+		var es = @:privateAccess server.sessionById(e.id);
+		var w : Market.Ware = null;
+		for( x in Market.wares ) if( w == null && x.onSale && x.charge == null && x.base > 0 ) w = x;
+		var start = es.record.credits == null ? Market.START_CREDITS : es.record.credits;
+		e.client.send(CEcon(1, EBuy, w.key, 3));
+		until(() -> e.has(m -> m.match(SInventory(1, _))));
+		var c1 : Int = patched(e, "credits");
+		check("progresion: comprar da los bloques y cobra", count(lastInv(e), w.block.index) == 3 && c1 < start && es.record.credits == c1, start + " -> " + c1);
+		e.client.send(CEcon(2, ESell, w.key, 50));
+		until(() -> e.has(m -> m.match(SInventory(2, _))));
+		var c2 : Int = patched(e, "credits");
+		check("progresion: vender solo lo que se tiene", count(lastInv(e), w.block.index) == 0 && c2 > c1 && c2 < start, c1 + " -> " + c2);
+		e.client.send(CEcon(3, EBuy, w.key, 1 << 19));
+		until(() -> e.has(m -> m.match(SInventory(3, _))));
+		var c3 : Int = patched(e, "credits");
+		check("progresion: no se compra mas de lo que se puede pagar", c3 >= 0 && c3 < c2 && es.record.credits == c3, "" + c3);
+		Contracts.state(es.record);
+		var before = haxe.Json.stringify(es.record.contracts);
+		e.client.send(CEcon(4, EDeliver, "", 0));
+		until(() -> e.has(m -> m.match(SInventory(4, _))));
+		check("progresion: un contrato sin sus bloques no paga", es.record.credits == c3 && haxe.Json.stringify(es.record.contracts) == before);
+		// el cliente manda su partida con creditos, inventario y licencias inventados: no se toma nada de eso
+		var fake : SaveData.SaveInfo = haxe.Json.parse(haxe.Json.stringify(es.record));
+		fake.credits = 999999;
+		fake.inv.t[0] = { k : Block.get(BChest).index, n : 9 };
+		fake.uni.licenses = [1, 2, 3, 4, 5, 6, 7];
+		fake.px = 12.5;
+		var lic = es.record.uni.licenses.length;
+		e.client.send(CSaveRecord(NetZip.packString(haxe.Json.stringify(SaveData.diskEncode(fake)))));
+		e.client.send(CEcon(5, EDeliver, "", 0));
+		until(() -> e.has(m -> m.match(SInventory(5, _))));
+		check("progresion: la partida del cliente no da creditos, objetos ni licencias", es.record.credits == c3
+			&& count(lastInv(e), Block.get(BChest).index) == 0 && es.record.uni.licenses.length == lic && es.record.px == 12.5);
+		server.stop();
+	}
+
 	static function add( c : TestClient ) {
 		clients.push(c);
 		return c;
@@ -522,7 +582,7 @@ class NetTest {
 			CAccess(3, true, false, true, 4), CInvite(3, 2, 1), CGuest(3, "ab12cd34", -1), CTransfer(3, 2), CAbandon(3), CGetAccess(3),
 			CCharge(1), CPick(4, 9), CThrow(5, 2, 3), CInvLayout(6, { t : [null, { k : 5, n : 2 }], charges : [{ c : 1, n : 3 }] }), CDeath(true),
 			CCreative(7, 1, 5, 9), CChestOpen(1, 2, 3), CChestMove(1, 2, 3, 4, [{ k : 5, n : 1 }, null], { t : [null], charges : [] }), CChestClose,
-			CActivate(4, 5, 6)];
+			CActivate(4, 5, 6), CEcon(9, EBuy, "b12", 3)];
 		var ss : Array<ServerMsg> = [SServerHello("srv", b32, b32, b64, true), SWelcome(3, "Bob#2", Manager, true, 123.5, false),
 			SRefuse(RBanned, "x"), SPong(1.25, 2.5), SPlayers([{ id : 1, name : "a", role : 2, place : "" }]),
 			SUserJoin({ id : 2, name : "b", role : 0, place : "Planète de X" }), SUserLeave(9), STalk(-1, "srv", CServer, "m"),
@@ -535,7 +595,8 @@ class NetTest {
 			SPlanetLost("mp.x"), SRights(7),
 			SInventory(3, { t : [{ k : 5, n : 2 }, null], charges : [{ c : 0, n : 4 }] }),
 			SAddLoot({ id : 1, x : 1.5, y : 2.5, z : 3.5, vx : 0.25, vy : -0.25, vz : 0, gi : 5, n : 2, delay : 0, container : true }),
-			SDeleteLoot(1), SLootCount(1, 2), SLootRest(1, 1.5, 2.5, 3.5), SChest(1, 2, 3, 4, [null, { k : 5, n : 1 }], "Bob"), SHit(20), SBomb(1.5, 2.5, 3.5)];
+			SDeleteLoot(1), SLootCount(1, 2), SLootRest(1, 1.5, 2.5, 3.5), SChest(1, 2, 3, 4, [null, { k : 5, n : 1 }], "Bob"), SHit(20), SBomb(1.5, 2.5, 3.5),
+			SPatch("credits", "120")];
 		var names = [for( c in cs ) Type.enumConstructor(c)];
 		for( n in Type.getEnumConstructs(ClientMsg) ) check("muestra de " + n, names.indexOf(n) >= 0);
 		names = [for( s in ss ) Type.enumConstructor(s)];

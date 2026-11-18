@@ -657,7 +657,22 @@ class GameView {
 	// ---------------------------------------------------------------- modo creativo / supervivencia (anadido del port)
 
 	/** solo una partida creada en creativo pasa a supervivencia y vuelve; una de aventura nunca */
-	public function canSwitchMode() : Bool return info.creative == true;
+	/** multijugador: puede bascular su modo (gestionnaire; el modo lo decide el servidor, SMode) */
+	public var netSwitch = false;
+
+	public function canSwitchMode() : Bool return net != null ? netSwitch : info.creative == true;
+
+	/** multijugador: el modo que dice el servidor (SWelcome, SMode), como setSurvival pero sin tocar la partida */
+	public function netSetMode( c : Bool ) {
+		if( creative == c ) return;
+		creative = c;
+		if( !c ) {
+			life = 100;
+			oxygen = 100;
+			jetpack = 1;
+		}
+		laserCharge = null;
+	}
 
 	/**
 	 * Partida creativa: pasa a supervivencia (on) o vuelve a creativo. Sigue al modo lo que mira `creative`: dano, oxigeno,
@@ -701,7 +716,10 @@ class GameView {
 	    para la vuelta de emergencia de la cometa */
 	public function returnToShip( manual : Bool, lose = true ) {
 		if( fadeFX != null && fadeFX.lock ) return; // hero.lock: ya se esta volviendo
-		var left = lose ? DeathDropsPlay.leave(this, manual) : null;
+		// multijugador: en el planeta el contenedor lo deja el servidor (NetGame.sentDeath)
+		var netDeath = lose && net != null && pz < World.SHIP_Z;
+		if( netDeath && !creative && info.tuto == null ) net.sentDeath(manual);
+		var left = lose && !netDeath ? DeathDropsPlay.leave(this, manual) : null;
 		if( left != null ) onEquipmentLeft();
 		fadeFX = { t : 0., col : manual ? 0xFFFFFF : 0xFF0000, speed : 2., alpha : null, lock : true, dz : manual ? -0.5 : 0.8, done : function() {
 			life = 100;
@@ -1390,10 +1408,15 @@ class GameView {
 			case BShipComputer: lastComputer = { x : x, y : y, z : z }; onComputer();
 			case BCrafterComputer: if( ship != null ) ship.activateCraft(x, y, z, this);
 			// cambio del port: en el hangar (EditShip) y en la nave nodriza no explota, para no romper la nave
-			case BArtiBomb: if( hangar == null && info.mothership != true ) explodeBomb(x, y, z);
+			case BArtiBomb: if( net != null && z < World.SHIP_Z ) net.sentActivate(x, y, z) else if( hangar == null && info.mothership != true ) explodeBomb(x, y, z);
 			default:
-				if( b.hasProp(PContainer) && onChest != null ) onChest(chestBox(x, y, z, b));
+				// multijugador: las cantinas del planeta son del servidor (una persona a la vez)
+				if( b.hasProp(PContainer) && net != null && z < World.SHIP_Z ) net.sentChestOpen(x, y, z);
+				else if( b.hasProp(PContainer) && onChest != null ) onChest(chestBox(x, y, z, b));
 			}
+		} else if( b.toggle != null && net != null && z < World.SHIP_Z ) {
+			// multijugador: la puerta del planeta la cambia el servidor (todos la ven)
+			net.sentActivate(x, y, z);
 		} else if( b.toggle != null ) {
 			// Process.toggle: se cambia toda la columna del mismo bloque (una puerta mide varios bloques de alto)
 			while( world.block(x, y, z - 1) == b ) z--;
@@ -1456,6 +1479,22 @@ class GameView {
 	 * borde) a rojo (en el centro; ver bombFlash), y vacia una esfera de radio 8 sin soltar nada. Al activarla se explota; si
 	 * se excava hasta el final se recoge, como cualquier bloque (Game.checkToggle / checkAction).
 	 */
+	/** multijugador: el servidor ha hecho explotar una bomba aqui (los bloques llegan aparte): temblor y particulas */
+	public function netBomb( x : Float, y : Float, z : Float ) {
+		shake = 1;
+		Snd.play("destroyBlock", 0.6);
+	}
+
+	/** multijugador: dano de una bomba calculado por el servidor, con su fundido como en explodeBomb */
+	public function netHit( dmg : Float ) {
+		if( dmg <= 0 ) return;
+		var prev = fadeFX != null && fadeFX == bombFade ? fadeFX : null;
+		var dying = fadeFX != null && fadeFX.lock;
+		hit(dmg);
+		var pow = Math.max(0, Math.min(1, (dmg - 20) / 130));
+		if( !dying ) bombFlash(pow, prev);
+	}
+
 	function explodeBomb( x : Int, y : Int, z : Int ) {
 		var ray = 8;
 		var hx = wrapDist(px - x), hy = wrapDist(py - y), hz = pz - z;
@@ -1835,7 +1874,10 @@ class GameView {
 		}
 		actionPause = 1;
 		if( s.power < 1 || !canBreak ) return;
-		if( laserCharge != null ) inv.useCharge(laserCharge);
+		if( laserCharge != null ) {
+			inv.useCharge(laserCharge);
+			if( net != null ) net.sentCharge(laserCharge);
+		}
 		activatePending = null;
 		breakBlock(s.x, s.y, s.z, b);
 		Kubindex.broke(info, b);
@@ -2013,9 +2055,10 @@ class GameView {
 
 	public function breakBlock( x : Int, y : Int, z : Int, b : Block, isProcess = false ) {
 		shake += 0.05 * Math.random(); // temblor (Game.blockBreak)
-		if( b.hasProp(PContainer) ) breakChest(x, y, z);
+		if( b.hasProp(PContainer) && (net == null || z >= World.SHIP_Z) ) breakChest(x, y, z);
 		var get = b.getDrop();
-		if( get != null && !creative ) {
+		// multijugador: en el planeta lo que se suelta lo crea el servidor
+		if( get != null && !creative && (net == null || z >= World.SHIP_Z) ) {
 			// cambio del port: lo que suelta con probabilidad (BFDropChance: BCoal, BBlackIce, hierbas...) se recupera
 			// siempre en una zona de sintetizador y en el hangar; si no, puesto alli para fabricar o rehacer la nave, se perdia al quitarlo
 			var chance = inCraftZone(x, y, z) ? 100 : b.getMain().getDropChance();
@@ -2043,7 +2086,9 @@ class GameView {
 	function dropCurrent() {
 		var index = inv.blockIndex - 1;
 		var s = inv.drop(index);
-		if( s != null ) throwStack(Block.all[s.k], s.n);
+		// multijugador: en el planeta lo tira el servidor (el suelto es suyo)
+		if( s != null && net != null && pz < World.SHIP_Z ) net.sentThrow(index + 1, s.n);
+		else if( s != null ) throwStack(Block.all[s.k], s.n);
 	}
 
 	/** tira n bloques b delante del jugador, como R (dropCurrent; tambien la pantalla de inventario): un solo suelto con todos,
@@ -2078,6 +2123,8 @@ class GameView {
 			inv.blockIndex = idx + 1;
 		}
 		inv.inv.t[idx] = { k : b.index, n : inv.maxBlock(b) };
+		// multijugador: la paleta la aplica el servidor (que mira que este en creativo)
+		if( net != null ) net.sentCreative(idx + 1, b, inv.maxBlock(b));
 		inv.display();
 	}
 

@@ -9,7 +9,7 @@ $repo = (Resolve-Path "$PSScriptRoot\..\..").Path
 $scripts = @("place", "place_top", "bomb", "bomb_liquids", "chest", "chest_move", "cascade", "flow", "drop_rest", "mort_conteneur",
 	"muerte_nave", "dock", "pilotar_vuelo", "sintetizador_mano", "recetas_cantidades", "contrats", "shop", "licencias", "cometa",
 	"kubindex", "hangar", "explore", "mother_save", "stockage_vaisseau", "creatif_survie", "vida", "palette_charges")
-if ($Only.Count -gt 0) { $scripts = $Only }
+if ($Only.Count -gt 0) { $scripts = @($Only | ForEach-Object { $_ -split "," } | Where-Object { $_ -ne "" }) }
 $base = "$repo\port\out\baseline"
 
 function Run-One([string]$name, [string]$dest) {

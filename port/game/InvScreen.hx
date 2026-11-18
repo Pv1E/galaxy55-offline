@@ -27,7 +27,10 @@ class InvScreen extends h2d.Object {
 
 	public var onClose : Void -> Void;
 	/** tirar n bloques b delante del jugador (GameView.throwStack) */
-	public var onThrow : Block -> Int -> Void;
+	/** tirar n bloques de la casilla slot (indice de inv.t), ya quitados de ella */
+	public var onThrow : Block -> Int -> Int -> Void;
+	/** multijugador: el inventario ha cambiado de orden (NetGame.sentLayout) */
+	public var onLayout : Void -> Void;
 	/** boton de arriba a la derecha (addCornerButton): la bascula creativo / supervivencia de una partida creativa */
 	public var corner(default, null) : Ui.Widget;
 
@@ -321,6 +324,7 @@ class InvScreen extends h2d.Object {
 	/** cambio de verdad en el inventario: la barra se redibuja y el Kubindex lo mira (Inv.onChange / onContent) */
 	function changed() {
 		inv.display();
+		if( onLayout != null ) onLayout();
 		refresh();
 	}
 
@@ -464,7 +468,7 @@ class InvScreen extends h2d.Object {
 		if( held == null ) return;
 		if( n > held.n ) n = held.n;
 		take(held.from, n);
-		if( onThrow != null ) onThrow(Block.all[held.k], n);
+		if( onThrow != null ) onThrow(Block.all[held.k], n, held.from);
 		held.n -= n;
 		if( held.n <= 0 ) held = null;
 		changed();
@@ -475,7 +479,7 @@ class InvScreen extends h2d.Object {
 		var d = inv.inv.t[s];
 		if( d == null ) return;
 		inv.inv.t[s] = null;
-		if( onThrow != null ) onThrow(Block.all[d.k], d.n);
+		if( onThrow != null ) onThrow(Block.all[d.k], d.n, s);
 		changed();
 	}
 

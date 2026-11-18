@@ -1504,6 +1504,11 @@ class Dev {
 			app.mp.client.send(CAccess(Std.parseInt(a[2]), a[3] == "1", a.length > 4 && a[4] == "1", a.length > 5 && a[5] == "1", a.length > 6 ? Std.parseInt(a[6]) : 0));
 		case "invite":
 			app.mp.client.send(CInvite(Std.parseInt(a[2]), Std.parseInt(a[3]), a.length > 4 ? Std.parseInt(a[4]) : 0));
+		case "give":
+			// mp give ID Bloque [n]: solo el anfitrion, directo a su servidor (el inventario es del servidor)
+			var s = app.mp.server == null ? null : app.mp.server.sessionById(Std.parseInt(a[2]));
+			if( s == null ) Sys.println("mp give: no hospeda o no hay jugador " + a[2]);
+			else app.mp.server.worlds.items.devGive(s, bk(a[3]), a.length > 4 ? Std.parseInt(a[4]) : 50);
 		case "landforeign":
 			app.devLandForeign();
 		case "mode":
@@ -1516,6 +1521,16 @@ class Dev {
 	}
 
 	function print( a : Array<String>, g : GameView, app : GalaxyApp ) {
+		if( a[1] == "mploots" ) {
+			// el anfitrion: los sueltos de su servidor (id bloque x n en x,y,z; espera; contenedor)
+			if( app.mp == null || app.mp.server == null ) Sys.println("mploots: no hospeda");
+			else for( inst in @:privateAccess app.mp.server.worlds.instances ) {
+				var l = [for( d in inst.items.drops ) d.id + " " + d.b.k + "x" + d.n + " @" + r3(d.x) + "," + r3(d.y) + "," + r3(d.z) + (d.delay > 0 ? " espera " + r3(d.delay) : "") + (d.loot != null ? " contenedor" : "")];
+				l.sort(Reflect.compare);
+				Sys.println("mploots " + inst.key + ": " + l.length + (l.length > 0 ? " " + l.join(" | ") : ""));
+			}
+			return;
+		}
 		if( a[1] == "mpworld" ) {
 			// el anfitrion: los planetas cargados en su servidor y su suma (la misma que print cellhash si el terreno coincide)
 			if( app.mp == null || app.mp.server == null ) Sys.println("mpworld: no hospeda");

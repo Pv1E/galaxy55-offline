@@ -131,11 +131,11 @@ class Contracts {
 	static function warn( msg : String ) Sys.stderr().writeString("contracts.json: " + msg + "\n");
 
 	/** periodo actual (hora real UTC) */
-	public static function slot() : Int return devSlot != null ? devSlot : Math.floor(Sys.time() / config.period);
+	public static function slot() : Int return devSlot != null ? devSlot : Math.floor(Clock.now() / config.period);
 
 	/** segundos que faltan para el siguiente tablero */
 	public static function remaining() : Float {
-		var now = Sys.time(), p = config.period;
+		var now = Clock.now(), p = config.period;
 		return (Math.ffloor(now / p) + 1) * p - now;
 	}
 

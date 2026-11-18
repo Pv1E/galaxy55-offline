@@ -24,7 +24,7 @@ class Licenses {
 	/** solo pruebas (Dev "licenses clock H"): segundos que se suman a la hora real */
 	public static var devShift = 0.;
 
-	public static function now() : Float return Sys.time() + devShift;
+	public static function now() : Float return Clock.now() + devShift;
 
 	/** partidas anteriores a las licencias: los planetas visitados tienen licencia y el inicial es el principal (con el tutorial
 	    en curso aun no hay principal) */

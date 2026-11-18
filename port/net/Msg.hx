@@ -48,6 +48,29 @@ enum abstract AdminOp(Int) to Int from Int {
 }
 
 /**
+ * Operaciones de la progresion (CEcon): el cliente las hace en su copia de la partida con las reglas del core (lo ve al momento)
+ * y el servidor las repite sobre la de verdad; despues manda los campos que han cambiado (SPatch) y el inventario.
+ */
+enum abstract EconOp(Int) to Int from Int {
+	/** comprar n de la mercancia a (Market.ware) */
+	var EBuy = 0;
+	var ESell = 1;
+	/** entregar al contrato n del tablero (Contracts.deliver) */
+	var EDeliver = 2;
+	/** dar lo que se lleve al contrato en curso n (Contracts.give) */
+	var EGive = 3;
+	/** abandonar el contrato en curso n */
+	var EAbandonContract = 4;
+	/** dar tierra roja al contrato especial */
+	var EGiveSpecial = 5;
+	/** comprar la mejora ESCorp a */
+	var EUpgrade = 6;
+	/** planeta n como planeta principal */
+	var EMainPlanet = 7;
+	public static inline var MAX = 7;
+}
+
+/**
  * Estado de un jugador en el mundo, 20 veces por segundo: posicion de los pies, mirada, laser (activo, carga: -1 = sin carga, y
  * punto apuntado) y banderas (NetFlags). Lo que dibujan los demas: el cono, su nombre y su laser.
  */
@@ -162,6 +185,8 @@ enum ClientMsg {
 	CChestClose;
 	/** activar el bloque de (x, y, z): puerta, bomba... */
 	CActivate( x : Int, y : Int, z : Int );
+	/** progresion: la operacion op (EconOp) con sus argumentos */
+	CEcon( seq : Int, op : Int, a : String, n : Int );
 }
 
 enum ServerMsg {
@@ -213,6 +238,8 @@ enum ServerMsg {
 	SHit( dmg : Float );
 	/** una bomba ha explotado en (x, y, z): efecto y temblor */
 	SBomb( x : Float, y : Float, z : Float );
+	/** un campo de la partida tal como lo tiene el servidor (credits, market, contracts, special, upgrades, licenses), en JSON */
+	SPatch( key : String, json : String );
 }
 
 /**
@@ -222,11 +249,13 @@ enum ServerMsg {
  */
 class Msg {
 
-	public static inline var PROTOCOL = 3;
+	public static inline var PROTOCOL = 4;
 	/** cambios de celdas en un mensaje, y bytes de un terreno descomprimido */
 	public static inline var CHANGES_MAX = 1 << 16;
 	public static inline var EDITS_MAX = 64 << 20;
 	public static inline var NAME_MAX = 24;
+	/** SPatch: un campo de la partida en JSON */
+	public static inline var PATCH_MAX = 1 << 20;
 	public static inline var CHAT_MAX = 200;
 	public static inline var PASSWORD_MAX = 64;
 	public static inline var SERVER_NAME_MAX = 48;
@@ -371,6 +400,8 @@ class Msg {
 		case CChestClose:
 		case CActivate(x, y, z):
 			w.uint(x); w.uint(y); w.uint(z);
+		case CEcon(seq, op, a, n):
+			w.uint(seq); w.uint(op); w.string(a); w.uint(n);
 		}
 		return w.getBytes();
 	}
@@ -448,6 +479,9 @@ class Msg {
 		case 29:
 			var x = r.uintIn(0, COORD_MAX); var y = r.uintIn(0, COORD_MAX); var z = r.uintIn(0, Z_MAX);
 			CActivate(x, y, z);
+		case 30:
+			var seq = r.uint(); var op = r.uintIn(0, EconOp.MAX); var a = r.string(64); var n = r.uintIn(0, 1 << 20);
+			CEcon(seq, op, a, n);
 		case k: throw new NetReader.NetError("mensaje de cliente desconocido " + k);
 		}
 		r.done();
@@ -511,6 +545,8 @@ class Msg {
 			w.float(dmg);
 		case SBomb(x, y, z):
 			w.float(x); w.float(y); w.float(z);
+		case SPatch(key, json):
+			w.string(key); w.string(json);
 		case SPlanetLost(reason):
 			w.string(reason);
 		case SPong(t, serverTime):
@@ -622,6 +658,9 @@ class Msg {
 		case 29:
 			var x = r.floatIn(-1e5, 1e5); var y = r.floatIn(-1e5, 1e5); var z = r.floatIn(-1e3, 1e4);
 			SBomb(x, y, z);
+		case 30:
+			var key = r.string(16); var json = r.string(PATCH_MAX);
+			SPatch(key, json);
 		case k: throw new NetReader.NetError("mensaje de servidor desconocido " + k);
 		}
 		r.done();

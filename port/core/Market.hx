@@ -245,6 +245,14 @@ class Market {
 		items = [for( it in info.items ) it.key => it];
 	}
 
+	/** multijugador: el estado que dice el servidor (SPatch), en este mismo objeto: la tienda abierta lo sigue usando */
+	public function load( o : MarketInfo ) {
+		if( o == null ) return;
+		info.time = o.time;
+		info.items = [for( i in o.items ) if( i.bought != null || i.sold != null ) { key : i.key, bought : i.bought, sold : i.sold }];
+		items = [for( it in info.items ) it.key => it];
+	}
+
 	public function item( w : Ware ) : MarketItem {
 		var it = items.get(w.key);
 		if( it == null ) {
