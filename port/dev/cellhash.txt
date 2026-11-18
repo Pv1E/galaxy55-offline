@@ -1,0 +1,4 @@
+# multijugador (anadido del port): suma de las celdas del planeta de la partida de prueba, para compararla con la del servidor
+# (hl port/out/server.hl --gen SEMILLA BIOMA TAMANO, con los valores que escribe esta orden)
+waitfor planet
+print cellhash

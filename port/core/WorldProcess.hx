@@ -20,7 +20,7 @@ import Block;
  */
 class WorldProcess {
 
-	var world : World;
+	var world : WorldData;
 	/** rompe un bloque con sus drops (Game.blockBreak con isProcess = true) */
 	var breakFn : Int -> Int -> Int -> Block -> Void;
 	/** cambio del port: bomba antigua alcanzada por la lava (GameView.lavaBomb); sin el se rompe como con el agua */
@@ -35,7 +35,7 @@ class WorldProcess {
 	    se recoge, ni lo que se propaga, EditShip.checkSelect); los de una nave antigua se quedan quietos */
 	public var allowFlow = true;
 
-	public function new( world : World, breakFn ) {
+	public function new( world : WorldData, breakFn ) {
 		this.world = world;
 		this.breakFn = breakFn;
 		initTrack();
@@ -54,7 +54,7 @@ class WorldProcess {
 		x = real(x);
 		y = real(y);
 		world.setBlock(x, y, z, b);
-		if( b != null && b == world.seaBlock && z < World.SHIP_Z ) world.addFlood();
+		if( b != null && b == world.seaBlock && z < WorldData.SHIP_Z ) world.addFlood();
 		onSet(x, y, z, old, b);
 	}
 
@@ -115,7 +115,7 @@ class WorldProcess {
 	}
 
 	function flood( x : Int, y : Int, z : Int, b : Block ) {
-		if( z < 1 || z >= World.HEIGHT - 1 ) return false;
+		if( z < 1 || z >= WorldData.HEIGHT - 1 ) return false;
 		var b2 = get(x, y, z);
 		if( b2 == b ) {
 			// agua puesta junto al mar: el mar la llena
@@ -134,7 +134,7 @@ class WorldProcess {
 	}
 
 	inline function pushPlaced( x : Int, y : Int, z : Int, b : Block ) {
-		propagate.push({ x : real(x), y : real(y), z : z, b : b, t : 2 + Std.random(3) });
+		propagate.push({ x : real(x), y : real(y), z : z, b : b, t : 2 + GameRng.int(3) });
 	}
 
 	/** cambio del port: estos pasos no cuentan para bajar el nivel del mar (en el original el agua puesta inundaba como el mar) */
@@ -191,8 +191,8 @@ class WorldProcess {
 	}
 
 	function updateCover() {
-		if( cover.length == 0 || Std.random(5) != 0 ) return;
-		var c = cover[Std.random(cover.length)];
+		if( cover.length == 0 || GameRng.int(5) != 0 ) return;
+		var c = cover[GameRng.int(cover.length)];
 		cover.remove(c);
 		var b = get(c.x, c.y, c.z);
 		var over = get(c.x, c.y, c.z + 1);
@@ -212,7 +212,7 @@ class WorldProcess {
 	 */
 	function snowsOn( x : Int, y : Int, z : Int ) : Bool {
 		if( world.biomeName != "BIWinterPeaks" ) return false;
-		for( zz in z + 1...World.HEIGHT )
+		for( zz in z + 1...WorldData.HEIGHT )
 			if( world.collidePoint(real(x) + 0.5, real(y) + 0.5, zz + 0.5) ) return false;
 		return true;
 	}
@@ -229,7 +229,7 @@ class WorldProcess {
 
 	/** Process.onSet: se llama despues de cambiar un bloque del planeta o del hangar (no de la nave) */
 	public function onSet( x : Int, y : Int, z : Int, old : Block, b : Block ) {
-		if( z >= World.SHIP_Z ) return;
+		if( z >= WorldData.SHIP_Z ) return;
 		if( (old != null && old.hasProp(PTrack)) || (b != null && b.hasProp(PTrack)) )
 			checkTrack(x, y, z);
 		var over = get(x, y, z + 1);
@@ -273,7 +273,7 @@ class WorldProcess {
 				if( world.waterLevelAt(x, y, z) != 0 ) pushPlaced(x, y, z, b) else pushFlood(x, y, z);
 			}
 			else if( allowFlow && b.propagate != null )
-				propagate.push({ x : real(x), y : real(y), z : z, b : b, t : 2 + Std.random(3) });
+				propagate.push({ x : real(x), y : real(y), z : z, b : b, t : 2 + GameRng.int(3) });
 			switch( b.k ) {
 			case BFreezer:
 				if( allowTransforms ) freeze(x, y, z);
@@ -284,7 +284,7 @@ class WorldProcess {
 			for( f in old.flags )
 				switch( f ) {
 				case BFTransform(t, p):
-					if( allowTransforms && (p == null || Math.random() < p) )
+					if( allowTransforms && (p == null || GameRng.float() < p) )
 						set(x, y, z, b, Block.get(t));
 				default:
 				}
@@ -315,7 +315,7 @@ class WorldProcess {
 		if( b.type == BTWater )
 			pushFlood(x, y, z);
 		else if( b.propagate != null )
-			propagate.push({ x : real(x), y : real(y), z : z, b : b, t : 2 + Std.random(3) });
+			propagate.push({ x : real(x), y : real(y), z : z, b : b, t : 2 + GameRng.int(3) });
 	}
 
 	function updatePropagate() {
@@ -413,8 +413,8 @@ class WorldProcess {
 			if( gi == 0 ) continue;
 			var b = Block.all[gi];
 			if( b == null || !b.hasProp(PTrack) ) continue;
-			var c = key >> World.ZBITS;
-			tracks.push({ x : c % size, y : Std.int(c / size), z : key & (World.HEIGHT - 1), b : b, dist : trackDist(b), on : false });
+			var c = key >> WorldData.ZBITS;
+			tracks.push({ x : c % size, y : Std.int(c / size), z : key & (WorldData.HEIGHT - 1), b : b, dist : trackDist(b), on : false });
 		}
 	}
 

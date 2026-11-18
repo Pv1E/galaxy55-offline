@@ -21,7 +21,8 @@ class CraftArea {
 	public var engine = new CraftEngine();
 	public var curCraft : CraftRule;
 	public var curText : String;
-	public var preview : Drops.Drop;
+	/** bloque suelto de vista previa (Drops.Drop del juego; Dynamic para que los datos no dependan del dibujo) */
+	public var preview : Dynamic;
 
 	public function new( x : Int, y : Int, z : Int ) {
 		this.x = x;

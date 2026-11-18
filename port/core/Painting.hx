@@ -53,10 +53,10 @@ class Painting {
 	 * Punto de la celda que va en el centro de la mano (Hand) o en el eje de giro de un bloque suelto (Drops): el de la placa de
 	 * un tableau, que si no quedaba en un borde de la celda; el centro de la celda para los demas
 	 */
-	public static function center( b : Block ) : h3d.col.Point {
-		if( b.wall < 0 || b.size == null ) return new h3d.col.Point(0.5, 0.5, 0.5);
+	public static function center( b : Block ) : { x : Float, y : Float, z : Float } {
+		if( b.wall < 0 || b.size == null ) return { x : 0.5, y : 0.5, z : 0.5 };
 		var s = b.size;
-		return new h3d.col.Point((s.x1 + s.x2) * 0.5, (s.y1 + s.y2) * 0.5, (s.z1 + s.z2) * 0.5);
+		return { x : (s.x1 + s.x2) * 0.5, y : (s.y1 + s.y2) * 0.5, z : (s.z1 + s.z2) * 0.5 };
 	}
 
 	/** malla del tableau en el formato de los modelos (Models.ModelData), hecha una vez por bloque */

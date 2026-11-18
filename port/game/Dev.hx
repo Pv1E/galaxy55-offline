@@ -1470,6 +1470,11 @@ class Dev {
 	}
 
 	function print( a : Array<String>, g : GameView, app : GalaxyApp ) {
+		if( a[1] == "cellhash" && g != null ) {
+			// multijugador: la misma suma que da el servidor (server.hl --gen SEMILLA BIOMA TAMANO) para el terreno generado
+			Sys.println("cellhash " + g.world.seed + " " + g.world.biomeName + " " + (g.world.size >> 7) + ": " + g.world.cellHash());
+			return;
+		}
 		if( a[1] == "screen" ) {
 			Sys.println("pantalla " + @:privateAccess app.currentName);
 			return;

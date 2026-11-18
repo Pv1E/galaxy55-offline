@@ -20,19 +20,19 @@ import ExpData;
  */
 class Comets {
 
-	public static inline var SIZE = 96;
+	public static inline var SIZE = CometRules.SIZE;
 	public static inline var SLOT = 2 * 3600;
 	public static inline var CHANCE = 6;
 	public static inline var ID = 9;
 	/** tipos de cometa: su bioma */
-	public static var KINDS = ["BICometCinder"];
+	public static var KINDS = CometRules.KINDS;
 
 	/** solo pruebas (Dev "comet here"): sistema con cometa en cualquier franja */
 	public static var devForce = -1;
 	/** solo pruebas (--all-comets): todos los sistemas con cometa en cualquier franja (salvo la ya visitada) */
 	public static var devAll = Sys.args().indexOf("--all-comets") >= 0;
 
-	public static function isComet( biome : String ) return KINDS.indexOf(biome) >= 0;
+	public static function isComet( biome : String ) return CometRules.isComet(biome);
 
 	public static inline function idOf( sys : Int ) return sys * 10 + ID;
 
