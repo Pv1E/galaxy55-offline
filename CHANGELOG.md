@@ -3,6 +3,17 @@
 [English: `CHANGELOG.en.md`](CHANGELOG.en.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
 ## Sin publicar
+- **Multijugador** (añadido del port): botón Multijugador en el menú principal, con los servidores guardados y las partidas de la
+  red local (estado, jugadores, ping, versión), añadir y modificar, contraseña y pseudo. "Crear una partida" parte de una partida
+  guardada, que sigue siendo la misma (se juega sola, sin red, y se vuelve a hospedar): nombre, puerto, contraseña, red local,
+  UPnP (si no, el puerto que abrir a mano) y equipo al suelo. Servidor dedicado sin ventana: `galaxy55-serveur.bat` (consola: stop,
+  list, kick, ban, op, say…). Identidad secreta sin cuenta (`identite.g55`, se copia para conservarla), conexión cifrada y la
+  misma versión obligatoria. Cada jugador tiene su galaxia; sus planetas se abren a invitados exploradores o visitantes (derechos
+  de los visitantes, visita de todo el servidor para los gestores, cesión, abandono) y su sistema sale en el mapa del invitado.
+  Los demás jugadores son conos con su nombre y su láser; chat de mundo, planeta o privado (T), lista de jugadores (Tab
+  mantenido) y Pausa > Opciones multijugador para los gestores. El servidor decide todo lo que crea o destruye objetos
+  (inventarios, sueltos, cantinas, muerte, nave, sintetizador, hangar, tienda, contratos, licencias, cometas de cada jugador,
+  tutorial): sin duplicación, comprobado con una prueba de resistencia. En multijugador la pausa no para el mundo.
 - PRs 130-139 acoplados: contrato especial el primero en Contratos (130), Contenedor ESCorp con arrastrar y soltar (131),
   almacén de la nave en el ordenador de a bordo (132), al morir lo que llevas queda en un contenedor y opción para quitarlo (133),
   los clics fuera de una ventana ya no llegan al menú de debajo (134), cristales verdes de bonus y demás bloques de carga en la

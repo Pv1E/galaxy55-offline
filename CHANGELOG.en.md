@@ -3,6 +3,17 @@
 [Español: `CHANGELOG.md`](CHANGELOG.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
 ## Unreleased
+- **Multiplayer** (port addition): Multiplayer button in the main menu, with saved servers and local network games (status,
+  players, ping, version), add and edit, password and nickname. "Create a game" starts from a saved game, which stays the same
+  game (playable alone without network, and hostable again): name, port, password, local network, UPnP (otherwise the port to
+  forward by hand) and death drop. Dedicated server without a window: `galaxy55-serveur.bat` (console: stop, list, kick, ban, op,
+  say…). Secret identity without an account (`identite.g55`, copy it to keep it), encrypted connection, same version required.
+  Each player has their own galaxy; their planets open to explorer or visitor guests (visitor rights, server-wide visits by
+  managers, handing over, abandoning) and the system shows up on the guest's map. Other players are cones with their name and
+  laser; world, planet or private chat (T), player list (hold Tab) and Pause > Multiplayer options for managers. The server
+  decides everything that creates or destroys items (inventories, loose items, chests, death, ship, synthesizer, hangar, shop,
+  contracts, licences, per-player comets, tutorial): no duplication, checked by an endurance test. In multiplayer the pause does
+  not stop the world.
 - PRs 130-139 merged: special contract listed first (130), ESCorp Container drag and drop (131), ship storage on the board
   computer (132), dying leaves your gear in a container plus an option to turn it off (133), clicks outside a dialog no longer
   reach the menu below (134), green bonus crystals and other charge blocks in the creative palette (135, 136), mouse wheel wraps
