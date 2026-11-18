@@ -12,26 +12,26 @@ typedef TutoFace = { x : Int, y : Int, z : Int, ox : Int, oy : Int };
  */
 class TutoTerrain {
 
-	public static inline function wrap( w : World, v : Int ) return ((v % w.size) + w.size) % w.size;
+	public static inline function wrap( w : WorldData, v : Int ) return ((v % w.size) + w.size) % w.size;
 
-	static function block( w : World, x : Int, y : Int, z : Int ) return w.block(wrap(w, x), wrap(w, y), z);
+	static function block( w : WorldData, x : Int, y : Int, z : Int ) return w.block(wrap(w, x), wrap(w, y), z);
 
-	static function set( w : World, x : Int, y : Int, z : Int, k : BlockKind ) w.setBlock(wrap(w, x), wrap(w, y), z, k == null ? null : Block.get(k));
+	static function set( w : WorldData, x : Int, y : Int, z : Int, k : BlockKind ) w.setBlock(wrap(w, x), wrap(w, y), z, k == null ? null : Block.get(k));
 
 	/** aire o un detalle (hierba, flores): se puede pisar o tapar */
-	static function free( w : World, x : Int, y : Int, z : Int ) {
+	static function free( w : WorldData, x : Int, y : Int, z : Int ) {
 		var b = block(w, x, y, z);
 		return b == null || b.hasFlag(BFDetail);
 	}
 
-	static function solid( w : World, x : Int, y : Int, z : Int ) {
+	static function solid( w : WorldData, x : Int, y : Int, z : Int ) {
 		var b = block(w, x, y, z);
 		return b != null && b.type == BTFull && !b.hasProp(PLiquid) && b.k != BWood;
 	}
 
 	/** el bloque macizo mas alto de la columna (-1 si hay liquido encima o un tronco) */
-	public static function top( w : World, x : Int, y : Int ) : Int {
-		var z = World.HEIGHT - 2;
+	public static function top( w : WorldData, x : Int, y : Int ) : Int {
+		var z = WorldData.HEIGHT - 2;
 		while( z > 0 ) {
 			var b = block(w, x, y, z);
 			if( b != null ) {
@@ -44,7 +44,7 @@ class TutoTerrain {
 	}
 
 	/** suelo seco y despejado cerca del punto (angulo a, distancia d) de la nave, a una altura parecida a la suya */
-	public static function ground( w : World, sx : Int, sy : Int, gz : Int, a : Float, d : Float ) : { x : Int, y : Int, z : Int } {
+	public static function ground( w : WorldData, sx : Int, sy : Int, gz : Int, a : Float, d : Float ) : { x : Int, y : Int, z : Int } {
 		var x0 = sx + Math.round(Math.cos(a) * d), y0 = sy + Math.round(Math.sin(a) * d);
 		for( r in 0...10 )
 			for( dx in -r...r + 1 )
@@ -59,7 +59,7 @@ class TutoTerrain {
 	}
 
 	/** un monticulo (r = radio, h = alto en el centro) de ese bloque sobre el suelo de (cx, cy, base); sin tocar troncos ni hojas */
-	static function mound( w : World, cx : Int, cy : Int, base : Int, r : Float, h : Float, k : BlockKind ) {
+	static function mound( w : WorldData, cx : Int, cy : Int, base : Int, r : Float, h : Float, k : BlockKind ) {
 		var n = Math.ceil(r);
 		for( dx in -n...n + 1 )
 			for( dy in -n...n + 1 ) {
@@ -75,7 +75,7 @@ class TutoTerrain {
 	}
 
 	/** risco cercano: suelo despejado delante (x, y, z) y, hacia (ox, oy), roca de al menos 3 de alto y 3 de fondo */
-	static function cliff( w : World, sx : Int, sy : Int, gz : Int ) : TutoFace {
+	static function cliff( w : WorldData, sx : Int, sy : Int, gz : Int ) : TutoFace {
 		var dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 		for( d in 14...32 )
 			for( i in 0...24 ) {
@@ -95,14 +95,14 @@ class TutoTerrain {
 	}
 
 	/** sin risco cerca: un penasco de roca delante de un sitio de suelo, para abrir el hueco en el */
-	static function outcrop( w : World, sx : Int, sy : Int, gz : Int ) : TutoFace {
+	static function outcrop( w : WorldData, sx : Int, sy : Int, gz : Int ) : TutoFace {
 		var s = ground(w, sx, sy, gz, 1.2, 20);
 		mound(w, s.x + 4, s.y, s.z, 3.5, 6, BRock);
 		return { x : s.x, y : s.y, z : s.z, ox : 1, oy : 0 };
 	}
 
 	/** 3 fragmentos de etherium en las paredes de un hueco de 2 de hondo y 2 de alto abierto en la roca */
-	public static function etheriumCave( w : World, sx : Int, sy : Int, gz : Int, put : Int -> Int -> Int -> BlockKind -> Void ) {
+	public static function etheriumCave( w : WorldData, sx : Int, sy : Int, gz : Int, put : Int -> Int -> Int -> BlockKind -> Void ) {
 		var c = cliff(w, sx, sy, gz);
 		if( c == null ) c = outcrop(w, sx, sy, gz);
 		var px = -c.oy, py = c.ox;
@@ -121,7 +121,7 @@ class TutoTerrain {
 	}
 
 	/** da al aire (o a un liquido) por un lado o por arriba: se ve y se puede minar desde fuera */
-	static function exposed( w : World, x : Int, y : Int, z : Int ) {
+	static function exposed( w : WorldData, x : Int, y : Int, z : Int ) {
 		for( o in [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1]] ) {
 			var b = block(w, x + o[0], y + o[1], z + o[2]);
 			if( b == null || b.hasProp(PLiquid) || b.hasFlag(BFDetail) ) return true;
@@ -135,7 +135,7 @@ class TutoTerrain {
 	 * aire, 1 vez de cada 5). Para el tutorial el mineral es siempre bauxita (en el generador, 1 filon de cada 5) y al menos 3
 	 * asoman: son las que se marcan.
 	 */
-	public static function bauxiteVein( w : World, sx : Int, sy : Int, gz : Int, put : Int -> Int -> Int -> BlockKind -> Void ) {
+	public static function bauxiteVein( w : WorldData, sx : Int, sy : Int, gz : Int, put : Int -> Int -> Int -> BlockKind -> Void ) {
 		var rnd = new mt.Rand(w.seed ^ 0xBA0C);
 		var s = ground(w, sx, sy, gz, 2.6, 28);
 		var el = [];
@@ -151,7 +151,7 @@ class TutoTerrain {
 		for( e in el )
 			elipse(e.sx, e.sy, e.sz, function(dx, dy, dz) {
 				var z = e.z + dz;
-				if( z < 1 || z >= World.HEIGHT - 1 ) return;
+				if( z < 1 || z >= WorldData.HEIGHT - 1 ) return;
 				set(w, e.x + dx, e.y + dy, z, BHardRock);
 				pts.push({ x : e.x + dx, y : e.y + dy, z : z });
 			});

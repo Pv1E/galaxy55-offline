@@ -39,6 +39,16 @@ class ServerEcon {
 			// no hay mejoras ESCorp todavia (EscorpUpgrades.ALL esta vacia)
 			false;
 		case EMainPlanet: info.uni != null && Licenses.setMain(info, n) == null;
+		case EEndTutorial:
+			// el envio es el mismo que al empezar sin tutorial: acabarlo antes de tiempo no da nada de mas
+			if( info.tuto == null ) false else {
+				info.tuto = null;
+				TutoSetup.grant(info);
+				if( info.uni != null ) Licenses.tutorialDone(info);
+				true;
+			}
+		case ESkipTutorial:
+			info.tuto != null && worlds.skipTutorial(s);
 		default: false;
 		}
 		if( ok ) {
@@ -98,6 +108,8 @@ class ServerEcon {
 			s.send(SPatch("special", haxe.Json.stringify(info.special)));
 		case EUpgrade:
 			s.send(SPatch("upgrades", haxe.Json.stringify(info.upgrades)));
+		case EEndTutorial:
+			if( info.uni != null ) s.send(SPatch("licenses", haxe.Json.stringify({ licenses : info.uni.licenses, main : info.uni.main })));
 		case EMainPlanet:
 			if( info.uni != null ) s.send(SPatch("main", haxe.Json.stringify({ main : info.uni.main, mainTime : info.uni.mainTime, mainChanges : info.uni.mainChanges })));
 		default:
@@ -114,6 +126,8 @@ class ServerEcon {
 		case EGiveSpecial: "da al contrato especial";
 		case EUpgrade: "compra la mejora";
 		case EMainPlanet: "cambia de planeta principal a";
+		case EEndTutorial: "acaba el tutorial";
+		case ESkipTutorial: "pasa el tutorial";
 		default: "?";
 		}
 	}

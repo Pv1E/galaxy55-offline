@@ -939,6 +939,12 @@ class GalaxyApp extends hxd.App {
 	public function skipTutorial() {
 		var info = game != null ? game.toInfo() : spaceInfo;
 		if( !Tutorial.active(info) ) return;
+		// multijugador: lo hace el servidor (ServerWorlds.skipTutorial), que manda la partida nueva (SRecord)
+		if( mp != null && mp.isPlaying() ) {
+			mapToast = TutoText.get("skipped");
+			mp.client.send(CEcon(0, ESkipTutorial, "", 0));
+			return;
+		}
 		TutoSetup.skip(info);
 		if( explorer != null ) {
 			explorer.dispose();
@@ -1793,6 +1799,7 @@ class GalaxyApp extends hxd.App {
 			space.takeoff();
 			// multijugador: el jugador deja el planeta (los demas dejan de verlo)
 			if( mp != null ) mp.client.send(CTakeoff);
+			mpHeld = [];
 			tutorial.takeoff();
 			// se guarda en cuanto el mapa se ha dibujado (para la miniatura); si antes se cierra la ventana, se guarda igual
 			takeoffSave = 1.0;
@@ -2270,6 +2277,10 @@ class GalaxyApp extends hxd.App {
 					net.sentChestMove();
 				};
 			};
+			// lo del planeta que llego mientras se cargaba (sueltos que ya habia, cambios de los demas...)
+			var held = mpHeld;
+			mpHeld = [];
+			for( m in held ) net.onMessage(m);
 		}
 		// en la nodriza de una partida multijugador no se tira nada: no hay servidor que lo lleve (se perderia)
 		if( mp != null && mp.isPlaying() && loadInfo.mothership == true ) game.noThrow = true;
@@ -2789,6 +2800,7 @@ class GalaxyApp extends hxd.App {
 			} catch( e : Dynamic ) {}
 			startGame(old);
 		case SPlanetLost(reason):
+			mpHeld = [];
 			// el planeta se ha cerrado, abandonado o ya no se puede entrar: de vuelta al espacio (con el aviso)
 			showToast(Lang.t(reason));
 			if( pendingLand != null ) {
@@ -2838,6 +2850,20 @@ class GalaxyApp extends hxd.App {
 			}
 		default:
 			if( game != null && game.net != null ) game.net.onMessage(m);
+			// aterrizando o cargando: lo del planeta (sueltos que ya hay, cambios de los demas...) se guarda para NetGame
+			else if( planetMsg(m) && mpHeld.length < 200000 ) mpHeld.push(m);
+		}
+	}
+
+	/** mensajes del planeta que llegan antes de que el juego este listo (al aterrizar, al cargar): se pasan a NetGame al crearlo */
+	var mpHeld : Array<ServerMsg> = [];
+
+	static function planetMsg( m : ServerMsg ) : Bool {
+		return switch( m ) {
+		// no las posiciones de los demas ni las explosiones: viejas no sirven (en el hangar se seguirian juntando)
+		case SChanges(_), SSetResult(_, _, _), SReduceWater, SAddLoot(_), SDeleteLoot(_), SLootCount(_, _), SLootRest(_, _, _, _),
+			SChest(_, _, _, _, _, _), SShipCells(_): true;
+		default: false;
 		}
 	}
 
@@ -2862,6 +2888,9 @@ class GalaxyApp extends hxd.App {
 				info.shipEdits = [];
 				showToast(Lang.t("mp.ship.refused"), 5);
 			}
+		case "tuto":
+			// donde puso el servidor los bloques del tutorial (ServerWorlds.seedTutorial); el paso lo lleva el juego
+			if( info.tuto != null && v != null && v.spots != null ) info.tuto.spots = v.spots;
 		case "storage":
 			// en su sitio: la pantalla del stockage abierta sigue con las mismas listas
 			var st = StorageData.ensure(info);

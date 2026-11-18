@@ -50,6 +50,8 @@ class NetTest {
 		econTest(Sys.args().length > 0 ? Sys.args()[0] + "_eco" : "port/out/net_test_eco");
 		shipTest(Sys.args().length > 0 ? Sys.args()[0] + "_nave" : "port/out/net_test_nave");
 		hangarTest(Sys.args().length > 0 ? Sys.args()[0] + "_hangar" : "port/out/net_test_hangar");
+		cometTest(Sys.args().length > 0 ? Sys.args()[0] + "_comete" : "port/out/net_test_comete");
+		tutoTest(Sys.args().length > 0 ? Sys.args()[0] + "_tuto" : "port/out/net_test_tuto");
 		var dir = Sys.args().length > 0 ? Sys.args()[0] : "port/out/net_test";
 		deleteDir(dir);
 		sys.FileSystem.createDirectory(dir);
@@ -718,6 +720,115 @@ class NetTest {
 			&& gs.record.shipData == haxe.crypto.Base64.encode(hangarBytes(cells)));
 		g.client.send(CSaveShip(6, haxe.zip.Compress.run(haxe.io.Bytes.alloc(Hangar.SX * Hangar.SY * Hangar.SZ * 2 + 3), 9), back));
 		check("hangar: una nave que no vale no pasa", until(() -> g.has(m -> m.match(SInventory(6, _)))) && gs.record.shipData == haxe.crypto.Base64.encode(hangarBytes(cells)));
+		server.stop();
+	}
+
+	/**
+	 * Cometas en el servidor: solo se aterriza en la que el servidor dice que hay (con su hora), es de ese jugador y de nadie mas,
+	 * acabado su tiempo no se rompe nada y al despegar se borra y ya no se vuelve.
+	 */
+	static function cometTest( dir : String ) {
+		deleteDir(dir);
+		sys.FileSystem.createDirectory(dir);
+		server = new GameServer(dir);
+		server.listen("127.0.0.1", 55093);
+		clients = [];
+		var h = add(new TestClient("Hal", secret(60)));
+		h.tcp(55093);
+		until(() -> h.welcome != null);
+		h.client.send(CSetMode(false));
+		h.client.send(CNewGame(false));
+		until(() -> h.has(m -> m.match(SRecord(_))) && lastInv(h) != null);
+		var hs = @:privateAccess server.sessionById(h.id);
+		var uni = hs.record.uni;
+		var d = ExpData.ExpOffline.make(uni.seed, uni.start, null, null, null, uni.gone);
+		var sys = d.systems[0].id;
+		Comets.devForce = -1;
+		var none = true;
+		for( q in d.systems ) if( Comets.of(uni, q) != null ) none = false;
+		if( none ) {
+			h.client.send(CLand("", Comets.idOf(sys)));
+			check("cometa: sin cometa ahora no se aterriza", until(() -> h.has(m -> m.match(SPlanetLost(_)))));
+		}
+		Comets.devForce = sys;
+		h.client.send(CLand("", Comets.idOf(sys)));
+		check("cometa: con la cometa del servidor se aterriza", until(() -> h.has(m -> m.match(SPlanetData(_, _, _, _, _, _, _, _, _)))) && hs.record.comet != null
+			&& CometRules.isComet(hs.instance.row.biome));
+		var inst = hs.instance;
+		until(() -> inst.ready(), 30);
+		var w = inst.world;
+		var sp = w.spawnPoint();
+		h.client.send(CState({ id : 0, x : sp.x, y : sp.y, z : sp.z, yaw : 0., pitch : 0., flags : 0, charge : -1, hx : 0., hy : 0., hz : 0. }));
+		until(() -> false, 0.2);
+		var bx = Std.int(sp.x), by = Std.int(sp.y), bz = Std.int(sp.z) - 1;
+		h.client.send(CBreak(1, bx, by, bz, w.block(bx, by, bz).index));
+		check("cometa: se rompe con tiempo", until(() -> h.has(m -> m.match(SSetResult(1, true, _)))));
+		hs.record.comet.left = 0;
+		var bz2 = w.topCollide(bx + 1, by) - 1;
+		h.client.send(CBreak(2, bx + 1, by, bz2, w.block(bx + 1, by, bz2).index));
+		check("cometa: acabado el tiempo no se rompe nada", until(() -> h.has(m -> m.match(SSetResult(2, false, _)))));
+		var key = inst.key;
+		h.client.send(CTakeoff);
+		check("cometa: al despegar se borra y queda visitada", until(() -> hs.instance == null && !@:privateAccess server.worlds.instances.exists(key))
+			&& hs.record.comet == null && hs.record.uni.comets != null && hs.record.uni.comets.indexOf(sys) >= 0);
+		var lost = Lambda.count(h.msgs, m -> m.match(SPlanetLost(_)));
+		h.client.send(CLand("", Comets.idOf(sys)));
+		check("cometa: no se vuelve a una cometa visitada", until(() -> Lambda.count(h.msgs, m -> m.match(SPlanetLost(_))) > lost));
+		Comets.devForce = -1;
+		server.stop();
+	}
+
+	/**
+	 * Tutorial en el servidor: pone lo del tutorial en su planeta (y dice donde), el envio de la ESCorp se da una sola vez al
+	 * acabarlo, la partida del cliente no borra los sitios ni vuelve a empezar el tutorial, y pasarlo deja la partida como sin el.
+	 */
+	static function tutoTest( dir : String ) {
+		deleteDir(dir);
+		sys.FileSystem.createDirectory(dir);
+		server = new GameServer(dir);
+		server.genBudgetMs = 50;
+		server.listen("127.0.0.1", 55092);
+		clients = [];
+		var t = add(new TestClient("Ida", secret(70)));
+		t.tcp(55092);
+		until(() -> t.welcome != null);
+		t.client.send(CSetMode(false));
+		t.client.send(CNewGame(true));
+		until(() -> t.has(m -> m.match(SRecord(_))) && lastInv(t) != null);
+		var ts = @:privateAccess server.sessionById(t.id);
+		check("tutorial: partida nueva con tutorial", ts.record.tuto != null);
+		t.client.send(CLand("", TutoSetup.PLANET));
+		check("tutorial: el servidor pone sus bloques y dice donde", until(() -> t.has(m -> m.match(SPatch("tuto", _))), 30) && ts.record.tuto.spots != null
+			&& ts.instance.world.block(ts.record.tuto.spots[0], ts.record.tuto.spots[1], ts.record.tuto.spots[2]) == Block.get(BYellowCrystalLight));
+		var fake : SaveData.SaveInfo = haxe.Json.parse(haxe.Json.stringify(ts.record));
+		fake.tuto.spots = null;
+		fake.tuto.step = 3;
+		t.client.send(CSaveRecord(NetZip.packString(haxe.Json.stringify(SaveData.diskEncode(fake)))));
+		t.client.send(CEcon(1, EDeliver, "", 0));
+		until(() -> t.has(m -> m.match(SInventory(1, _))));
+		check("tutorial: la partida del cliente lleva el paso pero no borra los sitios", ts.record.tuto.step == 3 && ts.record.tuto.spots != null);
+		var c0 = ts.record.credits == null ? 0 : ts.record.credits;
+		t.client.send(CEcon(2, EEndTutorial, "", 0));
+		until(() -> t.has(m -> m.match(SInventory(2, _))));
+		var c1 = ts.record.credits;
+		check("tutorial: al acabarlo, el envio de la ESCorp", ts.record.tuto == null && c1 == c0 + Market.START_CREDITS && ts.record.uni.main != null);
+		t.client.send(CEcon(3, EEndTutorial, "", 0));
+		until(() -> t.has(m -> m.match(SInventory(3, _))));
+		fake.tuto = { step : 0 };
+		t.client.send(CSaveRecord(NetZip.packString(haxe.Json.stringify(SaveData.diskEncode(fake)))));
+		t.client.send(CEcon(4, EEndTutorial, "", 0));
+		until(() -> t.has(m -> m.match(SInventory(4, _))));
+		check("tutorial: el envio una sola vez, y no se vuelve a empezar", ts.record.credits == c1 && ts.record.tuto == null);
+		var u = add(new TestClient("Ugo", secret(71)));
+		u.tcp(55092);
+		until(() -> u.welcome != null);
+		u.client.send(CNewGame(true));
+		until(() -> u.has(m -> m.match(SRecord(_))));
+		var us = @:privateAccess server.sessionById(u.id);
+		var records = Lambda.count(u.msgs, m -> m.match(SRecord(_)));
+		u.client.send(CEcon(1, ESkipTutorial, "", 0));
+		check("tutorial: pasarlo deja la partida como sin el (y se manda de nuevo)", until(() -> Lambda.count(u.msgs, m -> m.match(SRecord(_))) > records)
+			&& us.record.tuto == null && us.record.credits == Market.START_CREDITS && us.record.uni.space == true);
 		server.stop();
 	}
 

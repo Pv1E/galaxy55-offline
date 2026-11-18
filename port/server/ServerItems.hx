@@ -251,7 +251,7 @@ class ServerItems {
 		if( inst == null ) return;
 		var d = inst.items.drops.get(id);
 		if( d == null ) return;
-		var ok = s.rights & RPickup != 0 && s.pos != null && d.delay <= 0 && dist2(inst, s.pos, d.x, d.y, d.z) <= PICK_REACH * PICK_REACH;
+		var ok = !worlds.cometOver(s) && s.rights & RPickup != 0 && s.pos != null && d.delay <= 0 && dist2(inst, s.pos, d.x, d.y, d.z) <= PICK_REACH * PICK_REACH;
 		var got = false;
 		if( ok ) {
 			var i = inv(s);

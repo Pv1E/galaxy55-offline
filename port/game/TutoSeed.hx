@@ -21,23 +21,9 @@ class TutoSeed {
 	 * planeta: pasar el tutorial los quita) y los que hay que recoger se guardan en tuto.spots para seguirlos.
 	 */
 	public static function seedPlanet( g : GameView ) {
-		var t = g.info.tuto;
-		if( t == null || t.spots != null || g.ship == null ) return;
-		var w = g.world, sx = g.ship.x, sy = g.ship.y, gz = Std.int(g.ship.z) - 1;
-		var spots = [];
-		function put( x : Int, y : Int, z : Int, k : BlockKind ) {
-			x = TutoTerrain.wrap(w, x);
-			y = TutoTerrain.wrap(w, y);
-			w.setBlock(x, y, z, Block.get(k));
-			for( v in [x, y, z, Type.enumIndex(k)] ) spots.push(v);
-		}
-		for( i in 0...4 ) {
-			var s = TutoTerrain.ground(w, sx, sy, gz, i * Math.PI / 2 + 0.4, 9 + i * 2);
-			put(s.x, s.y, s.z + 1, BYellowCrystalLight);
-		}
-		TutoTerrain.etheriumCave(w, sx, sy, gz, put);
-		TutoTerrain.bauxiteVein(w, sx, sy, gz, put);
-		t.spots = spots;
+		// multijugador: lo pone el servidor (ServerWorlds.seedTutorial) y manda tuto.spots
+		if( g.info.tuto == null || g.info.tuto.spots != null || g.ship == null || g.net != null ) return;
+		TutoSetup.seedPlanet(g.world, g.info, g.ship.x, g.ship.y, Std.int(g.ship.z) - 1);
 	}
 
 	/** hangar durante el tutorial: la nave con sus agujeros (el hangar se hace con el plano, sin los shipEdits) */

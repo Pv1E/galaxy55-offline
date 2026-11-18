@@ -91,6 +91,8 @@ class Tutorial {
 	}
 
 	function finish( g : GameView ) {
+		// multijugador: el envio lo da el servidor (ServerEcon, EEndTutorial); aqui se hace igual en la copia para verlo ya
+		if( g.net != null ) g.net.sentEcon(EEndTutorial, "", 0);
 		g.inv.addCharge(CBlue, TutoSetup.GIFT);
 		g.inv.addCharge(CYellow, TutoSetup.GIFT);
 		g.info.credits = (g.info.credits == null ? 0 : g.info.credits) + Market.START_CREDITS;

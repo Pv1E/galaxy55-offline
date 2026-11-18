@@ -67,7 +67,11 @@ enum abstract EconOp(Int) to Int from Int {
 	var EUpgrade = 6;
 	/** planeta n como planeta principal */
 	var EMainPlanet = 7;
-	public static inline var MAX = 7;
+	/** fin del tutorial: el envio de la ESCorp (TutoSetup.grant) y su planeta pasa a principal */
+	var EEndTutorial = 8;
+	/** pasar el tutorial: la partida como si se hubiera empezado sin el (TutoSetup.skip) */
+	var ESkipTutorial = 9;
+	public static inline var MAX = 9;
 }
 
 /**

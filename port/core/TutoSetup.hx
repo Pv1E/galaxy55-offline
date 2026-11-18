@@ -95,6 +95,30 @@ class TutoSetup {
 
 
 
+
+	/**
+	 * Al primer aterrizaje en el planeta del tutorial: 4 citronox viejos a 9-15 bloques de la nave (sx, sy; gz = su suelo),
+	 * fragmentos de etherium en un hueco de un risco y un filon de bauxita (TutoTerrain). Son cambios del planeta (setBlock) y
+	 * los que hay que recoger quedan en tuto.spots. Lo hace el juego en solo (TutoSeed.seedPlanet) y el servidor en multijugador.
+	 */
+	public static function seedPlanet( w : WorldData, info : SaveInfo, sx : Int, sy : Int, gz : Int ) {
+		var t = info.tuto;
+		if( t == null || t.spots != null ) return;
+		var spots = [];
+		function put( x : Int, y : Int, z : Int, k : BlockKind ) {
+			x = TutoTerrain.wrap(w, x);
+			y = TutoTerrain.wrap(w, y);
+			w.setBlock(x, y, z, Block.get(k));
+			for( v in [x, y, z, Type.enumIndex(k)] ) spots.push(v);
+		}
+		for( i in 0...4 ) {
+			var s = TutoTerrain.ground(w, sx, sy, gz, i * Math.PI / 2 + 0.4, 9 + i * 2);
+			put(s.x, s.y, s.z + 1, BYellowCrystalLight);
+		}
+		TutoTerrain.etheriumCave(w, sx, sy, gz, put);
+		TutoTerrain.bauxiteVein(w, sx, sy, gz, put);
+		t.spots = spots;
+	}
 	/** en el tutorial solo se fabrican el aluminio y el blindaje que pide (Tutorial.craftAllowed; tambien el servidor, ServerShip) */
 	public static function craftAllowed( info : SaveInfo, r : CraftRule ) : Bool {
 		if( info == null || info.tuto == null ) return true;

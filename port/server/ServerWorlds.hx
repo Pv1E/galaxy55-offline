@@ -73,6 +73,12 @@ class ServerWorlds {
 	/** la partida al cliente; si esta en un planeta, con el terreno de ese planeta (que es del servidor) */
 	function sendRecord( s : Session ) {
 		var info = s.record;
+		// se fue estando en una cometa: ya no vuelve a ella (Comets.leave), queda en el espacio sobre su sistema
+		if( info.comet != null ) {
+			Comets.leave(info);
+			if( info.uni != null ) info.uni.space = true;
+			saveRecord(s);
+		}
 		if( info.uni != null && info.uni.space != true && info.hangar != true && info.mothership != true ) {
 			var inst = enter(s, ownKey(s, info.uni.planetId), info.uni.planetId);
 			if( inst != null ) {
@@ -98,7 +104,7 @@ class ServerWorlds {
 	 * Lo demas es del servidor, que lo cambia con sus reglas: inventario y contenedores (ServerItems), creditos, mercado,
 	 * contratos y planeta principal (ServerEcon), licencias (land, CAbandon), terreno (planet_edits), modo y tiempo de juego.
 	 * La nave (plano del hangar, cambios, cantinas, stockage y sueltos) es de ServerShip. Provisional hasta que el servidor lleve
-	 * tambien la nodriza, la cometa y el tutorial: eso aun se toma del cliente.
+	 * Las cometas las lleva el servidor (cometLand). Provisional hasta que lleve tambien el tutorial: eso aun se toma del cliente.
 	 */
 	function clientRecord( s : Session, data : haxe.io.Bytes ) {
 		var o : Dynamic;
@@ -119,8 +125,12 @@ class ServerWorlds {
 		r.hangar = info.hangar;
 		r.mothership = info.mothership;
 		r.inMother = info.inMother;
-		r.comet = info.comet;
-		r.tuto = info.tuto;
+		// el tutorial: sus pasos los lleva el cliente (no dan nada); se acaba o se pasa solo con CEcon (el envio lo da el servidor),
+		// no se vuelve a el, y donde estan sus bloques (spots) los puso el servidor
+		if( r.tuto != null && info.tuto != null ) {
+			if( r.tuto.spots != null ) info.tuto.spots = r.tuto.spots;
+			r.tuto = info.tuto;
+		}
 		r.tutorial = info.tutorial;
 		var u = info.uni, ru = r.uni;
 		if( u != null && ru != null ) {
@@ -128,7 +138,6 @@ class ServerWorlds {
 			ru.robot = u.robot;
 			ru.ship = u.ship;
 			ru.traveled = u.traveled;
-			ru.comets = u.comets;
 			// en un planeta de otro jugador: su partida sigue en su galaxia (al volver, en el espacio)
 			ru.space = s.instance != null && s.instance.row.galaxy != s.uid ? true : u.space;
 			// los planetas visitados sin sus cambios (estan en planet_edits), y solo los de su galaxia que tiene
@@ -254,6 +263,10 @@ class ServerWorlds {
 	}
 
 	function land( s : Session, galaxy : String, pid : Int ) {
+		if( galaxy == "" && pid % 10 == Comets.ID ) {
+			cometLand(s, Std.int(pid / 10));
+			return;
+		}
 		var row : ServerDb.PlanetRow = null;
 		if( galaxy == "" ) row = planetRow(s, pid);
 		else {
@@ -277,6 +290,7 @@ class ServerWorlds {
 		}
 		s.send(SPlanetData(inst.key, row.seed, row.biome, row.size, row.gen, row.shipAt, NetZip.packInts(currentEdits(inst)),
 			server.db.displayOf(row.owner), s.rights));
+		seedTutorial(inst);
 	}
 
 	/** la nave del jugador en el servidor (ServerShip): se hace la primera vez que la usa */
@@ -286,6 +300,7 @@ class ServerWorlds {
 	}
 
 	function takeoff( s : Session ) {
+		endComet(s);
 		leaveInstance(s);
 		if( s.ship != null ) s.ship.clearLoot();
 		if( s.record != null && s.record.uni != null ) {
@@ -295,6 +310,7 @@ class ServerWorlds {
 	}
 
 	public function onLeave( s : Session ) {
+		if( endComet(s) && s.record != null && s.record.uni != null ) s.record.uni.space = true;
 		if( s.instance != null && s.instance.row.galaxy != s.uid && s.record != null && s.record.uni != null ) {
 			s.record.uni.space = true;
 			saveRecord(s);
@@ -302,6 +318,103 @@ class ServerWorlds {
 		leaveInstance(s);
 	}
 
+
+	// ---------------------------------------------------------------- cometas (de cada jugador, nunca compartidas)
+
+	static inline function isComet( inst : PlanetInstance ) return inst != null && CometRules.isComet(inst.row.biome);
+
+	/**
+	 * Aterrizar en la cometa del sistema sys de su galaxia: solo si el servidor, con su hora (Comets.of, Clock), dice que la hay
+	 * ahora y no la ha visitado ya. Es suya y de nadie mas (no esta en la tabla de planetas: nadie puede ir, no gasta licencia)
+	 * y su tiempo lo cuenta el servidor (SaveInfo.comet.left, segun la velocidad de su nave).
+	 */
+	function cometLand( s : Session, sys : Int ) {
+		var info = s.record, uni = s.record.uni;
+		var d = ExpData.ExpOffline.make(uni.seed, uni.start, null, null, null, uni.gone);
+		var sobj : ExpData.ExpSystem = null;
+		for( q in d.systems ) if( q.id == sys ) sobj = q;
+		var p = sobj == null ? null : Comets.of(uni, sobj);
+		if( p == null ) {
+			s.send(SPlanetLost("mp.land.denied"));
+			return;
+		}
+		var row : ServerDb.PlanetRow = { gkey : s.uid + ":c" + sys + ":" + p.comet, owner : s.uid, galaxy : s.uid, pid : p.id, seed : p.seed,
+			biome : p.biome, size : 1, gen : gen.Generator.VERSION, shipAt : "", access : "" };
+		var inst = enterRow(s, row);
+		if( s.ship != null ) s.ship.clearLoot();
+		uni.planetId = p.id;
+		uni.space = null;
+		info.comet = { sys : sys, slot : p.comet, left : Comets.dockTime(Hangar.speedOf(ShipData.current(info))) };
+		saveRecord(s);
+		server.files.log(s.display + " aterriza en la cometa " + row.gkey + " (" + p.biome + ")");
+		s.send(SPlanetData(inst.key, row.seed, row.biome, row.size, row.gen, "", NetZip.packInts(currentEdits(inst)), server.db.displayOf(s.uid), s.rights));
+	}
+
+	/** se va de su cometa (despega o se desconecta): ya no vuelve (Comets.leave) y la cometa se borra con sus cambios. true si lo estaba */
+	function endComet( s : Session ) : Bool {
+		var inst = s.instance;
+		if( !isComet(inst) ) return false;
+		leaveInstance(s);
+		instances.remove(inst.key);
+		db.begin();
+		db.deletePlanet(inst.key);
+		db.commit();
+		if( s.record != null ) {
+			Comets.leave(s.record);
+			saveRecord(s);
+		}
+		return true;
+	}
+
+	/** en su cometa con el tiempo acabado: ya no rompe, no pone ni recoge */
+	public function cometOver( s : Session ) : Bool {
+		return isComet(s.instance) && s.record != null && s.record.comet != null && s.record.comet.left <= 0;
+	}
+
+	// ---------------------------------------------------------------- tutorial
+
+	/**
+	 * El planeta del tutorial de un jugador ya generado y aun sin lo suyo: el servidor pone los citronox, el etherium y la bauxita
+	 * (TutoSetup.seedPlanet, junto a donde aterriza su nave, como Ship) y le manda tuto.spots. En multijugador el cliente no los
+	 * pone (TutoSeed): si no, el servidor no los tendria y no se podrian romper.
+	 */
+	function seedTutorial( inst : PlanetInstance ) {
+		if( !inst.ready() ) return;
+		for( s in inst.players ) {
+			var info = s.record;
+			if( info == null || info.tuto == null || info.tuto.spots != null || inst.row.galaxy != s.uid || inst.row.pid != TutoSetup.PLANET ) continue;
+			var w = inst.world, size = w.size;
+			var at = readShipAt(inst.row.shipAt), p = w.shipPlace();
+			var x = at != null ? ((at.x % size) + size) % size : p != null ? p.x : 14;
+			var y = at != null ? ((at.y % size) + size) % size : p != null ? p.y : 12;
+			// Ship.groundAt: encima del bloque mas alto de la columna con colision
+			var zz = WorldData.HEIGHT - 1;
+			while( zz > 0 && !w.collidePoint(x + 0.5, y + 0.5, zz) ) zz--;
+			var b = w.block(x, y, zz);
+			var gz = Std.int(zz + (b != null && b.size != null ? b.size.z2 : 1)) - 1;
+			TutoSetup.seedPlanet(w, info, x, y, gz);
+			saveRecord(s);
+			s.send(SPatch("tuto", haxe.Json.stringify(info.tuto)));
+			server.files.log("tutorial de " + s.display + " preparado en " + inst.key);
+		}
+	}
+
+	/** pasar el tutorial (CEcon ESkipTutorial): la partida como si hubiera empezado sin el; su planeta vuelve a estar sin explorar */
+	public function skipTutorial( s : Session ) : Bool {
+		var info = s.record;
+		if( info == null || info.tuto == null ) return false;
+		leaveInstance(s);
+		var gkey = ownKey(s, TutoSetup.PLANET);
+		instances.remove(gkey);
+		db.begin();
+		db.deletePlanet(gkey);
+		db.commit();
+		TutoSetup.skip(info);
+		s.ship = null;
+		saveRecord(s);
+		sendRecord(s);
+		return true;
+	}
 	// ---------------------------------------------------------------- accesos
 
 	static function readAccess( j : String ) : PlanetAccess {
@@ -518,7 +631,8 @@ class ServerWorlds {
 	function blockChange( s : Session, m : ClientMsg ) {
 		var inst = s.instance;
 		if( inst == null ) return;
-		if( s.rights & RBuild == 0 ) {
+		// en una cometa, acabado su tiempo no se toca nada (el cliente ya ha vuelto a la nave)
+		if( s.rights & RBuild == 0 || cometOver(s) ) {
 			switch( m ) {
 			case CBreak(seq, _, _, _, _), CPlace(seq, _, _, _, _, _, _): s.send(SSetResult(seq, false, 0));
 			default:
@@ -609,6 +723,7 @@ class ServerWorlds {
 			if( left <= 0 ) break;
 			if( inst.generate(left) ) {
 				server.files.log("planeta " + inst.key + " generado");
+				seedTutorial(inst);
 				var w = inst.waiting;
 				inst.waiting = [];
 				for( q in w ) if( q.s.instance == inst ) blockChange(q.s, q.m);
@@ -632,6 +747,9 @@ class ServerWorlds {
 		var now = haxe.Timer.stamp();
 		// el tiempo de juego de cada uno (los precios del robot vuelven a lo normal con el: Market.advance); se guarda con lo demas
 		for( s in server.playing() ) if( s.record != null ) s.record.playSeconds += TICK;
+		// el tiempo en su cometa corre abajo, no a bordo (GameView.updateComet)
+		for( s in server.playing() )
+			if( isComet(s.instance) && s.record.comet != null && s.pos != null && s.pos.z < WorldData.SHIP_Z ) s.record.comet.left -= TICK;
 		for( inst in instances.copy() ) {
 			if( inst.players.length == 0 ) {
 				if( now - inst.emptySince > UNLOAD ) unload(inst);
