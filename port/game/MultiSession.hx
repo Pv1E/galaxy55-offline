@@ -25,6 +25,8 @@ class MultiSession {
 	/** avisos para la pantalla (claves de Lang y sus valores) */
 	public var notices = new Array<{ key : String, args : Array<String> }>();
 	public var onMessage : ServerMsg -> Void;
+	/** jugador nuevo en el servidor: empezar sin preguntar (false = sin tutorial; pruebas). null = la interfaz pregunta */
+	public var autoNewGame : Null<Bool>;
 
 	function new() {}
 
@@ -79,6 +81,7 @@ class MultiSession {
 			role = r;
 			creative = c;
 			firstTime = first;
+			if( first && autoNewGame != null ) client.send(CNewGame(autoNewGame));
 		case ERefused(r, detail):
 			end("mp.refuse." + r, r);
 		case EKicked(r, detail):

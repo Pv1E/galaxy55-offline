@@ -1,4 +1,5 @@
 import Ui;
+import Msg;
 import SaveData.SaveInfo;
 
 enum State {
@@ -228,6 +229,8 @@ class GalaxyApp extends hxd.App {
 	var game : GameView;
 	/** partida multijugador en curso (anadido del port): su servidor si hospeda y su cliente; null en solo */
 	public var mp : MultiSession;
+	/** multijugador: partida que espera los datos del planeta pedido al servidor (landOnPlanet) */
+	var pendingLand : SaveInfo;
 	var pad : hxd.Pad;
 
 	var ui : h2d.Object;
@@ -1780,6 +1783,8 @@ class GalaxyApp extends hxd.App {
 		captureMouse(false);
 		if( takeoff ) {
 			space.takeoff();
+			// multijugador: el jugador deja el planeta (los demas dejan de verlo)
+			if( mp != null ) mp.client.send(CTakeoff);
 			tutorial.takeoff();
 			// se guarda en cuanto el mapa se ha dibujado (para la miniatura); si antes se cierra la ventana, se guarda igual
 			takeoffSave = 1.0;
@@ -1872,6 +1877,14 @@ class GalaxyApp extends hxd.App {
 		old.genVersion = target != null ? SaveData.genVersion(target.genVersion) : gen.Generator.VERSION;
 		old.px = old.py = old.pz = -1;
 		old.yaw = old.pitch = 0;
+		// multijugador: el terreno es del servidor; se pide y la partida empieza cuando llega (onMpMessage, SPlanetData)
+		if( mp != null ) {
+			pendingLand = old;
+			state = Loading;
+			showPlanetLoading();
+			mp.client.send(CLand("", p.id));
+			return;
+		}
 		startGame(old);
 	}
 
@@ -2197,6 +2210,8 @@ class GalaxyApp extends hxd.App {
 			Sys.println(loadWorld.debugStats());
 		}
 		game = new GameView(s3d, loadWorld, loadInfo, atlas, loadShip);
+		// multijugador (anadido del port): lo que hace el jugador va al servidor y lo de los demas llega a este mundo
+		if( mp != null && mp.isPlaying() && loadInfo.mothership != true && loadInfo.hangar != true ) game.net = new NetGame(mp, game, s3d, s2d);
 		loadWorld = null;
 		loadShip = null;
 		if( loadInfo.uni != null && loadInfo.uni.space == true && loadInfo.hangar != true && loadInfo.mothership != true ) {
@@ -2633,12 +2648,67 @@ class GalaxyApp extends hxd.App {
 		}
 	}
 
+	/** empieza una partida multijugador (hospedada o unida): lo que manda el servidor llega a onMpMessage */
+	public function startMulti( m : MultiSession ) {
+		mp = m;
+		mp.onMessage = onMpMessage;
+	}
+
+	/** mensajes del servidor que tocan a la partida: la partida del jugador, el planeta pedido y lo del mundo */
+	function onMpMessage( m : ServerMsg ) {
+		switch( m ) {
+		case SRecord(data):
+			var info = try SaveData.parse(haxe.Json.parse(NetZip.unpackString(data, 64 << 20)), "multijoueur") catch( e : Dynamic ) null;
+			if( info == null ) {
+				showToast(Lang.t("mp.badrecord"));
+				return;
+			}
+			if( explorer != null ) {
+				explorer.dispose();
+				explorer = null;
+			}
+			spaceInfo = null;
+			space = null;
+			if( game != null ) leaveGame();
+			saveOnMap = false;
+			startGame(info);
+		case SPlanetData(_, seed, biome, size, gv, shipAt, edits, _, _):
+			var old = pendingLand;
+			if( old == null ) return;
+			pendingLand = null;
+			old.seed = seed;
+			old.biome = biome;
+			old.sizeChunks = size;
+			old.genVersion = gv;
+			old.edits = try NetZip.unpackInts(edits, Msg.EDITS_MAX >> 2) catch( e : Dynamic ) [];
+			old.shipAt = null;
+			if( shipAt != "" ) try {
+				var o : Dynamic = haxe.Json.parse(shipAt);
+				old.shipAt = { x : Std.int(o.x), y : Std.int(o.y) };
+			} catch( e : Dynamic ) {}
+			startGame(old);
+		default:
+			if( game != null && game.net != null ) game.net.onMessage(m);
+		}
+	}
+
+	/** guarda la partida: en solo, su archivo; en multijugador la manda al servidor (provisional: el servidor aun no lleva
+	    inventario ni economia) */
+	function writeSave( info : SaveInfo ) : Bool {
+		if( mp != null ) {
+			if( !mp.isPlaying() ) return false;
+			mp.client.send(CSaveRecord(NetZip.packString(haxe.Json.stringify(SaveData.diskEncode(info)))));
+			return true;
+		}
+		return SaveData.write(info, captureThumb());
+	}
+
 	function saveGame( notify : Bool ) {
 		if( game == null ) {
 			// en el espacio: la partida con la nave y el robot donde estan en el mapa
 			if( spaceInfo == null || explorer == null ) return;
 			storeMapPos();
-			var ok = SaveData.write(spaceInfo, captureThumb());
+			var ok = writeSave(spaceInfo);
 			if( notify ) showToast(ok ? Lang.t("saved.ok") : "ERROR");
 			return;
 		}
@@ -2648,7 +2718,7 @@ class GalaxyApp extends hxd.App {
 		// dentro de la nodriza (llegando del mapa): se apunta, para que al cargar se aparezca dentro y no en el mapa
 		var inMother = game.info.mothership == true && !GameView.editMother && info != null && info.uni != null && info.uni.space == true;
 		if( inMother ) info.inMother = { x : game.px, y : game.py, z : game.pz, yaw : game.yaw, pitch : game.pitch };
-		var ok = SaveData.write(info, captureThumb());
+		var ok = writeSave(info);
 		if( inMother ) info.inMother = null;
 		// modo de edicion: guardar (Esc, guardar y salir) tambien escribe la nave nodriza
 		if( GameView.editMother && game.info.mothership == true )
@@ -3083,7 +3153,8 @@ class GalaxyApp extends hxd.App {
 				} else if( K.isPressed(K.ESCAPE) || Keys.pressed("palette") ) closePalette();
 				// la tienda y los contratos salen del ordenador de a bordo: tampoco paran el juego (ver abajo, state == Paused); la
 				// barra de vida se ve bajo el panel
-				if( shop != null || contracts != null || database != null || invScreen != null || storage != null ) {
+				// en multijugador nada para el mundo: tampoco la paleta (anadido del port)
+				if( shop != null || contracts != null || database != null || invScreen != null || storage != null || mp != null ) {
 					game.update(dt, false, pad);
 					if( game == null || state != Playing ) return;
 					updateJetHud(game);
@@ -3149,7 +3220,8 @@ class GalaxyApp extends hxd.App {
 			// nave y el mundo no se para. Cambio del port: sin ningun control (ni andar ni mirar), el teclado y el raton son del menu
 			// la pantalla de licencias sale del ordenador de a bordo y tampoco para el juego (aviso del PR 77)
 			// la conversacion con el robot tampoco: el se mueve y habla mientras la camara lo encuadra
-			if( current != null && (currentName == "computer" || currentName == "licenses" || currentName == "robot") ) {
+			// en multijugador la pausa no para el mundo (anadido del port): los demas siguen y lo que pasa llega igual
+			if( (current != null && (currentName == "computer" || currentName == "licenses" || currentName == "robot")) || mp != null ) {
 				if( currentName == "robot" ) updateRobotDialog(dt);
 				game.update(dt, false, pad);
 				if( game == null || state != Paused ) return;

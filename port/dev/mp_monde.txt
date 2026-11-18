@@ -1,0 +1,26 @@
+# multijugador (anadido del port): un jugador en su propio servidor. Partida nueva (en el espacio), aterriza en su planeta con
+# los datos del servidor, rompe un bloque (el servidor lo acepta) y el terreno del juego y el del servidor dan la misma suma.
+# port/dev/multirun.ps1 -ScriptList port/dev/mp_monde.txt -Extra "--rngseed=1 --creative"
+waitfor planet
+mp host 55191
+waitfor map 6000
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+wait 60
+print mp
+print mpworld
+tp 64 64 top 0.8 -0.9
+wait 30
+slot 0
+key dig
+wait 10
+unkey
+wait 60
+print cellhash
+print mpworld
+print remotes
+mp leave
+quit

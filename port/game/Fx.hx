@@ -94,6 +94,18 @@ class Fx {
 		denied = new h3d.scene.Mesh(IconMesh.cube(51), blendMaterial(), root);
 		denied.visible = false;
 
+		var bm = newBeam(root);
+		beamRoot = bm.root;
+		beam = bm.mesh;
+		beamUv = bm.uv;
+		beamTex = bm.tex;
+		beamRoot.visible = false;
+	}
+
+
+	/** un rayo como el del jugador (Render.initLazer): 4 planos que giran alrededor de +x, de longitud 1; tambien los de los demas jugadores (RemotePlayers) */
+	public static function newBeam( parent : h3d.scene.Object ) : { root : h3d.scene.Object, mesh : h3d.scene.Mesh, uv : h3d.shader.UVDelta, tex : Array<h3d.mat.Texture> } {
+		var beamTex : Array<h3d.mat.Texture>, beamUv : h3d.shader.UVDelta, beamRoot : h3d.scene.Object, beam : h3d.scene.Mesh;
 		// el rayo: 4 planos que giran alrededor del eje (Render.initLazer), de longitud 1 a lo largo de +x
 		var pts = [], uvs = [], idx = new hxd.IndexBuffer();
 		for( r in 0...4 ) {
@@ -132,9 +144,36 @@ class Fx {
 		beamUv = new h3d.shader.UVDelta();
 		mat.mainPass.addShader(beamUv);
 		// el padre orienta y escala el rayo; el hijo gira sobre su propio eje (rotate() de Heaps gira sobre el eje X del mundo)
-		beamRoot = new h3d.scene.Object(root);
+		beamRoot = new h3d.scene.Object(parent);
 		beam = new h3d.scene.Mesh(poly, mat, beamRoot);
-		beamRoot.visible = false;
+		return { root : beamRoot, mesh : beam, uv : beamUv, tex : beamTex };
+	}
+
+	/** pone el rayo de start a end con su textura (0 sin carga, 1..3 cargas) y su giro y su avance de textura (time en tmod) */
+	public static function placeBeam( root : h3d.scene.Object, mesh : h3d.scene.Mesh, uv : h3d.shader.UVDelta, id : Int, start : h3d.Vector, end : h3d.Vector, time : Float ) {
+		var d = end.sub(start);
+		var len = d.length();
+		if( len < 0.05 ) {
+			root.visible = false;
+			return;
+		}
+		var rspeed = 3., tspeed = 1.;
+		switch( id ) {
+		case 0: tspeed = 0.8; rspeed = 5;
+		case 1: tspeed = 3; rspeed = 4;
+		case 2: tspeed = 2; rspeed = 5;
+		case 3: tspeed = 2; rspeed = 5;
+		}
+		root.visible = true;
+		root.setPosition(start.x, start.y, start.z);
+		root.setDirection(d);
+		mesh.setRotation(rspeed * time / 32, 0, 0);
+		root.scaleX = len;
+		root.scaleY = 0.2;
+		root.scaleZ = 0.2;
+		var tscale = len / 2;
+		uv.uvScale.set(tscale, 1);
+		uv.uvDelta.set(-tspeed * time / 32 / tscale, 0);
 	}
 
 	function blendMaterial() : h3d.mat.Material {
@@ -268,29 +307,7 @@ class Fx {
 			// lo que se ve esta curvado (el planeta es redondo): el rayo termina donde se ve el impacto, no en su altura real
 			var edx = end.x - g.px, edy = end.y - g.py;
 			end.z -= (edx * edx + edy * edy) * (2.0 / world.size);
-			var d = end.sub(start);
-			var len = d.length();
-			if( len < 0.05 ) {
-				beamRoot.visible = false;
-			} else {
-				var rspeed = 3., tspeed = 1.;
-				switch( id ) {
-				case 0: tspeed = 0.8; rspeed = 5;
-				case 1: tspeed = 3; rspeed = 4;
-				case 2: tspeed = 2; rspeed = 5;
-				case 3: tspeed = 2; rspeed = 5;
-				}
-				beamRoot.visible = true;
-				beamRoot.setPosition(start.x, start.y, start.z);
-				beamRoot.setDirection(d);
-				beam.setRotation(rspeed * time / 32, 0, 0);
-				beamRoot.scaleX = len;
-				beamRoot.scaleY = 0.2;
-				beamRoot.scaleZ = 0.2;
-				var tscale = len / 2;
-				beamUv.uvScale.set(tscale, 1);
-				beamUv.uvDelta.set(-tspeed * time / 32 / tscale, 0);
-			}
+			placeBeam(beamRoot, beam, beamUv, id, start, end, time);
 		} else
 			beamRoot.visible = false;
 	}

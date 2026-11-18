@@ -84,6 +84,8 @@ class GameView {
 	var hand : Hand;
 	/** Process.hx del original: agua y lava que fluyen, hierba, anclas... */
 	public var process : WorldProcess;
+	/** partida multijugador (anadido del port): manda lo que hace el jugador y aplica lo que llega; null en solo */
+	public var net : NetGame;
 	/** la nave: el jugador empieza dentro y baja al planeta por el teletransportador (Game.placeShip) */
 	public var ship(default, null) : Ship;
 	/** progreso del teletransporte (Hero.enteringShip): -1 = recien llegado, 0..1.5 = entrando; a 1.5 se transporta */
@@ -519,7 +521,9 @@ class GameView {
 			var c = bombQueue.shift();
 			explodeBomb(c.x, c.y, c.z);
 		}
-		process.update(realDt, px, py, pz + viewZ * 0.5);
+		// en multijugador el proceso del mundo corre en el servidor: aqui llegan sus cambios (NetGame)
+		if( net == null ) process.update(realDt, px, py, pz + viewZ * 0.5);
+		else net.update(realDt);
 		world.flush();
 		if( !piloting ) drops.update(this, tmod); // pilotando, los sueltos de la nave van con ella (pilotMove)
 		fx.update(this, realDt, tmod);
@@ -570,6 +574,7 @@ class GameView {
 
 	public function dispose() {
 		stopSounds();
+		if( net != null ) net.dispose();
 		if( ship != null ) ship.dispose();
 		fx.dispose();
 		parts.dispose();
@@ -1951,7 +1956,10 @@ class GameView {
 		// el agua puesta por el jugador se extiende como la cascada (si no, inundaria como el mar)
 		if( put.type == BTWater && !inShip && hangar == null ) world.setWater(x, y, z, put, WorldProcess.PLACED);
 		else world.setBlock(x, y, z, put);
-		if( !inShip ) process.onSet(x, y, z, here, put);
+		if( !inShip ) {
+			if( net != null ) net.sentPlace(x, y, z, put, put.type == BTWater && hangar == null ? WorldProcess.PLACED : 0, @:privateAccess inv.blockIndex);
+			else process.onSet(x, y, z, here, put);
+		}
 		if( inShip ) ship.craft(x, y, z, put, this);
 		Kubindex.placed(info, put);
 		select = null;
@@ -2021,6 +2029,7 @@ class GameView {
 		world.setBlock(x, y, z, null);
 		parts.doBreak(x, y, z, b);
 		if( z >= World.SHIP_Z ) ship.craft(x, y, z, null, this);
+		else if( net != null ) { if( !isProcess ) net.sentBreak(x, y, z, b); }
 		else process.onSet(x, y, z, b, null);
 	}
 

@@ -1485,9 +1485,13 @@ class Dev {
 		var rest = a.slice(2).join(" ");
 		switch( a[1] ) {
 		case "host":
-			app.mp = MultiSession.host(Settings.dir() + "/mp_serveur", Std.parseInt(a[2]), "127.0.0.1");
+			var m = MultiSession.host(Settings.dir() + "/mp_serveur", Std.parseInt(a[2]), "127.0.0.1");
+			m.autoNewGame = false;
+			app.startMulti(m);
 		case "join":
-			app.mp = MultiSession.join("127.0.0.1", Std.parseInt(a[2]), a.length > 3 ? a[3] : "", null, 0);
+			var m = MultiSession.join("127.0.0.1", Std.parseInt(a[2]), a.length > 3 ? a[3] : "", null, 0);
+			m.autoNewGame = false;
+			app.startMulti(m);
 		case "say":
 			app.mp.say(rest);
 		case "pm":
@@ -1504,6 +1508,16 @@ class Dev {
 	}
 
 	function print( a : Array<String>, g : GameView, app : GalaxyApp ) {
+		if( a[1] == "mpworld" ) {
+			// el anfitrion: los planetas cargados en su servidor y su suma (la misma que print cellhash si el terreno coincide)
+			if( app.mp == null || app.mp.server == null ) Sys.println("mpworld: no hospeda");
+			else for( inst in @:privateAccess app.mp.server.worlds.instances ) Sys.println("mpworld " + inst.key + " " + (inst.ready() ? inst.world.cellHash() : "generando") + " jugadores " + inst.players.length);
+			return;
+		}
+		if( a[1] == "remotes" ) {
+			Sys.println(g == null || g.net == null ? "remotos: sin partida multijugador" : g.net.devInfo());
+			return;
+		}
 		if( a[1] == "mp" ) {
 			Sys.println(app.mp == null ? "mp ninguno" : app.mp.devInfo());
 			return;
