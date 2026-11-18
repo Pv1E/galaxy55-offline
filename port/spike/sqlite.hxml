@@ -1,0 +1,3 @@
+-cp port/spike
+-main SqliteSpike
+-hl port/out/spike_sqlite.hl

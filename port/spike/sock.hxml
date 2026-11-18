@@ -1,0 +1,3 @@
+-cp port/spike
+-main SockSpike
+-hl port/out/spike_sock.hl
