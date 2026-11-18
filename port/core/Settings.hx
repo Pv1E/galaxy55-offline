@@ -32,6 +32,10 @@ class Settings {
 	/** primera vez que se abre el juego (no habia settings.json): se pregunta el idioma */
 	public static var firstRun = false;
 
+	/** teclas cambiadas (Keys, en el juego): las pone GalaxyApp antes de load; el servidor no tiene teclas */
+	public static var keysLoad : Dynamic -> Void;
+	public static var keysSave : Void -> Dynamic;
+
 	public static function dir() : String {
 		var base = Sys.getEnv("GALAXY55_DATA");
 		if( base == null || base == "" ) base = Sys.getEnv("APPDATA");
@@ -67,7 +71,7 @@ class Settings {
 			if( o.maxFps != null ) maxFps = Std.int(o.maxFps);
 			if( Std.isOfType(o.pseudo, String) && o.pseudo != "" ) pseudo = o.pseudo;
 			// teclas cambiadas en Opciones > Controles (Keys): solo las que no son las de por defecto
-			Keys.load(o.keys);
+			if( keysLoad != null ) keysLoad(o.keys);
 		} catch( e : Dynamic ) {}
 		Lang.setCode(lang);
 	}
@@ -82,7 +86,7 @@ class Settings {
 	}
 
 	public static function save() {
-		var o = { lang : lang, mouseSens : mouseSens, fov : fov, volume : volume, fullscreen : fullscreen, invertY : invertY, turnKeys : turnKeys, wheelWrap : wheelWrap, showHelp : showHelp, placePreview : placePreview, selectBox : selectBox, waterWaves : waterWaves, targetName : targetName, vsync : vsync, maxFps : maxFps, pseudo : pseudo, keys : Keys.save() };
+		var o = { lang : lang, mouseSens : mouseSens, fov : fov, volume : volume, fullscreen : fullscreen, invertY : invertY, turnKeys : turnKeys, wheelWrap : wheelWrap, showHelp : showHelp, placePreview : placePreview, selectBox : selectBox, waterWaves : waterWaves, targetName : targetName, vsync : vsync, maxFps : maxFps, pseudo : pseudo, keys : keysSave != null ? keysSave() : null };
 		try sys.io.File.saveContent(dir() + "/settings.json", haxe.Json.stringify(o, null, "  ")) catch( e : Dynamic ) {}
 	}
 }

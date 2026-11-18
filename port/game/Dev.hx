@@ -466,7 +466,7 @@ class Dev {
 		case "close": app.closeStorage();
 		case "forget": if( info != null ) info.storage = null;
 		case "put":
-			var st = ShipStorage.ensure(info);
+			var st = StorageData.ensure(info);
 			var n = a.length > 3 ? Std.parseInt(a[3]) : 1;
 			var got = new Inventory({ maxWeight : 64, t : st.t, charges : st.charges }).addBlocks(bk(a[2]), n);
 			if( got < n ) Sys.println("storage put: solo caben " + got);
@@ -477,7 +477,7 @@ class Dev {
 				return;
 			}
 			var g = @:privateAccess app.game;
-			if( a[1] == "charge" ) setCharge(ShipStorage.ensure(info).charges, k, Std.parseInt(a[3]));
+			if( a[1] == "charge" ) setCharge(StorageData.ensure(info).charges, k, Std.parseInt(a[3]));
 			else if( g != null ) {
 				setCharge(g.inv.inv.charges, k, Std.parseInt(a[3]));
 				g.inv.display();
@@ -1815,7 +1815,7 @@ class Dev {
 			inline function items( t : Protocol.BlockInventory ) return [for( s in t ) s == null ? "-" : EditorKubes.label(Block.all[s.k]) + "x" + s.n].join(" ");
 			var c = app.chest;
 			Sys.println("cantina: " + (c == null ? "cerrada" : "abierta [" + items(c.box) + "]") + "  guardadas: " + (g.info.chests == null ? "" : [for( e in g.info.chests ) e.key + " [" + items(e.t) + "]"].join(", ")));
-		case "deathdrops": Sys.println("dejado: " + DeathDrops.devInfo(g));
+		case "deathdrops": Sys.println("dejado: " + DeathDropsPlay.devInfo(g));
 		case "shake":
 			// temblor, subida de la camara y del HUD (en pixeles de la ventana) de este fotograma, y segundos de juego
 			inline function r( v : Float ) return Math.round(v * 1000) / 1000;

@@ -12,6 +12,9 @@ import Common;
  */
 class BlockNames {
 
+	/** el bloque es un kube (de Kube o del editor: prefijo BKube de BlockKind), no un bloque de Galaxy 55 (antes KubeData.isKube) */
+	public static function isKube( k : BlockKind ) : Bool return StringTools.startsWith(Std.string(k), "BKube");
+
 	static var EN : Map<String, String> = [
 		// plantas, rocas y cristal con carga: sin nombre en ningun idioma del original
 		"BYellowPlant" => "Citronox Plant", "BBluePlant" => "Etherium Plant", "BYellowCeil" => "Citronox Stalactite",
@@ -186,7 +189,7 @@ class BlockNames {
 		for( b in Block.all ) {
 			// los kubes del editor (EditorKubes, al final de Block.all) se quedan fuera de la tabla: Block.getName da su nombre, el
 			// del editor, aunque cambie despues de hacer la tabla
-			if( b == null || EditorKubes.isEditor(b) ) continue;
+			if( b == null || (b != null && b.k == BKubeEditor) ) continue;
 			var key = Type.enumConstructor(b.k);
 			var es = NamesGen.ES[b.index] != null ? NamesGen.ES[b.index].name : null;
 			var n : String = switch( lang ) {
@@ -207,7 +210,7 @@ class BlockNames {
 		for( i in 0...out.length ) if( out[i] == null ) out[i] = { name : "-" };
 		// el original solo nombraba lo que cabe en el inventario (getDrop ya da el bloque base); aqui se apunta a todo
 		for( b in Block.all ) {
-			if( EditorKubes.isEditor(b) ) continue;
+			if( (b != null && b.k == BKubeEditor) ) continue;
 			var m = b, n = 0;
 			while( m != null && out[m.index].name == "-" && n++ < 8 ) m = base(m);
 			if( m != null && m != b ) out[b.index] = { name : out[m.index].name };

@@ -71,7 +71,7 @@ class Tutorial {
 			return;
 		}
 		if( t.spots == null && g.ship != null ) {
-			TutoSetup.seedPlanet(g);
+			TutoSeed.seedPlanet(g);
 			if( t.step == SPACE ) t.step = EXIT;
 		}
 		switch( t.step ) {
@@ -151,7 +151,7 @@ class Tutorial {
 	/** reglas del hangar durante el tutorial (GameView.hangarRule): no se rompe nada y solo se pone blindaje en los agujeros */
 	public static function hangarRule( info : SaveInfo ) : Bool -> Int -> Int -> Int -> Block -> String {
 		if( !active(info) ) return null;
-		var cells = TutoSetup.hangarCells();
+		var cells = TutoSeed.hangarCells();
 		return function( place : Bool, x : Int, y : Int, z : Int, b : Block ) : String {
 			if( !place ) return TutoText.get("nobreak");
 			for( c in cells )
@@ -188,7 +188,7 @@ class Tutorial {
 
 	// ---------------------------------------------------------------- recuentos
 
-	function filled( g : GameView ) return [for( c in TutoSetup.hangarCells() ) if( TutoTargets.isHull(g.world.block(c.x, c.y, c.z)) ) c].length;
+	function filled( g : GameView ) return [for( c in TutoSeed.hangarCells() ) if( TutoTargets.isHull(g.world.block(c.x, c.y, c.z)) ) c].length;
 
 	function holesFilled( g : GameView ) return filled(g) >= holes();
 

@@ -249,7 +249,7 @@ class Drops {
 					}
 				}
 			}
-			if( d.loot != null && !picked ) DeathDrops.follow(g, d);
+			if( d.loot != null && !picked ) DeathDropsPlay.follow(g, d);
 			if( picked || got ) Snd.play("pickupBlock", 0.3);
 			if( picked || d.time <= 0 ) {
 				if( d.obj != null ) {

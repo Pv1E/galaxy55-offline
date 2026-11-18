@@ -54,7 +54,7 @@ class Licenses {
 	public static function claim( info : SaveInfo, id : Int ) {
 		var uni = info.uni;
 		if( !has(uni, id) ) uni.licenses.push(id);
-		if( uni.main == null && !Tutorial.active(info) ) uni.main = id;
+		if( uni.main == null && info.tuto == null ) uni.main = id;
 	}
 
 	/** al acabar el tutorial: su planeta, en el que estas, pasa a ser el principal */

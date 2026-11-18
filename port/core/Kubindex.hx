@@ -1,5 +1,5 @@
 import Common;
-import Ui;
+
 import SaveData.SaveInfo;
 
 /**
@@ -30,6 +30,19 @@ typedef KubInfo = {
 	var fresh : Array<String>;
 }
 
+/** Un aviso de la Base de datos ESCorp: que ha pasado, el nombre y el kube (o el color del tipo de planeta o cometa). */
+typedef KubNews = {
+	var title : String;
+	var name : String;
+	@:optional var block : Block;
+	@:optional var state : KubState;
+	@:optional var colors : Array<Int>;
+	/** explicacion debajo, en varias lineas (el contrato especial: para que sirve el conteneur) */
+	@:optional var text : String;
+	/** segundos en pantalla (TIME si no se dice) */
+	@:optional var time : Float;
+}
+
 /** Estado de una ficha para el jugador. */
 enum abstract KubState(Int) to Int {
 	var Unknown = 0;
@@ -54,7 +67,9 @@ enum abstract KubState(Int) to Int {
 class Kubindex {
 
 	/** aviso al jugador al repertoriar algo nuevo (GalaxyApp: KubNotify, arriba a la derecha) */
-	public static var onNews : KubNotify.KubNews -> Void;
+	public static var onNews : KubNews -> Void;
+	/** color de los avisos de anomalia (Theme.ACCENT; los datos no dependen de la interfaz) */
+	static inline var ACCENT = 0xFF9A1F;
 
 	static var lastSeen : { kub : KubInfo, index : Int };
 
@@ -125,7 +140,7 @@ class Kubindex {
 		var k = ensure(info);
 		if( k.anomalies.indexOf(id) >= 0 ) return;
 		k.anomalies.push(id);
-		if( onNews != null ) onNews({ title : KubText.get("kub.newanomaly"), name : KubData.get().anomalyName(id), colors : [Theme.ACCENT] });
+		if( onNews != null ) onNews({ title : KubText.get("kub.newanomaly"), name : KubData.get().anomalyName(id), colors : [ACCENT] });
 	}
 
 	/** receta descubierta: se ha recuperado uno de sus kubes */
@@ -206,7 +221,7 @@ class Kubindex {
 	public static function shipKnown( info : SaveInfo ) {
 		if( full(info) ) return;
 		var k = ensure(info), d = KubData.get();
-		for( c in ShipData.load(Hangar.currentShip(info)).cells ) {
+		for( c in ShipData.load(ShipData.current(info)).cells ) {
 			var e = d.entryOf(Block.all[c.id]);
 			if( e == null || k.got.indexOf(key(e)) >= 0 ) continue;
 			k.seen.remove(key(e));

@@ -34,7 +34,7 @@ class KubeData {
 	static inline var KIND_PREFIX = "BKube";
 
 	/** el bloque es un kube (de Kube o del editor), no un bloque de Galaxy 55 */
-	public static function isKube( k : BlockKind ) : Bool return StringTools.startsWith(Std.string(k), KIND_PREFIX);
+	public static function isKube( k : BlockKind ) : Bool return BlockNames.isKube(k);
 
 	/** las formas del juego: las de los bloques de DataGen y los modelos de Models.hx que el original tenia sin usar */
 	public static var SHAPES : Array<KubeShape> = [

@@ -231,7 +231,7 @@ class GameView {
 			pitch = info.pitch;
 		}
 		// el equipo dejado aqui al morir o con Mayus+K, en el planeta o la cometa y en la nave
-		DeathDrops.spawnAll(this);
+		DeathDropsPlay.spawnAll(this);
 	}
 
 	/** mercado del robot comerciante (se crea al abrir la tienda por primera vez) */
@@ -696,14 +696,14 @@ class GameView {
 	    para la vuelta de emergencia de la cometa */
 	public function returnToShip( manual : Bool, lose = true ) {
 		if( fadeFX != null && fadeFX.lock ) return; // hero.lock: ya se esta volviendo
-		var left = lose ? DeathDrops.leave(this, manual) : null;
+		var left = lose ? DeathDropsPlay.leave(this, manual) : null;
 		if( left != null ) onEquipmentLeft();
 		fadeFX = { t : 0., col : manual ? 0xFFFFFF : 0xFF0000, speed : 2., alpha : null, lock : true, dz : manual ? -0.5 : 0.8, done : function() {
 			life = 100;
 			oxygen = 100;
 			gravity = 0;
 			gotoShip(true);
-			if( left != null ) DeathDrops.spawn(this, left);
+			if( left != null ) DeathDropsPlay.spawn(this, left);
 		} };
 	}
 

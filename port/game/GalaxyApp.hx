@@ -349,6 +349,10 @@ class GalaxyApp extends hxd.App {
 			else if( StringTools.startsWith(a, "--lang=") ) Lang.setCode(a.substr(7));
 		}
 		Theme.init();
+		// lo del juego que usan los datos (port/core) sin depender de la interfaz
+		Settings.keysLoad = function( o ) Keys.load(o);
+		Settings.keysSave = function() return Keys.save();
+		SaveData.diskEncode = EditorKubes.encode;
 		Settings.load();
 		// tarjeta grafica y driver (anadido del port), para los reportes de fallos de dibujo: gpu.txt junto a las partidas
 		try sys.io.File.saveContent(Settings.dir() + "/gpu.txt", engine.driver.getDriverName(true) + "\n") catch( e : Dynamic ) {}
@@ -2162,7 +2166,7 @@ class GalaxyApp extends hxd.App {
 		loadWorld = info.mothership == true
 			? new World(info.seed, "BIMoon", (Mothership.data() != null ? Mothership.sizeChunks : 1), s3d, atlas, false, null, Mothership.withShip(Hangar.currentShip(info)))
 			: info.hangar == true
-			? new World(info.seed, "BIShed", 1, s3d, atlas, false, null, TutoSetup.holed(info, Hangar.shedData(Hangar.currentShip(info))))
+			? new World(info.seed, "BIShed", 1, s3d, atlas, false, null, TutoSeed.holed(info, Hangar.shedData(Hangar.currentShip(info))))
 			: new World(info.seed, info.biome, info.sizeChunks, s3d, atlas, false, info.edits, null, null, SaveData.genVersion(info.genVersion));
 		if( info.mothership == true ) {
 			loadWorld.sky.fog.curve = 0.00001;
@@ -2540,7 +2544,7 @@ class GalaxyApp extends hxd.App {
 		// en el hangar no (su ordenador no se activa: WInShip): solo a bordo y en la nave nodriza
 		if( game == null || storage != null || game.hangar != null || Tutorial.active(game.info) ) return;
 		if( current != null ) resume();
-		storage = new ShipStorage(s2d, atlas, game.inv, ShipStorage.ensure(game.info));
+		storage = new ShipStorage(s2d, atlas, game.inv, StorageData.ensure(game.info));
 		storage.onClose = closeStorage;
 		paletteOpen = true;
 		captureMouse(false);

@@ -50,6 +50,13 @@ typedef ShipDataInfo = {
 /** Datos de una nave: bytes comprimidos con zlib = sx, sy, sz y, por cada y, x, z, el indice del bloque en 2 bytes. */
 class ShipData {
 
+	/** plano de la nave de la partida (SaveInfo.shipData, editado en el hangar) o la de siempre (antes Hangar.currentShip) */
+	public static function current( info : SaveData.SaveInfo ) : haxe.io.Bytes {
+		if( info != null && info.shipData != null )
+			try return haxe.crypto.Base64.decode(info.shipData) catch( e : Dynamic ) {}
+		return Const.DEFAULT_SHIP;
+	}
+
 	public static function load( compressed : haxe.io.Bytes ) : ShipDataInfo {
 		var raw = haxe.zip.Uncompress.run(compressed);
 		var sx = raw.get(0), sy = raw.get(1), sz = raw.get(2);

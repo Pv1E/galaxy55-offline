@@ -310,7 +310,7 @@ class Contracts {
 	}
 
 	/** aviso del conteneur cobrado: para que sirve y como se fabrica */
-	public static function specialNews() : KubNotify.KubNews {
+	public static function specialNews() : Kubindex.KubNews {
 		return { title : Lang.t("contracts.special.got"), name : specialReward().getName(), block : specialReward(), text : Lang.t("contracts.special.info"), time : 12 };
 	}
 }

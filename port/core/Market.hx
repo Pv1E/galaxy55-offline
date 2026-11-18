@@ -153,7 +153,7 @@ class Market {
 				var base : Null<Int> = PRICES.exists(key) ? PRICES.get(key) : b.basePrice;
 				if( b.index <= 0 || base == null || base <= 0 || b.type == BTInvisible ) continue;
 				// los kubes no son mercancia de la ESCorp: el robot no los vende ni los compra
-				if( KubeData.isKube(b.k) ) continue;
+				if( BlockNames.isKube(b.k) ) continue;
 				if( NOT_TRADED.indexOf(key) >= 0 ) continue;
 				// ni lo que la base de datos ESCorp tiene por especial (no sale en ningun sitio ni se fabrica: los aparatos de la
 				// nave, la nodriza), salvo SPECIAL_TRADED

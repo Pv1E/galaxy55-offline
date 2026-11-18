@@ -1,18 +1,7 @@
 import Ui;
 import Kubindex.KubState;
+import Kubindex.KubNews;
 
-/** Un aviso de la Base de datos ESCorp: que ha pasado, el nombre y el kube (o el color del tipo de planeta o cometa). */
-typedef KubNews = {
-	var title : String;
-	var name : String;
-	@:optional var block : Block;
-	@:optional var state : KubState;
-	@:optional var colors : Array<Int>;
-	/** explicacion debajo, en varias lineas (el contrato especial: para que sirve el conteneur) */
-	@:optional var text : String;
-	/** segundos en pantalla (TIME si no se dice) */
-	@:optional var time : Float;
-}
 
 /**
  * Avisos ligeros de la Base de datos ESCorp, arriba a la derecha de la ventana (anadido del port): un kube localizado o

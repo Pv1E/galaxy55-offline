@@ -192,7 +192,7 @@ class KubData {
 	}
 
 	function entryKey( e : Block, byRecipe : Bool ) : Float {
-		if( KubeData.isKube(e.k) ) return 5 * GROUP + e.index;
+		if( BlockNames.isKube(e.k) ) return 5 * GROUP + e.index;
 		if( special.exists(e.index) ) return 4 * GROUP + e.index;
 		var made = recipesMaking(e);
 		if( byRecipe && made.length > 0 ) return 3 * GROUP + firstRecipeKey(made);

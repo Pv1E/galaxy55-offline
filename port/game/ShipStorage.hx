@@ -1,12 +1,8 @@
 import Common;
 import Ui;
 import SlotGrid;
+import StorageData.StorageInfo;
 
-/** Contenido del stockage de la nave (SaveInfo.storage): bloques en casillas y cargas en contadores, sin casillas. */
-typedef StorageInfo = {
-	var t : Protocol.BlockInventory;
-	var charges : Protocol.UserCharges;
-}
 
 /**
  * Stockage de la nave (anadido del port). En el original lo llevaba el servidor y se ha perdido: el cliente solo tiene
@@ -73,7 +69,7 @@ class ShipStorage extends h2d.Object {
 		addChild(hint);
 		// las casillas al final: la pila del cursor se dibuja encima de todo
 		grid = new SlotGrid(this, atlas);
-		var smax = chargeMax(), imax = SlotZone.invChargeMax();
+		var smax = StorageData.chargeMax(), imax = SlotZone.invChargeMax();
 		inline function below( max : Array<Int> ) return function(i : Int) return max[i] < 0 ? Lang.t("storage.nolimit") : "max " + max[i];
 		grid.addZone(SlotZone.ofBlocks(store.t, maxWeight, px + 24, py + 96));
 		var z = SlotZone.ofCharges(store.charges, smax, cx, py + 96);
@@ -93,53 +89,6 @@ class ShipStorage extends h2d.Object {
 	}
 
 	// ---------------------------------------------------------------- datos
-
-	/** casillas de bloques: las de un Conteneur ESCorp (BFContainer de BChest) */
-	public static function blockSlots() : Int {
-		for( f in Block.get(BChest).flags ) switch( f ) { case BFContainer(s): return s; default: }
-		return 4;
-	}
-
-	/** cuantas cargas de cada tipo caben: la cuarta parte del maximo del inventario (24, 12 y 5), las de bonus sin limite (-1) */
-	public static function chargeMax() : Array<Int> {
-		var inv = SlotZone.invChargeMax();
-		return [for( k in 0...SlotZone.CHARGE_KINDS ) Type.createEnumIndex(ChargeKind, k) == CBonus ? -1 : Std.int(inv[k] / 4)];
-	}
-
-	public static function empty() : StorageInfo {
-		return { t : [for( i in 0...blockSlots() ) null], charges : [] };
-	}
-
-	/** el stockage de la partida; se crea vacio la primera vez (las partidas de antes no lo tienen) */
-	public static function ensure( info : SaveData.SaveInfo ) : StorageInfo {
-		if( info.storage == null ) info.storage = empty();
-		// si un dia cambia el numero de casillas, las que falten se anaden vacias
-		while( info.storage.t.length < blockSlots() ) info.storage.t.push(null);
-		return info.storage;
-	}
-
-	/** stockage guardado; null si no hay o esta mal formado (lo que no se entiende se salta) */
-	public static function read( o : Dynamic ) : StorageInfo {
-		try {
-			if( o == null ) return null;
-			var s = empty();
-			if( o.t != null ) {
-				var a : Array<Dynamic> = o.t;
-				for( i in 0...a.length ) {
-					var v = a[i];
-					if( v == null || v.k == null || v.n == null || Std.int(v.n) <= 0 ) continue;
-					if( i < s.t.length ) s.t[i] = { k : Std.int(v.k), n : Std.int(v.n) } else s.t.push({ k : Std.int(v.k), n : Std.int(v.n) });
-				}
-			}
-			if( o.charges != null )
-				for( c in (o.charges : Array<Dynamic>) )
-					if( c != null && c.c != null && c.n != null && Std.int(c.c) >= 0 && Std.int(c.c) < SlotZone.CHARGE_KINDS && Std.int(c.n) > 0 )
-						s.charges.push({ c : Std.int(c.c), n : Std.int(c.n) });
-			return s;
-		} catch( e : Dynamic ) {
-			return null;
-		}
-	}
 
 	/** banco de pruebas (print storage): bloques y cargas guardados */
 	public static function devInfo( s : StorageInfo ) : String {

@@ -10,7 +10,7 @@ class TutoTargets {
 		var s = g.info.tuto.step;
 		if( g.hangar != null ) {
 			if( s == Tutorial.LEAVE ) return g.hangar.spawnCell == null ? [] : [g.hangar.spawnCell];
-			return [for( c in TutoSetup.hangarCells() ) if( !isHull(g.world.block(c.x, c.y, c.z)) ) c];
+			return [for( c in TutoSeed.hangarCells() ) if( !isHull(g.world.block(c.x, c.y, c.z)) ) c];
 		}
 		var ship = g.ship;
 		var inShip = g.pz >= World.SHIP_Z;

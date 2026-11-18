@@ -72,7 +72,7 @@ typedef SaveInfo = {
 	var sizeChunks : Int;
 	var created : Float;
 	var saved : Float;
-	/** version del juego que creo la partida (GalaxyApp.VERSION, anadido del port); null en las partidas de antes */
+	/** version del juego que creo la partida (GameVersion.VERSION, anadido del port); null en las partidas de antes */
 	@:optional var createdWith : String;
 	/** version del juego que la guardo por ultima vez (va con saved); null si no se ha guardado desde entonces */
 	@:optional var savedWith : String;
@@ -144,13 +144,16 @@ typedef SaveInfo = {
 	 * kubes del editor de kubes puestos en la partida (EditorKubes, anadido del port), aparte de los campos de siempre. Solo en
 	 * disco: al empezar a jugar pasan a esos campos (EditorKubes.attach) y SaveData.write los vuelve a sacar (EditorKubes.encode)
 	 */
-	@:optional var editorKubes : EditorKubes.EditorKubesSave;
+	@:optional var editorKubes : KubeSaveData.EditorKubesSave;
 	/** stockage de la nave (ShipStorage, anadido del port): bloques y cargas guardados; null = aun vacio (y en las partidas de antes) */
-	@:optional var storage : ShipStorage.StorageInfo;
+	@:optional var storage : StorageData.StorageInfo;
 }
 
 /** Guardado en disco: %APPDATA%\Galaxy55\saves\<id>.json (+ <id>.png con la miniatura). */
 class SaveData {
+
+	/** lo que se escribe en disco a partir de la partida en juego: el juego pone EditorKubes.encode (los kubes del editor van aparte) */
+	public static var diskEncode : SaveInfo -> SaveInfo = function( i ) return i;
 
 	public static inline var VERSION = 1;
 
@@ -171,7 +174,7 @@ class SaveData {
 		var now = Date.now().getTime();
 		return {
 			version : VERSION, id : newId(), name : name, seed : seed, biome : biome, sizeChunks : sizeChunks,
-			created : now, saved : now, createdWith : GalaxyApp.VERSION, savedWith : GalaxyApp.VERSION, playSeconds : 0, px : -1, py : -1, pz : -1, yaw : 0, pitch : 0, fly : false, inv : creative ? Inv.defaults() : Inv.empty(), edits : [], shipEdits : [], creative : creative, credits : Market.START_CREDITS,
+			created : now, saved : now, createdWith : GameVersion.VERSION, savedWith : GameVersion.VERSION, playSeconds : 0, px : -1, py : -1, pz : -1, yaw : 0, pitch : 0, fly : false, inv : creative ? Inv.defaults() : Inv.empty(), edits : [], shipEdits : [], creative : creative, credits : Market.START_CREDITS,
 			genVersion : gen.Generator.VERSION,
 		};
 	}
@@ -377,8 +380,8 @@ class SaveData {
 					deathDrops : DeathDrops.read(o.deathDrops), dropOnDeath : o.dropOnDeath != false,
 					survival : o.creative == true && o.survival == true ? true : null,
 					tuto : readTuto(o.tuto), shipAt : readSpot(o.shipAt), comet : readComet(o.comet), kub : readKub(o.kub),
-					inMother : readMotherPos(o.inMother), editorKubes : EditorKubes.readSave(o.editorKubes),
-					storage : ShipStorage.read(o.storage),
+					inMother : readMotherPos(o.inMother), editorKubes : KubeSaveData.read(o.editorKubes),
+					storage : StorageData.read(o.storage),
 			};
 		} catch( e : Dynamic ) {
 			return null;
@@ -391,11 +394,11 @@ class SaveData {
 		try {
 			if( touch ) {
 				info.saved = Date.now().getTime();
-				info.savedWith = GalaxyApp.VERSION;
+				info.savedWith = GameVersion.VERSION;
 			}
 			var path = jsonPath(info.id);
 			// los kubes del editor van aparte (EditorKubes.encode: una copia; la partida en juego no cambia)
-			sys.io.File.saveContent(path + ".tmp", haxe.Json.stringify(EditorKubes.encode(info), null, "  "));
+			sys.io.File.saveContent(path + ".tmp", haxe.Json.stringify(diskEncode(info), null, "  "));
 			if( sys.FileSystem.exists(path) ) sys.FileSystem.deleteFile(path);
 			sys.FileSystem.rename(path + ".tmp", path);
 			if( thumbPng != null ) sys.io.File.saveBytes(thumbPath(info.id), thumbPng);

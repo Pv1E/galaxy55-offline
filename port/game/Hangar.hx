@@ -16,11 +16,7 @@ class Hangar {
 	static inline var OX = 4;
 
 	/** nave actual de la partida (comprimida); la de serie si no se ha editado */
-	public static function currentShip( info : SaveData.SaveInfo ) : haxe.io.Bytes {
-		if( info != null && info.shipData != null )
-			try return haxe.crypto.Base64.decode(info.shipData) catch( e : Dynamic ) {}
-		return Const.DEFAULT_SHIP;
-	}
+	public static function currentShip( info : SaveData.SaveInfo ) : haxe.io.Bytes return ShipData.current(info);
 
 	/** posicion de aparicion (EditShip.getPosition: x = -0.5, sobre las casillas de salida) */
 	public static function spawn() return { x : OX - 0.5, y : SY * 0.5 + 2.5, z : 1. };
