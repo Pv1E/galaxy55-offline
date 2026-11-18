@@ -24,6 +24,8 @@ class MultiSession {
 	public var endReason(default, null) : Null<RefuseReason>;
 	/** avisos para la pantalla (claves de Lang y sus valores) */
 	public var notices = new Array<{ key : String, args : Array<String> }>();
+	/** opciones del servidor (solo a los gestionnaires, SServerInfo) */
+	public var serverInfo : { name : String, lan : Bool, deathDrop : Bool, password : Bool };
 	public var onMessage : ServerMsg -> Void;
 	/** jugador nuevo en el servidor: empezar sin preguntar (false = sin tutorial; pruebas). null = la interfaz pregunta */
 	public var autoNewGame : Null<Bool>;
@@ -118,6 +120,8 @@ class MultiSession {
 				foreign = l;
 			case SMode(c):
 				creative = c;
+			case SServerInfo(name, lan, dd, pw):
+				serverInfo = { name : name, lan : lan, deathDrop : dd, password : pw };
 			default:
 			}
 			if( onMessage != null ) onMessage(m);

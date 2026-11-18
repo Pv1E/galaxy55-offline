@@ -551,6 +551,7 @@ class GalaxyApp extends hxd.App {
 				case "upgrades": buildUpgrades();
 				case "kubes": buildKubes();
 				case "multi": buildMulti();
+				case "mpoptions": buildMpOptions();
 				default: null;
 			}
 			screens.set(name, s);
@@ -927,6 +928,89 @@ class GalaxyApp extends hxd.App {
 		}
 		playerList.visible = show;
 		if( show ) s2d.addChild(playerList);
+	}
+
+	/**
+	 * Pausa > Opciones multijugador (anadido del port): los jugadores conectados (papel y sitio) para todos; para los
+	 * gestionnaires, en cada uno nombrar o destituir, expulsar y prohibir (nunca al propietario), bascular su propio modo, y las
+	 * opciones del servidor (nombre, contrasena, red local, equipo al suelo). Todo pasa por el servidor (CAdmin, CSetMode).
+	 */
+	function buildMpOptions() : Screen {
+		var s = new ServerListScreen(ui);
+		s.listY = 110;
+		s.VISIBLE = 3;
+		var bg = new h2d.Graphics(s);
+		Theme.fullRect(bg, 0x000000, 0.4);
+		Theme.rect(bg, 110, 30, 1060, 660, Theme.PANEL, 0.96);
+		Theme.rect(bg, 110, 30, 1060, 4, Theme.ACCENT);
+		var t = Theme.text(s, Lang.t("mp.options"), 3.0, Theme.TEXT, 0, 44);
+		t.x = (W - t.textWidth * t.scaleX) * 0.5;
+		if( mp == null || !mp.isPlaying() ) return s;
+		var manager = mp.isManager();
+		var l = [for( p in mp.players ) p];
+		l.sort(function(a, b) return a.role != b.role ? b.role - a.role : Reflect.compare(a.name.toLowerCase(), b.name.toLowerCase()));
+		for( p in l ) {
+			var me = p.id == mp.myId;
+			var acts = !manager || me || p.role == (Owner : Int) ? [] : [p.role == (Manager : Int) ? "demote" : "promote", "kick", "ban"];
+			var role = p.role == (Owner : Int) ? Lang.t("mp.role.owner") : p.role == (Manager : Int) ? Lang.t("mp.role.manager") : Lang.t("mp.role.player");
+			var row = new ServerRow(s, p.name + (me ? "  " + Lang.t("mp.you") : ""), role, acts, false);
+			row.setInfo(PlayerList.placeName(p.place), Theme.DIM);
+			s.rows.push(row);
+			s.add(row, s.listX, s.listY);
+			var id = p.id, name = p.name;
+			row.onAction = function( a ) {
+				if( mp == null || !mp.isPlaying() ) return;
+				switch( a ) {
+				case "promote", "demote":
+					mp.client.send(CAdmin(a == "promote" ? APromote : ADemote, id, ""));
+					haxe.Timer.delay(reopenMpOptions, 400);
+				case "kick", "ban":
+					askConfirm(s, Lang.t("mp.admin." + a + ".ask").split("%n%").join(name), "", Theme.DANGER, function() {
+						if( mp != null ) mp.client.send(CAdmin(a == "kick" ? AKick : ABan, id, ""));
+						haxe.Timer.delay(reopenMpOptions, 400);
+					});
+				default:
+				}
+			};
+		}
+		s.layout();
+		var y = 430.;
+		if( manager ) {
+			var info = mp.serverInfo;
+			var mode = new Button(s, Lang.t(game != null && game.creative ? "mp.mode.tosurvival" : "mp.mode.tocreative"), 340, 48);
+			s.add(mode, 130, y);
+			mode.onActivate = function() {
+				switchMode();
+				haxe.Timer.delay(reopenMpOptions, 400);
+			};
+			var name = new TextField(s, Lang.t("mp.create.name"), info != null ? info.name : mp.serverName, 680, 48, 320);
+			name.maxLen = Msg.SERVER_NAME_MAX;
+			s.add(name, 490, y);
+			name.onEnter = function() if( mp != null ) mp.client.send(CAdmin(AServerName, 0, StringTools.trim(name.text)));
+			var pw = new TextField(s, Lang.t(info != null && info.password ? "mp.password.change" : "mp.password.set"), "", 1040, 48, 300);
+			pw.maxLen = 64;
+			s.add(pw, 130, y + 56);
+			pw.onEnter = function() if( mp != null ) mp.client.send(CAdmin(APassword, 0, pw.text));
+			var lan = new CheckBox(s, Lang.t("mp.create.lan"), info == null || info.lan, 510, 48);
+			s.add(lan, 130, y + 112);
+			lan.onChange = function( v ) if( mp != null ) mp.client.send(CAdmin(ALanVisible, 0, v ? "1" : "0"));
+			var drop = new CheckBox(s, Lang.t("deathdrop.option"), info == null || info.deathDrop, 510, 48);
+			s.add(drop, 660, y + 112);
+			drop.onChange = function( v ) if( mp != null ) mp.client.send(CAdmin(ADeathDrop, 0, v ? "1" : "0"));
+		}
+		var back = new Button(s, Lang.t("back"), 300, 48);
+		s.add(back, (W - 300) * 0.5, 622);
+		back.onActivate = function() show("pause");
+		s.onBack = function() show("pause");
+		return s;
+	}
+
+	function reopenMpOptions() {
+		if( currentName != "mpoptions" ) return;
+		var old = screens.get("mpoptions");
+		screens.remove("mpoptions");
+		if( old != null ) old.remove();
+		show("mpoptions");
 	}
 	/** la conexion se ha acabado (cerrada, rechazada, expulsado): al menu Multijugador con el motivo; con contrasena se pide */
 	function endMulti() {
@@ -2596,7 +2680,7 @@ class GalaxyApp extends hxd.App {
 	}
 
 	function buildPause() : Screen {
-		var s = panelFor(560, 520, Lang.t("pause.title"));
+		var s = panelFor(560, mp != null && mp.isPlaying() ? 600 : 520, Lang.t("pause.title"));
 		var x = (W - 460) * 0.5;
 		var y = 215.;
 		var res = new Button(s, Lang.t("resume"));
@@ -2614,6 +2698,17 @@ class GalaxyApp extends hxd.App {
 			var skip = new Button(s, TutoText.get("skip"));
 			s.add(skip, x, y + 310);
 			skip.onActivate = function() askSkip(s);
+		}
+		// multijugador: sus opciones (jugadores; para los gestionnaires, la administracion), debajo de lo demas
+		if( mp != null && mp.isPlaying() ) {
+			var mo = new Button(s, Lang.t("mp.options"));
+			s.add(mo, x, y + (game != null && game.hangar == null && game.info.mothership != true && Tutorial.active(game.info) ? 372 : 310));
+			mo.onActivate = function() {
+				var old = screens.get("mpoptions");
+				screens.remove("mpoptions");
+				if( old != null ) old.remove();
+				show("mpoptions");
+			};
 		}
 		res.onActivate = function() resume();
 		sv.onActivate = function() saveGame(true);

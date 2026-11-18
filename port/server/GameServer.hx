@@ -294,6 +294,7 @@ class GameServer {
 		files.log("entra " + s.display + " (" + uid + ", conexion " + s.id + ", " + s.channel.transport.peerName() + ")" + (first ? " por primera vez" : ""));
 		files.chat("--- entra " + s.display + " (" + uid + ")");
 		if( !needGame ) worlds.onLogin(s);
+		if( s.isManager() ) s.send(serverInfo());
 	}
 
 	function netPlayer( p : Session, viewer : Session ) : NetPlayer {
@@ -389,6 +390,12 @@ class GameServer {
 		}
 	}
 
+	/** SServerInfo: lo que ven los gestionnaires de las opciones del servidor */
+	public function serverInfo() : ServerMsg {
+		var o = files.options;
+		return SServerInfo(o.name, o.lanVisible, o.deathDrop, files.hasPassword());
+	}
+
 	function byId( id : Int ) : Session {
 		for( o in sessions ) if( o.id == id && o.state == SPlay ) return o;
 		return null;
@@ -438,6 +445,8 @@ class GameServer {
 			files.options.deathDrop = arg == "1";
 			files.saveOptions();
 		}
+		// los gestionnaires ven las opciones como quedan (y el nombrado, que ahora lo es)
+		for( o in sessions ) if( o.state == SPlay && o.isManager() ) o.send(serverInfo());
 		s.send(SNotice("mp.admin.done", []));
 	}
 

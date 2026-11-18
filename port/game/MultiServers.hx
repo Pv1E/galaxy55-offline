@@ -195,13 +195,19 @@ class ServerRow extends Widget {
 		acts.visible = false;
 		onLeft = function() if( action > 0 ) action--;
 		onRight = function() if( action < actions.length - 1 ) action++;
-		onActivate = function() if( onAction != null ) onAction(actions[action]);
+		onActivate = function() if( onAction != null && actions.length > 0 ) onAction(actions[action]);
 		inter.onClick = function(_) if( enabled ) {
 			if( onPress != null ) onPress(this);
 			action = 0;
 			activate();
 		};
 		drawActions();
+	}
+
+	/** la linea de abajo con otro texto (Opciones multijugador: donde esta el jugador) */
+	public function setInfo( text : String, col : Int ) {
+		status.text = text;
+		status.textColor = col;
 	}
 
 	/** la linea de estado: lo que contesto el servidor (o que no contesta) */
@@ -250,7 +256,8 @@ class ServerRow extends Widget {
 class ServerListScreen extends Screen {
 	public var rows = new Array<ServerRow>();
 	public var top = 0;
-	public static inline var VISIBLE = 4;
+	/** filas a la vista */
+	public var VISIBLE = 4;
 	static inline var STEP = 100;
 	public var listX = 130.;
 	public var listY = 130.;
