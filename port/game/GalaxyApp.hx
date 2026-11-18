@@ -226,6 +226,8 @@ class GalaxyApp extends hxd.App {
 	var loadWorld : World;
 	var loadInfo : SaveInfo;
 	var game : GameView;
+	/** partida multijugador en curso (anadido del port): su servidor si hospeda y su cliente; null en solo */
+	public var mp : MultiSession;
 	var pad : hxd.Pad;
 
 	var ui : h2d.Object;
@@ -2992,6 +2994,8 @@ class GalaxyApp extends hxd.App {
 			lastStamp = now;
 		}
 		if( dt > 0.1 ) dt = 0.1;
+		// multijugador: el servidor del anfitrion y el cliente no se paran nunca (menus, carga, pausa)
+		if( mp != null ) mp.pump(dt);
 		// iconos grandes de la Base de datos ESCorp y de la paleta: unos pocos por fotograma (mas con una de ellas abierta); los de
 		// reserva, solo en la pantalla de carga del planeta, mas deprisa con el mundo ya hecho. Antes seguian jugando, pasados 2 s
 		// de la llegada, dibujando fuera de pantalla en cada imagen: sospechosos del parpadeo que se ve con algunas tarjetas en

@@ -1,0 +1,14 @@
+# multijugador (anadido del port), con port/dev/mp_guest.txt en port/dev/multirun.ps1: este juego hospeda en 127.0.0.1:55190,
+# espera al invitado, se saludan por el chat, el invitado (gestionnaire) no puede echar al propietario y el anfitrion cierra
+waitfor planet
+mp host 55190
+waitfor mp 600
+print mp
+waitfor mpplayers2 6000
+mp say bonjour de l'hote
+waitfor mpchat3 3000
+print mp
+wait 200
+mp leave
+waitfor mpend 600
+print mp

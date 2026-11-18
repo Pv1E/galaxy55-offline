@@ -27,6 +27,8 @@ class Settings {
 	/** limite de fotogramas por segundo (0 = sin limite) */
 	public static var maxFps = 0;
 	public static var FPS_STEPS = [0, 30, 60, 120, 144, 240];
+	/** pseudo del multijugador (anadido del port): por defecto "User" y 6 cifras al azar, se cambia en Multijugador > Opciones */
+	public static var pseudo : String = null;
 	/** primera vez que se abre el juego (no habia settings.json): se pregunta el idioma */
 	public static var firstRun = false;
 
@@ -63,14 +65,24 @@ class Settings {
 			if( o.targetName != null ) targetName = o.targetName;
 			if( o.vsync != null ) vsync = o.vsync;
 			if( o.maxFps != null ) maxFps = Std.int(o.maxFps);
+			if( Std.isOfType(o.pseudo, String) && o.pseudo != "" ) pseudo = o.pseudo;
 			// teclas cambiadas en Opciones > Controles (Keys): solo las que no son las de por defecto
 			Keys.load(o.keys);
 		} catch( e : Dynamic ) {}
 		Lang.setCode(lang);
 	}
 
+	/** el pseudo del multijugador; la primera vez se elige "User" y 6 cifras al azar y se guarda */
+	public static function myPseudo() : String {
+		if( pseudo == null || pseudo == "" ) {
+			pseudo = "User" + StringTools.lpad(Std.string(Std.random(1000000)), "0", 6);
+			save();
+		}
+		return pseudo;
+	}
+
 	public static function save() {
-		var o = { lang : lang, mouseSens : mouseSens, fov : fov, volume : volume, fullscreen : fullscreen, invertY : invertY, turnKeys : turnKeys, wheelWrap : wheelWrap, showHelp : showHelp, placePreview : placePreview, selectBox : selectBox, waterWaves : waterWaves, targetName : targetName, vsync : vsync, maxFps : maxFps, keys : Keys.save() };
+		var o = { lang : lang, mouseSens : mouseSens, fov : fov, volume : volume, fullscreen : fullscreen, invertY : invertY, turnKeys : turnKeys, wheelWrap : wheelWrap, showHelp : showHelp, placePreview : placePreview, selectBox : selectBox, waterWaves : waterWaves, targetName : targetName, vsync : vsync, maxFps : maxFps, pseudo : pseudo, keys : Keys.save() };
 		try sys.io.File.saveContent(dir() + "/settings.json", haxe.Json.stringify(o, null, "  ")) catch( e : Dynamic ) {}
 	}
 }

@@ -1,4 +1,5 @@
 import Common;
+import Msg;
 
 /**
  * Banco de pruebas (solo para desarrollo): ejecuta un guion de ordenes sobre una partida nueva, sin ventana a la vista ni teclado.
@@ -597,6 +598,11 @@ class Dev {
 			case "ready": playing || (g == null && app.explorer != null);
 			case "ground": g != null && g.onGround();
 			case "menu": Type.enumConstructor(@:privateAccess app.state) == "Menu" && @:privateAccess app.bgWorlds.length > 0;
+			// multijugador (anadido del port): dentro de la partida, el fin de la conexion, y N jugadores conectados (mpplayers3)
+			case "mp": app.mp != null && app.mp.isPlaying();
+			case "mpend": app.mp != null && app.mp.ended != null;
+			case w if( StringTools.startsWith(w, "mpplayers") ): app.mp != null && Lambda.count(app.mp.players) >= Std.parseInt(w.substr(9));
+			case w if( StringTools.startsWith(w, "mpchat") ): app.mp != null && app.mp.chat.length >= Std.parseInt(w.substr(6));
 			default: true;
 		}
 	}
@@ -654,6 +660,8 @@ class Dev {
 				case "waitfor":
 					waitCond = a[1];
 					waitMax = a.length > 2 ? Std.parseInt(a[2]) : 2000;
+				case "mp":
+					mpCommand(a, app);
 				case "until":
 					untilWhat = a[1];
 					untilValue = f(a[2]);
@@ -1469,7 +1477,37 @@ class Dev {
 		Sys.println("fadelog: destellos a los " + [for( t in L.rises ) r3(t - L.t0)].join(" ") + " s");
 	}
 
+	/**
+	 * Multijugador (anadido del port): mp host PUERTO (hospeda en 127.0.0.1 con sus archivos en la carpeta de datos, mp_serveur),
+	 * mp join PUERTO [contrasena], mp say TEXTO, mp pm ID TEXTO, mp admin OP ID [ARG], mp mode 0|1, mp leave
+	 */
+	function mpCommand( a : Array<String>, app : GalaxyApp ) {
+		var rest = a.slice(2).join(" ");
+		switch( a[1] ) {
+		case "host":
+			app.mp = MultiSession.host(Settings.dir() + "/mp_serveur", Std.parseInt(a[2]), "127.0.0.1");
+		case "join":
+			app.mp = MultiSession.join("127.0.0.1", Std.parseInt(a[2]), a.length > 3 ? a[3] : "", null, 0);
+		case "say":
+			app.mp.say(rest);
+		case "pm":
+			app.mp.say(a.slice(3).join(" "), CPrivate, Std.parseInt(a[2]));
+		case "admin":
+			app.mp.client.send(CAdmin(Std.parseInt(a[2]), Std.parseInt(a[3]), a.length > 4 ? a[4] : ""));
+		case "mode":
+			app.mp.client.send(CSetMode(a[2] == "1"));
+		case "leave":
+			app.mp.close();
+		default:
+			Sys.println("mp desconocido: " + a[1]);
+		}
+	}
+
 	function print( a : Array<String>, g : GameView, app : GalaxyApp ) {
+		if( a[1] == "mp" ) {
+			Sys.println(app.mp == null ? "mp ninguno" : app.mp.devInfo());
+			return;
+		}
 		if( a[1] == "cellhash" && g != null ) {
 			// multijugador: la misma suma que da el servidor (server.hl --gen SEMILLA BIOMA TAMANO) para el terreno generado
 			Sys.println("cellhash " + g.world.seed + " " + g.world.biomeName + " " + (g.world.size >> 7) + ": " + g.world.cellHash());

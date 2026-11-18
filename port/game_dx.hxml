@@ -1,6 +1,8 @@
 --macro allowPackage('flash')
 -cp port/game
 -cp port/core
+-cp port/net
+-cp port/server
 -cp port/explore
 -cp libs/libs-haxe3
 -cp libs/libs-haxe2

@@ -59,8 +59,8 @@ class Channel {
 
 	/** el siguiente mensaje completo llegado (null si no hay); cierra la conexion si algo no cuadra */
 	public function receive() : Null<Bytes> {
-		if( transport.closed ) return null;
-		var b = transport.read();
+		// cerrada, se siguen dando las tramas ya llegadas (el aviso de cierre del servidor llega justo antes del cierre)
+		var b = transport.closed ? null : transport.read();
 		if( b != null ) {
 			bytesIn += b.length;
 			if( inLen + b.length > inBuf.length ) {
@@ -80,12 +80,14 @@ class Channel {
 			if( c & 0x80 == 0 ) break;
 			shift += 7;
 			if( shift > 28 ) {
+				inLen = 0;
 				transport.close("longitud de trama invalida");
 				return null;
 			}
 		}
 		var limit = MAX_FRAME + (recvKey != null ? Nacl.TAG : 0);
 		if( n > limit || n < 0 ) {
+			inLen = 0;
 			transport.close("trama demasiado grande (" + n + ")");
 			return null;
 		}
@@ -96,6 +98,7 @@ class Channel {
 		if( recvKey == null ) return payload;
 		var msg = Nacl.secretboxOpen(payload, nonce(recvCtr++), recvKey);
 		if( msg == null ) {
+			inLen = 0;
 			transport.close("trama alterada o fuera de orden");
 			return null;
 		}
