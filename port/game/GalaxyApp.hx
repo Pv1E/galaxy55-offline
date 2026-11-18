@@ -3039,6 +3039,7 @@ class GalaxyApp extends hxd.App {
 			var net = game.net = new NetGame(mp, game, s3d, s2d);
 			game.netSwitch = mp.isManager();
 			game.netSetMode(mp.creative);
+			game.netOwner = mpRights & (ROwner : Int) != 0;
 			net.onToast = function(s) showToast(s);
 			net.onCloseChest = closeChest;
 			net.onOpenChest = function( box ) {
@@ -3597,6 +3598,7 @@ class GalaxyApp extends hxd.App {
 			}
 		case SRights(r):
 			mpRights = r;
+			if( game != null && game.net != null ) game.netOwner = r & (ROwner : Int) != 0;
 		case SAccess(pid, open, allV, serverV, vr, guests):
 			accessState = { pid : pid, open : open, allVisitors : allV, serverVisit : serverV, vr : vr, guests : guests };
 			reopenAccess();

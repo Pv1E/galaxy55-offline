@@ -1179,7 +1179,7 @@ class GameView {
 	/** solo en los planetas jugables: no en la nave nodriza, el hangar ni el tutorial, y no durante un fundido */
 	public function canPilot() : Bool {
 		return ship != null && hangar == null && info.mothership != true && !Tutorial.active(info) && (fadeFX == null || !fadeFX.lock)
-			&& life > 0 && pz >= World.SHIP_Z;
+			&& life > 0 && pz >= World.SHIP_Z && (net == null || netOwner);
 	}
 
 	/** licencias (Licenses, anadido del port): en aventura solo se pilota sobre el planeta principal; en creativo, sobre todos
@@ -1225,6 +1225,24 @@ class GameView {
 		// de pie sobre el teletransportador: como al aparecer en la nave (gotoShip), no transporta hasta que te apartas y vuelves
 		enteringShip = -1;
 		releaseAction();
+		// multijugador: el punto de aterrizaje del planeta (los invitados llevan alli su nave)
+		if( net != null ) net.sentShipMove(ship.x, ship.y);
+	}
+
+	/** multijugador: solo el propietario del planeta pilota (mueve el punto de aterrizaje de todos) */
+	public var netOwner = true;
+
+	/** multijugador: el propietario ha llevado su nave a (x, y) (SShipMove): la nuestra va alli, y con ella quien vaya dentro */
+	public function netShipMoved( x : Int, y : Int ) {
+		if( ship == null || piloting ) return;
+		var s = world.size;
+		inline function wrapD( v : Int ) { v = ((v % s) + s) % s; return v > s >> 1 ? v - s : v; }
+		var dx = wrapD(x - ship.x), dy = wrapD(y - ship.y);
+		if( dx == 0 && dy == 0 ) return;
+		var aboard = pz >= World.SHIP_Z;
+		ship.slide(dx, dy);
+		var d = ship.land();
+		if( aboard ) moveRiders(dx + d.dx, dy + d.dy);
 	}
 
 	/** lo que va dentro de la nave se mueve con ella: el jugador y los bloques sueltos (las vistas previas de los sintetizadores) */

@@ -95,6 +95,9 @@ class NetGame {
 	}
 
 	/** el ordenador del sintetizador: fabrica el servidor */
+	/** el propietario ha aterrizado su nave: el nuevo punto de aterrizaje del planeta */
+	public function sentShipMove( x : Int, y : Int ) mp.client.send(CShipMove(x, y));
+
 	public function sentShipCraft( x : Int, y : Int, z : Int ) {
 		var c = shipCoords(x, y, z);
 		mp.client.send(CShipCraft(c.x, c.y, c.z));
@@ -284,6 +287,8 @@ class NetGame {
 				chest = { x : x, y : y, z : z, ver : ver, box : box };
 				if( onOpenChest != null ) onOpenChest(box);
 			}
+		case SShipMove(x, y):
+			g.netShipMoved(x, y);
 		case SHit(dmg):
 			g.netHit(dmg);
 		case SBomb(x, y, z):

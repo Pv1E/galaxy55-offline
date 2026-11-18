@@ -742,6 +742,16 @@ class ServerWorlds {
 			if( s.record != null ) clientRecord(s, data);
 		case CEcon(seq, op, a, n):
 			if( s.record != null ) econ.handle(s, seq, op, a, n);
+		case CShipMove(x, y):
+			// el punto de aterrizaje del planeta lo mueve solo su propietario (pilotando); los demas llevan alli su nave
+			var inst = s.instance;
+			if( inst == null || s.rights & ROwner == 0 || isComet(inst) ) return true;
+			var size = inst.world.size;
+			inst.row.shipAt = haxe.Json.stringify({ x : x % size, y : y % size });
+			db.begin();
+			db.putPlanet(inst.row);
+			db.commit();
+			for( p in inst.players ) if( p != s ) p.send(SShipMove(x % size, y % size));
 		default:
 			return items.handle(s, m);
 		}

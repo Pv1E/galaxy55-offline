@@ -201,6 +201,8 @@ enum ClientMsg {
 	CStorage( seq : Int, store : NetInv, inv : NetInv );
 	/** al salir del hangar con una nave valida: la nave (comprimida, como Hangar.shipBytes) y el inventario tal como quedan */
 	CSaveShip( seq : Int, ship : haxe.io.Bytes, inv : NetInv );
+	/** el propietario ha aterrizado su nave en (x, y) de su planeta: el punto de aterrizaje de todos */
+	CShipMove( x : Int, y : Int );
 }
 
 enum ServerMsg {
@@ -258,6 +260,8 @@ enum ServerMsg {
 	SShipCells( list : Array<NetChange> );
 	/** a los gestionnaires: las opciones del servidor (para Pausa > Opciones multijugador) */
 	SServerInfo( name : String, lan : Bool, deathDrop : Bool, password : Bool );
+	/** el propietario ha llevado su nave a (x, y): cada uno lleva alli la suya */
+	SShipMove( x : Int, y : Int );
 }
 
 /**
@@ -267,7 +271,7 @@ enum ServerMsg {
  */
 class Msg {
 
-	public static inline var PROTOCOL = 6;
+	public static inline var PROTOCOL = 7;
 	/** cambios de celdas en un mensaje, y bytes de un terreno descomprimido */
 	public static inline var CHANGES_MAX = 1 << 16;
 	public static inline var EDITS_MAX = 64 << 20;
@@ -430,6 +434,8 @@ class Msg {
 			w.uint(seq); writeInv(w, store); writeInv(w, inv);
 		case CSaveShip(seq, ship, inv):
 			w.uint(seq); w.bytes(ship); writeInv(w, inv);
+		case CShipMove(x, y):
+			w.uint(x); w.uint(y);
 		}
 		return w.getBytes();
 	}
@@ -526,6 +532,9 @@ class Msg {
 		case 35:
 			var seq = r.uint(); var ship = r.bytes(1 << 16); var inv = readInv(r);
 			CSaveShip(seq, ship, inv);
+		case 36:
+			var x = r.uintIn(0, COORD_MAX); var y = r.uintIn(0, COORD_MAX);
+			CShipMove(x, y);
 		case k: throw new NetReader.NetError("mensaje de cliente desconocido " + k);
 		}
 		r.done();
@@ -596,6 +605,8 @@ class Msg {
 			for( c in list ) { w.uint(c.key); w.uint(c.v); }
 		case SServerInfo(name, lan, deathDrop, password):
 			w.string(name); w.bool(lan); w.bool(deathDrop); w.bool(password);
+		case SShipMove(x, y):
+			w.uint(x); w.uint(y);
 		case SPlanetLost(reason):
 			w.string(reason);
 		case SPong(t, serverTime):
@@ -716,6 +727,9 @@ class Msg {
 		case 32:
 			var name = r.string(SERVER_NAME_MAX); var lan = r.bool(); var dd = r.bool(); var pw = r.bool();
 			SServerInfo(name, lan, dd, pw);
+		case 33:
+			var x = r.uintIn(0, COORD_MAX); var y = r.uintIn(0, COORD_MAX);
+			SShipMove(x, y);
 		case k: throw new NetReader.NetError("mensaje de servidor desconocido " + k);
 		}
 		r.done();
