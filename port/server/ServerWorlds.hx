@@ -44,12 +44,14 @@ class ServerWorlds {
 
 	/** al entrar: su partida, o null si es nuevo (espera CNewGame) */
 	public function onLogin( s : Session ) : Bool {
-		var row = db.getPlayer(s.uid);
-		if( row == null || row.record == "" ) return false;
-		try s.record = SaveData.parse(haxe.Json.parse(row.record), s.uid) catch( e : Dynamic ) s.record = null;
 		if( s.record == null ) {
-			server.files.log("partida ilegible de " + s.display + ": se empieza de nuevo");
-			return false;
+			var row = db.getPlayer(s.uid);
+			if( row == null || row.record == "" ) return false;
+			try s.record = SaveData.parse(haxe.Json.parse(row.record), s.uid) catch( e : Dynamic ) s.record = null;
+			if( s.record == null ) {
+				server.files.log("partida ilegible de " + s.display + ": se empieza de nuevo");
+				return false;
+			}
 		}
 		sendRecord(s);
 		items.sendInv(s);
@@ -70,6 +72,34 @@ class ServerWorlds {
 		sendForeign(s);
 	}
 
+
+	/**
+	 * Crear una partida multijugador desde una partida guardada (anadido del port): la partida del anfitrion pasa a ser la suya
+	 * en este servidor. Los cambios de sus planetas se pasan al servidor al visitarlos (planetRow); aqui, las cantinas de los
+	 * planetas (planet_chests). Los contenedores del equipo que quedaban en sus planetas no se pasan.
+	 */
+	public function importHost( s : Session, save : SaveInfo ) {
+		var info : SaveInfo = SaveData.parse(haxe.Json.parse(haxe.Json.stringify(save)), s.uid);
+		if( info == null ) return;
+		var ship = [];
+		db.begin();
+		if( info.chests != null )
+			for( c in info.chests ) {
+				if( StringTools.startsWith(c.key, "s:") ) {
+					ship.push(c);
+					continue;
+				}
+				var i = c.key.indexOf(":");
+				var pid = i > 1 ? Std.parseInt(c.key.substr(1, i - 1)) : null;
+				if( c.key.charAt(0) == "p" && pid != null ) db.saveChest(s.uid + ":" + pid, c.key.substr(i + 1), haxe.Json.stringify(c.t));
+			}
+		db.commit();
+		info.chests = ship;
+		info.deathDrops = null;
+		s.record = info;
+		saveRecord(s);
+		server.files.log(s.display + " trae su partida " + save.name + " (" + save.id + ")");
+	}
 	/** la partida al cliente; si esta en un planeta, con el terreno de ese planeta (que es del servidor) */
 	function sendRecord( s : Session ) {
 		var info = s.record;

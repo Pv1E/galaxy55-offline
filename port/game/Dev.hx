@@ -600,7 +600,7 @@ class Dev {
 			case "menu": Type.enumConstructor(@:privateAccess app.state) == "Menu" && @:privateAccess app.bgWorlds.length > 0;
 			// multijugador (anadido del port): dentro de la partida, el fin de la conexion, y N jugadores conectados (mpplayers3)
 			case "mp": app.mp != null && app.mp.isPlaying();
-			case "mpend": app.mp != null && app.mp.ended != null;
+			case "mpend": app.mp == null || app.mp.ended != null; // al acabar, GalaxyApp.endMulti la quita enseguida
 			case "mpforeign": app.mp != null && app.mp.foreign.length > 0;
 			case w if( StringTools.startsWith(w, "mpremotes") ): g != null && g.net != null && g.net.remotes.count() >= Std.parseInt(w.substr(9));
 			case w if( StringTools.startsWith(w, "mpplayers") ): app.mp != null && Lambda.count(app.mp.players) >= Std.parseInt(w.substr(9));

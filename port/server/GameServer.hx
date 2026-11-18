@@ -75,6 +75,8 @@ class GameServer {
 	public var port(default, null) = 0;
 	public var stopped(default, null) = false;
 	public var worlds(default, null) : ServerWorlds;
+	/** la partida solo del anfitrion al crear la partida desde ella (MultiSession.host): la del propietario la primera vez */
+	public var hostSave : SaveData.SaveInfo;
 	/** tiempo para generar planetas en cada pump (ms): poco dentro del juego (no se nota en los fotogramas), mas en un dedicado */
 	public var genBudgetMs = 4.;
 	/** tiempo maximo sin noticias de un cliente antes de cerrarlo (s) */
@@ -277,9 +279,15 @@ class GameServer {
 		s.role = uid == files.ownerUid ? Owner : (files.managers.exists(uid) ? Manager : Player);
 		s.creative = loadMode(s, owner);
 		s.state = SPlay;
+		// la partida solo del anfitrion (Crear desde una partida guardada): la primera vez pasa a ser la suya en este servidor
+		if( hostSave != null && uid == files.ownerUid ) {
+			var r = db.getPlayer(uid);
+			if( r == null || r.record == "" ) worlds.importHost(s, hostSave);
+			hostSave = null;
+		}
 		// "primera vez" = sin partida en este servidor: el cliente pregunta lo del tutorial y manda CNewGame
 		var row = db.getPlayer(uid);
-		var needGame = row == null || row.record == "";
+		var needGame = s.record == null && (row == null || row.record == "");
 		s.send(SWelcome(s.id, s.display, s.role, s.creative, Sys.time(), needGame));
 		s.send(SPlayers([for( o in sessions ) if( o.state == SPlay ) netPlayer(o, s)]));
 		for( o in sessions ) if( o != s && o.state == SPlay ) o.send(SUserJoin(netPlayer(s, o)));

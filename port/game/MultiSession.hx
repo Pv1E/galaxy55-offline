@@ -38,12 +38,15 @@ class MultiSession {
 	}
 
 	/** hospedar: servidor con sus archivos en dir; listenPort > 0 abre ese puerto en bindHost (0.0.0.0 = red local e Internet) */
-	public static function host( dir : String, listenPort : Int, bindHost = "0.0.0.0" ) : MultiSession {
+	/** hospedar con los archivos del servidor en dir (listenPort 0: sin red, solo este juego); save: la partida guardada de la que se
+	    crea (la del anfitrion en el servidor la primera vez) */
+	public static function host( dir : String, listenPort : Int, bindHost = "0.0.0.0", ?save : SaveData.SaveInfo ) : MultiSession {
 		var m = new MultiSession();
 		var id = identity();
 		// pruebas: --mpseed=N, la galaxia de los jugadores nuevos (la de siempre, para repetir un caso)
 		for( a in Sys.args() ) if( StringTools.startsWith(a, "--mpseed=") ) ServerWorlds.fixedSeed = Std.parseInt(a.substr(9));
 		m.server = new GameServer(dir);
+		m.server.hostSave = save;
 		if( listenPort > 0 ) m.server.listen(bindHost, listenPort);
 		m.client = new NetClient(id, Settings.myPseudo(), "", 0, m.server.fingerprint);
 		m.client.connectLocal(m.server.connectLocal());
