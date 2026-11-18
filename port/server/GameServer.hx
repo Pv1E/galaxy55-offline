@@ -66,6 +66,9 @@ class GameServer {
 	var keys : { pk : Bytes, sk : Bytes };
 	public var fingerprint(default, null) : String;
 	var listener : sys.net.Socket;
+	/** escucha en la red (false: solo el juego del anfitrion, una partida guardada jugada sin red) */
+	public var listening(get, never) : Bool;
+	inline function get_listening() return listener != null;
 	var udp : sys.net.UdpSocket;
 	var sessions = new Array<Session>();
 	var nextId = 1;

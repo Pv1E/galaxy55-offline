@@ -52,7 +52,9 @@ class SaveRow extends Widget {
 		Theme.text(this, info.name, 2.4, Theme.TEXT, 190, 10);
 		var size = Comets.isComet(info.biome) ? Comets.SIZE : 128 * info.sizeChunks;
 		var where = info.uni != null && info.uni.space == true ? Lang.t("save.space") : Lang.t("biome." + info.biome) + "  ·  " + size + "x" + size;
-		Theme.text(this, where + "  ·  " + Lang.t("seed") + " " + info.seed + (info.creative == true ? "  ·  " + Lang.t(info.survival == true ? "mode.creative.survival" : "mode.creative") : ""), 1.7, Theme.CYAN, 190, 48);
+		Theme.text(this, where + "  ·  " + Lang.t("seed") + " " + info.seed + (info.creative == true ? "  ·  " + Lang.t(info.survival == true ? "mode.creative.survival" : "mode.creative") : "")
+			// multijugador: la partida tiene servidor (se juega con el)
+			+ (sys.FileSystem.exists(SaveData.dir() + "/" + info.id + ".serveur") ? "  ·  " + Lang.t("mp.title") : ""), 1.7, Theme.CYAN, 190, 48);
 		Theme.text(this, Lang.t("played") + " " + Lang.duration(info.playSeconds) + "   " + Lang.t("saved") + " " + Lang.date(info.saved), 1.5, Theme.DIM, 190, 74);
 		var ver = versions(info);
 		if( ver != null ) {
@@ -1301,6 +1303,23 @@ class GalaxyApp extends hxd.App {
 		modal = m;
 	}
 
+	/** una partida guardada que ya tiene servidor (se creo una partida multijugador con ella): su servidor, sin red */
+	function playServerSave( info : SaveInfo ) {
+		if( mp != null ) return;
+		var m = try MultiSession.host(serverDir(info), 0, "127.0.0.1") catch( e : Dynamic ) {
+			showToast(Lang.t("mp.create.fail").split("%e%").join(Std.string(e)), 6);
+			return;
+		};
+		joining = null;
+		tutoAsked = true;
+		m.autoNewGame = false;
+		startMulti(m);
+		showWaiting(Lang.t("mp.connecting"));
+	}
+
+	/** multijugador con otros (o que puede haberlos): el mundo no se para en la pausa ni en los menus; sin red, como en solo */
+	function mpLive() return mp != null && (mp.server == null || mp.server.listening);
+
 	/** el servidor de una partida guardada esta a su lado: saves/<id>.serveur */
 	static function serverDir( info : SaveInfo ) return SaveData.dir() + "/" + info.id + ".serveur";
 
@@ -1310,18 +1329,22 @@ class GalaxyApp extends hxd.App {
 		var dir = serverDir(info);
 		var fresh = !sys.FileSystem.exists(dir);
 		sys.FileSystem.createDirectory(dir);
-		var m = try MultiSession.host(dir, port, "0.0.0.0", fresh ? info : null) catch( e : Dynamic ) {
+		// las opciones antes de escuchar (la red local se abre o no al empezar)
+		var m = try {
+			var files = new ServerFiles(dir);
+			var o = files.options;
+			o.name = name != "" ? name : info.name;
+			o.port = port;
+			o.lanVisible = lan;
+			o.upnp = upnp;
+			o.deathDrop = drop;
+			files.saveOptions();
+			files.setPassword(password);
+			MultiSession.host(dir, port, "0.0.0.0", fresh ? info : null);
+		} catch( e : Dynamic ) {
 			showToast(Lang.t("mp.create.fail").split("%e%").join(Std.string(e)), 6);
 			return;
 		};
-		var o = m.server.files.options;
-		o.name = name != "" ? name : info.name;
-		o.port = port;
-		o.lanVisible = lan;
-		o.upnp = upnp;
-		o.deathDrop = drop;
-		m.server.files.saveOptions();
-		m.server.files.setPassword(password);
 		joining = null;
 		tutoAsked = true;
 		m.autoNewGame = false;
@@ -1520,6 +1543,11 @@ class GalaxyApp extends hxd.App {
 	 * (saves/backups), se borran esos bloques, se guarda asi y se carga, con un aviso de lo borrado y de donde esta la copia.
 	 */
 	function playSave( parent : Screen, info : SaveInfo ) {
+		// multijugador: una partida que ya tiene servidor se juega con el, sin red (como en solo, el mundo se para en la pausa)
+		if( sys.FileSystem.exists(serverDir(info)) ) {
+			playServerSave(info);
+			return;
+		}
 		var r = UnknownBlocks.count(info);
 		if( UnknownBlocks.total(r) == 0 ) {
 			startGame(info);
@@ -4049,7 +4077,7 @@ class GalaxyApp extends hxd.App {
 		// pruebas (--fixeddt=S): cada fotograma avanza lo mismo; asi un guion da lo mismo en un PC lento o cargado (port/dev/baseline.ps1)
 		if( FIXED_DT > 0 ) dt = FIXED_DT;
 		// multijugador: el servidor del anfitrion y el cliente no se paran nunca (menus, carga, pausa)
-		if( mp != null ) mp.pump(dt);
+		if( mp != null ) mp.pump(state == Paused && !mpLive() ? 0 : dt);
 		mpWatch();
 		mpOverlay(dt);
 		// iconos grandes de la Base de datos ESCorp y de la paleta: unos pocos por fotograma (mas con una de ellas abierta); los de
@@ -4141,7 +4169,7 @@ class GalaxyApp extends hxd.App {
 				// la tienda y los contratos salen del ordenador de a bordo: tampoco paran el juego (ver abajo, state == Paused); la
 				// barra de vida se ve bajo el panel
 				// en multijugador nada para el mundo: tampoco la paleta (anadido del port)
-				if( shop != null || contracts != null || database != null || invScreen != null || storage != null || mp != null ) {
+				if( shop != null || contracts != null || database != null || invScreen != null || storage != null || mpLive() ) {
 					game.update(dt, false, pad);
 					if( game == null || state != Playing ) return;
 					updateJetHud(game);
@@ -4208,7 +4236,7 @@ class GalaxyApp extends hxd.App {
 			// la pantalla de licencias sale del ordenador de a bordo y tampoco para el juego (aviso del PR 77)
 			// la conversacion con el robot tampoco: el se mueve y habla mientras la camara lo encuadra
 			// en multijugador la pausa no para el mundo (anadido del port): los demas siguen y lo que pasa llega igual
-			if( (current != null && (currentName == "computer" || currentName == "licenses" || currentName == "robot")) || mp != null ) {
+			if( (current != null && (currentName == "computer" || currentName == "licenses" || currentName == "robot")) || mpLive() ) {
 				if( currentName == "robot" ) updateRobotDialog(dt);
 				game.update(dt, false, pad);
 				if( game == null || state != Paused ) return;

@@ -1,0 +1,29 @@
+# multijugador (anadido del port): una partida con la que se creo una partida multijugador lleva la marca Multijugador en la
+# lista y, al continuarla, se juega con su servidor sin red (print mp: escucha=no). port/dev/devrun.ps1 -Script ...
+waitfor planet
+menu
+waitfor menu
+button 2
+wait 20
+button 1
+wait 20
+button 8
+waitfor mp 6000
+waitfor ready 6000
+wait 60
+mp leave
+waitfor mpend 600
+wait 30
+tap esc
+wait 20
+print menu
+button 0
+wait 20
+shot mp_offline_lista
+print saves
+tap enter
+waitfor mp 6000
+waitfor ready 6000
+wait 30
+print mp
+quit

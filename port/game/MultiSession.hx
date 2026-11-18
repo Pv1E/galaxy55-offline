@@ -155,6 +155,6 @@ class MultiSession {
 		var ps = [for( p in players ) p.name + "(" + p.role + ")"];
 		ps.sort(Reflect.compare);
 		var last = chat.length == 0 ? "-" : chat[chat.length - 1].name + ": " + chat[chat.length - 1].msg;
-		return 'mp ${isPlaying() ? "jugando" : "no"} yo=$myName papel=$role creativo=$creative servidor="$serverName" jugadores=[${ps.join(",")}] chat=${chat.length} ultimo=$last fin=$ended';
+		return 'mp ${isPlaying() ? "jugando" : "no"} yo=$myName papel=$role creativo=$creative servidor="$serverName" jugadores=[${ps.join(",")}] chat=${chat.length} ultimo=$last fin=$ended${server != null ? " escucha=" + (server.listening ? "si" : "no") : ""}';
 	}
 }
