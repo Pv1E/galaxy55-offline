@@ -49,6 +49,7 @@ class NetTest {
 		itemsTest(Sys.args().length > 0 ? Sys.args()[0] + "_objets" : "port/out/net_test_objets");
 		econTest(Sys.args().length > 0 ? Sys.args()[0] + "_eco" : "port/out/net_test_eco");
 		shipTest(Sys.args().length > 0 ? Sys.args()[0] + "_nave" : "port/out/net_test_nave");
+		hangarTest(Sys.args().length > 0 ? Sys.args()[0] + "_hangar" : "port/out/net_test_hangar");
 		var dir = Sys.args().length > 0 ? Sys.args()[0] : "port/out/net_test";
 		deleteDir(dir);
 		sys.FileSystem.createDirectory(dir);
@@ -640,6 +641,86 @@ class NetTest {
 		server.stop();
 	}
 
+	/** la nave del hangar como la guarda el juego (Hangar.shipBytes) a partir de las celdas del cobertizo (shedData) */
+	static function hangarBytes( cells : Map<Int, Int> ) : haxe.io.Bytes {
+		var SX = Hangar.SX, SY = Hangar.SY, SZ = Hangar.SZ, OX = @:privateAccess Hangar.OX;
+		var data = haxe.io.Bytes.alloc(SX * SY * SZ * 2 + 3);
+		data.set(0, SX);
+		data.set(1, SY);
+		data.set(2, SZ);
+		var pos = 3;
+		for( y in 0...SY )
+			for( x in 0...SX )
+				for( z in 0...SZ ) {
+					var k = (((2 + x + OX) & Common.Const.MASK) << 16) | ((2 + y) << 8) | (1 + z);
+					var id = cells.exists(k) ? ShipData.shipId(Block.all[cells.get(k)]) : 0;
+					data.set(pos, id & 0xFF);
+					data.set(pos + 1, id >> 8);
+					pos += 2;
+				}
+		return haxe.zip.Compress.run(data, 9);
+	}
+
+	/**
+	 * Hangar (ServerShip.saveShip): la nave que manda el cliente al salir solo vale si es valida y si el inventario no tiene mas
+	 * de lo que daba la nave de antes menos la nueva; poner un bloque que no se tiene, inventar algo o una nave rota no pasan.
+	 */
+	static function hangarTest( dir : String ) {
+		deleteDir(dir);
+		sys.FileSystem.createDirectory(dir);
+		server = new GameServer(dir);
+		server.listen("127.0.0.1", 55094);
+		clients = [];
+		var g = add(new TestClient("Gus", secret(50)));
+		g.tcp(55094);
+		until(() -> g.welcome != null);
+		g.client.send(CSetMode(false));
+		g.client.send(CNewGame(false));
+		until(() -> g.has(m -> m.match(SRecord(_))) && lastInv(g) != null);
+		var gs = @:privateAccess server.sessionById(g.id);
+		var cells = new Map<Int, Int>();
+		for( c in Hangar.shedData(ShipData.current(gs.record)).cells ) cells.set((c.x << 16) | (c.y << 8) | c.z, c.id);
+		var same = hangarBytes(cells);
+		var inv0 = lastInv(g);
+		g.client.send(CSaveShip(1, same, inv0));
+		check("hangar: la misma nave y el mismo inventario valen", until(() -> g.has(m -> m.match(SInventory(1, _)))) && gs.record.shipData != null && !g.has(m -> m.match(SPatch("ship", _))));
+		// un bloque de casco de mas en una celda libre de la zona que deje la nave valida
+		var hull = Block.get(BShipHull);
+		var added = -1;
+		for( z in 1...Hangar.SZ + 1 ) for( y in 2...Hangar.SY + 2 ) for( x in 2...Hangar.SX + 2 ) {
+			if( added >= 0 ) break;
+			var k = (((x + @:privateAccess Hangar.OX) & Common.Const.MASK) << 16) | (y << 8) | z;
+			if( cells.exists(k) ) continue;
+			cells.set(k, hull.index);
+			if( Hangar.serverCheck(hangarBytes(cells), NetZip.inflate) == null ) added = k else cells.remove(k);
+		}
+		check("hangar: hay sitio para un bloque de casco", added >= 0);
+		var bigger = hangarBytes(cells);
+		g.client.send(CSaveShip(2, bigger, inv0));
+		check("hangar: poner un bloque que no se tiene no pasa", until(() -> g.has(m -> m.match(SPatch("ship", _)))) && gs.record.shipData == haxe.crypto.Base64.encode(same));
+		server.worlds.items.devGive(gs, hull, 1);
+		until(() -> count(lastInv(g), hull.index) == 1);
+		var withHull = lastInv(g);
+		var spent : NetInv = { t : [for( s in withHull.t ) s == null || s.k == hull.index ? null : { k : s.k, n : s.n }], charges : withHull.charges };
+		g.client.send(CSaveShip(3, bigger, spent));
+		check("hangar: con el bloque en el inventario, se gasta y la nave vale", until(() -> g.has(m -> m.match(SInventory(3, _))))
+			&& gs.record.shipData == haxe.crypto.Base64.encode(bigger) && count(lastInv(g), hull.index) == 0 && gs.ship == null);
+		var cheat : NetInv = { t : [for( s in spent.t ) s], charges : spent.charges };
+		for( i in 0...cheat.t.length ) if( cheat.t[i] == null ) { cheat.t[i] = { k : Block.get(BChest).index, n : 3 }; break; }
+		g.client.send(CSaveShip(4, bigger, cheat));
+		check("hangar: el inventario no puede inventar nada", until(() -> g.has(m -> m.match(SInventory(4, _)))) && count(lastInv(g), Block.get(BChest).index) == 0);
+		cells.remove(added);
+		var back : NetInv = { t : [for( s in spent.t ) s], charges : spent.charges };
+		var drop = hull.getDrop();
+		for( i in 0...back.t.length ) if( back.t[i] == null ) { back.t[i] = { k : drop.b.index, n : drop.count }; break; }
+		g.client.send(CSaveShip(5, hangarBytes(cells), back));
+		check("hangar: quitar un bloque lo devuelve", until(() -> g.has(m -> m.match(SInventory(5, _)))) && count(lastInv(g), drop.b.index) == drop.count
+			&& gs.record.shipData == haxe.crypto.Base64.encode(hangarBytes(cells)));
+		g.client.send(CSaveShip(6, haxe.zip.Compress.run(haxe.io.Bytes.alloc(Hangar.SX * Hangar.SY * Hangar.SZ * 2 + 3), 9), back));
+		check("hangar: una nave que no vale no pasa", until(() -> g.has(m -> m.match(SInventory(6, _)))) && gs.record.shipData == haxe.crypto.Base64.encode(hangarBytes(cells)));
+		server.stop();
+	}
+
 	static function add( c : TestClient ) {
 		clients.push(c);
 		return c;
@@ -665,7 +746,8 @@ class NetTest {
 			CCharge(1), CPick(4, 9), CThrow(5, 2, 3), CInvLayout(6, { t : [null, { k : 5, n : 2 }], charges : [{ c : 1, n : 3 }] }), CDeath(true),
 			CCreative(7, 1, 5, 9), CChestOpen(1, 2, 3), CChestMove(1, 2, 3, 4, [{ k : 5, n : 1 }, null], { t : [null], charges : [] }), CChestClose,
 			CActivate(4, 5, 6), CEcon(9, EBuy, "b12", 3), CShipOffset(-37, 34), CShipSet(3, 4, 5, 6, 7, 8, 2), CShipCraft(1, 2, 3),
-			CStorage(4, { t : [null, { k : 3, n : 2 }], charges : [{ c : 1, n : 4 }] }, { t : [{ k : 5, n : 1 }], charges : [] })];
+			CStorage(4, { t : [null, { k : 3, n : 2 }], charges : [{ c : 1, n : 4 }] }, { t : [{ k : 5, n : 1 }], charges : [] }),
+			CSaveShip(2, haxe.io.Bytes.ofString("nave"), { t : [null], charges : [] })];
 		var ss : Array<ServerMsg> = [SServerHello("srv", b32, b32, b64, true), SWelcome(3, "Bob#2", Manager, true, 123.5, false),
 			SRefuse(RBanned, "x"), SPong(1.25, 2.5), SPlayers([{ id : 1, name : "a", role : 2, place : "" }]),
 			SUserJoin({ id : 2, name : "b", role : 0, place : "Planète de X" }), SUserLeave(9), STalk(-1, "srv", CServer, "m"),

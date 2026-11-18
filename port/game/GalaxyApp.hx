@@ -1643,6 +1643,8 @@ class GalaxyApp extends hxd.App {
 			return;
 		}
 		if( game.hangarValid ) {
+			// multijugador: el servidor mira la nave y el inventario (ServerShip.saveShip); si no cuadran, se queda con los suyos
+			if( mp != null && mp.isPlaying() ) mp.client.send(CSaveShip(0, game.hangarShip(), ServerItems.netInv(game.inv.inv)));
 			hangarReturn.shipData = b64;
 			hangarReturn.inv = Inv.copy(game.inv.inv);
 			hangarReturn.shipEdits = [];
@@ -2269,6 +2271,8 @@ class GalaxyApp extends hxd.App {
 				};
 			};
 		}
+		// en la nodriza de una partida multijugador no se tira nada: no hay servidor que lo lleve (se perderia)
+		if( mp != null && mp.isPlaying() && loadInfo.mothership == true ) game.noThrow = true;
 		loadWorld = null;
 		loadShip = null;
 		if( loadInfo.uni != null && loadInfo.uni.space == true && loadInfo.hangar != true && loadInfo.mothership != true ) {
@@ -2469,6 +2473,11 @@ class GalaxyApp extends hxd.App {
 		invScreen.onClose = closeInventory;
 		invScreen.onThrow = function(b, n, slot) {
 			if( game == null ) return;
+			if( game.noThrow ) {
+				// en la nodriza multijugador no se tira: vuelve al inventario
+				if( b.charge != null ) game.inv.addCharge(b.charge, n) else game.inv.addBlocks(b, n);
+				return;
+			}
 			// multijugador: lo tira el servidor (en el planeta o en la nave)
 			if( game.net != null ) game.net.sentThrow(slot + 1, n) else game.throwStack(b, n);
 		};
@@ -2545,6 +2554,8 @@ class GalaxyApp extends hxd.App {
 		shop.onCredits = function(c) game.info.credits = c;
 		// multijugador: el servidor repite la compra o la venta (ServerEcon)
 		if( game.net != null ) shop.onTrade = function( buy, w, n ) if( game != null && game.net != null ) game.net.sentEcon(buy ? EBuy : ESell, w.key, n);
+		// en la nodriza (sin NetGame) tambien
+		else if( mp != null && mp.isPlaying() ) shop.onTrade = function( buy, w, n ) if( mp != null && mp.isPlaying() ) mp.client.send(CEcon(0, buy ? EBuy : ESell, w.key, n));
 		shop.onClose = closeShop;
 		paletteOpen = true;
 		captureMouse(false);
@@ -2639,6 +2650,14 @@ class GalaxyApp extends hxd.App {
 				if( game == null || game.net == null ) return;
 				game.inv.display();
 				game.net.sentStorage(st.store);
+			};
+		} else if( mp != null && mp.isPlaying() ) {
+			// en la nodriza (sin NetGame)
+			var st = storage;
+			st.grid.onChange = function() {
+				if( game == null || mp == null || !mp.isPlaying() ) return;
+				game.inv.display();
+				mp.client.send(CStorage(0, ServerItems.netInv({ maxWeight : 0, t : st.store.t, charges : st.store.charges }), ServerItems.netInv(game.inv.inv)));
 			};
 		}
 		paletteOpen = true;
@@ -2806,12 +2825,16 @@ class GalaxyApp extends hxd.App {
 		case SUserJoin(p) if( game != null && game.net != null && p.id == mp.myId ):
 			game.netSwitch = mp.isManager();
 		case SInventory(_, inv) if( game == null || game.net == null ):
-			// en el mapa (o cargando): el inventario de la partida queda como dice el servidor
+			// en el mapa (o cargando) y en la nodriza: el inventario de la partida queda como dice el servidor. En el hangar no: se
+			// juega aparte y el servidor mira el resultado al salir (CSaveShip)
+			if( game != null && game.hangar != null ) return;
 			var info = game != null ? game.info : spaceInfo != null ? spaceInfo : pendingLand != null ? pendingLand : loadInfo;
 			if( info != null && info.inv != null ) {
 				var t = info.inv.t;
 				for( k in 0...t.length ) t[k] = k < inv.t.length && inv.t[k] != null ? { k : inv.t[k].k, n : inv.t[k].n } : null;
-				info.inv.charges = [for( c in inv.charges ) { c : c.c, n : c.n }];
+				info.inv.charges.splice(0, info.inv.charges.length);
+				for( c in inv.charges ) info.inv.charges.push({ c : c.c, n : c.n });
+				if( game != null && game.info == info ) game.inv.display();
 			}
 		default:
 			if( game != null && game.net != null ) game.net.onMessage(m);
@@ -2832,6 +2855,13 @@ class GalaxyApp extends hxd.App {
 			info.special = v;
 		case "upgrades":
 			info.upgrades = v;
+		case "ship":
+			// la nave del hangar no cuadra (ServerShip.saveShip): se queda la de antes (se vera al volver a cargar la nave)
+			if( Std.isOfType(v, String) || v == null ) {
+				info.shipData = v;
+				info.shipEdits = [];
+				showToast(Lang.t("mp.ship.refused"), 5);
+			}
 		case "storage":
 			// en su sitio: la pantalla del stockage abierta sigue con las mismas listas
 			var st = StorageData.ensure(info);

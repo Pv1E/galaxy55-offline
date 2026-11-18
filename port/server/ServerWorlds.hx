@@ -97,8 +97,8 @@ class ServerWorlds {
 	 * La partida que manda el cliente (al guardar, al despegar): solo se toma lo que no da nada, donde esta y lo que ha visto.
 	 * Lo demas es del servidor, que lo cambia con sus reglas: inventario y contenedores (ServerItems), creditos, mercado,
 	 * contratos y planeta principal (ServerEcon), licencias (land, CAbandon), terreno (planet_edits), modo y tiempo de juego.
-	 * La nave (sus cambios, cantinas, stockage y sueltos) es de ServerShip. Provisional hasta que el servidor lleve tambien el
-	 * hangar, la nodriza, la cometa y el tutorial: eso aun se toma del cliente.
+	 * La nave (plano del hangar, cambios, cantinas, stockage y sueltos) es de ServerShip. Provisional hasta que el servidor lleve
+	 * tambien la nodriza, la cometa y el tutorial: eso aun se toma del cliente.
 	 */
 	function clientRecord( s : Session, data : haxe.io.Bytes ) {
 		var o : Dynamic;
@@ -116,12 +116,6 @@ class ServerWorlds {
 		r.saved = info.saved;
 		r.savedWith = info.savedWith;
 		r.kub = info.kub;
-		// la nave nueva del hangar (provisional: el hangar aun no pasa por el servidor): a bordo, todo como nuevo
-		if( info.shipData != r.shipData ) {
-			r.shipData = info.shipData;
-			r.shipEdits = [];
-			s.ship = null;
-		}
 		r.hangar = info.hangar;
 		r.mothership = info.mothership;
 		r.inMother = info.inMother;

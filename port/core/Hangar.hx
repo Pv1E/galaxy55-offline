@@ -43,7 +43,8 @@ class Hangar {
 	public static function forbidden( b : Block ) : String {
 		if( b.hasProp(PLiquid) || b.hasProp(PLava) || b.propagate != null ) return "no_liquid";
 		if( b.k == BArtiBomb ) return "no_bomb";
-		if( EditorKubes.isEditor(b) ) return "no_editor_kube";
+		// EditorKubes.isEditor (aqui sin el juego: el servidor tambien lo mira)
+		if( b.k == BKubeEditor ) return "no_editor_kube";
 		return null;
 	}
 
@@ -121,7 +122,7 @@ class Hangar {
 	public static function shipId( b : Block ) : Int return ShipData.shipId(b);
 
 	/** la nave de la zona construible (net/EditShip.getShipData), con las puertas cerradas */
-	public static function shipBytes( w : World ) : haxe.io.Bytes {
+	public static function shipBytes( w : WorldData ) : haxe.io.Bytes {
 		var data = haxe.io.Bytes.alloc(SX * SY * SZ * 2 + 3);
 		data.set(0, SX);
 		data.set(1, SY);
@@ -176,7 +177,58 @@ class Hangar {
 		return h.check() ? h.speed : 0;
 	}
 
-	public function new( w : World ) {
+	// ---------------------------------------------------------------- multijugador (anadido del port): el servidor
+
+	/**
+	 * Una nave que manda un cliente al salir del hangar (comprimida), para el servidor: del tamano de la zona construible (como
+	 * shipBytes), sin pasar de ese tamano al descomprimir, con bloques que existen y nada prohibido (forbidden), y valida
+	 * (check). null si vale; si no, el motivo (para el registro del servidor).
+	 */
+	public static function serverCheck( ship : haxe.io.Bytes, inflate : haxe.io.Bytes -> Int -> haxe.io.Bytes ) : String {
+		var max = 3 + SX * SY * SZ * 2;
+		var raw = try inflate(ship, max) catch( e : Dynamic ) return "no se descomprime";
+		if( raw.length != max || raw.get(0) != SX || raw.get(1) != SY || raw.get(2) != SZ ) return "tamano";
+		var pos = 3;
+		while( pos < raw.length ) {
+			var id = raw.get(pos) | (raw.get(pos + 1) << 8);
+			pos += 2;
+			if( id == 0 ) continue;
+			if( id >= Block.all.length ) return "bloque desconocido " + id;
+			var b = Block.all[id];
+			if( forbidden(b) != null ) return "prohibido " + b.k;
+		}
+		var h = new Hangar(null);
+		var cells = new Map<Int, Block>();
+		for( c in shedData(ship).cells ) cells.set((c.x << 16) | (c.y << 8) | c.z, Block.all[c.id]);
+		h.blockAt = function(x, y, z) return x < 0 || y < 0 || z < 0 ? null : cells.get((x << 16) | (y << 8) | z);
+		return h.check() ? null : "no vale (" + h.error + ")";
+	}
+
+	/**
+	 * Lo que cambia el inventario al pasar en el hangar de la nave old a la neu (comprimidas), celda a celda del cobertizo: lo
+	 * quitado da lo suyo (en el hangar siempre: GameView.inCraftZone), lo puesto se gasta. Bloque (indice) => cantidad (+ se
+	 * gana, - se gasta). Las puertas cuentan cerradas (shipId), como se guardan.
+	 */
+	public static function delta( old : haxe.io.Bytes, neu : haxe.io.Bytes ) : Map<Int, Int> {
+		var a = new Map<Int, Int>(), b = new Map<Int, Int>();
+		for( c in shedData(old).cells ) a.set((c.x << 16) | (c.y << 8) | c.z, ShipData.shipId(Block.all[c.id]));
+		for( c in shedData(neu).cells ) b.set((c.x << 16) | (c.y << 8) | c.z, ShipData.shipId(Block.all[c.id]));
+		var out = new Map<Int, Int>();
+		inline function add( k : Int, n : Int ) out.set(k, (out.exists(k) ? out.get(k) : 0) + n);
+		for( k => ia in a ) {
+			var ib = b.exists(k) ? b.get(k) : 0;
+			if( ia == ib ) continue;
+			if( ia != 0 ) {
+				var get = Block.all[ia].getDrop();
+				if( get != null ) add(get.b.index, get.count);
+			}
+			if( ib != 0 ) add(ib, -1);
+		}
+		for( k => ib in b ) if( !a.exists(k) && ib != 0 ) add(ib, -1);
+		return out;
+	}
+
+	public function new( w : WorldData ) {
 		if( w != null ) blockAt = w.block;
 		if( collideBits == null ) {
 			collideBits = [for( b in Block.all ) 0];

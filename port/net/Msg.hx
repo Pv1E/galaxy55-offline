@@ -195,6 +195,8 @@ enum ClientMsg {
 	CShipCraft( x : Int, y : Int, z : Int );
 	/** su nave: nuevo contenido del stockage y del inventario (lo movido entre los dos) */
 	CStorage( seq : Int, store : NetInv, inv : NetInv );
+	/** al salir del hangar con una nave valida: la nave (comprimida, como Hangar.shipBytes) y el inventario tal como quedan */
+	CSaveShip( seq : Int, ship : haxe.io.Bytes, inv : NetInv );
 }
 
 enum ServerMsg {
@@ -420,6 +422,8 @@ class Msg {
 			w.uint(x); w.uint(y); w.uint(z);
 		case CStorage(seq, store, inv):
 			w.uint(seq); writeInv(w, store); writeInv(w, inv);
+		case CSaveShip(seq, ship, inv):
+			w.uint(seq); w.bytes(ship); writeInv(w, inv);
 		}
 		return w.getBytes();
 	}
@@ -513,6 +517,9 @@ class Msg {
 		case 34:
 			var seq = r.uint(); var store = readInv(r); var inv = readInv(r);
 			CStorage(seq, store, inv);
+		case 35:
+			var seq = r.uint(); var ship = r.bytes(1 << 16); var inv = readInv(r);
+			CSaveShip(seq, ship, inv);
 		case k: throw new NetReader.NetError("mensaje de cliente desconocido " + k);
 		}
 		r.done();

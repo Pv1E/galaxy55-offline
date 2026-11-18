@@ -1,0 +1,30 @@
+# multijugador (anadido del port): el hangar se juega en el cliente y el servidor mira el resultado al salir (ServerShip.saveShip).
+# Aqui se pone un casco con la orden de pruebas set (sin gastarlo del inventario, como una trampa): el servidor no lo acepta,
+# lo dice en serveur.log y la partida se queda con la nave de antes. port/dev/multirun.ps1 -ScriptList port/dev/mp_hangar.txt
+waitfor planet
+mp host 55197
+waitfor map 6000
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+mp mode 0
+wait 20
+mp give 1 BShipHull 1
+wait 20
+ship
+wait 10
+hangar
+wait 60
+print inv
+settop 14 10 BShipHull
+wait 20
+print hangar
+hangarexit
+wait 120
+print inv
+print msg
+mp leave
+waitfor mpend 600

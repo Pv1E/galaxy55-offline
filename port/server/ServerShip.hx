@@ -243,6 +243,51 @@ class ServerShip {
 		worlds.markRecord(s);
 	}
 
+	// ---------------------------------------------------------------- hangar
+
+	/**
+	 * CSaveShip: al salir del hangar con una nave nueva. El hangar se juega en el cliente (como en solo) y aqui se mira el
+	 * resultado: que la nave sea valida (Hangar.serverCheck) y que el inventario no tenga mas de lo que daba la nave de antes
+	 * menos la nueva (Hangar.delta: lo quitado da lo suyo, lo puesto se gasta; lo que se quedo en el suelo del hangar se pierde,
+	 * como en solo). Nada de lo que no se tenia puede salir del hangar. Si vale, la nave de a bordo se rehace.
+	 */
+	public static function saveShip( s : Session, worlds : ServerWorlds, seq : Int, ship : haxe.io.Bytes, ni : NetInv ) {
+		var info = s.record;
+		var why = Hangar.serverCheck(ship, NetZip.inflate);
+		var cur = info.inv;
+		if( why == null && (ni.t.length != cur.t.length || !ServerItems.validSlots(ni.t, cur.maxWeight)) ) why = "inventario";
+		if( why == null ) {
+			var had = ServerItems.totals(cur.t, cur.charges);
+			var now = ServerItems.totals(ni.t, ni.charges);
+			var d = s.creative ? new Map<Int, Int>() : Hangar.delta(ShipData.current(info), ship);
+			var keys = [for( k in had.keys() ) k];
+			for( k in now.keys() ) keys.push(k);
+			for( k in d.keys() ) keys.push(k);
+			for( k in keys ) {
+				var can = (had.exists(k) ? had.get(k) : 0) + (d.exists(k) ? d.get(k) : 0);
+				var got = now.exists(k) ? now.get(k) : 0;
+				// las cargas (claves negativas) no cambian en el hangar: no se gastan ni se ganan
+				if( can < 0 || got > can || (k < 0 && got != can) ) {
+					why = "cuentas (" + (k < 0 ? "carga " + (-1 - k) : "" + Block.all[k].k) + ": tiene " + got + ", podia " + can + ")";
+					break;
+				}
+			}
+		}
+		s.ack = seq;
+		if( why == null ) {
+			info.shipData = haxe.crypto.Base64.encode(ship);
+			info.shipEdits = [];
+			for( i in 0...cur.t.length ) cur.t[i] = ni.t[i] == null ? null : { k : ni.t[i].k, n : ni.t[i].n };
+			s.ship = null;
+			worlds.markRecord(s);
+			worlds.server.files.log(s.display + " guarda una nave nueva en el hangar");
+		} else {
+			worlds.server.files.log("nave del hangar rechazada de " + s.display + ": " + why);
+			s.send(SPatch("ship", haxe.Json.stringify(info.shipData)));
+		}
+		worlds.items.sendInv(s);
+	}
+
 	// ---------------------------------------------------------------- stockage
 
 	/** CStorage: lo movido entre el stockage y el inventario; nada se crea ni se pierde y cada carga cabe en su contador */

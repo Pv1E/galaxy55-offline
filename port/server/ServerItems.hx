@@ -539,6 +539,8 @@ class ServerItems {
 			worlds.shipOf(s).craft(x, y, z);
 		case CStorage(seq, st, ni):
 			worlds.shipOf(s).storage(seq, st, ni);
+		case CSaveShip(seq, ship, ni):
+			ServerShip.saveShip(s, worlds, seq, ship, ni);
 		default:
 			return false;
 		}

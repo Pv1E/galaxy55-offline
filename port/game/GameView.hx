@@ -2089,7 +2089,11 @@ class GameView {
 	}
 
 	/** Game.dropCurrent: tira la pila de la casilla elegida delante del jugador. */
+	/** multijugador, en la nodriza: no se tira nada (no hay servidor que lleve lo tirado: se perderia) */
+	public var noThrow = false;
+
 	function dropCurrent() {
+		if( noThrow ) return;
 		var index = inv.blockIndex - 1;
 		var s = inv.drop(index);
 		// multijugador: en el planeta lo tira el servidor (el suelto es suyo)
