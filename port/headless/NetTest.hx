@@ -228,6 +228,7 @@ class NetTest {
 		var i = 0;
 		while( i + 1 < saved.length ) { if( saved[i] == key && saved[i + 1] == rock.index ) found = true; i += 2; }
 		check("mundo: guardado en la base de datos", found);
+		access(w, inst, pid, sp, bx, by, bz);
 		w.client.send(CTakeoff);
 		until(() -> false, 0.3);
 		w.client.close();
@@ -242,6 +243,71 @@ class NetTest {
 		check("mundo: al volver, su partida", w2.firstTime == false && rec2 != null && rec2.uni.seed == rec.uni.seed && rec2.uni.space == true);
 		server.stop();
 		clients = [];
+	}
+
+	/**
+	 * Accesos: otro jugador no entra en un planeta cerrado; abierto e invitado, lo ve en su mapa (SForeign), entra, los dos se ven
+	 * (SStates) y lo que rompe el invitado le llega al propietario; visitante, no rompe; cerrado, sale; cesion (el que cede se
+	 * queda de explorador) y abandono (todos fuera).
+	 */
+	static function access( w : TestClient, inst : PlanetInstance, pid : Int, sp : { x : Float, y : Float, z : Float }, bx : Int, by : Int, bz : Int ) {
+		var x = add(new TestClient("Xavier", secret(10)));
+		x.tcp(55098);
+		check("acceso: llega otro jugador", until(() -> x.welcome != null), x.lastEvent());
+		x.client.send(CNewGame(false));
+		until(() -> x.has(m -> m.match(SRecord(_))));
+		var wuid = server.db.findIdentity("ed25519", Identity.fromSecret(secret(9)).keysFor(server.publicKey()).pk.toHex());
+		var wpub = server.db.pubOf(wuid);
+		x.client.send(CLand(wpub, pid));
+		check("acceso: planeta cerrado, no entra", until(() -> x.has(m -> m.match(SPlanetLost("mp.land.denied")))));
+		w.client.send(CAccess(pid, true, false, false, 0));
+		w.client.send(CInvite(pid, x.id, 0));
+		check("acceso: invitado (aviso)", until(() -> x.notice("mp.invited")));
+		check("acceso: el planeta sale en su mapa", until(() -> x.has(m -> switch( m ) {
+			case SForeign(l): Lambda.exists(l, f -> f.pub == wpub && f.owner == "Wanda" && Lambda.exists(f.planets, p -> p.pid == pid && p.status == Type.enumIndex(ExpData.ExpPlanetStatus.PInvited)));
+			default: false;
+		})));
+		x.msgs = [];
+		x.client.send(CLand(wpub, pid));
+		var rights = -1;
+		until(() -> { for( m in x.msgs ) switch( m ) { case SPlanetData(_, _, _, _, _, _, _, owner, r): rights = r; default: } rights >= 0; });
+		check("acceso: entra como explorador", rights == Rights.EXPLORER, "" + rights);
+		var st = { id : 0, x : sp.x, y : sp.y, z : sp.z, yaw : 0., pitch : 0., flags : 1, charge : -1, hx : 1., hy : 2., hz : 3. };
+		w.client.send(CState(st));
+		x.client.send(CState({ id : 0, x : sp.x + 1, y : sp.y, z : sp.z, yaw : 1., pitch : 0., flags : 0, charge : -1, hx : 0., hy : 0., hz : 0. }));
+		check("acceso: los dos se ven", until(() -> w.has(m -> switch( m ) { case SStates(l): Lambda.exists(l, s -> s.id == x.id); default: false; })
+			&& x.has(m -> switch( m ) { case SStates(l): Lambda.exists(l, s -> s.id == w.id && s.flags & 1 != 0); default: false; })));
+		var tx = bx + 1, ty = by, tz = bz;
+		var tb = inst.world.block(tx, ty, tz);
+		if( tb == null ) { tz--; tb = inst.world.block(tx, ty, tz); }
+		var tkey = ((tx + ty * inst.world.size) << WorldData.ZBITS) | tz;
+		w.msgs = [];
+		x.client.send(CBreak(50, tx, ty, tz, tb.index));
+		check("acceso: lo que rompe el invitado llega al propietario", until(() -> x.has(m -> m.match(SSetResult(50, true, _)))
+			&& w.has(m -> switch( m ) { case SChanges(l): Lambda.exists(l, c -> c.key == tkey && c.v == 0); default: false; })));
+		var xpub = server.db.pubOf(server.db.findIdentity("ed25519", Identity.fromSecret(secret(10)).keysFor(server.publicKey()).pk.toHex()));
+		w.client.send(CGuest(pid, xpub, 1));
+		check("acceso: pasa a visitante", until(() -> x.has(m -> switch( m ) { case SRights(r): r & (RVisitor : Int) != 0 && r & (RBuild : Int) == 0; default: false; })));
+		var under = inst.world.block(tx, ty, tz - 1);
+		if( under != null ) {
+			x.client.send(CBreak(51, tx, ty, tz - 1, under.index));
+			check("acceso: un visitante no rompe", until(() -> x.has(m -> m.match(SSetResult(51, false, _)))));
+		}
+		w.client.send(CAccess(pid, false, false, false, 0));
+		check("acceso: cerrado, el invitado sale", until(() -> x.has(m -> m.match(SPlanetLost("mp.planet.closed")))));
+		w.client.send(CAccess(pid, true, false, false, 0));
+		w.client.send(CGuest(pid, xpub, 0));
+		w.client.send(CTransfer(pid, x.id));
+		check("acceso: cesion", until(() -> x.notice("mp.transfer.got")) && server.db.getPlanet(wuid + ":" + pid).owner != wuid);
+		x.msgs = [];
+		x.client.send(CLand(wpub, pid));
+		until(() -> x.has(m -> m.match(SPlanetData(_, _, _, _, _, _, _, _, _))));
+		w.client.send(CLand("", pid));
+		until(() -> w.has(m -> m.match(SPlanetData(_, _, _, _, _, _, _, "Xavier", _))));
+		check("acceso: el que cede sigue entrando (explorador)", w.has(m -> switch( m ) { case SPlanetData(_, _, _, _, _, _, _, "Xavier", r): r == Rights.EXPLORER; default: false; }));
+		x.client.send(CAbandon(pid));
+		check("acceso: abandono, todos fuera", until(() -> w.has(m -> m.match(SPlanetLost("mp.planet.abandoned")))) && server.db.getPlanet(wuid + ":" + pid) == null);
+		x.client.close();
 	}
 
 	static function add( c : TestClient ) {
@@ -264,14 +330,18 @@ class NetTest {
 		var cs : Array<ClientMsg> = [CHello(1, "0.8.1", "abcd", b32), CLogin(b32, b64, "Pseudo é", "pwd", -1), CPing(1.5),
 			CTalk(CPrivate, 7, "hola ñ"), CAdmin(ABan, 3, "x"), CSetMode(true), CBye, CNewGame(true), CLand("", 3), CTakeoff,
 			CState({ id : 0, x : 1.5, y : 2.5, z : 3.5, yaw : 0.25, pitch : -0.5, flags : 1, charge : -1, hx : 4, hy : 5, hz : 6 }),
-			CBreak(1, 2, 3, 4, 5), CPlace(2, 3, 4, 5, 6, 0, 1), CSaveRecord(Bytes.ofString("z"))];
+			CBreak(1, 2, 3, 4, 5), CPlace(2, 3, 4, 5, 6, 0, 1), CSaveRecord(Bytes.ofString("z")),
+			CAccess(3, true, false, true, 4), CInvite(3, 2, 1), CGuest(3, "ab12cd34", -1), CTransfer(3, 2), CAbandon(3), CGetAccess(3)];
 		var ss : Array<ServerMsg> = [SServerHello("srv", b32, b32, b64, true), SWelcome(3, "Bob#2", Manager, true, 123.5, false),
 			SRefuse(RBanned, "x"), SPong(1.25, 2.5), SPlayers([{ id : 1, name : "a", role : 2, place : "" }]),
 			SUserJoin({ id : 2, name : "b", role : 0, place : "Planète de X" }), SUserLeave(9), STalk(-1, "srv", CServer, "m"),
 			SNotice("mp.x", ["a", "b"]), SMode(false), SKicked(RKicked, "Alice"),
 			SRecord(Bytes.ofString("r")), SPlanetData("k:3", 42, "BIMars", 2, 0, "", Bytes.ofString("e"), "Bob", 7),
 			SChanges([{ key : 5, v : 9 }]), SSetResult(4, false, 3),
-			SStates([{ id : 2, x : 1.5, y : 2.5, z : 3.5, yaw : 0.5, pitch : 0, flags : 3, charge : 2, hx : 1, hy : 2, hz : 3 }]), SGone(5), SReduceWater];
+			SStates([{ id : 2, x : 1.5, y : 2.5, z : 3.5, yaw : 0.5, pitch : 0, flags : 3, charge : 2, hx : 1, hy : 2, hz : 3 }]), SGone(5), SReduceWater,
+			SAccess(3, true, true, false, 4, [{ pub : "ab12cd34", name : "Bob", role : 1 }]),
+			SForeign([{ pub : "ab12cd34", owner : "Bob", seed : 42, startSeed : 7, startBiome : "BIMars", startSize : 2, gone : [3], planets : [{ pid : 10, status : 3 }] }]),
+			SPlanetLost("mp.x"), SRights(7)];
 		var names = [for( c in cs ) Type.enumConstructor(c)];
 		for( n in Type.getEnumConstructs(ClientMsg) ) check("muestra de " + n, names.indexOf(n) >= 0);
 		names = [for( s in ss ) Type.enumConstructor(s)];

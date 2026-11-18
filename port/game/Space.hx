@@ -46,6 +46,8 @@ class Space {
 	/** antes de aterrizar en un planeta (al pulsar Aterrizar o Escanear): false = no se puede */
 	public function canLand( p : ExpPlanet ) : Bool {
 		if( Licenses.isAbandoned(uni, p.id) ) return false;
+		// multijugador: en un sistema de otro jugador, solo lo abierto para este (ForeignMap)
+		if( p.status == PForbidden ) return false;
 		if( !tutorial || p.id == TutoSetup.PLANET ) return true;
 		onRefuse(TutoText.get("badplanet"));
 		return false;

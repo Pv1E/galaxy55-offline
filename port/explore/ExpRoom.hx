@@ -566,6 +566,11 @@ class ExpRoom {
 	}
 
 	/** la imagen del planeta (frame = una de las 3 de tiles.png) y su icono segun el estado */
+	/** iconos del multijugador (Explorer.addPlanet): planeta de otro abierto para el, solo de visita, cerrado */
+	public static inline var ICON_OPEN = 5;
+	public static inline var ICON_LOCKED = 6;
+	public static inline var ICON_VISIT = 7;
+
 	function planetView( infos : ExpPlanet, frame : Int ) : ExpPlanetView {
 		var size = switch( infos.size ) {
 			case 1: 0.07;
@@ -594,11 +599,18 @@ class ExpRoom {
 		case PAbandonned, PForbidden:
 			pv.icon = 1;
 			pv.iconX = pv.iconY = 0;
+			// multijugador: planeta cerrado de otro jugador (ForeignMap), con el candado rojo en lugar de la marca
+			if( infos.status == PForbidden ) {
+				pv.icon = ICON_LOCKED;
+				pv.iconX = Std.int(bd.width * scale * 0.2);
+				pv.iconY = Std.int(-bd.height * scale * 0.2);
+			}
 			bd.applyFilter(bd, bd.rect, pt0, ExpColor.getSaturationFilter(-0.9));
 			bd.applyFilter(bd, bd.rect, pt0, ExpColor.getColorizeMatrixFilter(0x0, 0.5, 0.5));
 			bd.applyFilter(bd, bd.rect, pt0, new flash.filters.GlowFilter(Color.brightnessInt(bgColor, -0.7), 0.7, 16, 16, 1, 2));
-		case PActive, PInvited:
-			pv.icon = 3;
+		case PActive, PInvited, PVisit:
+			// multijugador: el drapeau verde solo en los propios; abierto para el, el candado abierto; solo de visita, la camara
+			pv.icon = infos.status == PActive ? 3 : (infos.status == PVisit ? ICON_VISIT : ICON_OPEN);
 			pv.showName = true;
 			bd.applyFilter(bd, bd.rect, pt0, new flash.filters.GlowFilter(halo, 0.9, 8, 8, 1));
 			bd.applyFilter(bd, bd.rect, pt0, new flash.filters.GlowFilter(halo, 0.7, 32, 32, 1));

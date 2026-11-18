@@ -42,7 +42,8 @@ class ServerDb {
 		cnx.request("PRAGMA journal_mode=WAL");
 		cnx.request("PRAGMA synchronous=NORMAL");
 		cnx.request("CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT)");
-		cnx.request("CREATE TABLE IF NOT EXISTS players (uid TEXT PRIMARY KEY, pseudo TEXT, display TEXT, created REAL, last REAL, record TEXT)");
+		cnx.request("CREATE TABLE IF NOT EXISTS players (uid TEXT PRIMARY KEY, pseudo TEXT, display TEXT, created REAL, last REAL, record TEXT, pub TEXT)");
+		cnx.request("CREATE UNIQUE INDEX IF NOT EXISTS players_pub ON players(pub)");
 		cnx.request("CREATE TABLE IF NOT EXISTS identities (kind TEXT, value TEXT, uid TEXT, PRIMARY KEY(kind, value))");
 		cnx.request("CREATE INDEX IF NOT EXISTS identities_uid ON identities(uid)");
 		cnx.request("CREATE TABLE IF NOT EXISTS planets (gkey TEXT PRIMARY KEY, owner TEXT, galaxy TEXT, pid INTEGER, seed INTEGER, biome TEXT, size INTEGER, gen INTEGER, shipAt TEXT, access TEXT)");
@@ -88,8 +89,31 @@ class ServerDb {
 		var uid = null;
 		do uid = SecureRandom.bytes(8).toHex() while( getPlayer(uid) != null );
 		var now = Sys.time();
-		cnx.request("INSERT INTO players VALUES (" + q(uid) + ", " + q(pseudo) + ", " + q(display) + ", " + now + ", " + now + ", '')");
+		var pub = null;
+		do pub = SecureRandom.bytes(4).toHex() while( uidOfPub(pub) != null );
+		cnx.request("INSERT INTO players VALUES (" + q(uid) + ", " + q(pseudo) + ", " + q(display) + ", " + now + ", " + now + ", '', " + q(pub) + ")");
 		return uid;
+	}
+
+	/** id publico del jugador (8 cifras hexadecimales): lo que ven los demas de el y de su galaxia, nunca su uid */
+	public function pubOf( uid : String ) : Null<String> {
+		var rs = cnx.request("SELECT pub FROM players WHERE uid = " + q(uid));
+		return rs.hasNext() ? Std.string(rs.next().pub) : null;
+	}
+
+	public function uidOfPub( pub : String ) : Null<String> {
+		var rs = cnx.request("SELECT uid FROM players WHERE pub = " + q(pub));
+		return rs.hasNext() ? Std.string(rs.next().uid) : null;
+	}
+
+	/** todos los planetas guardados (para los accesos: pocos por jugador) */
+	public function allPlanets() : Array<PlanetRow> {
+		var out = [];
+		for( o in cnx.request("SELECT gkey FROM planets") ) {
+			var p = getPlanet(Std.string(o.gkey));
+			if( p != null ) out.push(p);
+		}
+		return out;
 	}
 
 	public function getPlayer( uid : String ) : Null<PlayerRow> {

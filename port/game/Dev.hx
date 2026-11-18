@@ -601,6 +601,8 @@ class Dev {
 			// multijugador (anadido del port): dentro de la partida, el fin de la conexion, y N jugadores conectados (mpplayers3)
 			case "mp": app.mp != null && app.mp.isPlaying();
 			case "mpend": app.mp != null && app.mp.ended != null;
+			case "mpforeign": app.mp != null && app.mp.foreign.length > 0;
+			case w if( StringTools.startsWith(w, "mpremotes") ): g != null && g.net != null && g.net.remotes.count() >= Std.parseInt(w.substr(9));
 			case w if( StringTools.startsWith(w, "mpplayers") ): app.mp != null && Lambda.count(app.mp.players) >= Std.parseInt(w.substr(9));
 			case w if( StringTools.startsWith(w, "mpchat") ): app.mp != null && app.mp.chat.length >= Std.parseInt(w.substr(6));
 			default: true;
@@ -1498,6 +1500,12 @@ class Dev {
 			app.mp.say(a.slice(3).join(" "), CPrivate, Std.parseInt(a[2]));
 		case "admin":
 			app.mp.client.send(CAdmin(Std.parseInt(a[2]), Std.parseInt(a[3]), a.length > 4 ? a[4] : ""));
+		case "access":
+			app.mp.client.send(CAccess(Std.parseInt(a[2]), a[3] == "1", a.length > 4 && a[4] == "1", a.length > 5 && a[5] == "1", a.length > 6 ? Std.parseInt(a[6]) : 0));
+		case "invite":
+			app.mp.client.send(CInvite(Std.parseInt(a[2]), Std.parseInt(a[3]), a.length > 4 ? Std.parseInt(a[4]) : 0));
+		case "landforeign":
+			app.devLandForeign();
 		case "mode":
 			app.mp.client.send(CSetMode(a[2] == "1"));
 		case "leave":

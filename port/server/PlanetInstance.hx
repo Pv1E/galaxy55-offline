@@ -97,7 +97,7 @@ class ServerWorld extends WorldData {
 class PlanetInstance {
 
 	public var key(default, null) : String;
-	public var row(default, null) : ServerDb.PlanetRow;
+	public var row : ServerDb.PlanetRow;
 	public var world(default, null) : ServerWorld;
 	public var process(default, null) : WorldProcess;
 	public var players = new Array<GameServer.Session>();

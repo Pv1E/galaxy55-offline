@@ -32,6 +32,8 @@ class Session {
 	public var instance : PlanetInstance;
 	/** su ultima posicion (CState) */
 	public var pos : NetState;
+	/** derechos en el planeta donde esta (Rights) */
+	public var rights = 0;
 
 	public function new( id : Int, t : Transport ) {
 		this.id = id;
@@ -116,6 +118,14 @@ class GameServer {
 		sessions.push(s);
 		return s;
 	}
+
+	public function sessionById( id : Int ) : Session {
+		for( o in sessions ) if( o.id == id && o.state == SPlay ) return o;
+		return null;
+	}
+
+	/** las sesiones dentro del juego */
+	public function playing() : Array<Session> return [for( o in sessions ) if( o.state == SPlay ) o];
 
 	public function playersOnline() : Int {
 		var n = 0;

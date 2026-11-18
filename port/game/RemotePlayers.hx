@@ -173,6 +173,8 @@ class RemotePlayers {
 		}
 	}
 
+	public function count() return Lambda.count(remotes);
+
 	/** para las pruebas (print remotes) */
 	public function devInfo() : String {
 		var l = [for( r in remotes ) r.id + "@" + Math.round(r.x * 10) / 10 + "," + Math.round(r.y * 10) / 10 + "," + Math.round(r.z * 10) / 10 + (r.root.visible ? "" : "(oculto)") + (r.beam.root.visible ? " laser" : "")];

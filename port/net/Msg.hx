@@ -64,6 +64,37 @@ enum abstract NetFlags(Int) to Int {
 	var FJetpack = 4;
 }
 
+/** derechos de un jugador en un planeta (SPlanetData.rights) */
+enum abstract Rights(Int) to Int from Int {
+	var REnter = 1;
+	/** romper y poner (propietario e invitados exploradores) */
+	var RBuild = 2;
+	var RChests = 4;
+	var RActivate = 8;
+	var RPickup = 16;
+	/** propietario: accesos, mover la nave, ceder, abandonar */
+	var ROwner = 32;
+	/** visitante: no pierde el equipo al morir aqui */
+	var RVisitor = 64;
+	public static inline var ALL = 1 | 2 | 4 | 8 | 16 | 32;
+	public static inline var EXPLORER = 1 | 2 | 4 | 8 | 16;
+}
+
+/** papel de un invitado en un planeta */
+enum abstract GuestRole(Int) to Int from Int {
+	var GExplorer = 0;
+	var GVisitor = 1;
+}
+
+/** invitado de un planeta (id publico del jugador, su ultimo pseudo, su papel) */
+typedef NetGuest = { pub : String, name : String, role : Int };
+
+/** planeta de otra galaxia al que el jugador tiene acceso y su estado para el (ExpData: PInvited, PVisit, PForbidden...) */
+typedef NetForeignPlanet = { pid : Int, status : Int };
+
+/** galaxia de otro jugador con planetas a los que el jugador tiene acceso: lo que hace falta para dibujar su sistema */
+typedef NetForeign = { pub : String, owner : String, seed : Int, startSeed : Int, startBiome : String, startSize : Int, gone : Array<Int>, planets : Array<NetForeignPlanet> };
+
 /** Jugador en la lista (Tab, Opciones multijugador): id de la sesion (no la identidad), pseudo, papel y donde esta */
 typedef NetPlayer = { id : Int, name : String, role : Int, place : String };
 
@@ -91,6 +122,18 @@ enum ClientMsg {
 	CPlace( seq : Int, x : Int, y : Int, z : Int, gi : Int, level : Int, slot : Int );
 	/** partida del jugador (JSON comprimido): provisional, hasta que el servidor lleve el inventario y la economia */
 	CSaveRecord( data : Bytes );
+	/** propietario: abrir o cerrar su planeta pid, todos los invitados visitantes, visita para todo el servidor (gestionnaires) y
+	    lo que pueden hacer los visitantes (Rights: RChests, RActivate, RPickup) */
+	CAccess( pid : Int, open : Bool, allVisitors : Bool, serverVisit : Bool, visitorRights : Int );
+	/** propietario: invitar a un jugador conectado (id de sesion) con un papel (GuestRole) */
+	CInvite( pid : Int, target : Int, role : Int );
+	/** propietario: cambiar el papel de un invitado (role) o quitarlo (role = -1) */
+	CGuest( pid : Int, pub : String, role : Int );
+	/** propietario: ceder el titulo a un jugador conectado */
+	CTransfer( pid : Int, target : Int );
+	CAbandon( pid : Int );
+	/** pedir los accesos de un planeta propio (SAccess) */
+	CGetAccess( pid : Int );
 }
 
 enum ServerMsg {
@@ -120,6 +163,14 @@ enum ServerMsg {
 	SGone( id : Int );
 	/** el mar ha bajado una capa en este planeta */
 	SReduceWater;
+	/** accesos de un planeta propio (para su pantalla) */
+	SAccess( pid : Int, open : Bool, allVisitors : Bool, serverVisit : Bool, visitorRights : Int, guests : Array<NetGuest> );
+	/** galaxias de otros con planetas accesibles para el jugador (se anaden a su mapa) */
+	SForeign( list : Array<NetForeign> );
+	/** el jugador ya no puede estar en el planeta donde esta (cerrado, abandonado, retirado): vuelve al espacio */
+	SPlanetLost( reason : String );
+	/** sus derechos en este planeta han cambiado (Rights) */
+	SRights( rights : Int );
 }
 
 /**
@@ -200,6 +251,18 @@ class Msg {
 			w.uint(seq); w.uint(x); w.uint(y); w.uint(z); w.uint(gi); w.uint(level); w.uint(slot);
 		case CSaveRecord(data):
 			w.bytes(data);
+		case CAccess(pid, open, allVisitors, serverVisit, vr):
+			w.uint(pid); w.bool(open); w.bool(allVisitors); w.bool(serverVisit); w.uint(vr);
+		case CInvite(pid, target, role):
+			w.uint(pid); w.uint(target); w.uint(role);
+		case CGuest(pid, pub, role):
+			w.uint(pid); w.string(pub); w.int(role);
+		case CTransfer(pid, target):
+			w.uint(pid); w.uint(target);
+		case CAbandon(pid):
+			w.uint(pid);
+		case CGetAccess(pid):
+			w.uint(pid);
 		}
 		return w.getBytes();
 	}
@@ -238,6 +301,20 @@ class Msg {
 			var level = r.uintIn(0, 15); var slot = r.uintIn(0, 255);
 			CPlace(seq, x, y, z, gi, level, slot);
 		case 13: CSaveRecord(r.bytes(Channel.MAX_FRAME));
+		case 14:
+			var pid = r.uintIn(0, 1 << 20); var open = r.bool(); var av = r.bool(); var sv = r.bool(); var vr = r.uintIn(0, 0xFF);
+			CAccess(pid, open, av, sv, vr);
+		case 15:
+			var pid = r.uintIn(0, 1 << 20); var t = r.uint(); var role = r.uintIn(0, 1);
+			CInvite(pid, t, role);
+		case 16:
+			var pid = r.uintIn(0, 1 << 20); var pub = r.string(16); var role = r.intIn(-1, 1);
+			CGuest(pid, pub, role);
+		case 17:
+			var pid = r.uintIn(0, 1 << 20); var t = r.uint();
+			CTransfer(pid, t);
+		case 18: CAbandon(r.uintIn(0, 1 << 20));
+		case 19: CGetAccess(r.uintIn(0, 1 << 20));
 		case k: throw new NetReader.NetError("mensaje de cliente desconocido " + k);
 		}
 		r.done();
@@ -270,6 +347,23 @@ class Msg {
 		case SGone(id):
 			w.uint(id);
 		case SReduceWater:
+		case SAccess(pid, open, allVisitors, serverVisit, vr, guests):
+			w.uint(pid); w.bool(open); w.bool(allVisitors); w.bool(serverVisit); w.uint(vr);
+			w.uint(guests.length);
+			for( g in guests ) { w.string(g.pub); w.string(g.name); w.uint(g.role); }
+		case SForeign(list):
+			w.uint(list.length);
+			for( f in list ) {
+				w.string(f.pub); w.string(f.owner); w.int(f.seed); w.int(f.startSeed); w.string(f.startBiome); w.uint(f.startSize);
+				w.uint(f.gone.length);
+				for( g in f.gone ) w.uint(g);
+				w.uint(f.planets.length);
+				for( p in f.planets ) { w.uint(p.pid); w.uint(p.status); }
+			}
+		case SRights(r):
+			w.uint(r);
+		case SPlanetLost(reason):
+			w.string(reason);
 		case SPong(t, serverTime):
 			w.double(t); w.double(serverTime);
 		case SPlayers(list):
@@ -341,6 +435,25 @@ class Msg {
 			SStates([for( _ in 0...n ) readState(r)]);
 		case 16: SGone(r.uint());
 		case 17: SReduceWater;
+		case 18:
+			var pid = r.uintIn(0, 1 << 20); var open = r.bool(); var av = r.bool(); var sv = r.bool(); var vr = r.uintIn(0, 0xFF);
+			var n = r.count(PLAYERS_MAX, 3);
+			var guests = [for( _ in 0...n ) { var pub = r.string(16); var name = r.string(NAME_MAX + 8); var role = r.uintIn(0, 1); { pub : pub, name : name, role : role }; }];
+			SAccess(pid, open, av, sv, vr, guests);
+		case 19:
+			var n = r.count(PLAYERS_MAX, 8);
+			var list = [for( _ in 0...n ) {
+				var pub = r.string(16); var owner = r.string(NAME_MAX + 8); var seed = r.int(); var ss = r.int(); var sb = r.string(32);
+				var sz = r.uintIn(0, 8);
+				var ng = r.count(1024, 1);
+				var gone = [for( _ in 0...ng ) r.uint()];
+				var np = r.count(1024, 2);
+				var planets = [for( _ in 0...np ) { var pid = r.uint(); var st = r.uintIn(0, 15); { pid : pid, status : st }; }];
+				{ pub : pub, owner : owner, seed : seed, startSeed : ss, startBiome : sb, startSize : sz, gone : gone, planets : planets };
+			}];
+			SForeign(list);
+		case 20: SPlanetLost(r.string(64));
+		case 21: SRights(r.uintIn(0, 0xFFFF));
 		case k: throw new NetReader.NetError("mensaje de servidor desconocido " + k);
 		}
 		r.done();

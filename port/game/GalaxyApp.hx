@@ -202,6 +202,7 @@ class GalaxyApp extends hxd.App {
 	public static inline var VERSION = "0.8.1";
 	/** el juego corre en pruebas (--script o --shot): no se mueve el cursor del sistema (centerMouse) */
 	static var TEST_RUN = Lambda.exists(Sys.args(), a -> StringTools.startsWith(a, "--shot=") || StringTools.startsWith(a, "--script="));
+	static var FIXED_DT = { var v = 0.; for( a in Sys.args() ) if( StringTools.startsWith(a, "--fixeddt=") ) v = Std.parseFloat(a.substr(10)); v; };
 	/** color de fx.Load */
 	static inline var LOAD_COLOR = 0xC93814;
 	static var BIOMES = ["BIAutumn", "BIMoon", "BIMars", "BIWinterPeaks", "BIAcidForest"];
@@ -1748,6 +1749,8 @@ class GalaxyApp extends hxd.App {
 		Explorer.shipBytes = Hangar.currentShip(spaceInfo);
 		// activos: los planetas con licencia de la ESCorp (Licenses)
 		var infos = ExpData.ExpOffline.make(uni.seed, uni.start, uni.licenses, uni.pos, uni.abandoned, uni.gone);
+		// multijugador: los sistemas de otros jugadores donde este tiene planetas abiertos (ForeignMap)
+		if( mp != null ) ForeignMap.inject(infos, mp.foreign);
 		Explorer.robotStart = uni.robot;
 		explorer = new Explorer(s2d, infos, shipFrames);
 		hxd.System.allowTimeout = true;
@@ -1765,7 +1768,7 @@ class GalaxyApp extends hxd.App {
 		// cometas (Comets, añadido del port): no en el tutorial; su ventana dice el tiempo de amarre con la nave de ahora
 		var tuto = Tutorial.active(spaceInfo);
 		var dock = Comets.dockTime(Hangar.speedOf(Hangar.currentShip(spaceInfo)));
-		explorer.cometOf = function(s) return tuto ? null : Comets.of(uni, s);
+		explorer.cometOf = function(s) return tuto || ForeignMap.isForeign(s.id) ? null : Comets.of(uni, s);
 		explorer.cometInfo = function(p) return Lang.t("exp.comet.info").split("%t%").join(Comets.clock(dock));
 		explorer.addComet();
 		explorer.onAbandon = askAbandon;
@@ -1805,6 +1808,19 @@ class GalaxyApp extends hxd.App {
 	public function curInfo() : SaveInfo return game != null ? game.info : spaceInfo;
 
 	/** pruebas: aterrizar en el planeta del que despegaste */
+	/** pruebas (multijugador): aterrizar en el primer planeta abierto de otro jugador del mapa */
+	public function devLandForeign() {
+		if( explorer == null ) return;
+		for( s in explorer.infos.systems )
+			if( ForeignMap.isForeign(s.id) )
+				for( p in s.planets )
+					if( p.status == PInvited || p.status == PVisit ) {
+						landOnPlanet(p, s);
+						return;
+					}
+		Sys.println("landforeign: ningun planeta abierto de otro");
+	}
+
 	public function devLandHome() {
 		if( explorer == null ) return;
 		var id = universe().planetId;
@@ -1841,6 +1857,31 @@ class GalaxyApp extends hxd.App {
 
 	/** aterrizar en un planeta del mapa: se guardan los cambios del planeta actual y se carga el elegido (o se crea si es nuevo) */
 	function landOnPlanet( p : ExpData.ExpPlanet, s : ExpData.ExpSystem ) {
+		// multijugador: planeta de otro jugador (ForeignMap): sin licencia ni cambios en la galaxia propia; el servidor da el terreno
+		var foreign = mp != null ? ForeignMap.target(p.id) : null;
+		if( foreign != null ) {
+			var old = spaceInfo;
+			storeMapPos();
+			space.land(p);
+			space = null;
+			takeoffSave = 0;
+			old.uni.space = null;
+			old.uni.planetId = p.id;
+			old.comet = null;
+			explorer.dispose();
+			explorer = null;
+			spaceInfo = null;
+			dim.visible = true;
+			ui.removeChildren();
+			screens = new Map();
+			old.px = old.py = old.pz = -1;
+			old.yaw = old.pitch = 0;
+			pendingLand = old;
+			state = Loading;
+			showPlanetLoading();
+			mp.client.send(CLand(foreign.pub, foreign.pid));
+			return;
+		}
 		var old = spaceInfo;
 		storeMapPos();
 		space.land(p);
@@ -2687,6 +2728,27 @@ class GalaxyApp extends hxd.App {
 				old.shipAt = { x : Std.int(o.x), y : Std.int(o.y) };
 			} catch( e : Dynamic ) {}
 			startGame(old);
+		case SPlanetLost(reason):
+			// el planeta se ha cerrado, abandonado o ya no se puede entrar: de vuelta al espacio (con el aviso)
+			showToast(Lang.t(reason));
+			if( pendingLand != null ) {
+				var old = pendingLand;
+				pendingLand = null;
+				old.uni.space = true;
+				spaceInfo = old;
+				buildExplorer();
+			} else if( game != null && game.hangar == null && game.info.mothership != true ) {
+				game.info.uni.space = true;
+				buildExplorer();
+			}
+		case SForeign(_):
+			// el mapa abierto se rehace con los sistemas nuevos de otros jugadores
+			if( explorer != null && game == null && spaceInfo != null ) {
+				storeMapPos();
+				explorer.dispose();
+				explorer = null;
+				buildExplorer();
+			}
 		default:
 			if( game != null && game.net != null ) game.net.onMessage(m);
 		}
@@ -3068,6 +3130,8 @@ class GalaxyApp extends hxd.App {
 			lastStamp = now;
 		}
 		if( dt > 0.1 ) dt = 0.1;
+		// pruebas (--fixeddt=S): cada fotograma avanza lo mismo; asi un guion da lo mismo en un PC lento o cargado (port/dev/baseline.ps1)
+		if( FIXED_DT > 0 ) dt = FIXED_DT;
 		// multijugador: el servidor del anfitrion y el cliente no se paran nunca (menus, carga, pausa)
 		if( mp != null ) mp.pump(dt);
 		// iconos grandes de la Base de datos ESCorp y de la paleta: unos pocos por fotograma (mas con una de ellas abierta); los de

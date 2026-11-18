@@ -1,4 +1,4 @@
-param([string]$Script, [int]$Timeout = 120, [string]$Extra = "", [string]$Data = "")
+param([string]$Script, [int]$Timeout = 120, [string]$Extra = "", [string]$Data = "", [string]$HlFile = "port/out/galaxy55.hl")
 # Uso: powershell -File port/dev/devrun.ps1 -Script port/dev/synth.txt   (ver Dev.hx para las ordenes). Necesita haber compilado port/game.hxml.
 $repo = (Resolve-Path "$PSScriptRoot\..\..").Path
 Set-Location $repo
@@ -67,7 +67,7 @@ public static class DevRun {
 	}
 }
 "@
-if (-not [DevRun]::Run("`"$run`" port/out/galaxy55.hl --script=$Script $Extra", $repo, "$repo\port\out\dev_out.txt", "$repo\port\out\dev_err.txt", $Timeout * 1000)) { "TIMEOUT" }
+if (-not [DevRun]::Run("`"$run`" $HlFile --script=$Script $Extra", $repo, "$repo\port\out\dev_out.txt", "$repo\port\out\dev_err.txt", $Timeout * 1000)) { "TIMEOUT" }
 Get-Content "$repo\port\out\dev_out.txt" | Where-Object { $_ -notmatch '^(fondo|ruta|mundo)' }
 $e = Get-Content "$repo\port\out\dev_err.txt" -ErrorAction SilentlyContinue | Select-Object -First 8
 if ($e) { "ERR: $e" }

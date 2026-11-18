@@ -1,4 +1,4 @@
-param([switch]$Record, [string[]]$Only = @(), [int]$Timeout = 240, [double]$MaxPct = 0.5)
+param([switch]$Record, [string[]]$Only = @(), [int]$Timeout = 240, [double]$MaxPct = 0.5, [string]$HlFile = "port/out/galaxy55.hl")
 # Base de referencia del juego en solo para el multijugador (anadido del port): mientras se separan las reglas del dibujo, el solo
 # no debe cambiar. -Record pasa cada guion DOS veces con --rngseed=1 y guarda salida y capturas en port/out/baseline/<guion>/a y b;
 # sin -Record lo pasa una vez y lo compara con a, sin contar lo que ya cambia solo entre a y b (lineas con tiempos o posiciones,
@@ -19,7 +19,7 @@ function Run-One([string]$name, [string]$dest) {
 	if (Test-Path $data) { Remove-Item -Recurse -Force $data }
 	New-Item -ItemType Directory -Force $data | Out-Null
 	$start = Get-Date
-	$out = & powershell -NoProfile -ExecutionPolicy Bypass -File "$repo\port\dev\devrun.ps1" -Script "port/dev/$name.txt" -Timeout $Timeout -Data $data -Extra "--rngseed=1"
+	$out = & powershell -NoProfile -ExecutionPolicy Bypass -File "$repo\port\dev\devrun.ps1" -Script "port/dev/$name.txt" -Timeout $Timeout -Data $data -HlFile $HlFile -Extra "--rngseed=1 --fixeddt=0.016666667"
 	$out | Set-Content -Encoding utf8 "$dest\out.txt"
 	Get-ChildItem "$repo\port\out\*.png" | Where-Object { $_.LastWriteTime -ge $start } | ForEach-Object { Copy-Item $_.FullName $dest }
 }

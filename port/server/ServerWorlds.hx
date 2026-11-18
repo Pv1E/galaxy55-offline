@@ -3,6 +3,10 @@ import Msg;
 import SaveData.SaveInfo;
 import GameServer.Session;
 
+/** accesos de un planeta (planets.access en JSON): abierto, todos los invitados visitantes, visita para todo el servidor, lo que
+    pueden hacer los visitantes (Rights) y los invitados (uid y papel: 0 explorador, 1 visitante) */
+typedef PlanetAccess = { open : Bool, allVisitors : Bool, serverVisit : Bool, vr : Int, guests : Array<{ uid : String, role : Int }> };
+
 /**
  * El mundo compartido del servidor (anadido del port, multijugador): la partida de cada jugador (su SaveInfo, guardado en la
  * base de datos), los planetas cargados (PlanetInstance) y lo que pasa en ellos: aterrizar y despegar, la posicion de cada uno
@@ -42,6 +46,7 @@ class ServerWorlds {
 			return false;
 		}
 		sendRecord(s);
+		sendForeign(s);
 		return true;
 	}
 
@@ -53,6 +58,7 @@ class ServerWorlds {
 		saveRecord(s);
 		server.files.log(s.display + " empieza en el sector " + seed + (tuto ? " con el tutorial" : ""));
 		sendRecord(s);
+		sendForeign(s);
 	}
 
 	/** la partida al cliente; si esta en un planeta, con el terreno de ese planeta (que es del servidor) */
@@ -84,6 +90,11 @@ class ServerWorlds {
 		// el terreno es del servidor (planet_edits): no se guarda en la partida
 		info.edits = [];
 		if( info.uni != null ) for( p in info.uni.planets ) p.edits = [];
+		// en un planeta de otro jugador: su partida sigue en su galaxia (al volver, en el espacio)
+		if( info.uni != null && s.instance != null && s.instance.row.galaxy != s.uid ) {
+			info.uni.space = true;
+			if( s.record != null && s.record.uni != null ) info.uni.planetId = s.record.uni.planetId;
+		}
 		s.record = info;
 		saveRecord(s);
 	}
@@ -110,17 +121,51 @@ class ServerWorlds {
 		var d = ExpData.ExpOffline.make(uni.seed, uni.start, null, null, null, uni.gone);
 		var f = ExpData.ExpOffline.planet(d, pid);
 		if( f == null ) return null;
+		// licencias: el servidor cuenta los planetas que tiene (tambien los cedidos por otros); gestionnaires y creativo, sin limite
+		if( !s.isManager() && s.record.creative != true && ownedCount(s.uid) >= Licenses.MAX ) return null;
 		row = { gkey : gkey, owner : s.uid, galaxy : s.uid, pid : pid, seed : f.p.seed, biome : f.p.biome, size : f.p.size,
 			gen : gen.Generator.VERSION, shipAt : "", access : "" };
-		// los cambios de una partida solo (la del anfitrion) pasan al planeta la primera vez
+		// lo de una partida solo (la del anfitrion, al hospedarla): el planeta guardado pasa al servidor la primera vez
+		var saved : Array<Int> = null;
 		for( q in uni.planets ) if( q.id == pid ) {
 			if( q.genVersion != null ) row.gen = SaveData.genVersion(q.genVersion);
 			if( q.shipAt != null ) row.shipAt = haxe.Json.stringify(q.shipAt);
+			saved = q.edits;
+		}
+		if( uni.planetId == pid && s.record.edits != null && s.record.edits.length > 0 ) {
+			saved = s.record.edits;
+			row.gen = SaveData.genVersion(s.record.genVersion);
+			if( s.record.shipAt != null ) row.shipAt = haxe.Json.stringify(s.record.shipAt);
 		}
 		db.begin();
 		db.putPlanet(row);
+		if( saved != null && saved.length > 0 ) importEdits(row, saved);
 		db.commit();
 		return row;
+	}
+
+	/** los cambios de una partida solo, a los trozos del servidor */
+	function importEdits( row : ServerDb.PlanetRow, flat : Array<Int> ) {
+		var size = row.size << Const.BITS;
+		var chunks = new Map<Int, Array<Int>>();
+		var i = 0;
+		while( i + 1 < flat.length ) {
+			var k = flat[i], v = flat[i + 1];
+			i += 2;
+			var col = k >> WorldData.ZBITS;
+			var c = k < 0 ? -1 : ((col % size) >> 4) | ((Std.int(col / size) >> 4) << 8);
+			var l = chunks.get(c);
+			if( l == null ) chunks.set(c, l = []);
+			l.push(k);
+			l.push(v);
+		}
+		for( c => l in chunks ) db.saveEditChunk(row.gkey, c, l);
+	}
+
+	function ownedCount( uid : String ) : Int {
+		var n = 0;
+		for( p in db.allPlanets() ) if( p.owner == uid ) n++;
+		return n;
 	}
 
 	function instance( gkey : String, row : ServerDb.PlanetRow ) : PlanetInstance {
@@ -136,16 +181,22 @@ class ServerWorlds {
 		return inst.ready() ? inst.world.editsFlat() : db.loadEdits(inst.key);
 	}
 
-	/** s entra en el planeta pid de su galaxia */
-	function enter( s : Session, gkey : String, pid : Int ) : PlanetInstance {
+	/** s entra en el planeta row */
+	function enterRow( s : Session, row : ServerDb.PlanetRow ) : PlanetInstance {
 		leaveInstance(s);
-		var row = planetRow(s, pid);
-		if( row == null ) return null;
-		var inst = instance(gkey, row);
+		var inst = instance(row.gkey, row);
 		inst.players.push(s);
 		s.instance = inst;
-		s.where = gkey;
+		s.where = row.gkey;
+		s.rights = rightsFor(s.uid, inst.row);
 		return inst;
+	}
+
+	/** s entra en el planeta pid de su galaxia (al conectarse, si estaba en el) */
+	function enter( s : Session, gkey : String, pid : Int ) : PlanetInstance {
+		var row = planetRow(s, pid);
+		if( row == null || rightsFor(s.uid, row) & REnter == 0 ) return null;
+		return enterRow(s, row);
 	}
 
 	function leaveInstance( s : Session ) {
@@ -157,26 +208,29 @@ class ServerWorlds {
 		s.instance = null;
 		s.where = "";
 		s.pos = null;
+		s.rights = 0;
 	}
 
 	function land( s : Session, galaxy : String, pid : Int ) {
-		if( galaxy != "" ) {
-			// los planetas de otros (invitaciones) llegan con los accesos
-			s.send(SNotice("mp.land.denied", []));
+		var row : ServerDb.PlanetRow = null;
+		if( galaxy == "" ) row = planetRow(s, pid);
+		else {
+			var g = db.uidOfPub(galaxy);
+			if( g != null ) row = db.getPlanet(g + ":" + pid);
+		}
+		if( row == null || rightsFor(s.uid, row) & REnter == 0 ) {
+			s.send(SPlanetLost("mp.land.denied"));
 			return;
 		}
-		var inst = enter(s, ownKey(s, pid), pid);
-		if( inst == null ) {
-			s.send(SNotice("mp.land.denied", []));
-			return;
+		var inst = enterRow(s, row);
+		if( galaxy == "" ) {
+			var uni = s.record.uni;
+			uni.planetId = pid;
+			uni.space = null;
+			saveRecord(s);
 		}
-		var uni = s.record.uni;
-		uni.planetId = pid;
-		uni.space = null;
-		saveRecord(s);
-		var row = inst.row;
 		s.send(SPlanetData(inst.key, row.seed, row.biome, row.size, row.gen, row.shipAt, NetZip.packInts(currentEdits(inst)),
-			server.db.displayOf(row.owner), 0xFFFF));
+			server.db.displayOf(row.owner), s.rights));
 	}
 
 	function takeoff( s : Session ) {
@@ -188,7 +242,201 @@ class ServerWorlds {
 	}
 
 	public function onLeave( s : Session ) {
+		if( s.instance != null && s.instance.row.galaxy != s.uid && s.record != null && s.record.uni != null ) {
+			s.record.uni.space = true;
+			saveRecord(s);
+		}
 		leaveInstance(s);
+	}
+
+	// ---------------------------------------------------------------- accesos
+
+	static function readAccess( j : String ) : PlanetAccess {
+		var a : PlanetAccess = { open : false, allVisitors : false, serverVisit : false, vr : 0, guests : [] };
+		if( j == null || j == "" ) return a;
+		try {
+			var o : Dynamic = haxe.Json.parse(j);
+			a.open = o.open == true;
+			a.allVisitors = o.allVisitors == true;
+			a.serverVisit = o.serverVisit == true;
+			a.vr = Std.int(o.vr) & ((RChests : Int) | (RActivate : Int) | (RPickup : Int));
+			if( o.guests != null ) for( g in (o.guests : Array<Dynamic>) ) a.guests.push({ uid : Std.string(g.uid), role : Std.int(g.role) == 1 ? 1 : 0 });
+		} catch( e : Dynamic ) {}
+		return a;
+	}
+
+	/** derechos de uid en el planeta row (Rights): el propietario todo; cerrado, nadie mas; un invitado como explorador o visitante */
+	function rightsFor( uid : String, row : ServerDb.PlanetRow ) : Int {
+		if( row.owner == uid ) return Rights.ALL;
+		var a = readAccess(row.access);
+		if( !a.open ) return 0;
+		for( g in a.guests )
+			if( g.uid == uid ) return a.allVisitors || g.role == (GVisitor : Int) ? (REnter : Int) | (RVisitor : Int) | a.vr : Rights.EXPLORER;
+		if( a.serverVisit ) return (REnter : Int) | (RVisitor : Int) | a.vr;
+		return 0;
+	}
+
+	/** el planeta pid de s como propietario: en su galaxia, o cedido por otro y en el que esta ahora */
+	function ownedPlanet( s : Session, pid : Int ) : ServerDb.PlanetRow {
+		var row = db.getPlanet(ownKey(s, pid));
+		if( row != null && row.owner == s.uid ) return row;
+		if( s.instance != null && s.instance.row.pid == pid && s.instance.row.owner == s.uid ) return s.instance.row;
+		return null;
+	}
+
+	function saveAccess( row : ServerDb.PlanetRow, a : PlanetAccess ) {
+		row.access = haxe.Json.stringify(a);
+		db.begin();
+		db.putPlanet(row);
+		db.commit();
+		var inst = instances.get(row.gkey);
+		if( inst != null ) inst.row = row;
+		enforce(row);
+	}
+
+	/** tras cambiar los accesos: derechos al dia de los que estan alli, fuera los que ya no pueden, mapas al dia */
+	function enforce( row : ServerDb.PlanetRow ) {
+		var inst = instances.get(row.gkey);
+		if( inst != null )
+			for( p in inst.players.copy() ) {
+				var r = rightsFor(p.uid, row);
+				if( r & REnter == 0 ) {
+					leaveInstance(p);
+					p.send(SPlanetLost("mp.planet.closed"));
+				} else if( r != p.rights ) {
+					p.rights = r;
+					p.send(SRights(r));
+				}
+			}
+		for( p in server.playing() ) sendForeign(p);
+	}
+
+	function sendAccess( s : Session, row : ServerDb.PlanetRow ) {
+		var a = readAccess(row.access);
+		var guests = [for( g in a.guests ) { pub : db.pubOf(g.uid), name : db.displayOf(g.uid), role : g.role }];
+		s.send(SAccess(row.pid, a.open, a.allVisitors, a.serverVisit, a.vr, guests));
+	}
+
+	/** galaxias de otros con planetas accesibles para s: sus sistemas enteros, con el estado de cada planeta para s */
+	public function sendForeign( s : Session ) {
+		if( s.record == null ) return;
+		var byGalaxy = new Map<String, Array<ServerDb.PlanetRow>>();
+		for( p in db.allPlanets() ) {
+			if( p.galaxy == s.uid ) continue;
+			if( rightsFor(s.uid, p) & REnter == 0 ) continue;
+			var l = byGalaxy.get(p.galaxy);
+			if( l == null ) byGalaxy.set(p.galaxy, l = []);
+			l.push(p);
+		}
+		var out = [];
+		for( g => rows in byGalaxy ) {
+			var owner = db.getPlayer(g);
+			if( owner == null || owner.record == "" ) continue;
+			var rec : Dynamic = try haxe.Json.parse(owner.record) catch( e : Dynamic ) null;
+			if( rec == null || rec.uni == null ) continue;
+			var seed = Std.int(rec.uni.seed), st : Dynamic = rec.uni.start;
+			var gone : Array<Int> = rec.uni.gone == null ? [] : [for( v in (rec.uni.gone : Array<Dynamic>) ) Std.int(v)];
+			var start = st == null ? null : { seed : Std.int(st.seed), biome : Std.string(st.biome), size : Std.int(st.size) };
+			var d = ExpData.ExpOffline.make(seed, start, null, null, null, gone);
+			var planets = new Array<NetForeignPlanet>();
+			var systems = new Map<Int, Bool>();
+			for( r in rows ) {
+				var f = ExpData.ExpOffline.planet(d, r.pid);
+				if( f != null ) systems.set(f.s.id, true);
+			}
+			for( sys in d.systems ) {
+				if( !systems.exists(sys.id) ) continue;
+				for( p in sys.planets ) {
+					var row = Lambda.find(rows, r -> r.pid == p.id);
+					var status : ExpData.ExpPlanetStatus = PForbidden;
+					if( row != null ) {
+						var r = rightsFor(s.uid, row);
+						status = r & ROwner != 0 ? PActive : (r & RVisitor != 0 ? PVisit : PInvited);
+					}
+					planets.push({ pid : p.id, status : Type.enumIndex(status) });
+				}
+			}
+			out.push({ pub : db.pubOf(g), owner : owner.display, seed : seed, startSeed : start == null ? 0 : start.seed,
+				startBiome : start == null ? "" : start.biome, startSize : start == null ? 0 : start.size, gone : gone, planets : planets });
+		}
+		s.send(SForeign(out));
+	}
+
+	function accessMessage( s : Session, m : ClientMsg ) {
+		switch( m ) {
+		case CGetAccess(pid):
+			var row = ownedPlanet(s, pid);
+			if( row != null ) sendAccess(s, row);
+		case CAccess(pid, open, allVisitors, serverVisit, vr):
+			var row = ownedPlanet(s, pid);
+			if( row == null ) return;
+			var a = readAccess(row.access);
+			a.open = open;
+			a.allVisitors = allVisitors;
+			// la visita de todo el servidor solo la pone un gestionnaire
+			a.serverVisit = serverVisit && s.isManager();
+			a.vr = vr & ((RChests : Int) | (RActivate : Int) | (RPickup : Int));
+			saveAccess(row, a);
+			sendAccess(s, row);
+		case CInvite(pid, target, role):
+			var row = ownedPlanet(s, pid);
+			var t = server.sessionById(target);
+			if( row == null || t == null || t.uid == s.uid ) return;
+			var a = readAccess(row.access);
+			a.guests = a.guests.filter(g -> g.uid != t.uid);
+			a.guests.push({ uid : t.uid, role : role });
+			saveAccess(row, a);
+			sendAccess(s, row);
+			t.send(SNotice("mp.invited", [s.display]));
+			server.files.log(s.display + " invita a " + t.display + " a " + row.gkey + (role == 1 ? " (visitante)" : ""));
+		case CGuest(pid, pub, role):
+			var row = ownedPlanet(s, pid);
+			var uid = db.uidOfPub(pub);
+			if( row == null || uid == null ) return;
+			var a = readAccess(row.access);
+			if( role < 0 ) a.guests = a.guests.filter(g -> g.uid != uid);
+			else for( g in a.guests ) if( g.uid == uid ) g.role = role;
+			saveAccess(row, a);
+			sendAccess(s, row);
+		case CTransfer(pid, target):
+			var row = ownedPlanet(s, pid);
+			var t = server.sessionById(target);
+			if( row == null || t == null || t.uid == s.uid || t.record == null ) return;
+			// el que lo recibe necesita una licencia libre, salvo que sea gestionnaire o este en creativo
+			if( !t.isManager() && t.record.creative != true && ownedCount(t.uid) >= Licenses.MAX ) {
+				s.send(SNotice("mp.transfer.full", [t.display]));
+				return;
+			}
+			var a = readAccess(row.access);
+			a.guests = a.guests.filter(g -> g.uid != t.uid && g.uid != s.uid);
+			// el que lo cede se queda como explorador
+			a.guests.push({ uid : s.uid, role : 0 });
+			a.open = true;
+			row.owner = t.uid;
+			if( s.record.uni != null && row.galaxy == s.uid ) s.record.uni.licenses = s.record.uni.licenses.filter(l -> l != pid);
+			saveRecord(s);
+			saveAccess(row, a);
+			server.files.log(s.display + " cede " + row.gkey + " a " + t.display);
+			t.send(SNotice("mp.transfer.got", [s.display]));
+			s.send(SNotice("mp.transfer.done", [t.display]));
+		case CAbandon(pid):
+			var row = ownedPlanet(s, pid);
+			if( row == null ) return;
+			var inst = instances.get(row.gkey);
+			if( inst != null ) {
+				for( p in inst.players.copy() ) {
+					leaveInstance(p);
+					if( p != s ) p.send(SPlanetLost("mp.planet.abandoned"));
+				}
+				instances.remove(row.gkey);
+			}
+			db.begin();
+			db.deletePlanet(row.gkey);
+			db.commit();
+			server.files.log(s.display + " abandona " + row.gkey);
+			for( p in server.playing() ) sendForeign(p);
+		default:
+		}
 	}
 
 	// ---------------------------------------------------------------- romper y poner
@@ -208,6 +456,13 @@ class ServerWorlds {
 	function blockChange( s : Session, m : ClientMsg ) {
 		var inst = s.instance;
 		if( inst == null ) return;
+		if( s.rights & RBuild == 0 ) {
+			switch( m ) {
+			case CBreak(seq, _, _, _, _), CPlace(seq, _, _, _, _, _, _): s.send(SSetResult(seq, false, 0));
+			default:
+			}
+			return;
+		}
 		if( !inst.ready() ) {
 			inst.waiting.push({ s : s, m : m });
 			return;
@@ -260,6 +515,8 @@ class ServerWorlds {
 			s.pos = p;
 		case CBreak(_, _, _, _, _), CPlace(_, _, _, _, _, _, _):
 			blockChange(s, m);
+		case CAccess(_, _, _, _, _), CInvite(_, _, _), CGuest(_, _, _), CTransfer(_, _), CAbandon(_), CGetAccess(_):
+			if( s.record != null ) accessMessage(s, m);
 		case CSaveRecord(data):
 			if( s.record != null ) clientRecord(s, data);
 		default:

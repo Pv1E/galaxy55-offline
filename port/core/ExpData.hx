@@ -18,6 +18,8 @@ enum ExpPlanetStatus {
 	PAbandonned;
 	PInvited;
 	PForbidden;
+	/** multijugador (anadido del port): planeta de otro jugador abierto solo a visitas */
+	PVisit;
 }
 
 typedef ExpPlanet = {

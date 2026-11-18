@@ -465,6 +465,22 @@ class Explorer extends h2d.Object {
 			prev.getTexture().dispose();
 	}
 
+	/**
+	 * Iconos del multijugador (anadido del port) en el mapa: los de mp_icons.png (16x16: candado abierto, candado cerrado rojo,
+	 * camara) si existe; si no, provisionales hechos con los de tiles.png (candado dorado en verde o rojo, "?" en azul)
+	 */
+	static var mpTiles : h2d.Tile;
+	function mpIcon( icon : Int, parent : h2d.Object ) : h2d.Bitmap {
+		var i = icon - ExpRoom.ICON_OPEN;
+		if( mpTiles == null ) {
+			try mpTiles = hxd.res.Any.fromBytes("mp_icons.png", Res.exploreBytes("mp_icons.png")).toTile() catch( e : Dynamic ) mpTiles = null;
+		}
+		if( mpTiles != null ) return new h2d.Bitmap(mpTiles.sub(i * 16, 0, 16, 16, -8, -8), parent);
+		var b = new h2d.Bitmap(tiles.sub((i == 2 ? 2 : 0) * 16, 0, 16, 16, -8, -8), parent);
+		b.color.setColor(i == 0 ? 0xFF80FF80 : (i == 1 ? 0xFFFF5050 : 0xFF70C0FF));
+		return b;
+	}
+
 	function frame( i : Int, size = 32 ) : h2d.Tile return tiles.sub(i * size, 32, size, size, -size * 0.5, -size * 0.5);
 
 	function label( parent : h2d.Object, str : String, scale : Float, col : Int ) {
@@ -995,7 +1011,7 @@ class Explorer extends h2d.Object {
 		var bmp = new h2d.Bitmap(bmpTile(pv.bd, true).center(), obj);
 		bmp.setScale(pv.scale);
 		if( pv.icon > 0 ) {
-			var ic = new h2d.Bitmap(tiles.sub(pv.icon * 16, 0, 16, 16, -8, -8), obj);
+			var ic = pv.icon >= ExpRoom.ICON_OPEN ? mpIcon(pv.icon, obj) : new h2d.Bitmap(tiles.sub(pv.icon * 16, 0, 16, 16, -8, -8), obj);
 			ic.x = pv.iconX;
 			ic.y = pv.iconY;
 		}
@@ -1393,7 +1409,7 @@ class Explorer extends h2d.Object {
 		switch( p.status ) {
 		case PUnexplored:
 			openWindow(sp, p.name, bname, Lang.t("exp.scan"), function() startScan(p), abandon);
-		case PActive, PInvited:
+		case PActive, PInvited, PVisit:
 			openWindow(sp, p.name, bname, Lang.t("exp.land"), function() landPlanet(p), abandon);
 		case PAbandonned, PForbidden:
 			openWindow(sp, p.name, bname, null, function() {});
@@ -1661,7 +1677,7 @@ class Explorer extends h2d.Object {
 		gps = [];
 	}
 
-	inline function isActive( p : ExpPlanet ) return p.status == PActive || p.status == PInvited;
+	inline function isActive( p : ExpPlanet ) return p.status == PActive || p.status == PInvited || p.status == PVisit;
 
 	/** gotoSolar: una flecha por planeta activo; gotoSector (processEnd): una por sistema abierto con alguno */
 	function rebuildGps() {

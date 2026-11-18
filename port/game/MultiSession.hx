@@ -27,6 +27,8 @@ class MultiSession {
 	public var onMessage : ServerMsg -> Void;
 	/** jugador nuevo en el servidor: empezar sin preguntar (false = sin tutorial; pruebas). null = la interfaz pregunta */
 	public var autoNewGame : Null<Bool>;
+	/** galaxias de otros con planetas abiertos para este jugador (SForeign: se anaden al mapa) */
+	public var foreign : Array<NetForeign> = [];
 
 	function new() {}
 
@@ -106,6 +108,8 @@ class MultiSession {
 				chat.push({ from : from, name : name, chan : chan, msg : msg });
 			case SNotice(key, args):
 				notices.push({ key : key, args : args });
+			case SForeign(l):
+				foreign = l;
 			case SMode(c):
 				creative = c;
 			default:
