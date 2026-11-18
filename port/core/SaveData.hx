@@ -360,8 +360,13 @@ class SaveData {
 	}
 
 	public static function read( id : String ) : SaveInfo {
+		try return parse(haxe.Json.parse(sys.io.File.getContent(jsonPath(id))), id) catch( e : Dynamic ) return null;
+	}
+
+	/** partida a partir de su JSON (archivo o ficha del servidor); null si no es una partida (anadido del port: multijugador) */
+	public static function parse( o : Dynamic, id : String ) : SaveInfo {
 		try {
-			var o : Dynamic = haxe.Json.parse(sys.io.File.getContent(jsonPath(id)));
+			if( o == null ) return null;
 			if( o.version == null || o.seed == null || o.biome == null ) return null;
 			var uni = readUni(o.uni);
 			if( uni != null ) Licenses.migrate(uni, readTuto(o.tuto) != null);

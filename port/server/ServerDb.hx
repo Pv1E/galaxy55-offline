@@ -1,3 +1,18 @@
+/** Planeta guardado en el servidor: su propietario (el descubridor o a quien se lo cedio), la galaxia y el id con que se genera, y
+    el sitio de la nave y los accesos (JSON) */
+typedef PlanetRow = {
+	var gkey : String;
+	var owner : String;
+	var galaxy : String;
+	var pid : Int;
+	var seed : Int;
+	var biome : String;
+	var size : Int;
+	var gen : Int;
+	var shipAt : String;
+	var access : String;
+}
+
 /** Ficha de un jugador del servidor */
 typedef PlayerRow = {
 	var uid : String;
@@ -30,6 +45,8 @@ class ServerDb {
 		cnx.request("CREATE TABLE IF NOT EXISTS players (uid TEXT PRIMARY KEY, pseudo TEXT, display TEXT, created REAL, last REAL, record TEXT)");
 		cnx.request("CREATE TABLE IF NOT EXISTS identities (kind TEXT, value TEXT, uid TEXT, PRIMARY KEY(kind, value))");
 		cnx.request("CREATE INDEX IF NOT EXISTS identities_uid ON identities(uid)");
+		cnx.request("CREATE TABLE IF NOT EXISTS planets (gkey TEXT PRIMARY KEY, owner TEXT, galaxy TEXT, pid INTEGER, seed INTEGER, biome TEXT, size INTEGER, gen INTEGER, shipAt TEXT, access TEXT)");
+		cnx.request("CREATE TABLE IF NOT EXISTS planet_edits (gkey TEXT, chunk INTEGER, data BLOB, PRIMARY KEY(gkey, chunk))");
 		if( meta("version") == null ) setMeta("version", "1");
 	}
 
@@ -104,6 +121,55 @@ class ServerDb {
 	public function playerCount() : Int {
 		var rs = cnx.request("SELECT COUNT(*) AS n FROM players");
 		return rs.hasNext() ? Std.int(rs.next().n) : 0;
+	}
+
+
+	// ---------------------------------------------------------------- planetas
+
+	/** planeta guardado (gkey = galaxia del descubridor + ":" + id del planeta), null si nadie ha aterrizado aun */
+	public function getPlanet( gkey : String ) : Null<PlanetRow> {
+		var rs = cnx.request("SELECT gkey, owner, galaxy, pid, seed, biome, size, gen, shipAt, access FROM planets WHERE gkey = " + q(gkey));
+		if( !rs.hasNext() ) return null;
+		var o : Dynamic = rs.next();
+		return { gkey : Std.string(o.gkey), owner : Std.string(o.owner), galaxy : Std.string(o.galaxy), pid : Std.int(o.pid), seed : Std.int(o.seed),
+			biome : Std.string(o.biome), size : Std.int(o.size), gen : Std.int(o.gen), shipAt : o.shipAt == null ? "" : Std.string(o.shipAt),
+			access : o.access == null ? "" : Std.string(o.access) };
+	}
+
+	public function putPlanet( p : PlanetRow ) {
+		cnx.request("INSERT OR REPLACE INTO planets VALUES (" + q(p.gkey) + ", " + q(p.owner) + ", " + q(p.galaxy) + ", " + p.pid + ", " + p.seed + ", "
+			+ q(p.biome) + ", " + p.size + ", " + p.gen + ", " + q(p.shipAt) + ", " + q(p.access) + ")");
+	}
+
+	public function deletePlanet( gkey : String ) {
+		cnx.request("DELETE FROM planets WHERE gkey = " + q(gkey));
+		cnx.request("DELETE FROM planet_edits WHERE gkey = " + q(gkey));
+	}
+
+	/** cambios del terreno de un planeta: pares [celda, valor] de todos sus trozos */
+	public function loadEdits( gkey : String ) : Array<Int> {
+		var out = [];
+		var rs = cnx.request("SELECT data FROM planet_edits WHERE gkey = " + q(gkey));
+		for( o in rs ) {
+			var b : haxe.io.Bytes = o.data;
+			if( b == null ) continue;
+			var a = NetZip.unpackInts(b, 1 << 24);
+			for( v in a ) out.push(v);
+		}
+		return out;
+	}
+
+	/** reescribe los cambios de un trozo (pares [celda, valor]; vacio = se borra) */
+	public function saveEditChunk( gkey : String, chunk : Int, pairs : Array<Int> ) {
+		if( pairs.length == 0 ) {
+			cnx.request("DELETE FROM planet_edits WHERE gkey = " + q(gkey) + " AND chunk = " + chunk);
+			return;
+		}
+		var s = new StringBuf();
+		s.add("INSERT OR REPLACE INTO planet_edits VALUES (" + q(gkey) + ", " + chunk + ", ");
+		cnx.addValue(s, NetZip.packInts(pairs));
+		s.add(")");
+		cnx.request(s.toString());
 	}
 
 	public function close() {

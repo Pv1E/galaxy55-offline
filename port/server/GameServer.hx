@@ -26,6 +26,12 @@ class Session {
 	public var floodStrikes = 0;
 	/** donde esta (clave de planeta, "" en el espacio) */
 	public var where = "";
+	/** su partida en este servidor (null hasta CNewGame si es nuevo) */
+	public var record : SaveData.SaveInfo;
+	/** el planeta donde esta (null en el espacio) */
+	public var instance : PlanetInstance;
+	/** su ultima posicion (CState) */
+	public var pos : NetState;
 
 	public function new( id : Int, t : Transport ) {
 		this.id = id;
@@ -58,6 +64,9 @@ class GameServer {
 	/** puerto TCP abierto (0 = solo conexiones en memoria) */
 	public var port(default, null) = 0;
 	public var stopped(default, null) = false;
+	public var worlds(default, null) : ServerWorlds;
+	/** tiempo para generar planetas en cada pump (ms): poco dentro del juego (no se nota en los fotogramas), mas en un dedicado */
+	public var genBudgetMs = 4.;
 	/** tiempo maximo sin noticias de un cliente antes de cerrarlo (s) */
 	static inline var TIMEOUT = 30.;
 
@@ -68,6 +77,7 @@ class GameServer {
 		files.names = db.displayOf;
 		keys = files.serverKeys();
 		fingerprint = Handshake.fingerprint(keys.pk);
+		worlds = new ServerWorlds(this, db);
 		files.log("servidor \"" + files.options.name + "\" listo (huella " + fingerprint + ", azar: " + SecureRandom.source + ")");
 	}
 
@@ -152,6 +162,7 @@ class GameServer {
 			if( s.state != SClosed && s.channel.transport.closed ) leave(s, s.channel.transport.closeReason);
 			s.channel.flush();
 		}
+		worlds.pump(dt, genBudgetMs);
 		if( files.poll(dt) ) applyFiles();
 	}
 
@@ -162,6 +173,7 @@ class GameServer {
 		for( s in sessions ) s.channel.flush();
 		if( listener != null ) try listener.close() catch( e : Dynamic ) {}
 		if( udp != null ) try udp.close() catch( e : Dynamic ) {}
+		worlds.close();
 		db.close();
 		stopped = true;
 		files.log("servidor parado");
@@ -202,6 +214,7 @@ class GameServer {
 		case [_, CBye]:
 			leave(s, "se va");
 		default:
+			if( s.state == SPlay && worlds.handle(s, m) ) return;
 			drop(s, RProtocol, "mensaje fuera de lugar: " + Type.enumConstructor(m));
 		}
 	}
@@ -246,11 +259,15 @@ class GameServer {
 		s.role = uid == files.ownerUid ? Owner : (files.managers.exists(uid) ? Manager : Player);
 		s.creative = loadMode(s, owner);
 		s.state = SPlay;
-		s.send(SWelcome(s.id, s.display, s.role, s.creative, Sys.time(), first));
+		// "primera vez" = sin partida en este servidor: el cliente pregunta lo del tutorial y manda CNewGame
+		var row = db.getPlayer(uid);
+		var needGame = row == null || row.record == "";
+		s.send(SWelcome(s.id, s.display, s.role, s.creative, Sys.time(), needGame));
 		s.send(SPlayers([for( o in sessions ) if( o.state == SPlay ) netPlayer(o, s)]));
 		for( o in sessions ) if( o != s && o.state == SPlay ) o.send(SUserJoin(netPlayer(s, o)));
 		files.log("entra " + s.display + " (" + uid + ", conexion " + s.id + ", " + s.channel.transport.peerName() + ")" + (first ? " por primera vez" : ""));
 		files.chat("--- entra " + s.display + " (" + uid + ")");
+		if( !needGame ) worlds.onLogin(s);
 	}
 
 	function netPlayer( p : Session, viewer : Session ) : NetPlayer {
@@ -426,6 +443,7 @@ class GameServer {
 	function leave( s : Session, why : String ) {
 		if( s.state == SClosed ) return;
 		var wasPlaying = s.state == SPlay;
+		if( wasPlaying ) worlds.onLeave(s);
 		close(s);
 		if( wasPlaying ) {
 			files.log("sale " + s.display + " (" + why + ")");

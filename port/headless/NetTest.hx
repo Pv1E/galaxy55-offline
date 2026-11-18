@@ -43,6 +43,7 @@ class NetTest {
 
 	static function main() {
 		messages();
+		world(Sys.args().length > 0 ? Sys.args()[0] + "_monde" : "port/out/net_test_monde");
 		var dir = Sys.args().length > 0 ? Sys.args()[0] : "port/out/net_test";
 		deleteDir(dir);
 		sys.FileSystem.createDirectory(dir);
@@ -162,6 +163,87 @@ class NetTest {
 		Sys.exit(fails == 0 ? 0 : 1);
 	}
 
+	/**
+	 * Mundo compartido: partida nueva, aterrizar en su planeta (mismo terreno que el que genera el cliente), romper y poner con
+	 * sus comprobaciones (bloque esperado, distancia), cambios que manda el servidor (y el proceso del mundo: liquidos), guardado
+	 * en la base de datos y partida al volver a entrar.
+	 */
+	static function world( dir : String ) {
+		deleteDir(dir);
+		sys.FileSystem.createDirectory(dir);
+		PortRules.apply();
+		server = new GameServer(dir);
+		server.genBudgetMs = 50;
+		server.listen("127.0.0.1", 55098);
+		clients = [];
+		var w = add(new TestClient("Wanda", secret(9)));
+		w.tcp(55098);
+		check("mundo: entra, partida por empezar", until(() -> w.welcome != null) && w.firstTime == true, w.lastEvent());
+		w.client.send(CNewGame(false));
+		var rec : Dynamic = null;
+		until(() -> {
+			for( m in w.msgs ) switch( m ) { case SRecord(d): rec = haxe.Json.parse(NetZip.unpackString(d, 1 << 24)); default: }
+			rec != null;
+		});
+		check("mundo: partida nueva en el espacio", rec != null && rec.uni.space == true && rec.credits == Market.START_CREDITS);
+		var pid = TutoSetup.PLANET;
+		w.client.send(CLand("", pid));
+		var pd = null;
+		until(() -> {
+			for( m in w.msgs ) switch( m ) { case SPlanetData(k, seed, biome, size, gv, _, edits, owner, _): pd = { k : k, seed : seed, biome : biome, size : size, gv : gv, owner : owner }; default: }
+			pd != null;
+		});
+		var exp = ExpData.ExpOffline.planet(ExpData.ExpOffline.make(rec.uni.seed, rec.uni.start), pid).p;
+		check("mundo: datos del planeta", pd != null && pd.seed == exp.seed && pd.biome == exp.biome && pd.size == exp.size && pd.owner == "Wanda", Std.string(pd));
+		var inst : PlanetInstance = null;
+		check("mundo: el servidor genera el planeta", until(() -> {
+			for( i in @:privateAccess server.worlds.instances ) inst = i;
+			inst != null && inst.ready();
+		}, 30));
+		var local = new WorldData(pd.seed, pd.biome, pd.size, null, null, pd.gv);
+		while( !local.genStep(haxe.Timer.stamp(), 1000) ) {}
+		check("mundo: mismo terreno en el cliente y el servidor", local.cellHash() == inst.world.cellHash());
+		var sp = local.spawnPoint();
+		var bx = Std.int(sp.x), by = Std.int(sp.y), bz = Std.int(sp.z) - 1;
+		var b = local.block(bx, by, bz);
+		var key = ((bx + by * local.size) << WorldData.ZBITS) | bz;
+		var st = { id : 0, x : sp.x, y : sp.y, z : sp.z, yaw : 0., pitch : 0., flags : 0, charge : -1, hx : 0., hy : 0., hz : 0. };
+		w.client.send(CState(st));
+		w.client.send(CBreak(1, (bx + 40) % local.size, by, bz, b.index));
+		check("mundo: romper lejos: no", until(() -> w.has(m -> m.match(SSetResult(1, false, _)))));
+		w.client.send(CBreak(2, bx, by, bz, b.index));
+		check("mundo: romper el bloque de debajo", until(() -> w.has(m -> m.match(SSetResult(2, true, _)))));
+		check("mundo: el cambio llega", until(() -> w.has(m -> switch( m ) { case SChanges(l): Lambda.exists(l, c -> c.key == key && c.v == 0); default: false; })));
+		w.client.send(CBreak(3, bx, by, bz, b.index));
+		check("mundo: romper dos veces: no", until(() -> w.has(m -> m.match(SSetResult(3, false, 0)))));
+		var rock = Block.get(BRock);
+		w.client.send(CPlace(4, bx, by, bz, rock.index, 0, 1));
+		check("mundo: poner roca", until(() -> w.has(m -> m.match(SSetResult(4, true, _))) && inst.world.block(bx, by, bz) == rock));
+		var src = Block.get(BCascadeSource);
+		w.client.send(CPlace(5, bx, by, bz + 2, src.index, 0, 1));
+		check("mundo: la cascada corre en el servidor", until(() -> w.has(m -> switch( m ) { case SChanges(l): Lambda.exists(l, c -> c.key != key && (c.v & 0xFFFF) != 0 && (c.v & 0xFFFF) != src.index && (c.v & 0xFFFF) != rock.index); default: false; }), 8));
+		server.worlds.commit();
+		var saved = server.db.loadEdits(inst.key);
+		var found = false;
+		var i = 0;
+		while( i + 1 < saved.length ) { if( saved[i] == key && saved[i + 1] == rock.index ) found = true; i += 2; }
+		check("mundo: guardado en la base de datos", found);
+		w.client.send(CTakeoff);
+		until(() -> false, 0.3);
+		w.client.close();
+		until(() -> false, 0.3);
+		var w2 = add(new TestClient("Wanda", secret(9)));
+		w2.tcp(55098);
+		var rec2 : Dynamic = null;
+		until(() -> {
+			for( m in w2.msgs ) switch( m ) { case SRecord(d): rec2 = haxe.Json.parse(NetZip.unpackString(d, 1 << 24)); default: }
+			rec2 != null;
+		});
+		check("mundo: al volver, su partida", w2.firstTime == false && rec2 != null && rec2.uni.seed == rec.uni.seed && rec2.uni.space == true);
+		server.stop();
+		clients = [];
+	}
+
 	static function add( c : TestClient ) {
 		clients.push(c);
 		return c;
@@ -180,11 +262,16 @@ class NetTest {
 	static function messages() {
 		var b32 = Bytes.alloc(32), b64 = Bytes.alloc(64);
 		var cs : Array<ClientMsg> = [CHello(1, "0.8.1", "abcd", b32), CLogin(b32, b64, "Pseudo é", "pwd", -1), CPing(1.5),
-			CTalk(CPrivate, 7, "hola ñ"), CAdmin(ABan, 3, "x"), CSetMode(true), CBye];
+			CTalk(CPrivate, 7, "hola ñ"), CAdmin(ABan, 3, "x"), CSetMode(true), CBye, CNewGame(true), CLand("", 3), CTakeoff,
+			CState({ id : 0, x : 1.5, y : 2.5, z : 3.5, yaw : 0.25, pitch : -0.5, flags : 1, charge : -1, hx : 4, hy : 5, hz : 6 }),
+			CBreak(1, 2, 3, 4, 5), CPlace(2, 3, 4, 5, 6, 0, 1), CSaveRecord(Bytes.ofString("z"))];
 		var ss : Array<ServerMsg> = [SServerHello("srv", b32, b32, b64, true), SWelcome(3, "Bob#2", Manager, true, 123.5, false),
 			SRefuse(RBanned, "x"), SPong(1.25, 2.5), SPlayers([{ id : 1, name : "a", role : 2, place : "" }]),
 			SUserJoin({ id : 2, name : "b", role : 0, place : "Planète de X" }), SUserLeave(9), STalk(-1, "srv", CServer, "m"),
-			SNotice("mp.x", ["a", "b"]), SMode(false), SKicked(RKicked, "Alice")];
+			SNotice("mp.x", ["a", "b"]), SMode(false), SKicked(RKicked, "Alice"),
+			SRecord(Bytes.ofString("r")), SPlanetData("k:3", 42, "BIMars", 2, 0, "", Bytes.ofString("e"), "Bob", 7),
+			SChanges([{ key : 5, v : 9 }]), SSetResult(4, false, 3),
+			SStates([{ id : 2, x : 1.5, y : 2.5, z : 3.5, yaw : 0.5, pitch : 0, flags : 3, charge : 2, hx : 1, hy : 2, hz : 3 }]), SGone(5), SReduceWater];
 		var names = [for( c in cs ) Type.enumConstructor(c)];
 		for( n in Type.getEnumConstructs(ClientMsg) ) check("muestra de " + n, names.indexOf(n) >= 0);
 		names = [for( s in ss ) Type.enumConstructor(s)];
