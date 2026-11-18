@@ -48,6 +48,8 @@ class ServerDb {
 		cnx.request("CREATE INDEX IF NOT EXISTS identities_uid ON identities(uid)");
 		cnx.request("CREATE TABLE IF NOT EXISTS planets (gkey TEXT PRIMARY KEY, owner TEXT, galaxy TEXT, pid INTEGER, seed INTEGER, biome TEXT, size INTEGER, gen INTEGER, shipAt TEXT, access TEXT)");
 		cnx.request("CREATE TABLE IF NOT EXISTS planet_edits (gkey TEXT, chunk INTEGER, data BLOB, PRIMARY KEY(gkey, chunk))");
+		cnx.request("CREATE TABLE IF NOT EXISTS planet_chests (gkey TEXT, ckey TEXT, data TEXT, PRIMARY KEY(gkey, ckey))");
+		cnx.request("CREATE TABLE IF NOT EXISTS planet_loot (gkey TEXT, id INTEGER, data TEXT, PRIMARY KEY(gkey, id))");
 		if( meta("version") == null ) setMeta("version", "1");
 	}
 
@@ -168,6 +170,8 @@ class ServerDb {
 	public function deletePlanet( gkey : String ) {
 		cnx.request("DELETE FROM planets WHERE gkey = " + q(gkey));
 		cnx.request("DELETE FROM planet_edits WHERE gkey = " + q(gkey));
+		cnx.request("DELETE FROM planet_chests WHERE gkey = " + q(gkey));
+		cnx.request("DELETE FROM planet_loot WHERE gkey = " + q(gkey));
 	}
 
 	/** cambios del terreno de un planeta: pares [celda, valor] de todos sus trozos */
@@ -194,6 +198,31 @@ class ServerDb {
 		cnx.addValue(s, NetZip.packInts(pairs));
 		s.add(")");
 		cnx.request(s.toString());
+	}
+
+	/** cantinas de un planeta: clave "x,y,z" -> contenido (Protocol.BlockInventory en JSON) */
+	public function loadChests( gkey : String ) : Map<String, String> {
+		var out = new Map<String, String>();
+		for( o in cnx.request("SELECT ckey, data FROM planet_chests WHERE gkey = " + q(gkey)) ) out.set(Std.string(o.ckey), Std.string(o.data));
+		return out;
+	}
+
+	/** guarda una cantina (data null = ya no existe) */
+	public function saveChest( gkey : String, ckey : String, data : Null<String> ) {
+		if( data == null ) cnx.request("DELETE FROM planet_chests WHERE gkey = " + q(gkey) + " AND ckey = " + q(ckey));
+		else cnx.request("INSERT OR REPLACE INTO planet_chests VALUES (" + q(gkey) + ", " + q(ckey) + ", " + q(data) + ")");
+	}
+
+	/** contenedores del equipo dejado al morir en un planeta (DeathDrops.DeathDropInfo en JSON) */
+	public function loadLoot( gkey : String ) : Map<Int, String> {
+		var out = new Map<Int, String>();
+		for( o in cnx.request("SELECT id, data FROM planet_loot WHERE gkey = " + q(gkey)) ) out.set(Std.int(o.id), Std.string(o.data));
+		return out;
+	}
+
+	public function saveLoot( gkey : String, id : Int, data : Null<String> ) {
+		if( data == null ) cnx.request("DELETE FROM planet_loot WHERE gkey = " + q(gkey) + " AND id = " + id);
+		else cnx.request("INSERT OR REPLACE INTO planet_loot VALUES (" + q(gkey) + ", " + id + ", " + q(data) + ")");
 	}
 
 	public function close() {

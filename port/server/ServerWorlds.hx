@@ -20,6 +20,9 @@ class ServerWorlds {
 	var db : ServerDb;
 	var instances = new Map<String, PlanetInstance>();
 	var dirtyRecords = new Map<String, Session>();
+	public var items(default, null) : ServerItems;
+	/** pruebas (port/headless/NetTest.hx): semilla de todas las partidas nuevas, para tener siempre el mismo terreno */
+	public static var fixedSeed : Null<Int> = null;
 	var tickAcc = 0.;
 	var commitAcc = 0.;
 	static inline var TICK = 0.05;
@@ -32,6 +35,7 @@ class ServerWorlds {
 	public function new( server : GameServer, db : ServerDb ) {
 		this.server = server;
 		this.db = db;
+		items = new ServerItems(this, server, db);
 	}
 
 	// ---------------------------------------------------------------- partidas de los jugadores
@@ -46,18 +50,20 @@ class ServerWorlds {
 			return false;
 		}
 		sendRecord(s);
+		items.sendInv(s);
 		sendForeign(s);
 		return true;
 	}
 
 	function newGame( s : Session, tuto : Bool ) {
 		if( s.record != null ) return;
-		var seed = 1 + SecureRandom.int(999998);
+		var seed = fixedSeed != null ? fixedSeed : 1 + SecureRandom.int(999998);
 		s.record = TutoSetup.newGame(s.display, seed, tuto);
 		s.record.dropOnDeath = server.files.options.deathDrop;
 		saveRecord(s);
 		server.files.log(s.display + " empieza en el sector " + seed + (tuto ? " con el tutorial" : ""));
 		sendRecord(s);
+		items.sendInv(s);
 		sendForeign(s);
 	}
 
@@ -76,6 +82,9 @@ class ServerWorlds {
 		s.send(SRecord(NetZip.packString(json)));
 	}
 
+	/** la partida de s ha cambiado: se guarda en el siguiente commit */
+	public inline function markRecord( s : Session ) saveRecord(s);
+
 	function saveRecord( s : Session ) {
 		if( s.record == null ) return;
 		dirtyRecords.set(s.uid, s);
@@ -89,6 +98,9 @@ class ServerWorlds {
 		if( info == null ) return;
 		// el terreno es del servidor (planet_edits): no se guarda en la partida
 		info.edits = [];
+		// el inventario y los contenedores los lleva el servidor (ServerItems): no se toman del cliente
+		info.inv = s.record.inv;
+		info.deathDrops = s.record.deathDrops;
 		if( info.uni != null ) for( p in info.uni.planets ) p.edits = [];
 		// en un planeta de otro jugador: su partida sigue en su galaxia (al volver, en el espacio)
 		if( info.uni != null && s.instance != null && s.instance.row.galaxy != s.uid ) {
@@ -171,7 +183,9 @@ class ServerWorlds {
 	function instance( gkey : String, row : ServerDb.PlanetRow ) : PlanetInstance {
 		var inst = instances.get(gkey);
 		if( inst != null ) return inst;
-		inst = new PlanetInstance(row, db.loadEdits(gkey));
+		var created : PlanetInstance = null;
+		inst = created = new PlanetInstance(row, db.loadEdits(gkey), function( x, y, z, b ) items.onBreak(created, x, y, z, b, false), function( x, y, z, b ) items.lavaBomb(created, x, y, z));
+		items.load(inst);
 		instances.set(gkey, inst);
 		server.files.log("planeta " + gkey + " cargado (" + row.biome + ", " + row.size + ")");
 		return inst;
@@ -186,6 +200,7 @@ class ServerWorlds {
 		leaveInstance(s);
 		var inst = instance(row.gkey, row);
 		inst.players.push(s);
+		items.sendLoots(s, inst);
 		s.instance = inst;
 		s.where = row.gkey;
 		s.rights = rightsFor(s.uid, inst.row);
@@ -205,6 +220,7 @@ class ServerWorlds {
 		inst.players.remove(s);
 		if( inst.players.length == 0 ) inst.emptySince = haxe.Timer.stamp();
 		for( o in inst.players ) o.send(SGone(s.id));
+		items.release(s);
 		s.instance = null;
 		s.where = "";
 		s.pos = null;
@@ -479,6 +495,7 @@ class ServerWorlds {
 				return;
 			}
 			w.setBlock(x, y, z, null);
+			items.onBreak(inst, x, y, z, cur, s.creative);
 			inst.process.onSet(x, y, z, cur, null);
 			s.send(SSetResult(seq, true, 0));
 		case CPlace(seq, x, y, z, gi, level, slot):
@@ -492,9 +509,17 @@ class ServerWorlds {
 				s.send(SSetResult(seq, false, inside ? w.valueAt(key) : 0));
 				return;
 			}
+			// el bloque sale de su inventario (lo lleva el servidor): si no lo tiene, no se pone
+			if( !items.consumeForPlace(s, slot, gi) ) {
+				s.send(SSetResult(seq, false, w.valueAt(key)));
+				items.sendInv(s);
+				return;
+			}
 			if( b.type == BTWater ) w.setWater(x, y, z, b, level) else w.setBlock(x, y, z, b);
 			inst.process.onSet(x, y, z, cur, b);
 			s.send(SSetResult(seq, true, gi));
+			s.ack = seq;
+			if( !s.creative ) items.sendInv(s);
 		default:
 		}
 	}
@@ -520,7 +545,7 @@ class ServerWorlds {
 		case CSaveRecord(data):
 			if( s.record != null ) clientRecord(s, data);
 		default:
-			return false;
+			return items.handle(s, m);
 		}
 		return true;
 	}
@@ -563,6 +588,7 @@ class ServerWorlds {
 				continue;
 			}
 			var dropped = inst.tick(TICK);
+			items.tick(inst, TICK);
 			var ch = inst.takeChanges();
 			if( ch != null ) {
 				var i = 0;
@@ -588,6 +614,7 @@ class ServerWorlds {
 	function saveInstance( inst : PlanetInstance ) {
 		if( !inst.ready() ) return;
 		for( c => pairs in inst.world.takeDirty() ) db.saveEditChunk(inst.key, c, pairs);
+		items.save(inst);
 	}
 
 	/** todo lo cambiado, en una transaccion */

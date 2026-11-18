@@ -43,7 +43,10 @@ class NetTest {
 
 	static function main() {
 		messages();
+		// siempre el mismo terreno (si no, cada partida nueva tiene su semilla al azar y lo que se rompe cambia)
+		ServerWorlds.fixedSeed = 4242;
 		world(Sys.args().length > 0 ? Sys.args()[0] + "_monde" : "port/out/net_test_monde");
+		itemsTest(Sys.args().length > 0 ? Sys.args()[0] + "_objets" : "port/out/net_test_objets");
 		var dir = Sys.args().length > 0 ? Sys.args()[0] : "port/out/net_test";
 		deleteDir(dir);
 		sys.FileSystem.createDirectory(dir);
@@ -277,14 +280,16 @@ class NetTest {
 		x.client.send(CState({ id : 0, x : sp.x + 1, y : sp.y, z : sp.z, yaw : 1., pitch : 0., flags : 0, charge : -1, hx : 0., hy : 0., hz : 0. }));
 		check("acceso: los dos se ven", until(() -> w.has(m -> switch( m ) { case SStates(l): Lambda.exists(l, s -> s.id == x.id); default: false; })
 			&& x.has(m -> switch( m ) { case SStates(l): Lambda.exists(l, s -> s.id == w.id && s.flags & 1 != 0); default: false; })));
-		var tx = bx + 1, ty = by, tz = bz;
+		var tx = bx + 1, ty = by, tz = inst.world.topCollide(bx + 1, by) - 1;
 		var tb = inst.world.block(tx, ty, tz);
-		if( tb == null ) { tz--; tb = inst.world.block(tx, ty, tz); }
 		var tkey = ((tx + ty * inst.world.size) << WorldData.ZBITS) | tz;
 		w.msgs = [];
+		// juste encima de lo que rompe: el relieve cambia en cada partida nueva (semilla al azar)
+		x.client.send(CState({ id : 0, x : tx + 0.5, y : ty + 0.5, z : tz + 1, yaw : 1., pitch : 0., flags : 0, charge : -1, hx : 0., hy : 0., hz : 0. }));
+		until(() -> false, 0.2);
 		x.client.send(CBreak(50, tx, ty, tz, tb.index));
 		check("acceso: lo que rompe el invitado llega al propietario", until(() -> x.has(m -> m.match(SSetResult(50, true, _)))
-			&& w.has(m -> switch( m ) { case SChanges(l): Lambda.exists(l, c -> c.key == tkey && c.v == 0); default: false; })));
+			&& w.has(m -> switch( m ) { case SChanges(l): Lambda.exists(l, c -> c.key == tkey && c.v & 0xFFFF != tb.index); default: false; })));
 		var xpub = server.db.pubOf(server.db.findIdentity("ed25519", Identity.fromSecret(secret(10)).keysFor(server.publicKey()).pk.toHex()));
 		w.client.send(CGuest(pid, xpub, 1));
 		check("acceso: pasa a visitante", until(() -> x.has(m -> switch( m ) { case SRights(r): r & (RVisitor : Int) != 0 && r & (RBuild : Int) == 0; default: false; })));
@@ -310,6 +315,189 @@ class NetTest {
 		x.client.close();
 	}
 
+	/** inventario que el servidor ha mandado por ultima vez a c (SInventory) */
+	static function lastInv( c : TestClient ) : NetInv {
+		var r : NetInv = null;
+		for( m in c.msgs ) switch( m ) { case SInventory(_, i): r = i; default: }
+		return r;
+	}
+
+	static function count( i : NetInv, gi : Int ) : Int {
+		var n = 0;
+		if( i != null ) for( s in i.t ) if( s != null && s.k == gi ) n += s.n;
+		return n;
+	}
+
+	static function loots( c : TestClient ) : Map<Int, NetLoot> {
+		var m = new Map<Int, NetLoot>();
+		for( x in c.msgs ) switch( x ) {
+			case SAddLoot(l): m.set(l.id, l);
+			case SDeleteLoot(id): m.remove(id);
+			default:
+		}
+		return m;
+	}
+
+	/**
+	 * Objetos (el servidor es el unico que los crea): romper suelta, recoger es de uno solo (dos a la vez: uno gana), no se pone lo
+	 * que no se tiene, tirar, ordenar el inventario sin inventar nada, morir deja un contenedor que otro puede recoger, cantinas
+	 * (una persona a la vez, nada se crea al mover), bomba, y todo sigue igual tras parar y volver a arrancar el servidor.
+	 */
+	static function itemsTest( dir : String ) {
+		deleteDir(dir);
+		sys.FileSystem.createDirectory(dir);
+		server = new GameServer(dir);
+		server.genBudgetMs = 50;
+		server.listen("127.0.0.1", 55097);
+		clients = [];
+		var p = add(new TestClient("Pia", secret(20)));
+		p.tcp(55097);
+		until(() -> p.welcome != null);
+		// el primero es el propietario y empieza en creativo (sin sueltos): a supervivencia
+		p.client.send(CSetMode(false));
+		p.client.send(CNewGame(false));
+		until(() -> p.has(m -> m.match(SRecord(_))));
+		check("objetos: inventario del servidor al entrar", until(() -> lastInv(p) != null));
+		var pid = TutoSetup.PLANET;
+		p.client.send(CLand("", pid));
+		until(() -> p.has(m -> m.match(SPlanetData(_, _, _, _, _, _, _, _, _))));
+		var inst : PlanetInstance = null;
+		until(() -> { for( i in @:privateAccess server.worlds.instances ) inst = i; inst != null && inst.ready(); }, 30);
+		var w = inst.world;
+		var sp = w.spawnPoint();
+		var st = { id : 0, x : sp.x, y : sp.y, z : sp.z, yaw : 0., pitch : 0., flags : 0, charge : -1, hx : 0., hy : 0., hz : 0. };
+		p.client.send(CState(st));
+		var bx = Std.int(sp.x), by = Std.int(sp.y), bz = Std.int(sp.z) - 1;
+		var b = w.block(bx, by, bz);
+		var drop = b.getDrop().b;
+		p.client.send(CBreak(1, bx, by, bz, b.index));
+
+		check("objetos: romper suelta un objeto del servidor", until(() -> Lambda.count(loots(p)) > 0));
+		var id = -1, lg = -1;
+		for( l in loots(p) ) { id = l.id; lg = l.gi; }
+		check("objetos: es lo que suelta el bloque", lg == drop.index);
+		p.client.send(CPick(2, id));
+		check("objetos: recogido, al inventario", until(() -> count(lastInv(p), drop.index) == 1 && !loots(p).exists(id)));
+		p.client.send(CPick(3, id));
+		until(() -> p.has(m -> m.match(SInventory(3, _))));
+		check("objetos: recoger dos veces no da dos", count(lastInv(p), drop.index) == 1);
+		var q = add(new TestClient("Quim", secret(21)));
+		q.tcp(55097);
+		until(() -> q.welcome != null);
+		q.client.send(CNewGame(false));
+		until(() -> q.has(m -> m.match(SRecord(_))));
+		p.client.send(CAccess(pid, true, false, false, 0));
+		p.client.send(CInvite(pid, q.id, 0));
+		until(() -> q.has(m -> m.match(SForeign(_))) && q.notice("mp.invited"));
+		var ppub = server.db.pubOf(@:privateAccess server.sessionById(p.id).uid);
+		q.client.send(CLand(ppub, pid));
+		until(() -> q.has(m -> m.match(SPlanetData(_, _, _, _, _, _, _, _, _))));
+		q.client.send(CState({ id : 0, x : sp.x + 0.5, y : sp.y, z : sp.z, yaw : 0., pitch : 0., flags : 0, charge : -1, hx : 0., hy : 0., hz : 0. }));
+		var ux = bx + 1, uz = w.topCollide(bx + 1, by) - 1;
+		var under = w.block(ux, by, uz);
+		for( c in [p, q] ) c.client.send(CState({ id : 0, x : ux + 0.5, y : by + 0.5, z : uz + 1, yaw : 0., pitch : 0., flags : 0, charge : -1, hx : 0., hy : 0., hz : 0. }));
+		until(() -> false, 0.2);
+		p.client.send(CBreak(4, ux, by, uz, under.index));
+		var id2 = -1;
+		until(() -> { for( l in loots(q) ) if( l.id != id ) id2 = l.id; id2 >= 0; });
+		var dropUnder = under.getDrop() == null ? null : under.getDrop().b;
+		p.client.send(CPick(5, id2));
+		q.client.send(CPick(1, id2));
+		until(() -> p.has(m -> m.match(SInventory(5, _))) && q.has(m -> m.match(SInventory(1, _))));
+		var gp = dropUnder == null ? 0 : count(lastInv(p), dropUnder.index) - (dropUnder.index == drop.index ? 1 : 0);
+		var gq = dropUnder == null ? 0 : count(lastInv(q), dropUnder.index);
+		check("objetos: dos a la vez, solo uno lo coge", dropUnder == null || gp + gq == 1, gp + "+" + gq);
+		var rock = Block.get(BRock);
+		p.client.send(CState(st));
+		until(() -> false, 0.2);
+		p.client.send(CPlace(6, bx, by, bz, rock.index, 0, 1));
+		check("objetos: no se pone lo que no se tiene", until(() -> p.has(m -> m.match(SSetResult(6, false, _)))) && inst.world.block(bx, by, bz) != rock);
+		var slot = -1;
+		var pi = lastInv(p);
+		for( i in 0...pi.t.length ) if( pi.t[i] != null && pi.t[i].k == drop.index ) slot = i + 1;
+		p.client.send(CPlace(7, bx, by, bz, drop.index, 0, slot));
+		check("objetos: poner gasta el bloque", until(() -> p.has(m -> m.match(SSetResult(7, true, _)))) && until(() -> count(lastInv(p), drop.index) == 0 || p.has(m -> m.match(SInventory(_, _)))));
+		var ps = @:privateAccess server.sessionById(p.id);
+		ps.record.inv.t[0] = { k : rock.index, n : 10 };
+		ps.record.inv.t[1] = { k : Block.get(BChest).index, n : 1 };
+		ps.record.inv.t[2] = { k : Block.get(BArtiBomb).index, n : 1 };
+		server.worlds.items.sendInv(ps);
+		until(() -> count(lastInv(p), rock.index) == 10);
+		p.client.send(CThrow(8, 1, 4));
+		check("objetos: tirar 4 rocas", until(() -> count(lastInv(p), rock.index) == 6 && Lambda.exists([for( l in loots(p) ) l], l -> l.gi == rock.index && l.n == 4)));
+		var fake = lastInv(p);
+		fake.t[3] = { k : rock.index, n : 50 };
+		p.client.send(CInvLayout(9, fake));
+		until(() -> p.has(m -> m.match(SInventory(9, _))));
+		check("objetos: ordenar inventando rocas: no", count(lastInv(p), rock.index) == 6);
+		var swap = lastInv(p);
+		var tmp = swap.t[0];
+		swap.t[0] = swap.t[4];
+		swap.t[4] = tmp;
+		p.client.send(CInvLayout(10, swap));
+		until(() -> p.has(m -> m.match(SInventory(10, _))));
+		check("objetos: ordenar sin inventar: si", lastInv(p).t[4] != null && lastInv(p).t[4].k == rock.index && lastInv(p).t[0] == null);
+		var cx = bx + 2, cy = by, cz = w.topCollide(bx + 2, by);
+		p.client.send(CPlace(11, cx, cy, cz, Block.get(BChest).index, 0, 2));
+		until(() -> p.has(m -> m.match(SSetResult(11, true, _))));
+		p.client.send(CChestOpen(cx, cy, cz));
+		var opened = false;
+		until(() -> { for( m in p.msgs ) switch( m ) { case SChest(_, _, _, 0, t, ""): opened = t.length > 0; default: } opened; });
+		check("objetos: abrir la cantina", opened);
+		q.client.send(CChestOpen(cx, cy, cz));
+		check("objetos: la cantina abierta por otro esta ocupada", until(() -> q.has(m -> m.match(SChest(_, _, _, -1, _, "Pia")))));
+		var inv0 = lastInv(p);
+		var cheat = inv0.t.copy();
+		p.client.send(CChestMove(cx, cy, cz, 0, [{ k : rock.index, n : 30 }, null, null, null], { t : cheat, charges : inv0.charges }));
+		until(() -> p.has(m -> m.match(SChest(_, _, _, 0, _, ""))) && p.msgs.filter(m -> m.match(SChest(_, _, _, _, _, _))).length >= 2);
+		check("objetos: meter en la cantina lo que no se tiene: no", Lambda.count(server.worlds.items != null ? inst.items.chests.get(cx + "," + cy + "," + cz).filter(s -> s != null) : []) == 0);
+		var moved = inv0.t.copy();
+		var rs = moved[4];
+		moved[4] = null;
+		p.client.send(CChestMove(cx, cy, cz, 0, [rs, null, null, null], { t : moved, charges : inv0.charges }));
+		check("objetos: meter rocas en la cantina", until(() -> p.has(m -> m.match(SChest(_, _, _, 1, _, "")))) && count(lastInv(p), rock.index) == 0);
+		p.client.send(CChestClose);
+		p.client.send(CBreak(12, cx, cy, cz, Block.get(BChest).index));
+		check("objetos: romper la cantina suelta lo que tenia", until(() -> Lambda.exists([for( l in loots(p) ) l], l -> l.gi == rock.index && l.n == 6)));
+		var qinv0 = count(lastInv(q), rock.index);
+		ps.record.inv.t[0] = { k : rock.index, n : 5 };
+		server.worlds.items.sendInv(ps);
+		until(() -> count(lastInv(p), rock.index) == 5);
+		p.client.send(CDeath(false));
+		check("objetos: al morir, el inventario va a un contenedor", until(() -> count(lastInv(p), rock.index) == 0 && Lambda.exists([for( l in loots(q) ) l], l -> l.container)));
+		var cont = Lambda.find([for( l in loots(q) ) l], l -> l.container);
+		// el contenedor cae hasta el suelo: Quim va a donde se ha parado
+		var sd : ServerItems.ServerDrop = null;
+		until(() -> { sd = inst.items.drops.get(cont.id); sd != null && sd.rested; });
+		q.client.send(CState({ id : 0, x : sd.x, y : sd.y, z : sd.z - 0.5, yaw : 0., pitch : 0., flags : 0, charge : -1, hx : 0., hy : 0., hz : 0. }));
+		until(() -> false, 0.3);
+		q.client.send(CPick(2, cont.id));
+		check("objetos: otro jugador recoge el contenedor", until(() -> count(lastInv(q), rock.index) >= qinv0 + 5));
+		var bombGi = Block.get(BArtiBomb).index;
+		ps.record.inv.t[2] = { k : bombGi, n : 1 };
+		server.worlds.items.sendInv(ps);
+		until(() -> count(lastInv(p), bombGi) == 1);
+		var ox = bx + 4, oy = by, oz = w.topCollide(bx + 4, by);
+		p.client.send(CPlace(13, ox, oy, oz, bombGi, 0, 3));
+		until(() -> p.has(m -> m.match(SSetResult(13, true, _))));
+		p.client.send(CState({ id : 0, x : ox + 2.5, y : oy + 0.5, z : oz, yaw : 0., pitch : 0., flags : 0, charge : -1, hx : 0., hy : 0., hz : 0. }));
+		until(() -> false, 0.2);
+		p.client.send(CActivate(ox, oy, oz));
+		check("objetos: la bomba explota (efecto y dano)", until(() -> p.has(m -> m.match(SBomb(_, _, _))) && p.has(m -> m.match(SHit(_)))) && inst.world.block(ox, oy, oz) == null);
+		server.worlds.commit();
+		var keep = count(lastInv(q), rock.index);
+		server.stop();
+		clients = [];
+		server = new GameServer(dir);
+		server.genBudgetMs = 50;
+		server.listen("127.0.0.1", 55097);
+		var q2 = add(new TestClient("Quim", secret(21)));
+		q2.tcp(55097);
+		check("objetos: tras volver a arrancar, el inventario sigue", until(() -> lastInv(q2) != null) && count(lastInv(q2), rock.index) == keep);
+		server.stop();
+		clients = [];
+	}
+
 	static function add( c : TestClient ) {
 		clients.push(c);
 		return c;
@@ -331,7 +519,10 @@ class NetTest {
 			CTalk(CPrivate, 7, "hola ñ"), CAdmin(ABan, 3, "x"), CSetMode(true), CBye, CNewGame(true), CLand("", 3), CTakeoff,
 			CState({ id : 0, x : 1.5, y : 2.5, z : 3.5, yaw : 0.25, pitch : -0.5, flags : 1, charge : -1, hx : 4, hy : 5, hz : 6 }),
 			CBreak(1, 2, 3, 4, 5), CPlace(2, 3, 4, 5, 6, 0, 1), CSaveRecord(Bytes.ofString("z")),
-			CAccess(3, true, false, true, 4), CInvite(3, 2, 1), CGuest(3, "ab12cd34", -1), CTransfer(3, 2), CAbandon(3), CGetAccess(3)];
+			CAccess(3, true, false, true, 4), CInvite(3, 2, 1), CGuest(3, "ab12cd34", -1), CTransfer(3, 2), CAbandon(3), CGetAccess(3),
+			CCharge(1), CPick(4, 9), CThrow(5, 2, 3), CInvLayout(6, { t : [null, { k : 5, n : 2 }], charges : [{ c : 1, n : 3 }] }), CDeath(true),
+			CCreative(7, 1, 5, 9), CChestOpen(1, 2, 3), CChestMove(1, 2, 3, 4, [{ k : 5, n : 1 }, null], { t : [null], charges : [] }), CChestClose,
+			CActivate(4, 5, 6)];
 		var ss : Array<ServerMsg> = [SServerHello("srv", b32, b32, b64, true), SWelcome(3, "Bob#2", Manager, true, 123.5, false),
 			SRefuse(RBanned, "x"), SPong(1.25, 2.5), SPlayers([{ id : 1, name : "a", role : 2, place : "" }]),
 			SUserJoin({ id : 2, name : "b", role : 0, place : "Planète de X" }), SUserLeave(9), STalk(-1, "srv", CServer, "m"),
@@ -341,7 +532,10 @@ class NetTest {
 			SStates([{ id : 2, x : 1.5, y : 2.5, z : 3.5, yaw : 0.5, pitch : 0, flags : 3, charge : 2, hx : 1, hy : 2, hz : 3 }]), SGone(5), SReduceWater,
 			SAccess(3, true, true, false, 4, [{ pub : "ab12cd34", name : "Bob", role : 1 }]),
 			SForeign([{ pub : "ab12cd34", owner : "Bob", seed : 42, startSeed : 7, startBiome : "BIMars", startSize : 2, gone : [3], planets : [{ pid : 10, status : 3 }] }]),
-			SPlanetLost("mp.x"), SRights(7)];
+			SPlanetLost("mp.x"), SRights(7),
+			SInventory(3, { t : [{ k : 5, n : 2 }, null], charges : [{ c : 0, n : 4 }] }),
+			SAddLoot({ id : 1, x : 1.5, y : 2.5, z : 3.5, vx : 0.25, vy : -0.25, vz : 0, gi : 5, n : 2, delay : 0, container : true }),
+			SDeleteLoot(1), SLootCount(1, 2), SLootRest(1, 1.5, 2.5, 3.5), SChest(1, 2, 3, 4, [null, { k : 5, n : 1 }], "Bob"), SHit(20), SBomb(1.5, 2.5, 3.5)];
 		var names = [for( c in cs ) Type.enumConstructor(c)];
 		for( n in Type.getEnumConstructs(ClientMsg) ) check("muestra de " + n, names.indexOf(n) >= 0);
 		names = [for( s in ss ) Type.enumConstructor(s)];

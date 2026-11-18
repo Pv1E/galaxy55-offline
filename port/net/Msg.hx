@@ -95,6 +95,15 @@ typedef NetForeignPlanet = { pid : Int, status : Int };
 /** galaxia de otro jugador con planetas a los que el jugador tiene acceso: lo que hace falta para dibujar su sistema */
 typedef NetForeign = { pub : String, owner : String, seed : Int, startSeed : Int, startBiome : String, startSize : Int, gone : Array<Int>, planets : Array<NetForeignPlanet> };
 
+/** inventario (Protocol.InventoryInfos): casillas (bloque global y cantidad, null = vacia) y cargas */
+typedef NetInv = { t : Array<Null<{ k : Int, n : Int }>>, charges : Array<{ c : Int, n : Int }> };
+
+/**
+ * Bloque suelto en el mundo (Drops), del servidor: id, posicion, velocidad, bloque y cantidad, retraso antes de verse (s) y si es
+ * el contenedor del equipo dejado al morir (DeathDrops; container: se ve como una cantina y lo que lleva lo sabe el servidor)
+ */
+typedef NetLoot = { id : Int, x : Float, y : Float, z : Float, vx : Float, vy : Float, vz : Float, gi : Int, n : Int, delay : Float, container : Bool };
+
 /** Jugador en la lista (Tab, Opciones multijugador): id de la sesion (no la identidad), pseudo, papel y donde esta */
 typedef NetPlayer = { id : Int, name : String, role : Int, place : String };
 
@@ -134,6 +143,25 @@ enum ClientMsg {
 	CAbandon( pid : Int );
 	/** pedir los accesos de un planeta propio (SAccess) */
 	CGetAccess( pid : Int );
+	/** ha gastado una carga (ChargeKind) al excavar */
+	CCharge( c : Int );
+	/** recoger el suelto id (que esta a su lado) */
+	CPick( seq : Int, id : Int );
+	/** tirar n de la casilla slot (R, pantalla de inventario) */
+	CThrow( seq : Int, slot : Int, n : Int );
+	/** nuevo orden del inventario (pantalla de inventario): mismas cosas, en otras casillas */
+	CInvLayout( seq : Int, inv : NetInv );
+	/** ha muerto (o Mayus+K, manual): su equipo va a un contenedor donde esta */
+	CDeath( manual : Bool );
+	/** creativo: pone n del bloque gi en la casilla slot (paleta) */
+	CCreative( seq : Int, slot : Int, gi : Int, n : Int );
+	/** abrir la cantina de (x, y, z) */
+	CChestOpen( x : Int, y : Int, z : Int );
+	/** nuevo contenido de la cantina abierta y del inventario (lo que se ha movido entre los dos), sobre la version ver */
+	CChestMove( x : Int, y : Int, z : Int, ver : Int, chest : Array<Null<{ k : Int, n : Int }>>, inv : NetInv );
+	CChestClose;
+	/** activar el bloque de (x, y, z): puerta, bomba... */
+	CActivate( x : Int, y : Int, z : Int );
 }
 
 enum ServerMsg {
@@ -171,6 +199,20 @@ enum ServerMsg {
 	SPlanetLost( reason : String );
 	/** sus derechos en este planeta han cambiado (Rights) */
 	SRights( rights : Int );
+	/** el inventario del jugador (lo lleva el servidor); ack: ultima peticion suya ya hecha (para rehacer encima lo que espera) */
+	SInventory( ack : Int, inv : NetInv );
+	SAddLoot( l : NetLoot );
+	SDeleteLoot( id : Int );
+	/** al suelto id le quedan n (se ha recogido una parte) */
+	SLootCount( id : Int, n : Int );
+	/** el suelto id se ha parado aqui (corrige la fisica del cliente) */
+	SLootRest( id : Int, x : Float, y : Float, z : Float );
+	/** contenido de una cantina abierta (version ver); busy: el pseudo de quien la tiene abierta si no se puede abrir */
+	SChest( x : Int, y : Int, z : Int, ver : Int, t : Array<Null<{ k : Int, n : Int }>>, busy : String );
+	/** dano al jugador (bomba) */
+	SHit( dmg : Float );
+	/** una bomba ha explotado en (x, y, z): efecto y temblor */
+	SBomb( x : Float, y : Float, z : Float );
 }
 
 /**
@@ -180,7 +222,7 @@ enum ServerMsg {
  */
 class Msg {
 
-	public static inline var PROTOCOL = 2;
+	public static inline var PROTOCOL = 3;
 	/** cambios de celdas en un mensaje, y bytes de un terreno descomprimido */
 	public static inline var CHANGES_MAX = 1 << 16;
 	public static inline var EDITS_MAX = 64 << 20;
@@ -205,6 +247,53 @@ class Msg {
 	/** coordenadas de celda que puede mandar un cliente (planeta de hasta 384, nave y nodriza por encima) */
 	static inline var COORD_MAX = 4096;
 	static inline var Z_MAX = 512;
+
+	/** casillas de bloques: cantidad, y por casilla el bloque global (0 = vacia) y su cantidad */
+	static function writeSlots( w : NetWriter, t : Array<Null<{ k : Int, n : Int }>> ) {
+		w.uint(t.length);
+		for( s in t ) {
+			if( s == null || s.n <= 0 ) { w.uint(0); continue; }
+			w.uint(s.k);
+			w.uint(s.n);
+		}
+	}
+
+	static function readSlots( r : NetReader ) : Array<Null<{ k : Int, n : Int }>> {
+		var n = r.count(256, 1);
+		var out : Array<Null<{ k : Int, n : Int }>> = [];
+		for( _ in 0...n ) {
+			var k = r.uintIn(0, 0xFFFF);
+			if( k == 0 ) { out.push(null); continue; }
+			var c = r.uintIn(1, 1 << 20);
+			out.push({ k : k, n : c });
+		}
+		return out;
+	}
+
+	static function writeInv( w : NetWriter, i : NetInv ) {
+		writeSlots(w, i.t);
+		w.uint(i.charges.length);
+		for( c in i.charges ) { w.uint(c.c); w.uint(c.n); }
+	}
+
+	static function readInv( r : NetReader ) : NetInv {
+		var t = readSlots(r);
+		var n = r.count(16, 2);
+		var charges = [for( _ in 0...n ) { var c = r.uintIn(0, 15); var k = r.uintIn(0, 1 << 20); { c : c, n : k }; }];
+		return { t : t, charges : charges };
+	}
+
+	static function writeLoot( w : NetWriter, l : NetLoot ) {
+		w.uint(l.id); w.float(l.x); w.float(l.y); w.float(l.z); w.float(l.vx); w.float(l.vy); w.float(l.vz);
+		w.uint(l.gi); w.uint(l.n); w.float(l.delay); w.bool(l.container);
+	}
+
+	static function readLoot( r : NetReader ) : NetLoot {
+		var id = r.uint(); var x = r.floatIn(-1e5, 1e5); var y = r.floatIn(-1e5, 1e5); var z = r.floatIn(-1e3, 1e4);
+		var vx = r.floatIn(-100, 100); var vy = r.floatIn(-100, 100); var vz = r.floatIn(-100, 100);
+		var gi = r.uintIn(0, 0xFFFF); var n = r.uintIn(0, 1 << 20); var delay = r.floatIn(0, 1000); var c = r.bool();
+		return { id : id, x : x, y : y, z : z, vx : vx, vy : vy, vz : vz, gi : gi, n : n, delay : delay, container : c };
+	}
 
 	static function writePlayer( w : NetWriter, p : NetPlayer ) {
 		w.uint(p.id);
@@ -263,6 +352,25 @@ class Msg {
 			w.uint(pid);
 		case CGetAccess(pid):
 			w.uint(pid);
+		case CCharge(c):
+			w.uint(c);
+		case CPick(seq, id):
+			w.uint(seq); w.uint(id);
+		case CThrow(seq, slot, n):
+			w.uint(seq); w.uint(slot); w.uint(n);
+		case CInvLayout(seq, inv):
+			w.uint(seq); writeInv(w, inv);
+		case CDeath(manual):
+			w.bool(manual);
+		case CCreative(seq, slot, gi, n):
+			w.uint(seq); w.uint(slot); w.uint(gi); w.uint(n);
+		case CChestOpen(x, y, z):
+			w.uint(x); w.uint(y); w.uint(z);
+		case CChestMove(x, y, z, ver, chest, inv):
+			w.uint(x); w.uint(y); w.uint(z); w.uint(ver); writeSlots(w, chest); writeInv(w, inv);
+		case CChestClose:
+		case CActivate(x, y, z):
+			w.uint(x); w.uint(y); w.uint(z);
 		}
 		return w.getBytes();
 	}
@@ -315,6 +423,31 @@ class Msg {
 			CTransfer(pid, t);
 		case 18: CAbandon(r.uintIn(0, 1 << 20));
 		case 19: CGetAccess(r.uintIn(0, 1 << 20));
+		case 20: CCharge(r.uintIn(0, 15));
+		case 21:
+			var seq = r.uint(); var id = r.uint();
+			CPick(seq, id);
+		case 22:
+			var seq = r.uint(); var slot = r.uintIn(0, 255); var n = r.uintIn(1, 1 << 20);
+			CThrow(seq, slot, n);
+		case 23:
+			var seq = r.uint(); var inv = readInv(r);
+			CInvLayout(seq, inv);
+		case 24: CDeath(r.bool());
+		case 25:
+			var seq = r.uint(); var slot = r.uintIn(0, 255); var gi = r.uintIn(0, 0xFFFF); var n = r.uintIn(0, 1 << 20);
+			CCreative(seq, slot, gi, n);
+		case 26:
+			var x = r.uintIn(0, COORD_MAX); var y = r.uintIn(0, COORD_MAX); var z = r.uintIn(0, Z_MAX);
+			CChestOpen(x, y, z);
+		case 27:
+			var x = r.uintIn(0, COORD_MAX); var y = r.uintIn(0, COORD_MAX); var z = r.uintIn(0, Z_MAX); var ver = r.uint();
+			var chest = readSlots(r); var inv = readInv(r);
+			CChestMove(x, y, z, ver, chest, inv);
+		case 28: CChestClose;
+		case 29:
+			var x = r.uintIn(0, COORD_MAX); var y = r.uintIn(0, COORD_MAX); var z = r.uintIn(0, Z_MAX);
+			CActivate(x, y, z);
 		case k: throw new NetReader.NetError("mensaje de cliente desconocido " + k);
 		}
 		r.done();
@@ -362,6 +495,22 @@ class Msg {
 			}
 		case SRights(r):
 			w.uint(r);
+		case SInventory(ack, inv):
+			w.uint(ack); writeInv(w, inv);
+		case SAddLoot(l):
+			writeLoot(w, l);
+		case SDeleteLoot(id):
+			w.uint(id);
+		case SLootCount(id, n):
+			w.uint(id); w.uint(n);
+		case SLootRest(id, x, y, z):
+			w.uint(id); w.float(x); w.float(y); w.float(z);
+		case SChest(x, y, z, ver, t, busy):
+			w.uint(x); w.uint(y); w.uint(z); w.int(ver); writeSlots(w, t); w.string(busy);
+		case SHit(dmg):
+			w.float(dmg);
+		case SBomb(x, y, z):
+			w.float(x); w.float(y); w.float(z);
 		case SPlanetLost(reason):
 			w.string(reason);
 		case SPong(t, serverTime):
@@ -454,6 +603,25 @@ class Msg {
 			SForeign(list);
 		case 20: SPlanetLost(r.string(64));
 		case 21: SRights(r.uintIn(0, 0xFFFF));
+		case 22:
+			var ack = r.uint(); var inv = readInv(r);
+			SInventory(ack, inv);
+		case 23: SAddLoot(readLoot(r));
+		case 24: SDeleteLoot(r.uint());
+		case 25:
+			var id = r.uint(); var n = r.uint();
+			SLootCount(id, n);
+		case 26:
+			var id = r.uint(); var x = r.floatIn(-1e5, 1e5); var y = r.floatIn(-1e5, 1e5); var z = r.floatIn(-1e3, 1e4);
+			SLootRest(id, x, y, z);
+		case 27:
+			var x = r.uintIn(0, COORD_MAX); var y = r.uintIn(0, COORD_MAX); var z = r.uintIn(0, Z_MAX); var ver = r.intIn(-1, 1 << 30);
+			var t = readSlots(r); var busy = r.string(NAME_MAX + 8);
+			SChest(x, y, z, ver, t, busy);
+		case 28: SHit(r.floatIn(0, 10000));
+		case 29:
+			var x = r.floatIn(-1e5, 1e5); var y = r.floatIn(-1e5, 1e5); var z = r.floatIn(-1e3, 1e4);
+			SBomb(x, y, z);
 		case k: throw new NetReader.NetError("mensaje de servidor desconocido " + k);
 		}
 		r.done();

@@ -104,15 +104,22 @@ class PlanetInstance {
 	public var emptySince = 0.;
 	/** peticiones de jugadores (romper, poner) que esperan a que el mundo este generado */
 	public var waiting = new Array<{ s : GameServer.Session, m : ClientMsg }>();
+	/** sueltos, cantinas y bombas del planeta (ServerItems) */
+	public var items = new ServerItems.PlanetItems();
 	var lastFlood = 0;
 	var lastSea = 0;
 	var t0 = 0.;
 
-	public function new( row : ServerDb.PlanetRow, edits : Array<Int> ) {
+	/** onBreak: lo que rompe el proceso del mundo (liquidos, soportes), para que suelte lo suyo; onLavaBomb: la lava alcanza una bomba */
+	public function new( row : ServerDb.PlanetRow, edits : Array<Int>, onBreak : Int -> Int -> Int -> Block -> Void, onLavaBomb : Int -> Int -> Int -> Block -> Void ) {
 		this.row = row;
 		key = row.gkey;
 		world = new ServerWorld(row.seed, row.biome, row.size, edits, null, row.gen);
-		process = new WorldProcess(world, function( x, y, z, b ) world.setBlock(x, y, z, null));
+		process = new WorldProcess(world, function( x, y, z, b ) {
+			world.setBlock(x, y, z, null);
+			onBreak(x, y, z, b);
+		});
+		process.lavaBombFn = onLavaBomb;
 		t0 = haxe.Timer.stamp();
 	}
 

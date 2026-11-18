@@ -34,6 +34,10 @@ class Session {
 	public var pos : NetState;
 	/** derechos en el planeta donde esta (Rights) */
 	public var rights = 0;
+	/** ultima peticion de objetos ya hecha (SInventory.ack) */
+	public var ack = 0;
+	/** cantina que tiene abierta ("x,y,z" del planeta donde esta) */
+	public var chest : String;
 
 	public function new( id : Int, t : Transport ) {
 		this.id = id;
