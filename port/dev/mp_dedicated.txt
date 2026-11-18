@@ -1,0 +1,11 @@
+# multijugador (anadido del port): un juego se une a un servidor dedicado (server.hl, puerto 55199) y espera a que se pare
+waitfor planet
+mp join 55199
+waitfor mp 6000
+waitfor ready 6000
+wait 60
+print mp
+waitfor mpend 9000
+wait 30
+print menu
+quit

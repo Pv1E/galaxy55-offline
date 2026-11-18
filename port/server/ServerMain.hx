@@ -1,7 +1,12 @@
+import Msg;
+
 /**
- * Servidor del multijugador sin ventana (anadido del port). De momento solo comprueba que el nucleo (port/core) compila sin
- * Heaps: `hl port/out/server.hl --gen SEMILLA BIOMA TAMANO` genera un planeta con WorldData y escribe la suma de sus celdas
- * (la misma que da la orden de pruebas `print cellhash` del juego).
+ * Servidor del multijugador sin ventana (anadido del port): `hl server.hl [--data CARPETA] [--port PUERTO]` (galaxy55-serveur.bat).
+ * La primera vez crea en la carpeta (por defecto "serveur", junto al servidor) serveur.json, su clave y la base de datos; cada
+ * jugador nuevo empieza en una galaxia nueva y el primero que entra es el propietario. Escribe el registro en la consola y lee
+ * ordenes: stop, list, kick PSEUDO, ban PSEUDO, unban PSEUDO, op PSEUDO, deop PSEUDO, say TEXTO, save, help.
+ * Pruebas: `--gen SEMILLA BIOMA TAMANO` (suma de las celdas de un planeta, la de `print cellhash` del juego) y
+ * `--newplayer SEMILLA` (partida nueva sin el juego).
  */
 class ServerMain {
 
@@ -24,6 +29,84 @@ class ServerMain {
 				+ ", licencias " + info.uni.licenses.length + ", contratos " + Contracts.active(info).length);
 			return;
 		}
-		Sys.println("uso: server.hl --gen SEMILLA BIOMA TAMANO | --newplayer SEMILLA");
+		var dir = "serveur", port : Null<Int> = null;
+		var i = 0;
+		while( i < args.length ) {
+			switch( args[i] ) {
+			case "--data" if( i + 1 < args.length ): dir = args[++i];
+			case "--port" if( i + 1 < args.length ): port = Std.parseInt(args[++i]);
+			case "--help", "-h", "/?":
+				Sys.println("uso: server.hl [--data CARPETA] [--port PUERTO]");
+				return;
+			default:
+				Sys.println("orden desconocida: " + args[i] + " (--help)");
+				return;
+			}
+			i++;
+		}
+		run(dir, port);
+	}
+
+	static function run( dir : String, port : Null<Int> ) {
+		sys.FileSystem.createDirectory(dir);
+		var server = new GameServer(dir);
+		server.files.echo = true;
+		// sin juego que dibujar: mas tiempo para generar planetas en cada vuelta
+		server.genBudgetMs = 15;
+		server.listen("0.0.0.0", port);
+		Sys.println("Galaxy 55 - servidor \"" + server.files.options.name + "\" v" + GameVersion.VERSION + " en el puerto " + (port != null ? port : server.files.options.port)
+			+ " (datos: " + sys.FileSystem.absolutePath(dir) + "). Ordenes: help");
+		// la consola se lee en otro hilo (readLine espera): las ordenes llegan por la cola
+		var lines = new sys.thread.Deque<String>();
+		sys.thread.Thread.create(function() {
+			while( true ) {
+				var l = try Sys.stdin().readLine() catch( e : Dynamic ) null;
+				if( l == null ) break;
+				lines.add(l);
+			}
+		});
+		var last = haxe.Timer.stamp();
+		var running = true;
+		while( running ) {
+			var now = haxe.Timer.stamp();
+			var dt = now - last;
+			last = now;
+			if( dt > 0.25 ) dt = 0.25;
+			server.pump(dt);
+			var l = lines.pop(false);
+			while( l != null ) {
+				if( !command(server, StringTools.trim(l)) ) running = false;
+				l = lines.pop(false);
+			}
+			Sys.sleep(0.01);
+		}
+		server.stop();
+	}
+
+	/** una orden de la consola; false = parar */
+	static function command( server : GameServer, l : String ) : Bool {
+		if( l == "" ) return true;
+		var sp = l.indexOf(" ");
+		var cmd = (sp < 0 ? l : l.substr(0, sp)).toLowerCase(), arg = sp < 0 ? "" : StringTools.trim(l.substr(sp + 1));
+		switch( cmd ) {
+		case "stop", "quit", "exit":
+			return false;
+		case "list":
+			var ps = server.playing();
+			Sys.println(ps.length + " jugadores" + (ps.length == 0 ? "" : ": " + [for( s in ps ) s.display + (s.role == Owner ? " (propietario)" : s.role == Manager ? " (gestionnaire)" : "") + (s.where != "" ? " en un planeta" : " en el espacio")].join(", ")));
+		case "kick", "ban", "unban", "op", "deop":
+			var r = server.consoleAdmin(cmd, arg);
+			Sys.println(r);
+		case "say":
+			if( arg != "" ) server.consoleSay(arg);
+		case "save":
+			server.worlds.commit();
+			Sys.println("guardado");
+		case "help", "?":
+			Sys.println("ordenes: stop | list | kick PSEUDO | ban PSEUDO | unban PSEUDO | op PSEUDO | deop PSEUDO | say TEXTO | save");
+		default:
+			Sys.println("orden desconocida: " + cmd + " (help)");
+		}
+		return true;
 	}
 }

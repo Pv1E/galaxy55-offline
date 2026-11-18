@@ -12,18 +12,20 @@ New-Item -ItemType Directory -Force "$win\res", "$lin\res" | Out-Null
 
 # recursos: graficos del cliente, mapa de estrellas, nave nodriza, contratos de la ESCorp y sonidos
 $gfx = "src\G55\fla\client\gfx"
-$res = @("digger.png", "door.md", "hud.png", "hud_jetpack.png", "icons.png", "lazer.png", "lazer2.png", "lazer3.png", "lazer4.png", "ship_halo.png", "texture.png", "mothership.bin", "contracts.json", "kubindex.json")
+$res = @("digger.png", "door.md", "hud.png", "hud_jetpack.png", "icons.png", "lazer.png", "lazer2.png", "lazer3.png", "lazer4.png", "ship_halo.png", "texture.png", "mothership.bin", "contracts.json", "kubindex.json", "cone.png")
 foreach ($d in $win, $lin) {
 	foreach ($r in $res) { Copy-Item "$gfx\$r" "$d\res\$r" }
 	Copy-Item "src\G55\fla\explore\gfx\tiles.png" "$d\res\explore_tiles.png"
 	Get-ChildItem "src\G55\fla\client\sfx\*.wav" | ForEach-Object { Copy-Item $_.FullName "$d\res\sfx_$($_.Name)" }
 	Copy-Item "port\out\galaxy55.hl", "LICENSE", "NOTICE" $d
+	# servidor dedicado del multijugador, sin ventana (port\server.hxml)
+	if (Test-Path "port\out\server.hl") { Copy-Item "port\out\server.hl" $d }
 }
 # Windows: HashLink y sus librerias (sin las de compilar), y la version DirectX
 # galaxy55.exe: copia de hl.exe con el icono del juego y sin consola (port\tools\galaxy55_exe.ps1); con su propio nombre
 # Discord no lo toma por Half-Life
 Copy-Item "port\out\galaxy55_dx.hl" $win
-foreach ($f in "hl.exe", "libhl.dll", "fmt.hdll", "heaps.hdll", "openal.hdll", "OpenAL32.dll", "sdl.hdll", "SDL3.dll", "ui.hdll", "uv.hdll", "directx.hdll", "vcruntime140.dll") {
+foreach ($f in "hl.exe", "libhl.dll", "fmt.hdll", "heaps.hdll", "openal.hdll", "OpenAL32.dll", "sdl.hdll", "SDL3.dll", "ui.hdll", "uv.hdll", "directx.hdll", "sqlite.hdll", "vcruntime140.dll") {
 	Copy-Item (Join-Path $HashLink $f) $win
 }
 $utf8 = New-Object Text.UTF8Encoding $false
@@ -32,6 +34,11 @@ function Save([string]$path, [string]$text, [string]$nl) { [IO.File]::WriteAllTe
 foreach ($v in @(@("jugar.bat", "galaxy55.hl", "version OpenGL. Si no abre, usa jugar_dx.bat."), @("jugar_dx.bat", "galaxy55_dx.hl", "version DirectX (equipos sin OpenGL 3.2, maquinas virtuales)."))) {
 	# galaxy55.exe sin consola; si falta, hl.exe con su consola (y pausa si hay error)
 	Save "$win\$($v[0])" "@echo off`nrem Galaxy 55 (offline) v$Version - $($v[2])`ncd /d `"%~dp0`"`nif exist galaxy55.exe goto exe`nhl $($v[1]) %*`nif errorlevel 1 pause`nexit /b`n:exe`nstart `"`" galaxy55.exe $($v[1]) %*`n" "`r`n"
+}
+# servidor dedicado: consola con el registro y las ordenes (help); sus datos en la carpeta "serveur" (o --data OTRA)
+if (Test-Path "$win\server.hl") {
+	Save "$win\galaxy55-serveur.bat" "@echo off`nrem Galaxy 55 (offline) v$Version - servidor multijugador dedicado (sin ventana). Ordenes: help, stop`ncd /d `"%~dp0`"`nhl server.hl --data serveur %*`npause`n" "`r`n"
+	Save "$lin\galaxy55-serveur.sh" "#!/bin/sh`n# servidor multijugador dedicado (sin ventana). Ordenes: help, stop`ncd `"`$(dirname `"`$0`")`"`nexec hl server.hl --data serveur `"`$@`"`n" "`n"
 }
 Save "$win\LEEME.txt" @"
 GALAXY 55 (offline) v$Version - port nativo para Windows
@@ -45,6 +52,11 @@ Si no abre (equipos sin OpenGL 3.2, maquinas virtuales), usa jugar_dx.bat (versi
 La carpeta "res" debe quedar junto a galaxy55.hl. Las partidas y los ajustes se guardan en %APPDATA%\Galaxy55\ .
 El formato de las partidas puede cambiar entre versiones.
 
+MULTIJUGADOR: menu Multijugador (unirse a un servidor guardado o de la red local, o crear una partida desde una partida
+guardada). Tu identidad es el archivo identite.g55 de %APPDATA%\Galaxy55\ : copialo para jugar con ella en otro PC y no se
+lo des a nadie. Servidor dedicado sin ventana: galaxy55-serveur.bat (puerto 55055 TCP y UDP; sus datos en "serveur").
+Para jugar por Internet hay que abrir ese puerto en el router (la casilla UPnP lo intenta sola).
+
 Controles (teclado y raton): W/Z/flechas mover, raton mirar, Espacio saltar y jetpack, X caminar despacio, H casco,
 clic izquierdo/E/Mayus excavar, colocar o usar, 1-0 o rueda elegir casilla, Tab excavador, R tirar, Mayus+K volver a la nave,
 I paleta (creativo), clic central copiar bloque (creativo), Esc pausa, F5 guardar.
@@ -55,6 +67,9 @@ Back casco, Start pausa, R3 paleta y L3 copiar bloque (creativo). Cofres y tiend
 English: unofficial native Windows port of Motion Twin's Galaxy 55 (2012). Unzip the whole folder and run jugar.bat
 (OpenGL) or jugar_dx.bat (DirectX, for PCs without OpenGL 3.2 or virtual machines). Keep "res" next to galaxy55.hl.
 Saves go to %APPDATA%\Galaxy55\ . Known bugs: BUGS.md in the repository.
+Multiplayer: Multiplayer menu (join a saved or LAN server, or create a game from a saved game). Your identity is the file
+identite.g55 in %APPDATA%\Galaxy55\ (copy it to another PC to keep it; never share it). Dedicated server without a window:
+galaxy55-serveur.bat (port 55055 TCP and UDP, data in "serveur"); for Internet play, forward that port (UPnP tries it).
 "@ "`r`n"
 # Linux / macOS: con HashLink del sistema
 Save "$lin\jugar.sh" "#!/bin/sh`n# Abre Galaxy 55. Necesita HashLink (hl) instalado: ver LEEME.txt`ncd `"`$(dirname `"`$0`")`"`nexec hl galaxy55.hl `"`$@`"`n" "`n"

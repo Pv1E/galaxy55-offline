@@ -139,6 +139,12 @@ class ServerDb {
 		return rs.hasNext();
 	}
 
+	/** el uid del jugador con ese pseudo (sin mayusculas), para la consola del servidor dedicado */
+	public function uidOfDisplay( name : String ) : Null<String> {
+		for( o in cnx.request("SELECT uid FROM players WHERE lower(display) = lower(" + q(name) + ") OR lower(pseudo) = lower(" + q(name) + ") LIMIT 1") ) return Std.string(o.uid);
+		return null;
+	}
+
 	public function displayOf( uid : String ) : Null<String> {
 		var p = getPlayer(uid);
 		return p == null ? null : p.display;

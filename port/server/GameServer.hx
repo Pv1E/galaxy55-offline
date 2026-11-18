@@ -529,6 +529,51 @@ class GameServer {
 		sessions.remove(s);
 	}
 
+
+	// ---------------------------------------------------------------- consola del servidor dedicado (ServerMain)
+
+	/** kick, ban, unban, op, deop sobre el jugador de ese pseudo (conectado o no, salvo kick); lo que ha pasado */
+	public function consoleAdmin( cmd : String, pseudo : String ) : String {
+		if( pseudo == "" ) return "falta el pseudo";
+		var t : Session = null;
+		for( o in sessions ) if( o.state == SPlay && o.display.toLowerCase() == pseudo.toLowerCase() ) t = o;
+		var uid = t != null ? t.uid : db.uidOfDisplay(pseudo);
+		if( uid == null ) return "nadie con el pseudo " + pseudo;
+		if( uid == files.ownerUid ) return "el propietario no se toca (gestionnaires.txt)";
+		var name = t != null ? t.display : pseudo;
+		switch( cmd ) {
+		case "kick":
+			if( t == null ) return name + " no esta conectado";
+			files.log("la consola expulsa a " + name);
+			drop(t, RKicked, "");
+		case "ban":
+			files.setBanned(uid, true);
+			files.log("la consola prohibe a " + name);
+			if( t != null ) drop(t, RBanned, "");
+		case "unban":
+			files.setBanned(uid, false);
+			files.log("la consola levanta la prohibicion de " + name);
+		case "op":
+			files.setManager(uid, true);
+			files.log("la consola nombra gestionnaire a " + name);
+		case "deop":
+			files.setManager(uid, false);
+			files.log("la consola destituye a " + name);
+		default:
+			return "orden desconocida";
+		}
+		applyFiles();
+		for( o in sessions ) if( o.state == SPlay && o.isManager() ) o.send(serverInfo());
+		return "hecho";
+	}
+
+	/** un mensaje del servidor a todos (canal del mundo), apuntado en chat.log */
+	public function consoleSay( text : String ) {
+		text = clean(text);
+		if( text == "" ) return;
+		files.chat("[serveur] " + text);
+		for( o in sessions ) if( o.state == SPlay ) o.send(STalk(-1, "[Serveur]", CWorld, text));
+	}
 	// ---------------------------------------------------------------- red local
 
 	/** responde a las sondas "G55?" de los clientes que buscan partidas en la red local */
