@@ -300,9 +300,21 @@ class GameServer {
 		return { id : p.id, name : p.display, role : p.role, place : placeFor(p, viewer) };
 	}
 
-	/** lo que ve viewer de donde esta p: "" = en el espacio (el cliente pone "Espace"); el mundo compartido lo completa */
+	/**
+	 * Lo que ve viewer de donde esta p (lista de jugadores): "" en el espacio o en la nodriza (el cliente pone "Espacio"), "?" en un
+	 * planeta al que viewer no puede ir (o una cometa), y si puede, "pseudo del propietario|planeta". Nunca la clave interna del
+	 * planeta: lleva el uid del propietario, que no se ensena a nadie.
+	 */
 	function placeFor( p : Session, viewer : Session ) : String {
-		return p.where;
+		var inst = p.instance;
+		if( inst == null ) return "";
+		if( p != viewer && worlds.rightsFor(viewer.uid, inst.row) & REnter == 0 ) return "?";
+		return db.displayOf(inst.row.owner) + "|" + inst.row.pid;
+	}
+
+	/** p ha cambiado de sitio: todos (el tambien) lo ven en su lista (SUserJoin de alguien que ya estaba solo lo actualiza) */
+	public function whereChanged( p : Session ) {
+		for( o in sessions ) if( o.state == SPlay ) o.send(SUserJoin(netPlayer(p, o)));
 	}
 
 	function cleanPseudo( p : String ) : String {

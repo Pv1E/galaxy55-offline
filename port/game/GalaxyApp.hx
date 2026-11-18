@@ -1,5 +1,6 @@
 import Ui;
 import MultiServers;
+import ChatBox;
 import Msg;
 import SaveData.SaveInfo;
 
@@ -838,8 +839,16 @@ class GalaxyApp extends hxd.App {
 			showToast(Lang.t(n.key).split("%n%").join(n.args.length > 0 ? n.args[0] : ""), 5);
 		}
 		while( chatShown < mp.chat.length ) {
-			var c = mp.chat[chatShown++];
-			if( c.chan == CServer && (c.msg == "join" || c.msg == "leave") && c.name != mp.myName ) showToast(Lang.t("mp." + c.msg).split("%n%").join(c.name), 4);
+			var c = mp.chat[chatShown];
+			// un mensaje de alguien espera a que haya chat (al empezar a jugar)
+			if( c.chan != CServer && chatBox == null ) break;
+			chatShown++;
+			if( c.chan == CServer ) {
+				if( (c.msg == "join" || c.msg == "leave") && c.name != mp.myName ) showToast(Lang.t("mp." + c.msg).split("%n%").join(c.name), 4);
+			} else if( chatBox != null ) {
+				var tag = c.chan == CPlanet ? "[" + Lang.t("mp.chat.planet") + "] " : c.chan == CPrivate ? "[" + Lang.t("mp.chat.private") + "] " : "";
+				chatBox.add(tag + c.name + " : " + c.msg, c.chan == CPrivate ? Theme.ACCENT : c.chan == CPlanet ? Theme.CYAN : Theme.TEXT);
+			}
 		}
 		if( joining != null && mp.fingerprint != null && joining.fp != mp.fingerprint ) {
 			joining.fp = mp.fingerprint;
@@ -862,6 +871,63 @@ class GalaxyApp extends hxd.App {
 		}
 	}
 
+
+	/** chat y lista de jugadores de la partida multijugador (ChatBox, PlayerList) */
+	var chatBox : ChatBox;
+	var playerList : PlayerList;
+	var tabHeld = 0.;
+	var chatWasTyping = false;
+	var listStamp = -1.;
+
+	/** cada imagen: el chat (T para escribir, jugando) y la lista de jugadores (Tab mantenido), jugando y en el mapa */
+	function mpOverlay( dt : Float ) {
+		var on = mp != null && mp.isPlaying() && (state == Playing || state == Exploring || state == Paused);
+		if( !on ) {
+			if( chatBox != null ) {
+				chatBox.remove();
+				chatBox = null;
+			}
+			if( playerList != null ) {
+				playerList.remove();
+				playerList = null;
+			}
+			return;
+		}
+		if( chatBox == null ) {
+			chatBox = new ChatBox(s2d);
+			chatBox.onSend = function( chan, to, text ) {
+				if( mp == null || !mp.isPlaying() ) return;
+				if( chan == CPrivate ) {
+					var id = -1;
+					for( p in mp.players ) if( p.name.toLowerCase() == to.toLowerCase() ) id = p.id;
+					if( id < 0 ) {
+						showToast(Lang.t("mp.chat.nobody"), 3);
+						return;
+					}
+					mp.say(text, CPrivate, id);
+				} else mp.say(text, chan);
+			};
+			playerList = new PlayerList(s2d);
+		}
+		chatBox.visible = state != Paused;
+		chatBox.update(dt);
+		if( !chatBox.typing && state == Playing && game != null && !paletteOpen && chest == null && (modal == null || modal.parent == null)
+			&& hxd.Key.isPressed(hxd.Key.T) && chatBox.stoppedFrame != hxd.Timer.frameCount ) {
+			chatBox.open();
+			captureMouse(false);
+		}
+		if( chatWasTyping && !chatBox.typing && state == Playing && game != null && !paletteOpen && chest == null ) captureMouse(true);
+		chatWasTyping = chatBox.typing;
+		// Tab mantenido (un toque sigue siendo el excavador): la lista de jugadores
+		tabHeld = !chatBox.typing && state != Paused && hxd.Key.isDown(hxd.Key.TAB) ? tabHeld + dt : 0;
+		var show = tabHeld > 0.25;
+		if( show && (!playerList.visible || haxe.Timer.stamp() - listStamp > 1) ) {
+			playerList.refresh(mp.players, mp.myId);
+			listStamp = haxe.Timer.stamp();
+		}
+		playerList.visible = show;
+		if( show ) s2d.addChild(playerList);
+	}
 	/** la conexion se ha acabado (cerrada, rechazada, expulsado): al menu Multijugador con el motivo; con contrasena se pide */
 	function endMulti() {
 		var key = mp.ended, reason = mp.endReason;
@@ -888,6 +954,8 @@ class GalaxyApp extends hxd.App {
 			msgText.visible = false;
 			state = Menu;
 		}
+		// pruebas: el guion sigue en los menus (como tras su orden menu)
+		if( dev != null ) @:privateAccess dev.inMenu = true;
 		show("multi");
 		if( reason == RPassword && joining != null ) {
 			askPassword(joining);
@@ -3717,6 +3785,7 @@ class GalaxyApp extends hxd.App {
 		// multijugador: el servidor del anfitrion y el cliente no se paran nunca (menus, carga, pausa)
 		if( mp != null ) mp.pump(dt);
 		mpWatch();
+		mpOverlay(dt);
 		// iconos grandes de la Base de datos ESCorp y de la paleta: unos pocos por fotograma (mas con una de ellas abierta); los de
 		// reserva, solo en la pantalla de carga del planeta, mas deprisa con el mundo ya hecho. Antes seguian jugando, pasados 2 s
 		// de la llegada, dibujando fuera de pantalla en cada imagen: sospechosos del parpadeo que se ve con algunas tarjetas en
@@ -3779,7 +3848,12 @@ class GalaxyApp extends hxd.App {
 
 		if( state == Playing && game != null ) {
 			var K = hxd.Key;
-			if( paletteOpen ) {
+			if( chatBox != null && (chatBox.typing || chatBox.stoppedFrame == hxd.Timer.frameCount) ) {
+				// escribiendo en el chat (o el Intro/Esc que lo cierra): el juego sigue sin controles
+				game.update(dt, false, pad);
+				if( game == null || state != Playing ) return;
+				game.updateCamera();
+			} else if( paletteOpen ) {
 				game.stopSounds();
 				if( shop != null ) {
 					shop.update(dt, pad);

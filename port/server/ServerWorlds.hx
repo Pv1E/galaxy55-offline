@@ -269,6 +269,7 @@ class ServerWorlds {
 		s.instance = inst;
 		s.where = row.gkey;
 		s.rights = rightsFor(s.uid, inst.row);
+		server.whereChanged(s);
 		return inst;
 	}
 
@@ -290,6 +291,7 @@ class ServerWorlds {
 		s.where = "";
 		s.pos = null;
 		s.rights = 0;
+		server.whereChanged(s);
 	}
 
 	function land( s : Session, galaxy : String, pid : Int ) {
@@ -462,7 +464,7 @@ class ServerWorlds {
 	}
 
 	/** derechos de uid en el planeta row (Rights): el propietario todo; cerrado, nadie mas; un invitado como explorador o visitante */
-	function rightsFor( uid : String, row : ServerDb.PlanetRow ) : Int {
+	public function rightsFor( uid : String, row : ServerDb.PlanetRow ) : Int {
 		if( row.owner == uid ) return Rights.ALL;
 		var a = readAccess(row.access);
 		if( !a.open ) return 0;
