@@ -82,6 +82,12 @@ class GameServer {
 	public var worlds(default, null) : ServerWorlds;
 	/** la partida solo del anfitrion al crear la partida desde ella (MultiSession.host): la del propietario la primera vez */
 	public var hostSave : SaveData.SaveInfo;
+	/** kubes del editor que manda a los jugadores (loadKubes) */
+	public var kubes(default, null) : ServerKubes;
+	var dir : String;
+
+	/** los .kube de kubesDir pasan a ser los del servidor (el anfitrion: su carpeta; el dedicado: <datos>/kubes) */
+	public function loadKubes( kubesDir : String ) kubes.load(kubesDir, dir + "/kubes.json");
 	/** tiempo para generar planetas en cada pump (ms): poco dentro del juego (no se nota en los fotogramas), mas en un dedicado */
 	public var genBudgetMs = 4.;
 	/** tiempo maximo sin noticias de un cliente antes de cerrarlo (s) */
@@ -95,6 +101,8 @@ class GameServer {
 		keys = files.serverKeys();
 		fingerprint = Handshake.fingerprint(keys.pk);
 		worlds = new ServerWorlds(this, db);
+		kubes = new ServerKubes(files);
+		this.dir = dir;
 		files.log("servidor \"" + files.options.name + "\" listo (huella " + fingerprint + ", azar: " + SecureRandom.source + ")");
 	}
 
@@ -313,6 +321,8 @@ class GameServer {
 		var row = db.getPlayer(uid);
 		var needGame = s.record == null && (row == null || row.record == "");
 		s.send(SWelcome(s.id, s.display, s.role, s.creative, Sys.time(), needGame));
+		// los kubes del servidor antes que la partida: el mundo y la paleta los necesitan
+		kubes.send(s);
 		s.send(SPlayers([for( o in sessions ) if( o.state == SPlay ) netPlayer(o, s)]));
 		for( o in sessions ) if( o != s && o.state == SPlay ) o.send(SUserJoin(netPlayer(s, o)));
 		files.log("entra " + s.display + " (" + uid + ", conexion " + s.id + ", " + s.channel.transport.peerName() + ")" + (first ? " por primera vez" : ""));

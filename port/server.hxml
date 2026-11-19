@@ -9,6 +9,7 @@
 -cp stubs
 -cp port/shim
 -D haxe3
+-lib format
 -D server
 -main ServerMain
 -hl port/out/server.hl

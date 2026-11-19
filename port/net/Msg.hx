@@ -262,6 +262,10 @@ enum ServerMsg {
 	SServerInfo( name : String, lan : Bool, deathDrop : Bool, password : Bool );
 	/** el propietario ha llevado su nave a (x, y): cada uno lleva alli la suya */
 	SShipMove( x : Int, y : Int );
+	/** al entrar: el kube del editor numero i del servidor, en bruto (KubeCore.NetKube: nada que descomprimir ni guardar) */
+	SKubeDef( i : Int, k : KubeCore.NetKube );
+	/** fin de los kubes del servidor: hay n numeros (los que no han llegado no tienen kube) */
+	SKubesEnd( n : Int );
 }
 
 /**
@@ -271,7 +275,7 @@ enum ServerMsg {
  */
 class Msg {
 
-	public static inline var PROTOCOL = 7;
+	public static inline var PROTOCOL = 8;
 	/** cambios de celdas en un mensaje, y bytes de un terreno descomprimido */
 	public static inline var CHANGES_MAX = 1 << 16;
 	public static inline var EDITS_MAX = 64 << 20;
@@ -607,6 +611,12 @@ class Msg {
 			w.string(name); w.bool(lan); w.bool(deathDrop); w.bool(password);
 		case SShipMove(x, y):
 			w.uint(x); w.uint(y);
+		case SKubeDef(i, k):
+			w.uint(i); w.string(k.id); w.string(k.name); w.uint(k.shape); w.uint(k.render);
+			for( v in k.box ) w.uint(v);
+			w.float(k.light); w.float(k.reach); w.bool(k.noCollide); w.bytes(k.faces);
+		case SKubesEnd(n):
+			w.uint(n);
 		case SPlanetLost(reason):
 			w.string(reason);
 		case SPong(t, serverTime):
@@ -730,6 +740,15 @@ class Msg {
 		case 33:
 			var x = r.uintIn(0, COORD_MAX); var y = r.uintIn(0, COORD_MAX);
 			SShipMove(x, y);
+		case 34:
+			var i = r.uintIn(0, KubeCore.MAX - 1); var id = r.string(KubeCore.ID_MAX); var name = r.string(KubeCore.NAME_MAX * 4);
+			var shape = r.uintIn(0, KubeCore.SHAPES.length - 1); var render = r.uintIn(0, KubeCore.RENDERS.length - 1);
+			var box = [for( _ in 0...6 ) r.uintIn(0, KubeCore.SIZE)];
+			var light = r.floatIn(0, 15); var reach = r.floatIn(0, 15); var nc = r.bool(); var faces = r.bytes(KubeCore.FACES.length * KubeCore.FACE_BYTES);
+			var k : KubeCore.NetKube = { id : id, name : KubeCore.cleanName(name), shape : shape, render : render, box : box, light : light, reach : reach, noCollide : nc, faces : faces };
+			if( !KubeCore.valid(k) ) throw new NetReader.NetError("kube no valido");
+			SKubeDef(i, k);
+		case 35: SKubesEnd(r.uintIn(0, KubeCore.MAX));
 		case k: throw new NetReader.NetError("mensaje de servidor desconocido " + k);
 		}
 		r.done();

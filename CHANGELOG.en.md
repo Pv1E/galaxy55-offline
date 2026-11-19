@@ -14,6 +14,8 @@
   decides everything that creates or destroys items (inventories, loose items, chests, death, ship, synthesizer, hangar, shop,
   contracts, licences, per-player comets, tutorial): no duplication, checked by an endurance test. In multiplayer the pause does
   not stop the world.
+  Editor kubes come from the server (the host's, or the `serveur/kubes` folder of the dedicated server), sent as raw pixels:
+  no file or image to decode, nothing written to the player's disk.
 - PRs 130-139 merged: special contract listed first (130), ESCorp Container drag and drop (131), ship storage on the board
   computer (132), dying leaves your gear in a container plus an option to turn it off (133), clicks outside a dialog no longer
   reach the menu below (134), green bonus crystals and other charge blocks in the creative palette (135, 136), mouse wheel wraps

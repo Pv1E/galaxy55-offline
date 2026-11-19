@@ -780,7 +780,8 @@ class Dev {
 					} else {
 						var nb = a[4] == "none" ? null : bk(a[4]);
 						if( nb != null && nb.type == BTWater ) w.setWater(x, y, z, nb, WorldProcess.PLACED) else w.setBlock(x, y, z, nb);
-						g.process.onSet(x, y, z, old, nb);
+						// multijugador: como al poner jugando, lo pone el servidor (casilla 1 si no es creativo)
+						if( g.net != null && nb != null ) g.net.sentPlace(x, y, z, nb, 0, 1) else g.process.onSet(x, y, z, old, nb);
 					}
 					Sys.println(a[0] + " " + x + "," + y + "," + z + " antes=" + (old == null ? "aire" : "" + old.k));
 				case "shore":

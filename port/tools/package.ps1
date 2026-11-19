@@ -58,6 +58,7 @@ MULTIJUGADOR: menu Multijugador (unirse a un servidor guardado o de la red local
 guardada). Tu identidad es el archivo identite.g55 de %APPDATA%\Galaxy55\ : copialo para jugar con ella en otro PC y no se
 lo des a nadie. Servidor dedicado sin ventana: galaxy55-serveur.bat (puerto 55055 TCP y UDP; sus datos en "serveur").
 Para jugar por Internet hay que abrir ese puerto en el router (la casilla UPnP lo intenta sola).
+Kubes del editor del servidor dedicado: los .kube de serveur\kubes (en una partida creada desde el juego, los del anfitrion).
 
 Controles (teclado y raton): W/Z/flechas mover, raton mirar, Espacio saltar y jetpack, X caminar despacio, H casco,
 clic izquierdo/E/Mayus excavar, colocar o usar, 1-0 o rueda elegir casilla, Tab excavador, R tirar, Mayus+K volver a la nave,
@@ -72,6 +73,7 @@ Saves go to %APPDATA%\Galaxy55\ . Known bugs: BUGS.md in the repository.
 Multiplayer: Multiplayer menu (join a saved or LAN server, or create a game from a saved game). Your identity is the file
 identite.g55 in %APPDATA%\Galaxy55\ (copy it to another PC to keep it; never share it). Dedicated server without a window:
 galaxy55-serveur.bat (port 55055 TCP and UDP, data in "serveur"); for Internet play, forward that port (UPnP tries it).
+Editor kubes of a dedicated server: the .kube files in serveur\kubes (in a game created from the game, the host's).
 "@ "`r`n"
 # Linux / macOS: con HashLink del sistema
 Save "$lin\jugar.sh" "#!/bin/sh`n# Abre Galaxy 55. Necesita HashLink (hl) instalado: ver LEEME.txt`ncd `"`$(dirname `"`$0`")`"`nexec hl galaxy55.hl `"`$@`"`n" "`n"

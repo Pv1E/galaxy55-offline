@@ -10,5 +10,6 @@
 -cp stubs
 -cp port/shim
 -D haxe3
+-lib format
 -main NetTest
 -hl port/out/net_test.hl

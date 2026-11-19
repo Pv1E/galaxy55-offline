@@ -14,6 +14,8 @@
   (Tab maintenu), Pause > Options multijoueur pour les gestionnaires. Le serveur décide de tout ce qui crée ou détruit des objets
   (inventaires, objets au sol, coffres, mort, vaisseau, synthétiseur, hangar, boutique, contrats, licences, comètes propres à
   chaque joueur, tutoriel) : pas de duplication, vérifié par un test d'endurance. En multijoueur la pause n'arrête pas le monde.
+  Les kubes de l'éditeur viennent du serveur (ceux de l'hôte, ou le dossier `serveur/kubes` du serveur dédié), envoyés en
+  pixels bruts : ni fichier ni image à décoder, rien d'écrit sur le disque du joueur.
 - PR 130-139 intégrées : contrat spécial en premier (130), Conteneur ESCorp en glisser-déposer (131), stockage du vaisseau sur
   l'ordinateur de bord (132), à la mort l'équipement reste dans un conteneur, avec une option pour l'enlever (133), les clics hors
   d'une fenêtre n'atteignent plus le menu dessous (134), cristaux verts de bonus et autres blocs de charge dans la palette créative

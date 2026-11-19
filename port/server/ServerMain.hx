@@ -53,6 +53,8 @@ class ServerMain {
 		server.files.echo = true;
 		// sin juego que dibujar: mas tiempo para generar planetas en cada vuelta
 		server.genBudgetMs = 15;
+		// kubes del editor: los .kube de <datos>/kubes
+		server.loadKubes(dir + "/kubes");
 		server.listen("0.0.0.0", port);
 		Sys.println("Galaxy 55 - servidor \"" + server.files.options.name + "\" v" + GameVersion.VERSION + " en el puerto " + (port != null ? port : server.files.options.port)
 			+ " (datos: " + sys.FileSystem.absolutePath(dir) + "). Ordenes: help");

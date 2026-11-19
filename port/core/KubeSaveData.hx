@@ -24,6 +24,59 @@ typedef EditorKubesSave = {
 }
 
 class KubeSaveData {
+	/** los kubes de la partida guardada pasan a los campos de siempre, donde los campos de siempre tienen aire o una casilla vacia;
+	    decode da el bloque de cada numero (null: ya no esta). Lo usan el juego (EditorKubes) y el servidor (importHost) */
+	public static function merge( info : SaveData.SaveInfo, raw : EditorKubesSave, decode : Int -> Block ) {
+		function edits( e : Array<Int>, add : Array<Int> ) : Array<Int> {
+			if( add == null ) return e;
+			if( e == null ) e = [];
+			var at = new Map<Int, Int>();
+			var i = 0;
+			while( i + 1 < e.length ) {
+				if( e[i] >= 0 ) at.set(e[i], i + 1);
+				i += 2;
+			}
+			i = 0;
+			while( i + 1 < add.length ) {
+				var cell = add[i], b = decode(add[i + 1]);
+				i += 2;
+				if( cell < 0 || b == null ) continue;
+				var p = at.get(cell);
+				if( p == null ) {
+					e.push(cell);
+					e.push(b.index);
+				} else if( (e[p] & 0xFFFF) == 0 )
+					e[p] = b.index;
+			}
+			return e;
+		}
+		function slotsOf( t : Protocol.BlockInventory, add : Array<Int> ) {
+			if( t == null || add == null ) return;
+			var i = 0;
+			while( i + 2 < add.length ) {
+				var c = add[i], b = decode(add[i + 1]), n = add[i + 2];
+				i += 3;
+				if( b != null && c >= 0 && c < t.length && t[c] == null && n > 0 ) t[c] = { k : b.index, n : n };
+			}
+		}
+		info.edits = edits(info.edits, raw.edits);
+		info.shipEdits = edits(info.shipEdits, raw.shipEdits);
+		if( raw.planets != null && info.uni != null && info.uni.planets != null )
+			for( rp in raw.planets )
+				for( p in info.uni.planets )
+					if( p.id == rp.id ) p.edits = edits(p.edits, rp.edits);
+		if( raw.drops != null && info.deathDrops != null )
+			for( rd in raw.drops )
+				for( d in info.deathDrops )
+					if( d.id == rd.id ) slotsOf(d.t, rd.t);
+		if( info.inv != null ) slotsOf(info.inv.t, raw.inv);
+		if( raw.chests != null && info.chests != null )
+			for( rc in raw.chests )
+				for( c in info.chests )
+					if( c.key == rc.key ) slotsOf(c.t, rc.t);
+		if( info.storage != null ) slotsOf(info.storage.t, raw.storage);
+	}
+
 	/** editorKubes de una partida leida de disco; null si no hay o esta mal formado */
 	public static function read( o : Dynamic ) : EditorKubesSave {
 		try {

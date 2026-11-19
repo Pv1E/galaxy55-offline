@@ -22,6 +22,7 @@ print menu
 shot kubes_menu
 tap down
 tap down
+tap down
 tap enter
 wait 30
 print kube

@@ -7,6 +7,7 @@ menu
 waitfor menu
 tap down
 tap down
+tap down
 tap enter
 wait 30
 # tierra con hierba: el dessus y los lados son distintos, se ven los raccords de lado, de arriba y entre los dos

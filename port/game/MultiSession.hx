@@ -24,6 +24,8 @@ class MultiSession {
 	public var endReason(default, null) : Null<RefuseReason>;
 	/** avisos para la pantalla (claves de Lang y sus valores) */
 	public var notices = new Array<{ key : String, args : Array<String> }>();
+	/** kubes del editor del servidor (SKubeDef), por su numero */
+	public var kubes = new Array<KubeCore.NetKube>();
 	/** opciones del servidor (solo a los gestionnaires, SServerInfo) */
 	public var serverInfo : { name : String, lan : Bool, deathDrop : Bool, password : Bool };
 	public var onMessage : ServerMsg -> Void;
@@ -49,6 +51,8 @@ class MultiSession {
 		for( a in Sys.args() ) if( StringTools.startsWith(a, "--mpseed=") ) ServerWorlds.fixedSeed = Std.parseInt(a.substr(9));
 		m.server = new GameServer(dir);
 		m.server.hostSave = save;
+		// los kubes del editor del anfitrion (su carpeta) son los del servidor
+		m.server.loadKubes(KubeData.dir());
 		if( listenPort > 0 ) m.server.listen(bindHost, listenPort);
 		m.client = new NetClient(id, Settings.myPseudo(), "", 0, m.server.fingerprint);
 		m.client.connectLocal(m.server.connectLocal());
@@ -120,6 +124,8 @@ class MultiSession {
 				foreign = l;
 			case SMode(c):
 				creative = c;
+			case SKubeDef(i, k):
+				kubes[i] = k;
 			case SServerInfo(name, lan, dd, pw):
 				serverInfo = { name : name, lan : lan, deathDrop : dd, password : pw };
 			default:

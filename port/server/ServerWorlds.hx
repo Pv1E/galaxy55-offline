@@ -96,6 +96,15 @@ class ServerWorlds {
 		db.commit();
 		info.chests = ship;
 		info.deathDrops = null;
+		// los kubes del editor de su partida (por su archivo) pasan a los del servidor, que lee la misma carpeta (ServerKubes)
+		var raw = info.editorKubes;
+		if( raw != null ) {
+			KubeSaveData.merge(info, raw, function( n ) {
+				var i = n >> 2;
+				return i < 0 || i >= raw.ids.length ? null : server.kubes.blockOf(raw.ids[i], n & 3);
+			});
+			info.editorKubes = null;
+		}
 		s.record = info;
 		saveRecord(s);
 		server.files.log(s.display + " trae su partida " + save.name + " (" + save.id + ")");

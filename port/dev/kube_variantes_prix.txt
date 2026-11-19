@@ -9,6 +9,7 @@ menu
 waitfor menu
 tap down
 tap down
+tap down
 tap enter
 wait 30
 kube shape door

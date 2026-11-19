@@ -1,0 +1,17 @@
+# multijugador (anadido del port): el invitado de port/dev/mp_kubes_host.txt
+waitfor planet
+wait 300
+mp join 55185
+waitfor map 9000
+waitfor mpforeign 9000
+wait 60
+print edkubes
+mp landforeign
+waitfor planet 9000
+waitfor mpremotes1 6000
+wait 400
+print cellhash
+tp 63 63 top 0.6 -0.5
+wait 30
+shot mp_kubes_invitado
+waitfor mpend 6000

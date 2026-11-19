@@ -52,6 +52,7 @@ class NetTest {
 		hangarTest(Sys.args().length > 0 ? Sys.args()[0] + "_hangar" : "port/out/net_test_hangar");
 		cometTest(Sys.args().length > 0 ? Sys.args()[0] + "_comete" : "port/out/net_test_comete");
 		tutoTest(Sys.args().length > 0 ? Sys.args()[0] + "_tuto" : "port/out/net_test_tuto");
+		kubeTest(Sys.args().length > 0 ? Sys.args()[0] + "_kubes" : "port/out/net_test_kubes");
 		// endurance: 30 s por defecto; --soak=S para mas (port/headless: net_test.hl DIR --soak=600)
 		var soak = 30.;
 		for( a in Sys.args() ) if( StringTools.startsWith(a, "--soak=") ) soak = Std.parseFloat(a.substr(7));
@@ -973,6 +974,50 @@ class NetTest {
 		server.stop();
 	}
 
+	/**
+	 * Kubes del editor del servidor: los .kube de su carpeta se leen sin el juego, se mandan en bruto a cada jugador al entrar
+	 * (validos, del tamano exacto), sus bloques existen en el servidor (se pueden poner) y cada kube guarda su numero al volver a
+	 * arrancar aunque se quite otro; un kube malformado se rechaza al leer el mensaje.
+	 */
+	static function kubeTest( dir : String ) {
+		deleteDir(dir);
+		sys.FileSystem.createDirectory(dir);
+		var kd = dir + "/kubes";
+		sys.FileSystem.createDirectory(kd);
+		var names = ["acier", "amethyste", "beton"];
+		for( n in names ) sys.io.File.copy("port/kubes/" + n + ".kube", kd + "/" + n + ".kube");
+		server = new GameServer(dir);
+		server.loadKubes(kd);
+		server.listen("127.0.0.1", 55090);
+		clients = [];
+		var k = add(new TestClient("Kim", secret(90)));
+		k.tcp(55090);
+		check("kubes: el jugador recibe los del servidor al entrar", until(() -> k.has(m -> m.match(SKubesEnd(3)))));
+		var got = [for( m in k.msgs ) switch( m ) { case SKubeDef(i, kk): kk; default: null; }].filter(x -> x != null);
+		check("kubes: en bruto, validos y con su archivo", got.length == 3 && Lambda.foreach(got, x -> KubeCore.valid(x)) && got[0].id == "acier",
+			[for( x in got ) x.id + ":" + KubeCore.valid(x) + ":" + x.name + ":" + x.light + ":" + x.box].join(" "));
+		var b = KubeCore.blocksFor(1)[0];
+		check("kubes: sus bloques existen en el servidor", b.index < Block.all.length && Block.all[b.index] == b && b.k == BKubeEditor && b.getName() != "-");
+		k.client.send(CNewGame(false));
+		until(() -> k.has(m -> m.match(SRecord(_))) && lastInv(k) != null);
+		k.client.send(CCreative(1, 1, b.index, 5));
+		k.client.send(CEcon(2, EDeliver, "", 0));
+		until(() -> k.has(m -> m.match(SInventory(2, _))));
+		check("kubes: el creativo los tiene en la paleta del servidor", count(lastInv(k), b.index) > 0);
+		server.stop();
+		// se quita el primero: los demas guardan su numero (kubes.json)
+		sys.FileSystem.deleteFile(kd + "/acier.kube");
+		server = new GameServer(dir);
+		server.loadKubes(kd);
+		check("kubes: al volver a arrancar cada uno guarda su numero", server.kubes.list.length == 3 && server.kubes.list[0] == null
+			&& server.kubes.list[1] != null && server.kubes.list[1].id == "amethyste" && server.kubes.list[2].id == "beton",
+			[for( x in server.kubes.list ) x == null ? "-" : x.id].join(","));
+		server.stop();
+		var bad = Msg.encodeServer(SKubeDef(0, { id : "x", name : "x", shape : 0, render : 0, box : [0, 0, 0, 32, 32, 32], light : 0, reach : 0, noCollide : false,
+			faces : haxe.io.Bytes.alloc(100) }));
+		check("kubes: uno malformado (caras de otro tamano) se rechaza", rejects(() -> Msg.decodeServer(bad)));
+	}
+
 	static function add( c : TestClient ) {
 		clients.push(c);
 		return c;
@@ -1013,7 +1058,9 @@ class NetTest {
 			SInventory(3, { t : [{ k : 5, n : 2 }, null], charges : [{ c : 0, n : 4 }] }),
 			SAddLoot({ id : 1, x : 1.5, y : 2.5, z : 3.5, vx : 0.25, vy : -0.25, vz : 0, gi : 5, n : 2, delay : 0, container : true }),
 			SDeleteLoot(1), SLootCount(1, 2), SLootRest(1, 1.5, 2.5, 3.5), SChest(1, 2, 3, 4, [null, { k : 5, n : 1 }], "Bob"), SHit(20), SBomb(1.5, 2.5, 3.5),
-			SPatch("credits", "120"), SShipCells([{ key : 77, v : 3 }]), SServerInfo("Mi server", true, false, true), SShipMove(12, 34)];
+			SPatch("credits", "120"), SShipCells([{ key : 77, v : 3 }]), SServerInfo("Mi server", true, false, true), SShipMove(12, 34),
+			SKubeDef(3, { id : "acier", name : "Acier", shape : 2, render : 0, box : [0, 0, 0, 32, 16, 32], light : 6, reach : 2, noCollide : false,
+				faces : haxe.io.Bytes.alloc(KubeCore.FACES.length * KubeCore.FACE_BYTES) }), SKubesEnd(4)];
 		var names = [for( c in cs ) Type.enumConstructor(c)];
 		for( n in Type.getEnumConstructs(ClientMsg) ) check("muestra de " + n, names.indexOf(n) >= 0);
 		names = [for( s in ss ) Type.enumConstructor(s)];

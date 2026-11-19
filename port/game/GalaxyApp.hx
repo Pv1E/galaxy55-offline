@@ -1177,6 +1177,7 @@ class GalaxyApp extends hxd.App {
 		mp = null;
 		m.close();
 		mpHeld = [];
+		EditorKubes.useLocal();
 		closeWaiting();
 		if( game != null || explorer != null || state != Menu ) {
 			if( explorer != null ) {
@@ -3596,6 +3597,9 @@ class GalaxyApp extends hxd.App {
 				explorer = null;
 				buildExplorer();
 			}
+		case SKubesEnd(n):
+			// los kubes del editor del servidor (solo en memoria) en vez de los de la carpeta
+			EditorKubes.useServer(mp.kubes, n);
 		case SRights(r):
 			mpRights = r;
 			if( game != null && game.net != null ) game.netOwner = r & (ROwner : Int) != 0;

@@ -14,6 +14,8 @@
   mantenido) y Pausa > Opciones multijugador para los gestores. El servidor decide todo lo que crea o destruye objetos
   (inventarios, sueltos, cantinas, muerte, nave, sintetizador, hangar, tienda, contratos, licencias, cometas de cada jugador,
   tutorial): sin duplicación, comprobado con una prueba de resistencia. En multijugador la pausa no para el mundo.
+  Los kubes del editor vienen del servidor (los del anfitrión, o la carpeta `serveur/kubes` del servidor dedicado), enviados
+  como píxeles en bruto: ni archivo ni imagen que decodificar, nada se escribe en el disco del jugador.
 - PRs 130-139 acoplados: contrato especial el primero en Contratos (130), Contenedor ESCorp con arrastrar y soltar (131),
   almacén de la nave en el ordenador de a bordo (132), al morir lo que llevas queda en un contenedor y opción para quitarlo (133),
   los clics fuera de una ventana ya no llegan al menú de debajo (134), cristales verdes de bonus y demás bloques de carga en la

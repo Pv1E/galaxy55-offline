@@ -93,6 +93,48 @@ class EditorKubes {
 		return [for( s in out ) s.blocks[0]];
 	}
 
+
+	// ---------------------------------------------------------------- multijugador: los kubes del servidor
+
+	/** en una partida multijugador: los kubes son los del servidor (useServer), no los de la carpeta */
+	public static var serverMode(default, null) = false;
+
+	/**
+	 * Partida multijugador (anadido del port): los kubes del servidor (list[i] = su kube numero i, null si ese numero ya no
+	 * tiene) toman los bloques de los numeros 0..n-1 (KubeCore.blocksFor, los mismos que el servidor), solo en memoria; los de la
+	 * carpeta se dejan hasta useLocal. Se ven en todas las partidas del servidor y salen en la paleta en creativo.
+	 */
+	public static function useServer( list : Array<KubeCore.NetKube>, n : Int ) {
+		serverMode = true;
+		enabled = true;
+		byId = new Map();
+		for( i in 0...Std.int(Math.max(n, slots.length)) ) {
+			if( i >= slots.length ) slots.push(new Slot("", KubeCore.blocksFor(i)));
+			var s = slots[i], k = i < n ? list[i] : null;
+			s.kube = k == null ? null : KubeData.fromNet(k);
+			s.active = s.kube != null;
+			s.id = k == null ? "" : "srv:" + k.id;
+			s.path = null;
+			s.crc = 0;
+			s.stamp = -1;
+			if( s.active ) byId.set(s.id, s);
+		}
+		skipped = 0;
+		rebuild();
+	}
+
+	/** fin de la partida multijugador: los kubes del servidor se olvidan; los de la carpeta vuelven con la proxima partida (attach) */
+	public static function useLocal() {
+		if( !serverMode ) return;
+		serverMode = false;
+		for( s in slots ) {
+			s.active = false;
+			s.kube = null;
+			s.id = "";
+		}
+		byId = new Map();
+		rebuild();
+	}
 	// ---------------------------------------------------------------- carga
 
 	/**
@@ -100,6 +142,11 @@ class EditorKubes {
 	 * los de la partida guardada pasan a sus bloques; en aventura no queda ninguno disponible.
 	 */
 	public static function attach( info : SaveInfo ) {
+		// multijugador: los del servidor, siempre (las partidas del servidor llevan sus numeros tal cual)
+		if( serverMode ) {
+			enabled = true;
+			return;
+		}
 		enabled = info.creative == true;
 		if( !enabled ) {
 			for( s in slots ) s.active = false;
@@ -121,6 +168,7 @@ class EditorKubes {
 	 * archivos cambiados se vuelven a leer; si algo ha cambiado, se rehacen sus bloques, sus casillas del atlas y sus iconos.
 	 */
 	public static function refresh( ?wanted : Array<String> ) {
+		if( serverMode ) return;
 		var files = new Map<String, String>();
 		var order = [];
 		for( p in KubeData.list() ) {
@@ -147,7 +195,8 @@ class EditorKubes {
 			var crc = try haxe.crypto.Crc32.make(sys.io.File.getBytes(path)) catch( e : Dynamic ) 0;
 			var s = byId.get(id);
 			if( s == null ) {
-				s = new Slot(id, [for( _ in 0...PER ) newBlock()]);
+				// el kube numero i usa siempre los mismos bloques (KubeCore.blocksFor: los del servidor del mismo proceso tambien)
+				s = new Slot(id, KubeCore.blocksFor(slots.length));
 				slots.push(s);
 				byId.set(id, s);
 			}
@@ -160,18 +209,6 @@ class EditorKubes {
 			changed = true;
 		}
 		if( changed ) rebuild();
-	}
-
-	/** un bloque mas al final de Block.all, con el BlockKind de los kubes del editor */
-	static function newBlock() : Block {
-		var b = new Block(BKubeEditor);
-		b.index = Block.all.length;
-		b.flags = [];
-		b.type = BTFull;
-		b.tlr = b.tu = b.td = 0xFFF;
-		b.matter = b;
-		Block.all.push(b);
-		return b;
 	}
 
 	/** casillas, bloques e iconos de todos los kubes cargados */
@@ -251,140 +288,17 @@ class EditorKubes {
 
 	/** los bloques de un kube: los mismos campos que Block.initBlocks deja con las lineas de KubeData.dataGen */
 	static function setup( s : Slot ) {
-		for( b in s.blocks ) reset(b, s.kube == null ? "-" : s.kube.name);
-		if( !s.active ) return;
+		if( !s.active || s.kube == null ) {
+			for( b in s.blocks ) KubeCore.reset(b, s.kube == null ? "-" : s.kube.name);
+			return;
+		}
 		var k = s.kube;
-		inline function tile( f : Int ) return s.tiles[f] < 0 ? 0xFFF : s.tiles[f];
-		var b = s.blocks[0];
-		var flags = [];
-		if( k.light != null ) {
-			var l = k.light[1] > 0 ? BFLight(k.light[0], k.light[1]) : BFLight(k.light[0]);
-			flags.push(l);
-			flags.push(BFNoShade);
-		}
-		if( k.noCollide ) flags.push(BFNoCollide);
-		function common( x : Block, f : Array<BlockFlag> ) {
-			x.flags = flags.concat(f);
-			for( fl in x.flags )
-				switch( fl ) {
-				case BFLight(_): x.special = fl;
-				case BFNoCollide: x.props.unset(PCollide);
-				case BFMagnet(m):
-					if( x.magnets == 7 ) x.magnets = 0;
-					x.magnets |= Type.enumIndex(m);
-				case BFAnchor(a): x.anchors |= Type.enumIndex(a);
-				default:
-				}
-		}
-		var sz = { x1 : k.box[0] / KubeData.SIZE, y1 : k.box[1] / KubeData.SIZE, z1 : k.box[2] / KubeData.SIZE, x2 : k.box[3] / KubeData.SIZE, y2 : k.box[4] / KubeData.SIZE, z2 : k.box[5] / KubeData.SIZE };
-		b.tlr = tile(KubeData.SIDE);
-		b.tu = tile(KubeData.UP);
-		b.td = tile(KubeData.DOWN);
-		switch( k.shape.id ) {
-		case "cube":
-			b.type = k.blockType();
-			common(b, []);
-		case "cube6":
-			b.type = BTExtended;
-			b.tlr = (tile(KubeData.FRONT) << 12) | tile(KubeData.BACK);
-			b.tu = (tile(KubeData.LEFT) << 12) | tile(KubeData.UP);
-			b.td = (tile(KubeData.RIGHT) << 12) | tile(KubeData.DOWN);
-			common(b, []);
-		case "box":
-			b.type = BTReduced;
-			b.size = sz;
-			common(b, [BFSize(sz.x1, sz.y1, sz.z1, sz.x2, sz.y2, sz.z2)]);
-		case "door":
-			// como BShipDoor: cerrada X (gira a Y), cerrada Y y las dos abiertas; cada cerrada alterna con su abierta
-			var y = s.blocks[1], ox = s.blocks[2], oy = s.blocks[3];
-			var hold = [BFMagnet(UpDown), BFAnchor(Up), BFAnchor(Down)];
-			var szY = { x1 : sz.y1, y1 : sz.x1, z1 : sz.z1, x2 : sz.y2, y2 : sz.x2, z2 : sz.z2 };
-			for( c in [b, y] ) {
-				c.type = BTReduced;
-				c.tlr = b.tlr;
-				c.tu = b.tu;
-				c.td = b.td;
-			}
-			b.size = sz;
-			y.size = szY;
-			// la pareja de BFFlip y BFToggle va en flip y toggle (BFToggle nombra un BlockKind: el de todos estos es el mismo)
-			common(b, hold.concat([BFSize(sz.x1, sz.y1, sz.z1, sz.x2, sz.y2, sz.z2), BFFlip]));
-			common(y, hold.concat([BFSize(szY.x1, szY.y1, szY.z1, szY.x2, szY.y2, szY.z2)]));
-			for( o in [ox, oy] ) {
-				o.type = BTModel;
-				o.tlr = o.tu = o.td = tile(KubeData.OPEN);
-				o.props.unset(PCollide);
-			}
-			ox.model = MDoorOpenX;
-			oy.model = MDoorOpenY;
-			common(ox, hold.concat([BFModel(MDoorOpenX), BFNoCollide]));
-			common(oy, hold.concat([BFModel(MDoorOpenY), BFNoCollide]));
-			b.flip = y;
-			y.flip = b;
-			b.toggle = ox;
-			ox.toggle = b;
-			y.toggle = oy;
-			oy.toggle = y;
-		case "painting":
-			// 4 bloques, uno por pared (Painting, BFOnWall): el primero con la pared en +y, cada uno girado un cuarto de vuelta
-			var sizes = Painting.sizes(k.box);
-			for( t in 0...PER ) {
-				var c = s.blocks[t], z = sizes[t];
-				c.type = BTModel;
-				c.tlr = c.tu = c.td = b.tlr;
-				c.size = z;
-				c.wall = t;
-				common(c, [BFOnWall(t), BFSize(z.x1, z.y1, z.z1, z.x2, z.y2, z.z2), BFMagnet(None)]);
-			}
-		case "plane":
-			// como BWoodWindow: la X gira a la Y con BFFlip
-			var y = s.blocks[1];
-			for( c in [b, y] ) {
-				c.type = BTModel2Side;
-				c.tu = c.td = c.tlr = b.tlr;
-			}
-			b.model = MPlanX;
-			y.model = MPlanY;
-			common(b, [BFModel(MPlanX), BFFlip]);
-			common(y, [BFModel(MPlanY)]);
-			b.flip = y;
-			y.flip = b;
-		default:
-			b.type = k.shape.type;
-			b.model = k.shape.model;
-			if( k.shape.faces.length == 1 ) b.tu = b.td = b.tlr;
-			else if( !k.usesFace(KubeData.DOWN) ) b.td = b.tlr;
-			common(b, [BFModel(k.shape.model)]);
-		}
-		// las colisiones de los modelos sin BFSize usan su propia caja (como hace World al crearse, Builder.init)
-		for( x in s.blocks )
-			if( x.model != null && x.size == null ) x.size = Models.get(x.model).box;
+		// lo que no es dibujo esta en KubeCore (el servidor configura los mismos bloques, sin casillas)
+		KubeCore.setup(s.blocks, k.name, k.shape, k.render, k.box, k.light, k.noCollide, function( f ) return s.tiles[f] < 0 ? 0xFFF : s.tiles[f]);
 	}
 
-	/** un bloque del kube sin forma: lo que Block.new y Block.initBlocks dejan antes de leer las banderas */
-	static function reset( b : Block, name : String ) {
-		b.type = BTFull;
-		b.flags = [];
-		b.special = null;
-		b.model = null;
-		b.size = null;
-		b.flip = null;
-		b.toggle = null;
-		b.covered = null;
-		b.uncover = null;
-		b.propagate = null;
-		b.anchors = 0;
-		b.magnets = 7;
-		b.wall = -1;
-		b.props = new haxe.EnumFlags<Block.BlockProp>();
-		b.props.set(PCanPick);
-		b.props.set(PCollide);
-		b.tlr = b.tu = b.td = 0xFFF;
-		b.basePrice = null;
-		b.weight = 1;
-		b.matter = b;
-		@:privateAccess b.name = name;
-	}
+	/** un bloque del kube sin forma (KubeCore.reset) */
+	static inline function reset( b : Block, name : String ) KubeCore.reset(b, name);
 
 	// ---------------------------------------------------------------- partida guardada
 
@@ -424,57 +338,8 @@ class EditorKubes {
 		return s.blocks[v < s.variants() ? v : 0];
 	}
 
-	/** los kubes de la partida guardada pasan a los campos de siempre, donde los campos de siempre tienen aire o una casilla vacia */
-	static function merge( info : SaveInfo, raw : EditorKubesSave ) {
-		function edits( e : Array<Int>, add : Array<Int> ) : Array<Int> {
-			if( add == null ) return e;
-			if( e == null ) e = [];
-			var at = new Map<Int, Int>();
-			var i = 0;
-			while( i + 1 < e.length ) {
-				if( e[i] >= 0 ) at.set(e[i], i + 1);
-				i += 2;
-			}
-			i = 0;
-			while( i + 1 < add.length ) {
-				var cell = add[i], b = decode(raw, add[i + 1]);
-				i += 2;
-				if( cell < 0 || b == null ) continue;
-				var p = at.get(cell);
-				if( p == null ) {
-					e.push(cell);
-					e.push(b.index);
-				} else if( (e[p] & 0xFFFF) == 0 )
-					e[p] = b.index;
-			}
-			return e;
-		}
-		function slotsOf( t : Protocol.BlockInventory, add : Array<Int> ) {
-			if( t == null || add == null ) return;
-			var i = 0;
-			while( i + 2 < add.length ) {
-				var c = add[i], b = decode(raw, add[i + 1]), n = add[i + 2];
-				i += 3;
-				if( b != null && c >= 0 && c < t.length && t[c] == null && n > 0 ) t[c] = { k : b.index, n : n };
-			}
-		}
-		info.edits = edits(info.edits, raw.edits);
-		info.shipEdits = edits(info.shipEdits, raw.shipEdits);
-		if( raw.planets != null && info.uni != null && info.uni.planets != null )
-			for( rp in raw.planets )
-				for( p in info.uni.planets )
-					if( p.id == rp.id ) p.edits = edits(p.edits, rp.edits);
-		if( raw.drops != null && info.deathDrops != null )
-			for( rd in raw.drops )
-				for( d in info.deathDrops )
-					if( d.id == rd.id ) slotsOf(d.t, rd.t);
-		if( info.inv != null ) slotsOf(info.inv.t, raw.inv);
-		if( raw.chests != null && info.chests != null )
-			for( rc in raw.chests )
-				for( c in info.chests )
-					if( c.key == rc.key ) slotsOf(c.t, rc.t);
-		if( info.storage != null ) slotsOf(info.storage.t, raw.storage);
-	}
+	/** los kubes de la partida guardada pasan a los campos de siempre (KubeSaveData.merge: el servidor hace lo mismo) */
+	static function merge( info : SaveInfo, raw : EditorKubesSave ) KubeSaveData.merge(info, raw, function( n ) return decode(raw, n));
 
 	/**
 	 * Lo que SaveData.write escribe: sin kubes del editor en los campos de siempre, la misma partida; si no, una copia con aire y
