@@ -6,6 +6,7 @@ param(
 	[int]$Jobs = 1,
 	[double]$TimeoutScale = 2,
 	[switch]$CompareOnly,
+	[switch]$Reclean,
 	[switch]$KeepData
 )
 # Lanza todos los guiones de port/dev (*.txt) con devrun.ps1 y guarda lo que dicen y sus capturas, para comparar dos versiones.
@@ -14,6 +15,8 @@ param(
 # Necesita haber compilado port/game.hxml. Opciones:
 #   -Label NOMBRE   carpeta de salida: port/out/runall/NOMBRE (o una ruta)
 #   -Ref NOMBRE     referencia con la que comparar (port/out/runall/NOMBRE o una ruta); -CompareOnly compara sin lanzar nada
+#                   (con -Reference, rehace unstable.txt y shots_noise.tsv de las dos pasadas que ya hay); -Reclean vuelve a
+#                   limpiar las salidas que ya hay (raw/) con las reglas de ahora, sin lanzar nada (con -Reference, las dos pasadas)
 #   -Filter a*,b    solo esos guiones (comodines, separados por comas); en una carpeta que ya existe solo rehace esos
 #   -Jobs N         guiones a la vez (1); con mas, el reloj de cada partida va mas cargado: hacer la referencia igual
 #   -TimeoutScale F multiplica el -Timeout de cada guion (2: con varios a la vez algunos pasan de los 120 s por defecto)
@@ -22,7 +25,7 @@ param(
 # que se leen de su cabecera (la primera vez que aparece cada uno en un comentario: '-Extra "--lang=fr"', '-Timeout 400').
 # Salida en la carpeta: NOMBRE.txt (lo que dijo el juego, limpio de tiempos, ids, fechas y rutas), raw/ (sin limpiar),
 # shots/NOMBRE/*.jpg (capturas a 640 de ancho), summary.tsv (estado, segundos, opciones), index.html (todas las capturas).
-# -Reference: ademas unstable.txt (por guion, las lineas que cambiaron entre las dos pasadas, con las cifras como #) y
+# -Reference: ademas unstable.txt (por guion, las lineas que cambiaron entre las dos pasadas, con los numeros como #) y
 # shots_noise.tsv (diferencia media de cada captura entre las dos pasadas).
 # -Ref: compare.txt (diferencias que no son inestables, capturas que cambian mas que su ruido), compare.html (todas las
 # capturas, la referencia al lado, de la que mas cambia a la que menos) y compare_N.png (planchas de las que cambian).
@@ -43,8 +46,8 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 public static class RunAll {
-	/** la linea con las cifras como # (una linea inestable cambia sobre todo sus numeros) */
-	public static string Mask(string s) { return Regex.Replace(s, "[0-9]+", "#"); }
+	/** la linea con cada numero (signo y decimales incluidos) como # (una linea inestable cambia sobre todo sus numeros) */
+	public static string Mask(string s) { return Regex.Replace(s, "-?[0-9]+([.][0-9]+)?", "#"); }
 
 	/** diferencias por lineas (subsecuencia comun mas larga): {0, i, j} igual, {1, i, -1} solo en a, {2, -1, j} solo en b */
 	public static List<int[]> Diff(string[] a, string[] b) {
@@ -230,18 +233,18 @@ function Get-Scripts {
 	}
 }
 
-# limpia la salida de un guion: rutas de esta pasada, ids de partida, fechas, horas, md5, milisegundos y fps
-function Get-Clean($lines, [string]$data, [string]$shots) {
+# limpia la salida de un guion: rutas de las carpetas de la pasada (%TEMP%\g55runall\...\data|shots\GUION) y del repositorio, ids
+# de partida, fechas (tambien dia/mes), horas, md5, milisegundos y fps
+function Get-Clean($lines) {
 	$rules = @(
-		@([regex]::Escape($data), '<datos>'),
-		@([regex]::Escape($data.Replace('\', '/')), '<datos>'),
-		@([regex]::Escape($shots), '<capturas>'),
-		@([regex]::Escape($shots.Replace('\', '/')), '<capturas>'),
+		@('[A-Za-z]:[\\/][^ ]*?g55runall[\\/][^\\/ ]+[\\/]data[\\/][^\\/ ]+', '<datos>'),
+		@('[A-Za-z]:[\\/][^ ]*?g55runall[\\/][^\\/ ]+[\\/]shots[\\/][^\\/ ]+', '<capturas>'),
 		@([regex]::Escape($repo), '<repo>'),
 		@([regex]::Escape($repo.Replace('\', '/')), '<repo>'),
 		@('\b\d{8}_\d{6}_\d{1,4}\b', '<id>'),
 		@('\b\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}(?::\d{2})?)?\b', '<fecha>'),
 		@('\b\d{1,2}/\d{1,2}/\d{2,4}\b', '<fecha>'),
+		@('\b\d{1,2}/\d{1,2}(?= \d{1,2}:\d{2})', '<fecha>'),
 		@('\b\d{1,2}:\d{2}(?::\d{2})?\b', '<hora>'),
 		@('\b[0-9a-f]{32}\b', '<md5>'),
 		@('-?\d+(?:\.\d+)? ?ms\b', '<ms>'),
@@ -253,6 +256,22 @@ function Get-Clean($lines, [string]$data, [string]$shots) {
 		foreach ($r in $rules) { $l = $l -replace $r[0], $r[1] }
 		$l
 	}
+}
+
+# NOMBRE.txt a partir de raw/: lo que dijo el juego, limpio, y TIMEOUT o lo que dijo en stderr segun el estado; devuelve las lineas
+function Write-Clean([string]$dest, [string]$name, [string]$state) {
+	$lines = @(Get-Clean (Read-Lines "$dest\raw\$name.txt"))
+	if ($state -eq "timeout") { $lines += "TIMEOUT" }
+	elseif ($state -eq "err") { $lines += @(Get-Clean (Read-Lines "$dest\raw\$name.err.txt" | Select-Object -First 8 | ForEach-Object { "ERR: $_" })) }
+	Write-Lines "$dest\$name.txt" $lines
+	return $lines
+}
+
+# -Reclean: vuelve a limpiar las salidas que ya hay (raw/) con las reglas de ahora
+function Invoke-Reclean([string]$dest) {
+	$s = Get-Summary $dest
+	foreach ($name in $s.Keys) { Write-Clean $dest $name $s[$name][1] | Out-Null }
+	Write-Host "$dest`: $($s.Count) salidas limpias de nuevo"
 }
 
 # lanza los guiones en dest (como mucho $Jobs a la vez) y deja su salida limpia, sus capturas y summary.tsv. Con -Filter solo se
@@ -297,12 +316,8 @@ function Invoke-Run([string]$dest, $scripts) {
 			if (-not $r.P.HasExited) { & taskkill /T /F /PID $r.P.Id 2>&1 | Out-Null }
 			$name = $r.S.Name
 			$dev = Read-Lines "$tmp\$name.devrun.txt"
-			$err = Read-Lines "$dest\raw\$name.err.txt" | Select-Object -First 8
-			$lines = @(Get-Clean (Read-Lines "$dest\raw\$name.txt") $r.Data $r.Shots)
-			$state = "ok"
-			if ($dev -contains "TIMEOUT" -or -not $r.P.HasExited) { $lines += "TIMEOUT"; $state = "timeout" }
-			elseif ($err) { $lines += @(Get-Clean ($err | ForEach-Object { "ERR: $_" }) $r.Data $r.Shots); $state = "err" }
-			Write-Lines "$dest\$name.txt" $lines
+			$state = if ($dev -contains "TIMEOUT" -or -not $r.P.HasExited) { "timeout" } elseif (Read-Lines "$dest\raw\$name.err.txt") { "err" } else { "ok" }
+			$lines = Write-Clean $dest $name $state
 			$pngs = @(Get-ChildItem "$($r.Shots)\*.png" -ErrorAction SilentlyContinue)
 			if ($pngs.Count -gt 0) {
 				New-Item -ItemType Directory -Force "$dest\shots\$name" | Out-Null
@@ -435,11 +450,13 @@ function Write-Compare([string]$cur, [string]$ref, $scripts) {
 $scripts = @(Get-Scripts)
 if ($scripts.Count -eq 0) { throw "ningun guion con -Filter '$Filter'" }
 $dest = Get-Dir $Label
-if (-not $CompareOnly) {
+if ($Reclean) {
+	Invoke-Reclean $dest
+	if ($Reference) { Invoke-Reclean "$dest.2" }
+} elseif (-not $CompareOnly) {
 	Invoke-Run $dest $scripts
-	if ($Reference) {
-		Invoke-Run "$dest.2" $scripts
-		Write-Unstable $dest "$dest.2"
-	}
+	if ($Reference) { Invoke-Run "$dest.2" $scripts }
 }
+# con -CompareOnly o -Reclean, -Reference solo vuelve a sacar las lineas inestables de las dos pasadas que ya hay
+if ($Reference) { Write-Unstable $dest "$dest.2" }
 if ($Ref) { Write-Compare $dest (Get-Dir $Ref) $scripts }

@@ -8,8 +8,8 @@ waitfor window
 expbutton
 waitfor planet
 wait 30
-print block 95 71 135
-print block 96 71 135
+print blockl 59 62 5
+print blockl 60 62 5
 shot tuto_techo
 tuto step 7
 give BMinAluminium 2
@@ -60,7 +60,7 @@ hangarexit
 waitfor planet
 wait 30
 print tuto
-print block 95 71 135
+print blockl 59 62 5
 wait 30
 shot tuto_fin
 explore

@@ -93,10 +93,13 @@ import Common;
  *                           las capturas (shot, loadshot, expship, cover) van a esa carpeta
  *   loadshot nombre [N]     captura en la imagen N (5) de la siguiente carga de planeta (mientras carga el guion no corre)
  *   find Bloque [radio]     el bloque mas cercano a los pies del jugador (a menos de radio, 64; Bloque = none: el aire); en las
- *                           ordenes siguientes fx, fy y fz (o fx+1, fz-2...) son su celda
+ *                           ordenes siguientes fx, fy y fz (o fx+1, fz-2...) son su celda. Solo dice algo si no hay ninguno;
+ *                           print found: la celda encontrada. Sitios en vez de un bloque: find ship (donde aterrizo la nave),
+ *                           find anomaly N|NOMBRE (la invisible: fz = lo alto del cubo), find shore [x y] (la orilla de shore
+ *                           mas cercana a x y); shore tambien deja la suya en fx fy fz
  *   bench x y r z [Bloque|none] terreno conocido: en el cilindro de radio r alrededor de la columna x y, aire desde z hasta arriba
  *                           y debajo Bloque (BRock) en 3 celdas y en el aire que siga hasta llegar a algo; none: solo el aire.
- *                           Como set (cambios del jugador)
+ *                           Como set (cambios del jugador), sin decir nada: donde el terreno ya era asi no cambia la salida
  *   f2                      pulsa F2 (captura sin HUD en screenshots de la carpeta de datos); print shots las lista
  *   pause                   menu de pausa como Esc (el guion sigue; close lo cierra)
  *   newgame SEMILLA [acc..] Menu principal > Nueva partida como el jugador: pasa a Creativo, escribe la semilla, maneja la fila del bioma con
@@ -104,6 +107,7 @@ import Common;
  *                           clic en el titulo de la fila) y pulsa Crear; seguir con waitfor planet y print biome
  *   tuto new|notuto [semilla] partida de aventura nueva en el espacio, con o sin tutorial; tuto step N; tuto skip (sin preguntar)
  *                           tuto goto|goin|mine|activate: junto al primer objetivo / dentro de su celda / excavarlo / activarlo
+ *                           tuto spot N: el bloque N del tutorial (orden de print tuto) en fx fy fz, aun despues de pasarlo
  *   print tuto              paso del tutorial, objetivos marcados, sus bloques en el planeta y el texto (tambien en el mapa)
  *   menu                    Menu principal (guarda la partida, como desde la pausa); el guion sigue en los menus de inicio
  *   devsaves N              borra las partidas de la carpeta de datos de prueba y crea N de ejemplo (solo con GALAXY55_DATA)
@@ -210,6 +214,8 @@ class Dev {
 
 	/** celda de la ultima orden find (fx, fy, fz) */
 	var found : { x : Int, y : Int, z : Int };
+	/** bloques del tutorial de la ultima orden tuto spot (TutoInfo.spots: siguen despues de pasar el tutorial) */
+	var tutoSpots : Array<Int>;
 
 	/** fx, fy y fz (con +N o -N, N puede llevar decimales) en una orden: la celda de la ultima orden find */
 	function foundCoord( s : String ) : String {
@@ -220,7 +226,10 @@ class Dev {
 		return "" + (v + (r.matched(2) == null ? 0 : Std.parseFloat(r.matched(2))));
 	}
 
-	/** orden find: el bloque kb (null = aire) mas cercano a la celda de los pies, en una esfera de radio r */
+	/**
+	 * orden find: el bloque kb (null = aire) mas cercano a la celda de los pies, en una esfera de radio r. Solo dice algo si no lo
+	 * encuentra (print found): un guion que lo usa en vez de coordenadas fijas dice lo mismo que antes
+	 */
 	function findBlock( w : World, g : GameView, name : String, r : Int ) {
 		var kb = name == "none" ? null : bk(name);
 		var cx = Math.floor(g.px), cy = Math.floor(g.py), cz = Math.floor(g.pz);
@@ -245,35 +254,77 @@ class Dev {
 		}
 		var s = w.size;
 		found = { x : ((bx % s) + s) % s, y : ((by % s) + s) % s, z : bz };
-		Sys.println("find " + name + ": " + found.x + " " + found.y + " " + found.z + " (distancia " + Math.round(Math.sqrt(best) * 10) / 10 + ")");
+	}
+
+	/**
+	 * orden find con un sitio en vez de un bloque (sin mover al jugador ni decir nada si lo encuentra):
+	 *   find ship               donde aterrizo la nave (print ship): fz = el suelo
+	 *   find anomaly N|NOMBRE   la anomalia N del planeta o la primera con ese nombre (World.anomalies); fz = su z (la invisible:
+	 *                           lo alto del cubo, z + h)
+	 *   find shore [x y]        la orilla (como shore: agua al nivel del mar con suelo seco al lado en x + 1) mas cercana a x y, o
+	 *                           la primera; fz = el agua de arriba del mar
+	 * false si no es un sitio (find de un bloque)
+	 */
+	function findPlace( w : World, g : GameView, a : Array<String> ) : Bool {
+		switch( a[1] ) {
+		case "ship":
+			found = g.ship == null ? null : { x : Std.int(g.ship.x), y : Std.int(g.ship.y), z : Std.int(g.ship.z) };
+			if( found == null ) Sys.println("find ship: sin nave");
+		case "anomaly":
+			var an = null;
+			for( p in w.anomalies() ) if( an == null && p.n == a[2] ) an = p;
+			if( an == null && ~/^[0-9]+$/.match(a[2]) ) an = w.anomalies()[Std.parseInt(a[2])];
+			found = an == null ? null : { x : an.x, y : an.y, z : an.z + (an.h == null ? 0 : an.h) };
+			if( found == null ) Sys.println("find anomaly " + a[2] + ": no hay (" + [for( p in w.anomalies() ) p.n].join(" ") + ")");
+		case "shore":
+			var hx = a.length > 3 ? Std.parseInt(a[2]) : -1, hy = a.length > 3 ? Std.parseInt(a[3]) : -1, best = -1;
+			found = null;
+			for( y in 0...w.size )
+				for( x in 0...w.size ) {
+					if( (found != null && hx < 0) || !isShore(w, x, y) ) continue;
+					var dx = Std.int(Math.abs(x - hx)), dy = Std.int(Math.abs(y - hy));
+					if( dx > w.size >> 1 ) dx = w.size - dx;
+					if( dy > w.size >> 1 ) dy = w.size - dy;
+					var d = hx < 0 ? 0 : dx * dx + dy * dy;
+					if( found != null && d >= best ) continue;
+					best = d;
+					found = { x : x, y : y, z : w.waterLevel() - 1 };
+				}
+			if( found == null ) Sys.println("find shore: no hay orilla");
+		default:
+			return false;
+		}
+		return true;
+	}
+
+	/** orilla de shore: agua al nivel del mar en x y, suelo en x + 1 a esa altura y aire dos mas arriba */
+	static function isShore( w : World, x : Int, y : Int ) : Bool {
+		var wl = w.waterLevel();
+		var b = w.block(x, y, wl - 1);
+		if( b == null || b.type != BTWater ) return false;
+		var s = w.block(x + 1, y, wl - 1);
+		return s != null && s.collide && w.block(x + 1, y, wl + 1) == null;
 	}
 
 	/**
 	 * orden bench: aire desde z hasta arriba en el cilindro y, si floor no es null, floor en las 3 celdas de debajo y en el aire
-	 * que siga debajo hasta llegar a algo (una meseta maciza, sin cuevas justo debajo)
+	 * que siga debajo hasta llegar a algo (una meseta maciza, sin cuevas justo debajo). No dice nada: donde el terreno ya era asi
+	 * no cambia ni la salida del guion (lo cambiado se ve con count / top / print block)
 	 */
 	static function bench( w : World, x : Int, y : Int, r : Int, z : Int, floor : Block ) {
-		var n = 0;
 		for( dy in -r...r + 1 )
 			for( dx in -r...r + 1 ) {
 				if( dx * dx + dy * dy > r * r ) continue;
 				var cx = x + dx, cy = y + dy;
 				for( zz in z...World.HEIGHT - 1 )
-					if( zz >= 1 && w.block(cx, cy, zz) != null ) {
-						w.setBlock(cx, cy, zz, null);
-						n++;
-					}
+					if( zz >= 1 && w.block(cx, cy, zz) != null ) w.setBlock(cx, cy, zz, null);
 				if( floor == null ) continue;
 				var zz = z - 1;
 				while( zz >= 1 && (zz >= z - 3 || w.block(cx, cy, zz) == null) ) {
-					if( w.block(cx, cy, zz) != floor ) {
-						w.setBlock(cx, cy, zz, floor);
-						n++;
-					}
+					if( w.block(cx, cy, zz) != floor ) w.setBlock(cx, cy, zz, floor);
 					zz--;
 				}
 			}
-		Sys.println("bench " + x + " " + y + " " + r + " " + z + ": " + n + " celdas");
 	}
 
 	/** orden edkube: los .kube de la carpeta kubes de los datos de prueba (EditorKubes) */
@@ -827,7 +878,7 @@ class Dev {
 					g.inv.display();
 				case "hand": g.setSlot(bk(a[1])); // hand Bloque: lo pone en la casilla elegida, como la paleta creativa
 				case "find":
-					findBlock(w, g, a[1], a.length > 2 ? Std.parseInt(a[2]) : 64);
+					if( !findPlace(w, g, a) ) findBlock(w, g, a[1], a.length > 2 ? Std.parseInt(a[2]) : 64);
 				case "bench":
 					bench(w, Std.parseInt(a[1]), Std.parseInt(a[2]), Std.parseInt(a[3]), Std.parseInt(a[4]), a.length < 6 ? Block.get(BRock) : a[5] == "none" ? null : bk(a[5]));
 				case "tploose":
@@ -873,6 +924,7 @@ class Dev {
 							g.px = x + 1.5; g.py = y + 0.5; g.pz = w.topCollide(x + 1, y) + 0.01;
 							g.yaw = Math.PI; g.pitch = -0.6;
 							shoreX = x; shoreY = y;
+							this.found = { x : x, y : y, z : wl - 1 };
 							Sys.println("shore agua=" + x + "," + y + "," + (wl - 1) + " suelo=" + (x + 1) + " top=" + Std.int(g.pz) + " mar=" + wl);
 							found = true;
 							break;
@@ -1256,6 +1308,14 @@ class Dev {
 					case "new", "notuto": app.devNewGame(a[1] == "new", a.length > 2 ? Std.parseInt(a[2]) : 1234);
 					case "step": if( app.curInfo().tuto != null ) app.curInfo().tuto.step = Std.parseInt(a[2]);
 					case "skip": app.skipTutorial();
+					case "spot":
+						// tuto spot N: el bloque N del tutorial (TutoInfo.spots, en el orden de print tuto) en fx fy fz; tras pasar o
+						// acabar el tutorial (sin bloques), los de la ultima lista vista
+						var info = app.curInfo(), sp = info.tuto == null ? null : info.tuto.spots;
+						if( sp != null && sp.length > 0 ) tutoSpots = sp.copy();
+						var i = Std.parseInt(a[2]) * 4;
+						found = tutoSpots == null || i + 2 >= tutoSpots.length ? null : { x : tutoSpots[i], y : tutoSpots[i + 1], z : tutoSpots[i + 2] };
+						if( found == null ) Sys.println("tuto spot " + a[2] + ": no hay");
 					case "ask": @:privateAccess app.askSkip(app.current); // la ventana de confirmacion (con la pausa abierta)
 					case "rule":
 						// tuto rule place|break x y z Bloque: lo que dicen las reglas del hangar del tutorial (null = se puede)
@@ -1951,6 +2011,8 @@ class Dev {
 				Sys.println("cielo: " + (flat == null ? "degradado" : "color " + StringTools.hex(flat.color.toColor() & 0xFFFFFF, 6))
 					+ ", estrellas " + (st != null && st.visible ? "si" : "no"));
 			}
+		case "found":
+			Sys.println("find: " + (found == null ? "nada" : found.x + " " + found.y + " " + found.z));
 		case "gen":
 			var u = g.info.uni;
 			var visited = u == null ? "-" : [for( p in u.planets ) p.id + ":" + SaveData.genVersion(p.genVersion)].join(" ");
