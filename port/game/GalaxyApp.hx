@@ -356,8 +356,9 @@ class GalaxyApp extends hxd.App {
 		var win = hxd.Window.getInstance();
 		applyVsync();
 		win.onClose = function() {
-			// en el mapa se guarda la partida en el espacio; durante el despegue el planeta aun esta cargado
-			if( state == Playing || state == Paused || state == Exploring || (state == Loading && pendingExplorer > 0) ) saveGame(false);
+			// en el mapa se guarda la partida en el espacio; durante el despegue el planeta aun esta cargado, y mientras se prepara
+			// el mapa la partida ya esta en el espacio
+			if( state == Playing || state == Paused || state == Exploring || (state == Loading && (pendingExplorer > 0 || explorer != null)) ) saveGame(false);
 			return true;
 		};
 		if( Settings.fullscreen && shotPath == null ) win.displayMode = Borderless;
@@ -1711,11 +1712,14 @@ class GalaxyApp extends hxd.App {
 		startGame(info);
 	}
 
+	/**
+	 * Abre el mapa: en esta imagen, el despegue y las imagenes de la nave; los fondos del mapa se hacen despues en otro hilo con
+	 * la pantalla de carga en marcha (Explorer.prepare) y el mapa se abre en openExplorer. Antes todo iba en una sola imagen:
+	 * unos 10 s de juego congelado.
+	 */
 	function buildExplorer() {
-		ui.removeChildren();
-		bar = null;
-		// las imagenes de la nave y los fondos del mapa (por software) se hacen en una sola imagen: en un PC lento pasaba del
-		// minuto del vigilante de Heaps, que cerraba el juego con "Program timeout (infinite loop?)"; mientras, se para
+		// cuando todo iba en una sola imagen, en un PC lento pasaba del minuto del vigilante de Heaps, que cerraba el juego con
+		// "Program timeout (infinite loop?)"; mientras, se para
 		hxd.System.allowTimeout = false;
 		// despegue: los cambios del planeta quedan en la partida, que pasa al espacio, y el planeta se descarga
 		var takeoff = game != null;
@@ -1728,7 +1732,8 @@ class GalaxyApp extends hxd.App {
 			var c = info.comet;
 			if( c != null && info.uni != null ) Explorer.cometStart = Comets.make(info.uni.seed, c.sys, c.slot);
 			Comets.leave(info);
-			shipFrames = game.ship.captureFrames(engine, s3d);
+			// sin retocar: el retoque (por software) lo hace el hilo del mapa
+			shipFrames = game.ship.captureFrames(engine, s3d, 192, 32, false);
 			leaveGame();
 			info.uni.space = true;
 			info.uni.ship = null;
@@ -1739,9 +1744,22 @@ class GalaxyApp extends hxd.App {
 		// activos: los planetas con licencia de la ESCorp (Licenses)
 		var infos = ExpData.ExpOffline.make(uni.seed, uni.start, uni.licenses, uni.pos, uni.abandoned, uni.gone);
 		Explorer.robotStart = uni.robot;
-		explorer = new Explorer(s2d, infos, shipFrames);
+		explorer = new Explorer(s2d, infos, shipFrames, takeoff ? Ship.finishFrame : null);
 		hxd.System.allowTimeout = true;
 		s2d.under(explorer);
+		mapTakeoff = takeoff;
+		// al despegar, leaveGame ha quitado la pantalla de carga
+		showLoading(Lang.t("explore.loading"));
+	}
+	/** el mapa que se esta preparando viene de un despegue */
+	var mapTakeoff = false;
+
+	/** el mapa ya esta hecho (Explorer.prepare): se conecta con la partida y se muestra */
+	function openExplorer() {
+		ui.removeChildren();
+		bar = null;
+		var takeoff = mapTakeoff;
+		var uni = universe();
 		space = new Space(spaceInfo);
 		space.tutorial = Tutorial.active(spaceInfo);
 		// los avisos largos (licencias) se quedan mas tiempo
@@ -1820,7 +1838,8 @@ class GalaxyApp extends hxd.App {
 
 	/** la posicion de la nave y del robot en el mapa pasan a la partida (para guardarla) */
 	function storeMapPos() {
-		if( explorer == null ) return;
+		// mapa aun sin abrir (Explorer.prepare): nada se ha movido desde lo que dice la partida
+		if( explorer == null || !explorer.ready ) return;
 		var uni = universe();
 		var rp = explorer.robotPos();
 		if( rp != null ) uni.robot = rp;
@@ -3153,6 +3172,11 @@ class GalaxyApp extends hxd.App {
 		if( (state == Playing || state == Paused) && game != null ) layoutHelmet();
 
 		if( pendingExplorer > 0 && --pendingExplorer == 0 ) buildExplorer();
+		else if( state == Loading && explorer != null ) {
+			// el mapa se esta preparando (buildExplorer): la barra avanza con los fondos hechos
+			if( explorer.prepare() ) openExplorer();
+			else setProgress(explorer.progress());
+		}
 		if( state == Exploring && explorer != null ) {
 			if( !explorer.paused && current == null && pad != null && pad.isPressed(pad.config.start) ) explorer.escape();
 			explorer.update(dt);

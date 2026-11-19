@@ -75,6 +75,9 @@ private class Spot {
 	public function new() {}
 }
 
+/** Un sistema solar generado (Explorer.generateSystem): sus dos habitaciones y los pixeles de textura de sus capas, en su orden. */
+private typedef SystemJob = { room : ExpRoom, stars : ExpRoom, roomPx : Array<hxd.Pixels>, starsPx : Array<hxd.Pixels>, done : Bool };
+
 /** Una escena del mapa: una habitacion (fondos con paralaje) y sus capas ya como imagenes. */
 private class View {
 	public var room : ExpRoom;
@@ -204,7 +207,7 @@ class Explorer extends h2d.Object {
 	var sectorEntrance = { x : 0., y : 0. };
 	var spawnAcc = 0.;
 	/** sistemas que se estan generando en segundo plano (cambio del port: el original congelaba la pantalla al generarlos) */
-	var jobs = new Map<Int, { room : ExpRoom, stars : ExpRoom, done : Bool }>();
+	var jobs = new Map<Int, SystemJob>();
 	static inline var COMMON_LOW_ALPHA = 0.5;
 	static inline var COMMON_HIGH_ALPHA = 0.85;
 	static inline var ANIM_SECTOR_ZOOM = 60;
@@ -212,7 +215,8 @@ class Explorer extends h2d.Object {
 	static inline var ANIM_SOLARSTAR_ZOOM = 10;
 	static inline var REACTOR_COLOR = 0xA482FF;
 
-	public function new( parent : h2d.Object, infos : ExpInfos, ?frames : Array<flash.display.BitmapData> ) {
+	/** frames: imagenes de la nave; si llegan sin retocar, finishFrame las retoca (en el hilo de los fondos) */
+	public function new( parent : h2d.Object, infos : ExpInfos, ?frames : Array<flash.display.BitmapData>, ?finishFrame : flash.display.BitmapData -> Void ) {
 		super(parent);
 		this.infos = infos;
 		// fondo negro de toda la ventana: el mapa se ajusta a la zona W x H y, en una ventana que no es 16:9, en las bandas de
@@ -233,16 +237,9 @@ class Explorer extends h2d.Object {
 		img.getTexture().filter = Nearest;
 		tiles = img;
 
-		// fondo comun (Room.generateCommon), con alfa COMMON_LOW_ALPHA
+		// fondo comun (Room.generateCommon) y fondo del sector: se generan en otro hilo y sus capas se crean en prepare
 		common = makeView(new ExpRoom(infos.sector.seed, VW, VH));
-		common.room.generateCommon();
-		buildLayers(common);
-		for( o in common.layers ) o.b.alpha = COMMON_LOW_ALPHA;
-
-		// sector
 		sector = makeView(new ExpRoom(infos.sector.seed, VW, VH));
-		sector.room.generateSectorBackground(infos.sector.width, infos.sector.height);
-		buildLayers(sector);
 		worldSector = new h2d.Object(content);
 		for( si in infos.systems ) addSystem(si);
 		addRobot();
@@ -257,10 +254,9 @@ class Explorer extends h2d.Object {
 		shipObj.lineTo(-8, 5);
 		shipObj.endFill();
 		if( frames != null && frames.length > 0 ) {
-			shipTiles = [];
+			// sus texturas se hacen en prepare
 			shipFrames = frames;
-			for( bd in frames ) shipTiles.push(bmpTile(bd, true).center());
-			shipBmp = new h2d.Bitmap(shipTiles[0], shipWorld);
+			shipBmp = new h2d.Bitmap(null, shipWorld);
 			shipBmp.setScale(128 / frames[0].width);
 			shipObj.visible = false;
 		}
@@ -330,6 +326,115 @@ class Explorer extends h2d.Object {
 		spinner.visible = false;
 		loading(true);
 
+		// cambio del port: los fondos (unos 10 s de calculo por software) congelaban el juego al abrir el mapa. Se hacen en otro
+		// hilo mientras el juego sigue con su pantalla de carga, y el mapa se queda oculto hasta prepare. Un solo hilo, uno tras
+		// otro: con un hilo por fondo tardaba mas y daba tirones de hasta 800 ms (los hilos se disputan el recolector de
+		// memoria de HashLink). El sistema de la nave va despues del robot, como antes: es lo unico que tira del azar comun (el
+		// color de las rocas)
+		visible = false;
+		startAt = shipStart;
+		shipStart = null;
+		var c = common.room, s = sector.room, w = infos.sector.width, h = infos.sector.height;
+		var si = startSystem();
+		var sysJob = newSystemJob();
+		if( si != null ) jobs.set(si.id, sysJob);
+		startParts = si != null ? 4 : 3;
+		var job = startJob;
+		sys.thread.Thread.create(function() {
+			try {
+				if( shipBmp != null ) {
+					if( finishFrame != null ) for( bd in frames ) finishFrame(bd);
+					job.ship = [for( bd in frames ) toPixels(bd)];
+				}
+				job.parts++;
+				c.generateCommon();
+				job.common = convertLayers(c);
+				job.parts++;
+				s.generateSectorBackground(w, h);
+				job.sector = convertLayers(s);
+				job.parts++;
+				if( si != null ) {
+					generateSystem(si, sysJob);
+					job.parts++;
+				}
+			} catch( e : Dynamic ) job.error = e;
+			job.done = true;
+		});
+	}
+
+	/** el hilo que prepara el mapa al abrirlo: parts = partes ya hechas (nave, fondo comun, sector y sistema de la nave); ship,
+	    common y sector = los pixeles de sus texturas; error = lo que fallo alli (se lanza en este hilo) */
+	var startJob : { done : Bool, parts : Int, ship : Array<hxd.Pixels>, common : Array<hxd.Pixels>, sector : Array<hxd.Pixels>, error : Dynamic }
+		= { done : false, parts : 0, ship : null, common : null, sector : null, error : null };
+	var startParts = 0;
+	/** lo que queda por hacer con los fondos ya generados, un paso por imagen (prepare) */
+	var startSteps : Array<Void -> Void>;
+	var startStepsTotal = 0;
+	/** donde aparece la nave en el sector (shipStart al crear el mapa) */
+	var startAt : { x : Float, y : Float };
+	var startTime = haxe.Timer.stamp();
+	/** el mapa esta hecho y se ve */
+	public var ready(default, null) = false;
+
+	/** el sistema en el que esta la nave al abrir el mapa (junto a un planeta o dentro), o null si esta en el sector */
+	function startSystem() : ExpSystem {
+		switch( infos.shipPos ) {
+		case PPlanet(id):
+			for( si in infos.systems )
+				for( p in si.planets )
+					if( p.id == id ) return si;
+		case PInSystem(id):
+			for( si in infos.systems )
+				if( si.id == id ) return si;
+		default:
+		}
+		return null;
+	}
+
+	/**
+	 * Termina el mapa: false mientras trabaja el hilo; despues sube una textura en cada llamada (una por imagen de la pantalla de
+	 * carga: todas juntas eran otro tiron) y en la ultima lo muestra. GalaxyApp la llama hasta que devuelve true.
+	 */
+	public function prepare() : Bool {
+		if( ready ) return true;
+		if( startSteps == null ) {
+			if( !startJob.done ) return false;
+			if( startJob.error != null ) throw startJob.error;
+			if( Dev.trace ) Sys.println("tiempos: fondos del mapa=" + Std.int((haxe.Timer.stamp() - startTime) * 1000) + "ms (en segundo plano)");
+			startSteps = [];
+			if( startJob.ship != null ) {
+				var px = startJob.ship;
+				startJob.ship = null;
+				startSteps.push(function() {
+					shipTiles = [for( p in px ) pixelsTile(p, true).center()];
+					shipBmp.tile = shipTiles[0];
+				});
+			}
+			var views = [common, sector], pixels = [startJob.common, startJob.sector];
+			startJob.common = startJob.sector = null;
+			for( k in 0...views.length ) {
+				var v = views[k], px = pixels[k];
+				for( i in 0...px.length ) startSteps.push(function() addLayer(v, v.room.layers[i], px[i]));
+				startSteps.push(function() sortLayers(v));
+			}
+			startSteps.push(start);
+			startStepsTotal = startSteps.length;
+		}
+		startSteps.shift()();
+		return ready;
+	}
+
+	/** lo hecho de prepare, de 0 a 1 (barra de la pantalla de carga): el hilo hasta 0.9, las texturas el resto */
+	public function progress() : Float {
+		if( startSteps == null ) return 0.9 * startJob.parts / startParts;
+		return 0.9 + 0.1 * (1 - startSteps.length / startStepsTotal);
+	}
+
+	/** Manager.start: el mapa con la nave donde estaba, ya con los fondos */
+	function start() {
+		visible = true;
+		ready = true;
+		for( o in common.layers ) o.b.alpha = COMMON_LOW_ALPHA;
 		// posicion inicial de la nave
 		current = sector;
 		setBg(sector.room.bgColor);
@@ -342,10 +447,9 @@ class Explorer extends h2d.Object {
 			ship.x = sector.room.center.x;
 			ship.y = sector.room.center.y;
 		}
-		if( shipStart != null ) {
-			ship.x = shipStart.x;
-			ship.y = shipStart.y;
-			shipStart = null;
+		if( startAt != null ) {
+			ship.x = startAt.x;
+			ship.y = startAt.y;
 		}
 		sector.viewX = ship.x;
 		sector.viewY = ship.y;
@@ -391,7 +495,10 @@ class Explorer extends h2d.Object {
 
 	// ---------------------------------------------------------------- imagenes y fondo
 
-	function bmpTile( bd : flash.display.BitmapData, linear = false, premultiply = false ) : h2d.Tile {
+	function bmpTile( bd : flash.display.BitmapData, linear = false, premultiply = false ) : h2d.Tile return pixelsTile(toPixels(bd, premultiply), linear);
+
+	/** la imagen como pixeles de textura; no toca la tarjeta grafica, asi que se puede hacer en otro hilo */
+	static function toPixels( bd : flash.display.BitmapData, premultiply = false ) : hxd.Pixels {
 		var px = hxd.Pixels.alloc(bd.width, bd.height, BGRA);
 		for( i in 0...bd.width * bd.height ) {
 			var c = bd.px[i];
@@ -402,11 +509,18 @@ class Explorer extends h2d.Object {
 			}
 			px.bytes.setInt32(i * 4, c);
 		}
-		var tex = new h3d.mat.Texture(bd.width, bd.height);
+		return px;
+	}
+
+	function pixelsTile( px : hxd.Pixels, linear = false ) : h2d.Tile {
+		var tex = new h3d.mat.Texture(px.width, px.height);
 		tex.uploadPixels(px);
 		tex.filter = linear ? Linear : Nearest;
 		return h2d.Tile.fromTexture(tex);
 	}
+
+	/** los pixeles de las capas de una habitacion, en su orden (en el hilo que la genera: al crear la vista solo queda subirlos) */
+	static function convertLayers( room : ExpRoom ) : Array<hxd.Pixels> return [for( l in room.layers ) toPixels(l.bd, l.screen)];
 
 	function makeView( room : ExpRoom ) : View {
 		var v = new View();
@@ -415,12 +529,20 @@ class Explorer extends h2d.Object {
 		return v;
 	}
 
-	function buildLayers( v : View ) {
-		for( l in v.room.layers ) {
-			var b = new h2d.Bitmap(bmpTile(l.bd, false, l.screen), v.root);
-			b.blendMode = l.screen ? Screen : (l.additive ? Add : Alpha);
-			v.layers.push({ l : l, b : b });
-		}
+	/** px: los pixeles de las capas, si los hizo el hilo que genero la habitacion (convertLayers) */
+	function buildLayers( v : View, ?px : Array<hxd.Pixels> ) {
+		for( i in 0...v.room.layers.length ) addLayer(v, v.room.layers[i], px == null ? null : px[i]);
+		sortLayers(v);
+	}
+
+	function addLayer( v : View, l : ExpLayer, ?px : hxd.Pixels ) {
+		var b = new h2d.Bitmap(pixelsTile(px != null ? px : toPixels(l.bd, l.screen)), v.root);
+		b.blendMode = l.screen ? Screen : (l.additive ? Add : Alpha);
+		v.layers.push({ l : l, b : b });
+	}
+
+	/** las capas por profundidad */
+	function sortLayers( v : View ) {
 		v.layers.sort(function(a, b) return Reflect.compare(a.l.z, b.l.z));
 		for( o in v.layers ) v.root.addChild(o.b);
 	}
@@ -871,22 +993,18 @@ class Explorer extends h2d.Object {
 		if( worldSolar != null ) worldSolar.remove();
 
 		var job = jobs.get(si.id);
-		var room : ExpRoom, stars : ExpRoom;
-		if( job != null && job.done ) {
-			room = job.room;
-			stars = job.stars;
-		} else {
+		if( job == null || !job.done ) {
 			var t0 = haxe.Timer.stamp();
-			var g = generateSystem(si);
-			room = g.room;
-			stars = g.stars;
+			job = newSystemJob();
+			generateSystem(si, job);
 			if( Dev.trace ) Sys.println("tiempos: sistema y fondo=" + Std.int((haxe.Timer.stamp() - t0) * 1000) + "ms (sin segundo plano)");
 		}
 		jobs.remove(si.id);
+		var room = job.room;
 		solar = makeView(room);
-		solarStars = makeView(stars);
-		buildLayers(solarStars);
-		buildLayers(solar);
+		solarStars = makeView(job.stars);
+		buildLayers(solarStars, job.starsPx);
+		buildLayers(solar, job.roomPx);
 		content.addChildAt(solarStars.root, content.getChildIndex(sector.root) + 1);
 		content.addChildAt(solar.root, content.getChildIndex(solarStars.root) + 1);
 		worldSolar = new h2d.Object(content);
@@ -907,27 +1025,33 @@ class Explorer extends h2d.Object {
 		if( c != null ) addPlanet(solar.room.cometView(c));
 	}
 
-	/** Room.generateSolarSystem + generateSolarStars: solo calcula imagenes (BitmapData por software), se puede hacer en otro hilo */
-	static function generateSystem( si : ExpSystem ) {
+	/**
+	 * Room.generateSolarSystem + generateSolarStars, con los pixeles de textura de sus capas, en job (done al final): solo
+	 * calcula imagenes (BitmapData por software), se puede hacer en otro hilo
+	 */
+	static function generateSystem( si : ExpSystem, job : SystemJob ) {
 		var room = new ExpRoom(si.seed, VW, VH);
 		room.generateSolarSystem(si);
 		var stars = new ExpRoom(si.seed, VW, VH);
 		stars.bgColor = room.bgColor;
 		stars.generateSolarStars();
-		return { room : room, stars : stars };
+		job.roomPx = convertLayers(room);
+		job.starsPx = convertLayers(stars);
+		job.room = room;
+		job.stars = stars;
+		job.done = true;
 	}
+
+	static function newSystemJob() : SystemJob return { room : null, stars : null, roomPx : null, starsPx : null, done : false };
 
 	/** empieza a generar un sistema en segundo plano (mientras la nave vuela hacia el) */
 	function pregen( si : ExpSystem ) {
 		if( jobs.exists(si.id) ) return;
-		var job = { room : null, stars : null, done : false };
+		var job = newSystemJob();
 		jobs.set(si.id, job);
 		sys.thread.Thread.create(function() {
 			var t0 = haxe.Timer.stamp();
-			var g = generateSystem(si);
-			job.room = g.room;
-			job.stars = g.stars;
-			job.done = true;
+			generateSystem(si, job);
 			if( Dev.trace ) Sys.println("tiempos: sistema generado en segundo plano en " + Std.int((haxe.Timer.stamp() - t0) * 1000) + "ms");
 		});
 	}
