@@ -27,6 +27,8 @@ foreach ($d in $win, $lin) {
 # galaxy55.exe: copia de hl.exe con el icono del juego y sin consola (port\tools\galaxy55_exe.ps1); con su propio nombre
 # Discord no lo toma por Half-Life
 Copy-Item "port\out\galaxy55_dx.hl" $win
+# doble clic en galaxy55.exe: hl.exe sin argumentos carga hlboot.dat de la carpeta actual; sin el se cerraba sin decir nada
+Copy-Item "port\out\galaxy55.hl" "$win\hlboot.dat"
 foreach ($f in "hl.exe", "libhl.dll", "fmt.hdll", "heaps.hdll", "openal.hdll", "OpenAL32.dll", "sdl.hdll", "SDL3.dll", "ui.hdll", "uv.hdll", "directx.hdll", "sqlite.hdll", "ssl.hdll", "vcruntime140.dll") {
 	Copy-Item (Join-Path $HashLink $f) $win
 }
