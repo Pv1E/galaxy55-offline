@@ -16,6 +16,8 @@ $res = @("digger.png", "door.md", "hud.png", "hud_jetpack.png", "icons.png", "la
 foreach ($d in $win, $lin) {
 	foreach ($r in $res) { Copy-Item "$gfx\$r" "$d\res\$r" }
 	Copy-Item "src\G55\fla\explore\gfx\tiles.png" "$d\res\explore_tiles.png"
+	# iconos del multijugador en el mapa (candados y camara de Kube)
+	Copy-Item "src\G55\fla\explore\gfx\mp_icons.png" "$d\res\explore_mp_icons.png"
 	Get-ChildItem "src\G55\fla\client\sfx\*.wav" | ForEach-Object { Copy-Item $_.FullName "$d\res\sfx_$($_.Name)" }
 	Copy-Item "port\out\galaxy55.hl", "LICENSE", "NOTICE" $d
 	# servidor dedicado del multijugador, sin ventana (port\server.hxml)

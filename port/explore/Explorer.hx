@@ -466,8 +466,9 @@ class Explorer extends h2d.Object {
 	}
 
 	/**
-	 * Iconos del multijugador (anadido del port) en el mapa: los de mp_icons.png (16x16: candado abierto, candado cerrado rojo,
-	 * camara) si existe; si no, provisionales hechos con los de tiles.png (candado dorado en verde o rojo, "?" en azul)
+	 * Iconos del multijugador (anadido del port) en el mapa: los de mp_icons.png (los pictos de las recompensas de Kube, 17x17:
+	 * candado abierto, candado cerrado rojo, camara; el lado de cada uno es el alto de la imagen) si existe; si no, provisionales
+	 * hechos con los de tiles.png (candado dorado en verde o rojo, "?" en azul)
 	 */
 	static var mpTiles : h2d.Tile;
 	function mpIcon( icon : Int, parent : h2d.Object ) : h2d.Bitmap {
@@ -475,7 +476,10 @@ class Explorer extends h2d.Object {
 		if( mpTiles == null ) {
 			try mpTiles = hxd.res.Any.fromBytes("mp_icons.png", Res.exploreBytes("mp_icons.png")).toTile() catch( e : Dynamic ) mpTiles = null;
 		}
-		if( mpTiles != null ) return new h2d.Bitmap(mpTiles.sub(i * 16, 0, 16, 16, -8, -8), parent);
+		if( mpTiles != null ) {
+			var s = Std.int(mpTiles.height);
+			return new h2d.Bitmap(mpTiles.sub(i * s, 0, s, s, -(s >> 1), -(s >> 1)), parent);
+		}
 		var b = new h2d.Bitmap(tiles.sub((i == 2 ? 2 : 0) * 16, 0, 16, 16, -8, -8), parent);
 		b.color.setColor(i == 0 ? 0xFF80FF80 : (i == 1 ? 0xFFFF5050 : 0xFF70C0FF));
 		return b;
