@@ -249,7 +249,8 @@ function Get-Clean($lines) {
 		@('\b[0-9a-f]{32}\b', '<md5>'),
 		@('-?\d+(?:\.\d+)? ?ms\b', '<ms>'),
 		@('\btime_ms=\d+', 'time_ms=<ms>'),
-		@('\bfps \d+', 'fps <n>')
+		@('\bfps \d+', 'fps <n>'),
+		@('\b\d+ fps\b', '<n> fps')
 	)
 	foreach ($l in $lines) {
 		if ($l -match '^(fondo|ruta|mundo)') { continue }

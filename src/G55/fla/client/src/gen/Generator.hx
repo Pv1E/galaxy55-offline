@@ -109,6 +109,7 @@ class Generator {
 		perlin.buf.length += size * size;
 		outPos = perlin.buf.length;
 		perlin.buf.length += size * size << HBITS;
+		perlin.bind();
 		blocks = [];
 		btrans = [];
 		steps = [];
@@ -165,7 +166,7 @@ class Generator {
 	}
 	
 	inline function fset(addr, v) {
-		flash.Memory.setByte(addr + outPos, v);
+		perlin.setByte(addr + outPos, v);
 	}
 
 	inline function set(x, y, z, v) {
@@ -173,7 +174,7 @@ class Generator {
 			fset(((real(x) + real(y) * size) << HBITS) | z, v);
 	}
 	
-	function get(x, y, z) {
+	inline function get(x, y, z) {
 		if( z < 0 ) return BEDROCK;
 		if( z >= HEIGHT ) return EMPTY;
 		return fget(((real(x) + real(y) * size) << HBITS) | z);
@@ -191,11 +192,57 @@ class Generator {
 	}
 	
 	inline function fget(addr) {
-		return flash.Memory.getByte(addr + outPos);
+		return perlin.byte(addr + outPos);
 	}
-	
+
+	/**
+	 * Anadido del port: la primera celda del mundo en [start, end) que vale v (o end), en un bucle cerrado sobre el tampon: para
+	 * recorrer todo el mundo buscando un bloque en el mismo orden (las mismas tiradas de rnd) sin pagar fget celda a celda
+	 */
+	inline function findCell( start : Int, end : Int, v : Int ) : Int {
+		#if (hl && !genCheck)
+		var m = perlin.mem, o = outPos, i = start + o, e = end + o;
+		while( i < e && m.getUI8(i) != v ) i++;
+		return i - o;
+		#else
+		var i = start;
+		while( i < end && fget(i) != v ) i++;
+		return i;
+		#end
+	}
+
+	/** la primera celda del mundo en [start, end) que vale v o w (o end) */
+	inline function findCell2( start : Int, end : Int, v : Int, w : Int ) : Int {
+		#if (hl && !genCheck)
+		var m = perlin.mem, o = outPos, i = start + o, e = end + o;
+		while( i < e ) {
+			var c = m.getUI8(i);
+			if( c == v || c == w ) break;
+			i++;
+		}
+		return i - o;
+		#else
+		var i = start;
+		while( i < end ) {
+			var c = fget(i);
+			if( c == v || c == w ) break;
+			i++;
+		}
+		return i;
+		#end
+	}
+
+	/** n celdas seguidas del mundo a v, desde addr (anadido del port: fill del tampon en vez de fset una a una) */
+	inline function fillCells( addr : Int, n : Int, v : Int ) {
+		#if (hl && !genCheck)
+		if( n > 0 ) perlin.mem.fill(addr + outPos, n, v);
+		#else
+		for( i in 0...n ) fset(addr + i, v);
+		#end
+	}
+
 	inline function hval(addr) {
-		return flash.Memory.getByte(addr + outHeight);
+		return perlin.byte(addr + outHeight);
 	}
 	
 	inline function height(x, y) {
@@ -203,7 +250,7 @@ class Generator {
 	}
 
 	inline function setHeight(x, y, v) {
-		flash.Memory.setByte(real(x) + real(y) * size + outHeight, v);
+		perlin.setByte(real(x) + real(y) * size + outHeight, v);
 	}
 	
 	inline function hash(n) {
@@ -223,12 +270,12 @@ class Generator {
 	}
 	
 	inline function realHeight(p) {
-		return flash.Memory.getDouble(perlin.outOffset + (p << 3));
+		return perlin.double(perlin.outOffset + (p << 3));
 	}
-	
+
 	function setRealHeight(x, y, v) {
 		var p = real(x) + real(y) * size;
-		flash.Memory.setDouble(perlin.outOffset + (p << 3), v);
+		perlin.setDouble(perlin.outOffset + (p << 3), v);
 	}
 	
 	inline function real(v) {
@@ -406,20 +453,20 @@ class Generator {
 		}
 		var w = 0, i = outPos, end = outPos + (size * size << HBITS);
 		while( i < end )
-			w = (w << 5) - w + code[flash.Memory.getByte(i++)];
+			w = (w << 5) - w + code[perlin.byte(i++)];
 		// mezcla final (cada paso se puede deshacer: dos sumas distintas siguen siendo distintas)
 		w ^= w >>> 16;
 		w ^= w << 11;
 		w ^= w >>> 7;
 		var ha = 1, hb = 0;
 		for( j in 0...size * size ) {
-			ha = (ha + flash.Memory.getByte(outHeight + j)) % 65521;
+			ha = (ha + perlin.byte(outHeight + j)) % 65521;
 			hb = (hb + ha) % 65521;
 		}
 		var da = 1, db = 0, j = perlin.outOffset;
 		var dend = perlin.outOffset + size * size * 8;
 		while( j < dend ) {
-			da = (da + flash.Memory.getByte(j)) % 65521;
+			da = (da + perlin.byte(j)) % 65521;
 			db = (db + da) % 65521;
 			j += 3;
 		}
@@ -439,6 +486,7 @@ class Generator {
 			else {
 				var cur = steps[curPosition];
 				curPosition++;
+				stepRuns++;
 				if( onStep == null )
 					cur.f();
 				else {
@@ -526,7 +574,7 @@ class Generator {
 		for( p in 0...size * size ) {
 			var fh = Std.int((realHeight(p) - realHeightMin) * realHeightScale);
 			if( fh < 0 ) fh = 0 else if( fh > 0xFFFF ) fh = 0xFFFF;
-			flash.Memory.setByte(outHeight + p, heights[fh]);
+			perlin.setByte(outHeight + p, heights[fh]);
 		}
 	}
 	
@@ -553,9 +601,13 @@ class Generator {
 		var b = alloc(b);
 		var by = alloc(by);
 		spread(size, function(y) {
-			for( i in y * size * HEIGHT...(y + 1) * size * HEIGHT )
-				if( fget(i) == b && rnd.random(100)<pctChance )
+			var end = (y + 1) * size * HEIGHT;
+			var i = findCell(y * size * HEIGHT, end, b);
+			while( i < end ) {
+				if( rnd.random(100)<pctChance )
 					fset(i, by);
+				i = findCell(i + 1, end, b);
+			}
 		});
 	}
 	
@@ -589,10 +641,9 @@ class Generator {
 				if( rock < 0 ) rock = 0;
 				if( rock > h ) rock = h;
 				var addr = p << HBITS;
-				for( i in 0...rock )
-					fset(addr++, ROCK);
-				for( i in rock...h )
-					fset(addr++, SOIL);
+				fillCells(addr, rock, ROCK);
+				fillCells(addr + rock, h - rock, SOIL);
+				addr += h;
 				if( (realHeight(p) - realHeightMin) * realHeightScale < waterLimit )
 					for( i in h...wh+1 ) {
 						fset(addr++, WATER);
@@ -603,8 +654,7 @@ class Generator {
 		if( w < minWater && size > 128 ) {
 			// change perlin seed
 			perlin.seed = hash(perlin.seed);
-			for( i in 0...size * size * HEIGHT )
-				fset(i, 0);
+			fillCells(0, size * size * HEIGHT, 0);
 			curPosition = 0;
 		}
 	}
@@ -724,7 +774,7 @@ class Generator {
 		for( y in 0...size )
 			for( x in 0...size ) {
 				var h = (hval(addr) << 2) + (hval(addr + minusOne(x)) + hval(addr + plusOne(x)) + hval(addr + minusOne(y) * size) + hval(addr + plusOne(y)*size)) * 3;
-				flash.Memory.setByte(outHeight + addr, (h + 7) >> 4);
+				perlin.setByte(outHeight + addr, (h + 7) >> 4);
 				addr++;
 			}
 	}
@@ -772,35 +822,134 @@ class Generator {
 		return count;
 	}
 	
+	/** countEmpty(x, y, z, addr) <= 2, sin leer las vecinas que ya no cambian la respuesta (anadido del port) */
+	inline function fewEmpty(x, y, z, addr) {
+		var n = (fget(addr + (minusOne(x) << HBITS)) == EMPTY ? 1 : 0) + (fget(addr + (plusOne(x) << HBITS)) == EMPTY ? 1 : 0);
+		if( fget(addr + (minusOne(y) << HBITS) * size) == EMPTY ) n++;
+		if( n <= 2 ) {
+			if( fget(addr + (plusOne(y) << HBITS) * size) == EMPTY ) n++;
+			if( n <= 2 ) {
+				if( z > 0 && fget(addr - 1) == EMPTY ) n++;
+				if( n <= 2 && z < HEIGHT - 1 && fget(addr + 1) == EMPTY ) n++;
+			}
+		}
+		return n <= 2;
+	}
+
+	/** countEmpty(x, y, z, addr) >= 5, sin leer las vecinas que ya no cambian la respuesta (anadido del port) */
+	inline function manyEmpty(x, y, z, addr) {
+		// vecinas que no cuentan como vacias (fuera del mundo en z o llenas): con 2 ya no llega a 5
+		var miss = (z > 0 ? 0 : 1) + (z < HEIGHT - 1 ? 0 : 1);
+		if( fget(addr + (minusOne(x) << HBITS)) != EMPTY ) miss++;
+		if( miss < 2 ) {
+			if( fget(addr + (plusOne(x) << HBITS)) != EMPTY ) miss++;
+			if( miss < 2 ) {
+				if( fget(addr + (minusOne(y) << HBITS) * size) != EMPTY ) miss++;
+				if( miss < 2 && fget(addr + (plusOne(y) << HBITS) * size) != EMPTY ) miss++;
+				if( miss < 2 && z > 0 && fget(addr - 1) != EMPTY ) miss++;
+				if( miss < 2 && z < HEIGHT - 1 && fget(addr + 1) != EMPTY ) miss++;
+			}
+		}
+		return miss < 2;
+	}
+
+	/**
+	 * Anadido del port: lo que hace falta para que smooth3D no mire mas de lo necesario, con el mismo resultado:
+	 * - smoothTop: por columna, lo mas alto que no esta vacio (o mas: solo sube). Por encima del maximo de una columna y de sus
+	 *   4 vecinas, mas uno, una celda vacia tiene 5 o 6 vecinas vacias (no se rellena) y no hay celdas llenas: no se mira;
+	 * - smoothDirty: columnas en las que se ha escrito en la pasada anterior (bit 0) y en esta (bit 1). En una reanudacion
+	 *   (stepRetry o el bucle de Marte, smoothSeq), una columna sin escrituras en ella ni en sus vecinas desde la ultima vez que
+	 *   se miro no cambiaria nada: cada cambio empieza en una celda de la columna que se mira y solo depende de sus 6 vecinas.
+	 */
+	var smoothTop : haxe.ds.Vector<Int>;
+	var smoothDirty : haxe.ds.Vector<Int>;
+	/** la ultima pasada de smooth3D que cambio algo: en que ejecucion de paso (stepRuns), en que paso y con que alturas */
+	var smoothSeq : { run : Int, pos : Int, hmin : Int, hmax : Int };
+	/** pasos empezados (process): una reanudacion de smooth3D es en el mismo o en el siguiente, el mismo paso otra vez */
+	var stepRuns = 0;
+
+	/** principio de una pasada de smooth3D: la primera de una serie mira todas las columnas */
+	function smoothBegin( hmin : Int, hmax : Int ) {
+		var n = size * size;
+		var s = smoothSeq;
+		var resume = s != null && s.hmin == hmin && s.hmax == hmax && (s.run == stepRuns || (s.run == stepRuns - 1 && s.pos == curPosition - 1));
+		if( resume ) {
+			for( c in 0...n ) smoothDirty[c] = smoothDirty[c] >> 1;
+			return;
+		}
+		if( smoothTop == null ) {
+			smoothTop = new haxe.ds.Vector(n);
+			smoothDirty = new haxe.ds.Vector(n);
+		}
+		for( c in 0...n ) {
+			var addr = (c << HBITS) + HEIGHT - 1, z = HEIGHT - 1;
+			while( z > 0 && fget(addr) == EMPTY ) {
+				z--;
+				addr--;
+			}
+			smoothTop[c] = z;
+			smoothDirty[c] = 1;
+		}
+	}
+
+	/** fin de una pasada: si cambio algo, la siguiente puede ser una reanudacion */
+	function smoothEnd( changed : Int, hmin : Int, hmax : Int ) {
+		smoothSeq = changed > 0 ? { run : stepRuns, pos : curPosition - 1, hmin : hmin, hmax : hmax } : null;
+	}
+
+	/** se ha escrito en la celda addr (si es del mundo: los saltos de minusOne pueden salirse) */
+	inline function smoothWrote( addr : Int, filled : Bool ) {
+		if( addr >= 0 && addr < size * size * HEIGHT ) {
+			var c = addr >> HBITS;
+			smoothDirty[c] = smoothDirty[c] | 2;
+			if( filled && (addr & (HEIGHT - 1)) > smoothTop[c] ) smoothTop[c] = addr & (HEIGHT - 1);
+		}
+	}
+
 	function smooth3D( hmin = -1, hmax = 255 ) {
 		var changed = 0;
 		if( hmin < 0 ) hmin = waterLevel;
+		smoothBegin(hmin, hmax);
 		for( y in 0...size )
 			changed += smooth3DRow(y, hmin, hmax);
+		smoothEnd(changed, hmin, hmax);
 		return changed;
 	}
 
 	/** smooth3D() repartido, una fila por llamada (anadido del port, ver jobs); then recibe lo que ha cambiado */
 	function smooth3DLater( then : Int -> Void ) {
 		var changed = 0, hmin = waterLevel;
-		spread(size, function(y) changed += smooth3DRow(y, hmin, 255), function() then(changed));
+		smoothBegin(hmin, 255);
+		spread(size, function(y) changed += smooth3DRow(y, hmin, 255), function() {
+			smoothEnd(changed, hmin, 255);
+			then(changed);
+		});
 	}
 
 	function smooth3DRow( y : Int, hmin : Int, hmax : Int ) {
 		var changed = 0;
+		var top = smoothTop, dirty = smoothDirty;
+		var row = y * size, up = minusOne(y) * size, down = plusOne(y) * size;
 		for( x in 0...size ) {
 			var h = height(x,y);
 			if( h <= hmin || h > hmax ) continue;
-			var addr = ((x + y * size) << HBITS) + hmin;
-			for( z in hmin...HEIGHT ) {
+			var c = row + x, l = c + minusOne(x), r = c + plusOne(x), u = c + up, d = c + down;
+			if( (dirty[c] | dirty[l] | dirty[r] | dirty[u] | dirty[d]) == 0 ) continue;
+			var zmax = top[c];
+			if( top[l] > zmax ) zmax = top[l];
+			if( top[r] > zmax ) zmax = top[r];
+			if( top[u] > zmax ) zmax = top[u];
+			if( top[d] > zmax ) zmax = top[d];
+			zmax += 2;
+			if( zmax > HEIGHT ) zmax = HEIGHT;
+			var addr = (c << HBITS) + hmin;
+			for( z in hmin...zmax ) {
 				var b = fget(addr);
 				if( b == EMPTY ) {
-					var count = countEmpty(x, y, z, addr);
-					if( count <= 2 )
+					if( fewEmpty(x, y, z, addr) )
 						changed += smooth3DEmptyRec(x, y, z, addr, 4);
 				} else if( b != WATER ) {
-					var count = countEmpty(x, y, z, addr);
-					if( count >= 5 )
+					if( manyEmpty(x, y, z, addr) )
 						changed += smooth3DRec(x, y, z, addr, 10);
 				}
 				addr++;
@@ -808,39 +957,41 @@ class Generator {
 		}
 		return changed;
 	}
-	
+
 	function smooth3DRec(x, y, z, addr, depth) {
 		if( fget(addr) == WATER )
 			return 0;
 		fset(addr, EMPTY);
+		smoothWrote(addr, false);
 		var count = 1;
 		depth--;
 		if( depth == 0 ) return count;
 		var naddr = addr + (minusOne(x) << HBITS);
-		if( countEmpty(minusOne(x), y, z, naddr) >= 5 )
+		if( manyEmpty(minusOne(x), y, z, naddr) )
 			count += smooth3DRec(minusOne(x), y, z, naddr, depth);
 		var naddr = addr + (minusOne(y) << HBITS) * size;
-		if( countEmpty(x,minusOne(y), z, naddr) >= 5 )
+		if( manyEmpty(x,minusOne(y), z, naddr) )
 			count += smooth3DRec(x, minusOne(y), z, naddr, depth);
 		var naddr = addr - 1;
-		if( z > 0 && countEmpty(x,y, z-1, naddr) >= 5 )
+		if( z > 0 && manyEmpty(x,y, z-1, naddr) )
 			count += smooth3DRec(x, y, z - 1, naddr, depth);
 		return count;
 	}
-	
+
 	function smooth3DEmptyRec(x, y, z, addr, depth) {
 		fset(addr, SOIL);
+		smoothWrote(addr, true);
 		var count = 1;
 		depth--;
 		if( depth == 0 ) return count;
 		var naddr = addr + (minusOne(x) << HBITS);
-		if( countEmpty(minusOne(x), y, z, naddr) <= 2 )
+		if( fewEmpty(minusOne(x), y, z, naddr) )
 			count += smooth3DEmptyRec(minusOne(x), y, z, naddr, depth);
 		var naddr = addr + (minusOne(y) << HBITS) * size;
-		if( countEmpty(x,minusOne(y), z, naddr) <= 2 )
+		if( fewEmpty(x,minusOne(y), z, naddr) )
 			count += smooth3DEmptyRec(x, minusOne(y), z, naddr, depth);
 		var naddr = addr - 1;
-		if( z > 0 && countEmpty(x,y, z-1, naddr) <= 2 )
+		if( z > 0 && fewEmpty(x,y, z-1, naddr) )
 			count += smooth3DEmptyRec(x, y, z - 1, naddr, depth);
 		return count;
 	}
@@ -848,7 +999,7 @@ class Generator {
 	public function getBitmap() {
 		var bmp = new flash.display.BitmapData(size, size, true, 0);
 		var colors = bmp.getVector(bmp.rect);
-		flash.Memory.select(perlin.buf);
+		perlin.select();
 		
 		var wh = waterLevel;
 		for( y in 0...size )
@@ -1146,12 +1297,10 @@ class Generator {
 		for( y in 0...size )
 			for( x in 0...size ) {
 				addr++;
-				for( z in 1...HEIGHT ) {
-					var f = fget(addr);
-					if( f != WATER ) {
-						addr++;
-						continue;
-					}
+				// anadido del port: de un agua a la siguiente de la columna (findCell), en el mismo orden
+				var colEnd = addr + HEIGHT - 1;
+				while( (addr = findCell(addr, colEnd, WATER)) < colEnd ) {
+					var z = addr & (HEIGHT - 1);
 					waterTotal++;
 					if( isLiquid ) {
 						var a = addr + (minusOne(x) << HBITS);

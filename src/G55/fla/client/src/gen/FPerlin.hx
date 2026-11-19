@@ -14,7 +14,16 @@ class FPerlin {
 	public var seed : Int;
 	
 	public var buf : flash.utils.ByteArray;
-	
+	#if hl
+	/**
+	 * Anadido del port: buf leido directamente, sin flash.Memory (un tampon global para todos) ni su control de limites: cada
+	 * generador tiene el suyo. bind() lo vuelve a tomar cuando buf cambia de tamano (Generator le anade sus alturas y su mundo).
+	 * Con -D genCheck cada acceso comprueba que cae dentro de buf (flash.Memory leia 0 fuera y fallaba al escribir).
+	 */
+	public var mem(default, null) : hl.Bytes;
+	var memLength = 0;
+	#end
+
 	public function new( size ) {
 		this.size = size;
 		buf = new flash.utils.ByteArray();
@@ -30,7 +39,8 @@ class FPerlin {
 		gradOffset = buf.length;
 		buf.length += 65536 * 4;
 		// init gradients and alpha channel
-		flash.Memory.select(buf);
+		bind();
+		select();
 		for( i in 0...NGRADS ) {
 			var p = i << 5;
 			setDouble(p, GRADIENTS[i * 3] * 2.12);
@@ -40,7 +50,7 @@ class FPerlin {
 		}
 		// white
 		for( i in 0...size * size * 4 )
-			flash.Memory.setByte(bmpOffset + i, 0xFF);
+			setByte(bmpOffset + i, 0xFF);
 	}
 
 	public inline function reset() {
@@ -53,32 +63,97 @@ class FPerlin {
 		}
 	}
 	
+	/** anadido del port: buf ha cambiado de tamano (ver mem) */
+	public inline function bind() {
+		#if hl
+		mem = @:privateAccess buf.b.b;
+		memLength = buf.length;
+		#end
+	}
+
 	public inline function select() {
+		#if !hl
 		flash.Memory.select(buf);
+		#end
 	}
 
-	inline function setByte( index : Int, b : Int ) {
+	#if (hl && genCheck)
+	function check( index : Int, n : Int ) {
+		if( index < 0 || index + n > memLength )
+			throw "genCheck: acceso a " + index + " (" + n + " bytes) fuera del tampon (" + memLength + ")";
+	}
+	#end
+
+	public inline function setByte( index : Int, b : Int ) {
+		#if hl
+		#if genCheck check(index, 1); #end
+		mem.setUI8(index, b);
+		#else
 		flash.Memory.setByte(index,b);
-	}
-	
-	inline function setDouble( index : Int, v : Float ) {
-		flash.Memory.setDouble(index, v);
+		#end
 	}
 
-	inline function byte( index : Int ) : Int {
-		return flash.Memory.getByte(index);
+	public inline function setDouble( index : Int, v : Float ) {
+		#if hl
+		#if genCheck check(index, 8); #end
+		mem.setF64(index, v);
+		#else
+		flash.Memory.setDouble(index, v);
+		#end
 	}
-	
-	inline function getI32( index : Int ) {
+
+	public inline function byte( index : Int ) : Int {
+		#if hl
+		#if genCheck check(index, 1); #end
+		return mem.getUI8(index);
+		#else
+		return flash.Memory.getByte(index);
+		#end
+	}
+
+	inline function getI32( index : Int ) : Int {
+		#if hl
+		#if genCheck check(index, 4); #end
+		return mem.getI32(index);
+		#else
 		return flash.Memory.getI32(index);
+		#end
 	}
 
 	inline function setI32( index : Int, v : Int ) {
+		#if hl
+		#if genCheck check(index, 4); #end
+		mem.setI32(index, v);
+		#else
 		flash.Memory.setI32(index,v);
+		#end
 	}
-	
-	inline function double( index : Int ) : Float {
+
+	inline function getFloat( index : Int ) : Float {
+		#if hl
+		#if genCheck check(index, 4); #end
+		return mem.getF32(index);
+		#else
+		return flash.Memory.getFloat(index);
+		#end
+	}
+
+	inline function setFloat( index : Int, v : Float ) {
+		#if hl
+		#if genCheck check(index, 4); #end
+		mem.setF32(index, v);
+		#else
+		flash.Memory.setFloat(index, v);
+		#end
+	}
+
+	public inline function double( index : Int ) : Float {
+		#if hl
+		#if genCheck check(index, 8); #end
+		return mem.getF64(index);
+		#else
 		return flash.Memory.getDouble(index);
+		#end
 	}
 	
 	inline function scurve( a : Float ) {
@@ -294,11 +369,11 @@ class FPerlin {
 	
 	inline function invSqrt( x : Float ) : Float {
 		var half = 0.5 * x;
-		flash.Memory.setFloat(bmpOffset,x);
-		var i = flash.Memory.getI32(bmpOffset);
+		setFloat(bmpOffset,x);
+		var i = getI32(bmpOffset);
 		i = 0x5f3759df - (i>>1);
-		flash.Memory.setI32(bmpOffset,i);
-		x = flash.Memory.getFloat(bmpOffset);
+		setI32(bmpOffset,i);
+		x = getFloat(bmpOffset);
 		x = x * (1.5 - half*x*x);
 		return x;
 	}

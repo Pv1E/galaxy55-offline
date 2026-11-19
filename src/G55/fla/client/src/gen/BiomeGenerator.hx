@@ -1026,11 +1026,15 @@ class BiomeGenerator extends Generator {
 			// replace CAVE by tree content
 			var sap = alloc(BAcidTreeSap);
 			spread(size, function(y) {
-				for( i in y * size * HEIGHT...(y + 1) * size * HEIGHT ) {
+				// anadido del port: de una celda de madera o de CAVE a la siguiente (findCell2), en el mismo orden
+				var end = (y + 1) * size * HEIGHT;
+				var i = findCell2(y * size * HEIGHT, end, wood, CAVE);
+				while( i < end ) {
 					if( fget(i) == wood && rnd.random(10)==0 )
 						fset(i, rnd.random(100)<30 ? woodBubble : woodHole );
 					if( fget(i) == CAVE )
 						fset(i, rnd.random(5) == 0 ? sap : EMPTY);
+					i = findCell2(i + 1, end, wood, CAVE);
 				}
 			}, function() {
 				
