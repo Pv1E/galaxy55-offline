@@ -225,7 +225,7 @@ class ServerShip {
 		var c = chestOf(x, y, z, b);
 		var cur = s.record.inv;
 		var ok = ver == chestVer && nc.length == c.length && ni.t.length == cur.t.length && ServerItems.validSlots(nc, 0x7FFFFFFF)
-			&& ServerItems.validSlots(ni.t, cur.maxWeight)
+			&& ServerItems.validSlots(ni.t, cur.maxWeight, cur.t)
 			&& ServerItems.sameTotals(ServerItems.totals(c, null, ServerItems.totals(cur.t, cur.charges)), ServerItems.totals(nc, null, ServerItems.totals(ni.t, ni.charges)));
 		if( ok ) {
 			for( i in 0...c.length ) c[i] = nc[i] == null ? null : { k : nc[i].k, n : nc[i].n };
@@ -255,7 +255,7 @@ class ServerShip {
 		var info = s.record;
 		var why = Hangar.serverCheck(ship, NetZip.inflate);
 		var cur = info.inv;
-		if( why == null && (ni.t.length != cur.t.length || !ServerItems.validSlots(ni.t, cur.maxWeight)) ) why = "inventario";
+		if( why == null && (ni.t.length != cur.t.length || !ServerItems.validSlots(ni.t, cur.maxWeight, cur.t)) ) why = "inventario";
 		if( why == null ) {
 			var had = ServerItems.totals(cur.t, cur.charges);
 			var now = ServerItems.totals(ni.t, ni.charges);
@@ -296,12 +296,10 @@ class ServerShip {
 		var cur = StorageData.ensure(info);
 		var inv = info.inv;
 		var ok = st.t.length == cur.t.length && ni.t.length == inv.t.length && ServerItems.validSlots(st.t, 0x7FFFFFFF)
-			&& ServerItems.validSlots(ni.t, inv.maxWeight);
-		if( ok ) {
-			var smax = StorageData.chargeMax(), imax = StorageData.invChargeMax();
-			for( c in st.charges ) if( c.c < 0 || c.c >= StorageData.CHARGE_KINDS || c.n < 0 || (smax[c.c] >= 0 && c.n > smax[c.c]) ) ok = false;
-			for( c in ni.charges ) if( c.c < 0 || c.c >= StorageData.CHARGE_KINDS || c.n < 0 || c.n > imax[c.c] ) ok = false;
-		}
+			&& ServerItems.validSlots(ni.t, inv.maxWeight, inv.t)
+			// cada carga en su contador; uno que ya pasaba del maximo (partida creativa traida al servidor) no impide lo demas
+			&& ServerItems.chargesFit(st.charges, cur.charges, StorageData.chargeMax())
+			&& ServerItems.chargesFit(ni.charges, inv.charges, StorageData.invChargeMax());
 		if( ok ) ok = ServerItems.sameTotals(ServerItems.totals(cur.t, cur.charges, ServerItems.totals(inv.t, inv.charges)),
 			ServerItems.totals(st.t, st.charges, ServerItems.totals(ni.t, ni.charges)));
 		if( ok ) {

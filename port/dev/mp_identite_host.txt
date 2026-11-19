@@ -1,0 +1,19 @@
+# multijugador (anadido del port), con port/dev/mp_identite_guest.txt y port/dev/mp_identite_twin.txt (los tres con -Extra
+# "--rngseed=1" y la carpeta de datos del anfitrion para el gemelo): la identidad del anfitrion entrando desde otro juego se
+# rechaza y el anfitrion sigue jugando (antes salia y su servidor se paraba). Despues el anfitrion deja la partida: el invitado,
+# en plena partida, vuelve al menu con el raton suelto (print mp: raton=libre).
+waitfor planet
+mp host 55199
+waitfor map 6000
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+waitfor mpplayers2 9000
+# lo que tarda el invitado en aterrizar en su planeta (tamano 3: se genera despacio)
+wait 2400
+print mp
+mp leave
+waitfor mpend 600
+print mp

@@ -421,6 +421,7 @@ class Lang {
 		"mp.refuse.7" => ["El servidor se ha parado.", "The server has stopped.", "Le serveur s'est arrêté."],
 		"mp.refuse.8" => ["Demasiados mensajes: desconectado.", "Too many messages: disconnected.", "Trop de messages : déconnecté."],
 		"mp.refuse.9" => ["Error de comunicación con el servidor.", "Communication error with the server.", "Erreur de communication avec le serveur."],
+		"mp.refuse.10" => ["Esta identidad es la del anfitrión y ya está jugando en este servidor.", "This identity is the host's and is already playing on this server.", "Cette identité est celle de l'hôte et joue déjà sur ce serveur."],
 		"mp.badrecord" => ["La partida que ha mandado el servidor no se puede leer.", "The game sent by the server cannot be read.", "La partie envoyée par le serveur est illisible."],
 		"mp.land.denied" => ["No puedes aterrizar en este planeta.", "You cannot land on this planet.", "Tu ne peux pas atterrir sur cette planète."],
 		"mp.planet.closed" => ["Este planeta se ha cerrado a los exploradores.", "This planet has been closed to explorers.", "Cette planète a été fermée aux explorateurs."],

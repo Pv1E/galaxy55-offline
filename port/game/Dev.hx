@@ -1543,7 +1543,8 @@ class Dev {
 			return;
 		}
 		if( a[1] == "mp" ) {
-			Sys.println(app.mp == null ? "mp ninguno" : app.mp.devInfo());
+			// y si el juego tiene el raton (sin cursor): al acabar la sesion en plena partida tiene que soltarlo
+			Sys.println((app.mp == null ? "mp ninguno" : app.mp.devInfo()) + " raton=" + (@:privateAccess app.captured ? "capturado" : "libre"));
 			return;
 		}
 		if( a[1] == "cellhash" && g != null ) {

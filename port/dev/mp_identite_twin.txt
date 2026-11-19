@@ -1,0 +1,8 @@
+# multijugador (anadido del port): otro juego con la identidad del anfitrion de port/dev/mp_identite_host.txt (sus mismos
+# datos): el servidor lo rechaza (mp.refuse.10) y el anfitrion sigue
+waitfor planet
+wait 500
+mp join 55199
+waitfor mpend 9000
+print mp
+print menu

@@ -109,12 +109,36 @@ class ServerItems {
 		return true;
 	}
 
-	/** cada casilla con un bloque que existe y sin pasar de su maximo */
-	public static function validSlots( t : Array<Null<{ k : Int, n : Int }>>, maxWeight : Int ) : Bool {
-		for( s in t ) {
+	/**
+	 * cada casilla con un bloque que existe y sin pasar de su maximo. Con before (las casillas de antes): una pila que ya pasaba
+	 * del maximo en esa casilla (una partida creativa o de antes traida al servidor) puede quedarse o bajar, no crecer; si no,
+	 * todo lo que tocara ese inventario se rechazaria por una pila que nadie ha movido.
+	 */
+	public static function validSlots( t : Array<Null<{ k : Int, n : Int }>>, maxWeight : Int, ?before : Array<Null<{ k : Int, n : Int }>> ) : Bool {
+		for( i in 0...t.length ) {
+			var s = t[i];
 			if( s == null ) continue;
 			if( s.k <= 0 || s.k >= Block.all.length || s.n <= 0 ) return false;
-			if( s.n > Block.all[s.k].getMax(maxWeight) ) return false;
+			if( s.n > Block.all[s.k].getMax(maxWeight) ) {
+				var b = before == null || i >= before.length ? null : before[i];
+				if( b == null || b.k != s.k || s.n > b.n ) return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * cargas propuestas: cada tipo en su contador hasta max (-1: sin limite). Como las pilas de validSlots, un contador que ya
+	 * pasaba del maximo (30 rosas de una partida creativa, con 20 de maximo) puede quedarse o bajar, no subir.
+	 */
+	public static function chargesFit( cs : Array<{ c : Int, n : Int }>, before : Array<{ c : Int, n : Int }>, max : Array<Int> ) : Bool {
+		for( c in cs ) {
+			if( c.c < 0 || c.c >= max.length || c.n < 0 ) return false;
+			if( max[c.c] >= 0 && c.n > max[c.c] ) {
+				var had = 0;
+				if( before != null ) for( b in before ) if( b.c == c.c ) had += b.n;
+				if( c.n > had ) return false;
+			}
 		}
 		return true;
 	}
@@ -299,7 +323,7 @@ class ServerItems {
 	function layout( s : Session, ni : NetInv ) {
 		var cur = s.record.inv;
 		if( ni.t.length != cur.t.length ) return;
-		if( !validSlots(ni.t, cur.maxWeight) ) return;
+		if( !validSlots(ni.t, cur.maxWeight, cur.t) ) return;
 		var a = totals(cur.t, cur.charges), b = totals(ni.t, cur.charges);
 		if( !sameTotals(a, b) ) {
 			server.files.log("inventario rechazado de " + s.display + ": no cuadra");
@@ -399,7 +423,7 @@ class ServerItems {
 		var c = chestOf(inst, x, y, z, b);
 		var v = inst.items.chestVer.exists(k) ? inst.items.chestVer.get(k) : 0;
 		var cur = s.record.inv;
-		var ok = ver == v && nc.length == c.length && ni.t.length == cur.t.length && validSlots(nc, 0x7FFFFFFF) && validSlots(ni.t, cur.maxWeight);
+		var ok = ver == v && nc.length == c.length && ni.t.length == cur.t.length && validSlots(nc, 0x7FFFFFFF) && validSlots(ni.t, cur.maxWeight, cur.t);
 		if( ok ) {
 			// nada se crea ni se pierde: los totales de cantina + inventario (bloques y cargas) son los mismos antes y despues
 			var before = totals(c, null, totals(cur.t, cur.charges));

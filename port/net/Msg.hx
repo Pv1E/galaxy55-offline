@@ -12,7 +12,9 @@ enum abstract RefuseReason(Int) to Int from Int {
 	var RServerStop = 7;
 	var RFlood = 8;
 	var RProtocol = 9;
-	public static inline var MAX = 9;
+	/** la identidad del anfitrion entrando desde otro juego: no le quita el sitio (el anfitrion se iria y pararia el servidor) */
+	var RHostIdentity = 10;
+	public static inline var MAX = 10;
 }
 
 /** Papel de un jugador en el servidor */
@@ -275,7 +277,7 @@ enum ServerMsg {
  */
 class Msg {
 
-	public static inline var PROTOCOL = 8;
+	public static inline var PROTOCOL = 9;
 	/** cambios de celdas en un mensaje, y bytes de un terreno descomprimido */
 	public static inline var CHANGES_MAX = 1 << 16;
 	public static inline var EDITS_MAX = 64 << 20;

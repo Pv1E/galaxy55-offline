@@ -286,6 +286,14 @@ class GameServer {
 			refuse(s, RPassword, "");
 			return;
 		}
+		// la identidad del anfitrion ya jugando en su propio juego (otra ventana con los mismos datos): se rechaza la nueva. Si
+		// sustituyera a la del anfitrion como a cualquier otra, este saldria de la partida y su servidor se pararia para todos
+		if( uid != null )
+			for( o in sessions )
+				if( o != s && o.state == SPlay && o.uid == uid && Std.isOfType(o.channel.transport, LocalTransport) ) {
+					refuse(s, RHostIdentity, "");
+					return;
+				}
 		var name = cleanPseudo(pseudo);
 		db.begin();
 		var first = uid == null;

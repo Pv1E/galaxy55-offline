@@ -80,6 +80,13 @@ class NetTest {
 		carol.local(server.connectLocal());
 		check("carol entra en memoria", until(() -> carol.welcome != null), carol.lastEvent());
 		check("pseudo repetido lleva #2", carol.name == "Alice#2", carol.name);
+		// la identidad del jugador en memoria (el anfitrion) entrando por la red desde otro juego: se rechaza la nueva y el
+		// anfitrion sigue (antes le quitaba el sitio, y el anfitrion que sale para su servidor)
+		var carolTwice = add(new TestClient("Alice", secret(3)));
+		carolTwice.tcp(55099);
+		check("la identidad del anfitrion otra vez: rechazada", until(() -> carolTwice.refused == RHostIdentity), carolTwice.lastEvent());
+		until(() -> false, 0.2);
+		check("el anfitrion sigue dentro", carol.kicked == null && carol.welcome != null);
 
 		alice.client.send(CTalk(CWorld, 0, "hola a todos"));
 		check("chat del mundo llega a bob y carol", until(() -> bob.heard("hola a todos") && carol.heard("hola a todos")));
@@ -547,6 +554,8 @@ class NetTest {
 		until(() -> e.has(m -> m.match(SInventory(3, _))));
 		var c3 : Int = patched(e, "credits");
 		check("progresion: no se compra mas de lo que se puede pagar", c3 >= 0 && c3 < c2 && es.record.credits == c3, "" + c3);
+		// sin ningun bloque: el tablero cambia con la hora y su contrato 0 puede pedir justo el bloque que se acaba de comprar
+		for( i in 0...es.record.inv.t.length ) es.record.inv.t[i] = null;
 		Contracts.state(es.record);
 		var before = haxe.Json.stringify(es.record.contracts);
 		e.client.send(CEcon(4, EDeliver, "", 0));
@@ -635,6 +644,24 @@ class NetTest {
 		cheat.t[1] = { k : Block.get(BChest).index, n : 1 };
 		f.client.send(CStorage(7, cheat, ninv));
 		check("nave: el stockage no crea nada", until(() -> f.has(m -> m.match(SInventory(7, _)))) && fs.record.storage.t[1] == null);
+		// una partida creativa traida al servidor: 30 rosas en el inventario (maximo 20); el stockage sigue funcionando para lo
+		// demas (antes se rechazaba todo) y las rosas no pueden subir
+		var pink = Type.enumIndex(Common.ChargeKind.CPink);
+		var ic = fs.record.inv.charges;
+		for( c in ic.copy() ) if( c.c == pink ) ic.remove(c);
+		ic.push({ c : pink, n : 30 });
+		var back : NetInv = { t : [for( s in fs.record.inv.t ) s == null ? null : { k : s.k, n : s.n }], charges : [for( c in ic ) { c : c.c, n : c.n }] };
+		for( i in 0...back.t.length ) if( back.t[i] == null ) { back.t[i] = { k : Block.get(BRock).index, n : 5 }; break; }
+		var empty : NetInv = { t : [for( s in fs.record.storage.t ) null], charges : [for( c in fs.record.storage.charges ) { c : c.c, n : c.n }] };
+		f.client.send(CStorage(8, empty, back));
+		check("nave: con 30 rosas (maximo 20) el stockage sigue funcionando", until(() -> f.has(m -> m.match(SInventory(8, _))))
+			&& fs.record.storage.t[0] == null && count(lastInv(f), Block.get(BRock).index) == 5);
+		// 2 rosas guardadas que vuelven al inventario: los totales cuadran, pero 32 pasaria de las 30 que ya tenia
+		fs.record.storage.charges = [{ c : pink, n : 2 }];
+		var more : NetInv = { t : back.t, charges : [for( c in back.charges ) { c : c.c, n : c.c == pink ? c.n + 2 : c.n }] };
+		f.client.send(CStorage(9, { t : empty.t, charges : [] }, more));
+		check("nave: las rosas de mas no pueden subir", until(() -> f.has(m -> m.match(SInventory(9, _))))
+			&& Lambda.exists(fs.record.inv.charges, c -> c.c == pink && c.n == 30) && fs.record.storage.charges.length == 1);
 		// tirar a bordo: queda en la nave
 		server.worlds.items.devGive(fs, wood, 3);
 		until(() -> count(lastInv(f), wood.index) == 3);
@@ -643,8 +670,8 @@ class NetTest {
 		var ti = lastInv(f);
 		for( i in 0...ti.t.length ) if( ti.t[i] != null && ti.t[i].k == wood.index ) ts = i + 1;
 		var n0 = Lambda.count(ship.loot);
-		f.client.send(CThrow(8, ts, 3));
-		check("nave: lo tirado a bordo es un suelto de la nave", until(() -> f.has(m -> m.match(SInventory(8, _)))) && count(lastInv(f), wood.index) == 0 && Lambda.count(ship.loot) == n0 + 1);
+		f.client.send(CThrow(10, ts, 3));
+		check("nave: lo tirado a bordo es un suelto de la nave", until(() -> f.has(m -> m.match(SInventory(10, _)))) && count(lastInv(f), wood.index) == 0 && Lambda.count(ship.loot) == n0 + 1);
 		server.stop();
 	}
 

@@ -1197,6 +1197,10 @@ class GalaxyApp extends hxd.App {
 			msgText.visible = false;
 			state = Menu;
 		}
+		// la sesion puede acabar en plena partida (expulsado, servidor parado, la misma identidad en otro sitio): el raton seguia
+		// capturado (y los close* de leaveGame lo vuelven a capturar mientras state es Playing), sin cursor en los menus
+		if( chatBox != null && chatBox.typing ) chatBox.close();
+		captureMouse(false);
 		// pruebas: el guion sigue en los menus (como tras su orden menu)
 		if( dev != null ) @:privateAccess dev.inMenu = true;
 		show("multi");
