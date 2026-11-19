@@ -123,18 +123,68 @@ class PlanetInstance {
 		t0 = haxe.Timer.stamp();
 	}
 
-	public inline function ready() return world.isGenerated();
+	/** listo: generado (en otro hilo o tomado del anfitrion) y preparado en este (finishGen); hasta entonces nadie toca el mundo */
+	public inline function ready() return isReady;
+	var isReady = false;
 
-	/** genera durante budgetMs; true cuando el mundo esta listo */
-	public function generate( budgetMs : Float ) : Bool {
-		if( world.isGenerated() ) return true;
-		if( !world.genStep(haxe.Timer.stamp(), budgetMs) ) return false;
+	/**
+	 * el juego del anfitrion esta generando este mismo planeta (ha entrado y aun no esta listo): hasta esta hora no se genera
+	 * aqui, se espera su terreno (ServerWorlds.adoptTerrain). Generarlo a la vez costaba ~55 ms por fotograma al anfitrion.
+	 */
+	public var hostWaitUntil = 0.;
+
+	/** la generacion en otro hilo: empezada, acabada (lo escribe ese hilo) y su error si fallo */
+	var genStarted = false;
+	var genDone = false;
+	public var genError(default, null) : String;
+
+	public inline function generating() return genStarted && !isReady;
+
+	/**
+	 * Genera el mundo en otro hilo (cambio del port: en el mismo, cada paso del generador, unos 55 ms, paraba el juego del
+	 * anfitrion y el bucle del servidor dedicado). El generador comparte su memoria global con los demas (WorldData.genLock).
+	 * Se llama en cada vuelta: true cuando esta listo (lo ultimo, finishGen, se hace en este hilo).
+	 */
+	public function generateAsync() : Bool {
+		if( isReady ) return true;
+		if( genDone ) {
+			if( genError != null ) return false;
+			finishGen();
+			return true;
+		}
+		if( !genStarted ) {
+			genStarted = true;
+			var w = world;
+			sys.thread.Thread.create(function() {
+				try {
+					while( !cancelled && !w.genStep(haxe.Timer.stamp(), 30) ) {}
+				} catch( e : Dynamic ) {
+					genError = Std.string(e);
+				}
+				genDone = !cancelled;
+			});
+		}
+		return false;
+	}
+
+	/** descargado o servidor parado: el hilo deja de generar (si no, seguia con el cerrojo del generador y frenaba los demas) */
+	var cancelled = false;
+	public function cancel() cancelled = true;
+
+	/** el terreno que el juego del anfitrion acaba de generar (WorldData.adoptGenerated); true si era este planeta */
+	public function adopt( src : WorldData ) : Bool {
+		if( isReady || genStarted || !world.adoptGenerated(src) ) return false;
+		finishGen();
+		return true;
+	}
+
+	function finishGen() {
 		world.indexSaved();
 		world.changed = [];
 		world.dirty = new Map();
 		lastFlood = world.waterFlood;
 		lastSea = world.waterLevel();
-		return true;
+		isReady = true;
 	}
 
 	/** un paso del mundo (dt en segundos); devuelve si el mar ha bajado una capa */

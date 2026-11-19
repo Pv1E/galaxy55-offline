@@ -2,6 +2,7 @@ import Common;
 import Msg;
 import SaveData.SaveInfo;
 import GameServer.Session;
+import Transport;
 
 /** accesos de un planeta (planets.access en JSON): abierto, todos los invitados visitantes, visita para todo el servidor, lo que
     pueden hacer los visitantes (Rights) y los invitados (uid y papel: 0 explorador, 1 visitante) */
@@ -26,6 +27,10 @@ class ServerWorlds {
 	public static var fixedSeed : Null<Int> = null;
 	var tickAcc = 0.;
 	var commitAcc = 0.;
+	/** diagnostico (--mpprof, tambien en el servidor dedicado): generar, los pasos del mundo y el commit de mas de 30 ms */
+	public static var prof = Sys.args().indexOf("--mpprof") >= 0;
+	/** planetas cuya generacion ha fallado, ya apuntados en el registro */
+	var reported = new Map<String, Bool>();
 	static inline var TICK = 0.05;
 	static inline var COMMIT = 1.;
 	/** un planeta vacio se descarga al cabo de (s) */
@@ -274,6 +279,9 @@ class ServerWorlds {
 	function enterRow( s : Session, row : ServerDb.PlanetRow ) : PlanetInstance {
 		leaveInstance(s);
 		var inst = instance(row.gkey, row);
+		// el anfitrion genera el planeta en su juego: aqui se espera su terreno (como mucho 60 s, por si no llega)
+		if( !inst.ready() && Std.isOfType(s.channel.transport, LocalTransport) && WorldData.onGenerated != null )
+			inst.hostWaitUntil = haxe.Timer.stamp() + 60;
 		inst.players.push(s);
 		items.sendLoots(s, inst);
 		s.instance = inst;
@@ -293,6 +301,8 @@ class ServerWorlds {
 	function leaveInstance( s : Session ) {
 		var inst = s.instance;
 		if( inst == null ) return;
+		// el anfitrion se va antes de tener el terreno: se genera aqui
+		if( Std.isOfType(s.channel.transport, LocalTransport) ) inst.hostWaitUntil = 0;
 		inst.players.remove(s);
 		if( inst.players.length == 0 ) inst.emptySince = haxe.Timer.stamp();
 		for( o in inst.players ) o.send(SGone(s.id));
@@ -769,32 +779,61 @@ class ServerWorlds {
 
 	// ---------------------------------------------------------------- bucle
 
-	/** budgetMs: tiempo para generar planetas en esta llamada */
+	/** un planeta acaba de estar listo: lo del tutorial y las peticiones que esperaban */
+	function generated( inst : PlanetInstance, how : String ) {
+		server.files.log("planeta " + inst.key + " " + how);
+		seedTutorial(inst);
+		var w = inst.waiting;
+		inst.waiting = [];
+		for( q in w ) if( q.s.instance == inst ) blockChange(q.s, q.m);
+	}
+
+	/**
+	 * El juego del anfitrion (mismo proceso) acaba de generar un planeta (WorldData.onGenerated, terreno aun sin cambios): los
+	 * planetas que se estan generando aqui con los mismos datos lo toman en vez de generarlo otra vez. Los que esperaban al
+	 * anfitrion y no eran ese siguen generandose aqui.
+	 */
+	public function adoptTerrain( src : WorldData ) {
+		for( inst in instances ) {
+			if( inst.ready() || inst.generating() ) continue;
+			var t0 = haxe.Timer.stamp();
+			if( inst.adopt(src) ) generated(inst, "tomado del juego del anfitrion (" + Std.int((haxe.Timer.stamp() - t0) * 1000) + " ms)");
+			else inst.hostWaitUntil = 0;
+		}
+	}
+
+	/** budgetMs: ya no se usa (los planetas se generan en otro hilo, PlanetInstance.generateAsync) */
 	public function pump( dt : Float, budgetMs : Float ) {
 		var t0 = haxe.Timer.stamp();
 		for( inst in instances ) {
 			if( inst.ready() ) continue;
-			var left = budgetMs - (haxe.Timer.stamp() - t0) * 1000;
-			if( left <= 0 ) break;
-			if( inst.generate(left) ) {
-				server.files.log("planeta " + inst.key + " generado");
-				seedTutorial(inst);
-				var w = inst.waiting;
-				inst.waiting = [];
-				for( q in w ) if( q.s.instance == inst ) blockChange(q.s, q.m);
+			// el juego del anfitrion lo esta generando: se espera su terreno (adoptTerrain)
+			if( inst.hostWaitUntil > t0 ) continue;
+			if( inst.genError != null ) {
+				if( !reported.exists(inst.key) ) {
+					reported.set(inst.key, true);
+					server.files.log("planeta " + inst.key + ": la generacion ha fallado (" + inst.genError + ")");
+				}
+				continue;
 			}
+			if( inst.generateAsync() ) generated(inst, "generado");
 		}
+		if( prof && haxe.Timer.stamp() - t0 > 0.03 ) Sys.println("mpprof generar " + Std.int((haxe.Timer.stamp() - t0) * 1000) + " ms");
 		tickAcc += dt;
 		var n = 0;
+		var tt = haxe.Timer.stamp();
 		while( tickAcc >= TICK && n++ < 3 ) {
 			tickAcc -= TICK;
 			tick();
 		}
+		if( prof && haxe.Timer.stamp() - tt > 0.03 ) Sys.println("mpprof tick " + n + " pasos " + Std.int((haxe.Timer.stamp() - tt) * 1000) + " ms");
 		if( tickAcc > TICK * 3 ) tickAcc = 0;
 		commitAcc += dt;
 		if( commitAcc >= COMMIT ) {
 			commitAcc = 0;
+			var tc = haxe.Timer.stamp();
 			commit();
+			if( prof && haxe.Timer.stamp() - tc > 0.03 ) Sys.println("mpprof commit " + Std.int((haxe.Timer.stamp() - tc) * 1000) + " ms");
 		}
 	}
 
@@ -810,6 +849,8 @@ class ServerWorlds {
 				if( now - inst.emptySince > UNLOAD ) unload(inst);
 				continue;
 			}
+			// aun generandose (en otro hilo): ni sueltos ni cambios (los sueltos guardados miraban un mundo sin celdas)
+			if( !inst.ready() ) continue;
 			var dropped = inst.tick(TICK);
 			items.tick(inst, TICK);
 			var ch = inst.takeChanges();
@@ -829,6 +870,7 @@ class ServerWorlds {
 	}
 
 	function unload( inst : PlanetInstance ) {
+		inst.cancel();
 		saveInstance(inst);
 		instances.remove(inst.key);
 		server.files.log("planeta " + inst.key + " descargado");
@@ -851,5 +893,6 @@ class ServerWorlds {
 
 	public function close() {
 		commit();
+		for( inst in instances ) inst.cancel();
 	}
 }

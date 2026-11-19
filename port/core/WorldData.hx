@@ -60,6 +60,8 @@ class WorldData {
 		var comet = shipData == null && CometRules.isComet(biomeName);
 		size = comet ? CometRules.SIZE : sizeChunks << Const.BITS;
 		var biome : BiomeKind = Type.createEnum(BiomeKind, biomeName);
+		// el generador usa la memoria global (flash.Memory): no mientras otro hilo genera (genLock)
+		genLock.acquire();
 		gen = comet ? new CometGenerator(size, seed) : new gen.DetailsGenerator(size, seed);
 		if( genVersion != null ) gen.version = genVersion;
 		var bd = Data.getBiome(biome);
@@ -73,6 +75,7 @@ class WorldData {
 			seaBlock = Block.get(bd.water);
 		}
 		else initShip(shipData);
+		genLock.release();
 		// como Builder.init: los modelos sin BFSize usan su propia caja para las colisiones
 		for( b in Block.all )
 			if( b.model != null && b.size == null ) b.size = Models.get(b.model).box;
@@ -87,6 +90,50 @@ class WorldData {
 	public inline function isGenerated() return generated;
 
 	/**
+	 * Multijugador (anadido del port): aviso de cada mundo cuyo generador acaba de terminar, antes de usar su resultado (el
+	 * terreno tal como sale, sin cambios). El anfitrion lo usa para que su servidor tome el planeta que su juego acaba de
+	 * generar (adoptGenerated) en vez de generarlo otra vez en los mismos fotogramas.
+	 */
+	public static var onGenerated : WorldData -> Void;
+
+	/**
+	 * Un solo generador a la vez: Generator y FPerlin trabajan sobre una memoria global (flash.Memory, la que eligen al
+	 * empezar cada process). El servidor genera sus planetas en otro hilo (PlanetInstance.generateAsync) mientras el juego del
+	 * anfitrion puede estar generando el suyo; cada paso del generador (y su creacion) se hace con este cerrojo.
+	 */
+	public static var genLock(default, null) = new sys.thread.Mutex();
+
+	/**
+	 * Toma el terreno que src acaba de generar (llamado desde onGenerated: su generador ha terminado y aun no ha cambiado
+	 * nada) si es el mismo planeta (semilla, bioma, tamano, version y tipo de generador): las celdas y lo del generador que se
+	 * usa despues (bloques por id local, agua, anomalias), y sigue como genStep (cambios guardados). false si no es el mismo
+	 * o este ya esta generado.
+	 */
+	public function adoptGenerated( src : WorldData ) : Bool {
+		if( generated || isShip || src.isShip || src.seed != seed || src.biomeName != biomeName || src.size != size ) return false;
+		var g = gen, sg = src.gen;
+		if( g.version != sg.version || Type.getClass(g) != Type.getClass(sg) ) return false;
+		g.blocks = sg.blocks.copy();
+		g.btrans = sg.btrans.copy();
+		var h = new IntHash<Int>();
+		for( k in sg.hblocks.keys() ) h.set(k, sg.hblocks.get(k));
+		g.hblocks = h;
+		g.placed = sg.placed.copy();
+		@:privateAccess {
+			g.waterLevel = sg.waterLevel;
+			g.waterLimit = sg.waterLimit;
+			g.waterTotal = sg.waterTotal;
+		}
+		g.progress = 1;
+		wideCells(sg.getBytes().b);
+		initTables();
+		if( savedEdits != null && savedEdits.length > 0 ) shipPlace();
+		applySaved();
+		generated = true;
+		return true;
+	}
+
+	/**
 	 * Genera el terreno (o pone las celdas de la nave) durante budgetMs desde t0 y, al acabar, aplica los cambios guardados.
 	 * true cuando esta todo (World sigue entonces con la luz y las mallas).
 	 */
@@ -99,10 +146,17 @@ class WorldData {
 			return true;
 		}
 		var p0 = gen.progress;
-		var busy = gen.process(Std.int(budgetMs));
+		genLock.acquire();
+		var busy = false;
+		try busy = gen.process(Std.int(budgetMs)) catch( e : Dynamic ) {
+			genLock.release();
+			throw e;
+		}
+		genLock.release();
 		if( Sys.args().indexOf("--frametime") >= 0 && haxe.Timer.stamp() - t0 > 0.2 )
 			Sys.println("generador: " + Std.int((haxe.Timer.stamp() - t0) * 1000) + " ms en un paso (progreso " + Std.int(p0 * 100) + "% -> " + Std.int(gen.progress * 100) + "%)");
 		if( busy ) return false;
+		if( onGenerated != null ) onGenerated(this);
 		wideCells(gen.getBytes().b);
 		initTables();
 		// el sitio de la nave se elige antes de aplicar los cambios guardados: si no, con el suelo cavado o construido bajo

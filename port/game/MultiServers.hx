@@ -153,6 +153,8 @@ class ServerProbe {
 class ServerRow extends Widget {
 	public static inline var W = 1000;
 	static inline var BW = 150;
+	/** ancho de sus botones (BW; los de los invitados, mas largos: Pasar a explorador) */
+	var bw : Int;
 	static inline var BH = 36;
 	public var actions(default, null) : Array<String>;
 	public var action(default, set) = 0;
@@ -162,8 +164,9 @@ class ServerRow extends Widget {
 	var actBg : Array<h2d.Graphics>;
 	var actText : Array<h2d.Text>;
 
-	public function new( parent : h2d.Object, title : String, address : String, actions : Array<String>, lanTag : Bool ) {
+	public function new( parent : h2d.Object, title : String, address : String, actions : Array<String>, lanTag : Bool, bw = BW ) {
 		super(parent, W, 92);
+		this.bw = bw;
 		this.actions = actions;
 		label.visible = false;
 		Theme.text(this, title, 2.3, Theme.TEXT, 22, 10);
@@ -172,16 +175,16 @@ class ServerRow extends Widget {
 		acts = new h2d.Object(this);
 		actBg = [];
 		actText = [];
-		var x0 = w - 14 - actions.length * (BW + 8) + 8;
+		var x0 = w - 14 - actions.length * (bw + 8) + 8;
 		for( i in 0...actions.length ) {
 			var b = new h2d.Object(acts);
-			b.x = x0 + i * (BW + 8);
+			b.x = x0 + i * (bw + 8);
 			b.y = 10;
 			actBg.push(new h2d.Graphics(b));
 			var t = Theme.text(b, Lang.t("mp.act." + actions[i]), 1.7, Theme.TEXT);
-			Theme.center(t, BW, BH);
+			Theme.center(t, bw, BH);
 			actText.push(t);
-			var it = new h2d.Interactive(BW, BH, b);
+			var it = new h2d.Interactive(bw, BH, b);
 			it.onOver = function(_) if( enabled ) {
 				if( onHover != null ) onHover(this);
 				action = i;
@@ -245,8 +248,8 @@ class ServerRow extends Widget {
 		for( i in 0...actBg.length ) {
 			var g = actBg[i], on = i == action;
 			g.clear();
-			if( on ) Theme.rect(g, 0, 0, BW, BH, actions[i] == "delete" ? Theme.DANGER : Theme.ACCENT, 0.9);
-			else Theme.rect(g, 0, 0, BW, BH, 0xFFFFFF, 0.08);
+			if( on ) Theme.rect(g, 0, 0, bw, BH, actions[i] == "delete" ? Theme.DANGER : Theme.ACCENT, 0.9);
+			else Theme.rect(g, 0, 0, bw, BH, 0xFFFFFF, 0.08);
 			actText[i].textColor = on ? Theme.BG : Theme.TEXT;
 		}
 	}

@@ -1054,7 +1054,7 @@ class GalaxyApp extends hxd.App {
 		// el juego sigue detras (multijugador), sin su ayuda encima
 		hud.visible = false;
 		msgText.visible = false;
-		s.listY = 330;
+		s.listY = 380;
 		s.VISIBLE = 2;
 		var bg = new h2d.Graphics(s);
 		Theme.fullRect(bg, 0x000000, 0.4);
@@ -1075,30 +1075,37 @@ class GalaxyApp extends hxd.App {
 		}
 		var pid = a.pid;
 		function send( open : Bool, allV : Bool, serverV : Bool, vr : Int ) if( mp != null ) mp.client.send(CAccess(pid, open, allV, serverV, vr));
+		// lo que es cada papel, arriba: sin esto no se entendia que el visitante solo mira y el explorador construye
+		Theme.text(s, Lang.t("mp.access.help.explorer"), 1.4, Theme.DIM, 132, 92);
+		Theme.text(s, Lang.t("mp.access.help.visitor"), 1.4, Theme.DIM, 132, 116);
 		var open = new CheckBox(s, Lang.t("mp.access.open"), a.open, 510, 48);
 		var allV = new CheckBox(s, Lang.t("mp.access.allvisitors"), a.allVisitors, 510, 48);
-		s.add(open, 130, 96);
-		s.add(allV, 660, 96);
+		s.add(open, 130, 148);
+		s.add(allV, 660, 148);
 		var serverV : CheckBox = null;
 		if( mp.isManager() ) {
-			serverV = new CheckBox(s, Lang.t("mp.access.servervisit"), a.serverVisit, 1040, 48);
-			s.add(serverV, 130, 150);
+			// la casilla con un texto corto y lo demas al lado, en pequeno (el texto entero no cabia en la casilla)
+			serverV = new CheckBox(s, Lang.t("mp.access.servervisit"), a.serverVisit, 510, 48);
+			s.add(serverV, 130, 202);
+			var note = Theme.text(s, Lang.t("mp.access.servervisit.note"), 1.3, Theme.DIM, 662, 204);
+			note.maxWidth = 490 / note.scaleX;
 		}
-		Theme.text(s, Lang.t("mp.access.visitors"), 1.6, Theme.CYAN, 132, 206);
+		Theme.text(s, Lang.t("mp.access.visitors"), 1.6, Theme.CYAN, 132, 260);
 		var rc = new CheckBox(s, Lang.t("mp.access.chests"), a.vr & (RChests : Int) != 0, 340, 46);
 		var ra = new CheckBox(s, Lang.t("mp.access.activate"), a.vr & (RActivate : Int) != 0, 340, 46);
 		var rp = new CheckBox(s, Lang.t("mp.access.pickup"), a.vr & (RPickup : Int) != 0, 340, 46);
-		s.add(rc, 130, 232);
-		s.add(ra, 480, 232);
-		s.add(rp, 830, 232);
+		s.add(rc, 130, 286);
+		s.add(ra, 480, 286);
+		s.add(rp, 830, 286);
 		function vr() return (rc.checked ? (RChests : Int) : 0) | (ra.checked ? (RActivate : Int) : 0) | (rp.checked ? (RPickup : Int) : 0);
 		function apply( _ ) send(open.checked, allV.checked, serverV != null ? serverV.checked : a.serverVisit, vr());
 		for( c in [open, allV, rc, ra, rp] ) c.onChange = apply;
 		if( serverV != null ) serverV.onChange = apply;
-		Theme.text(s, Lang.t("mp.access.guests").split("%n%").join("" + a.guests.length), 1.8, Theme.TEXT, 132, 292);
+		Theme.text(s, Lang.t("mp.access.guests").split("%n%").join("" + a.guests.length), 1.8, Theme.TEXT, 132, 344);
 		for( g in a.guests ) {
-			var role = Lang.t(g.role == 1 ? "mp.access.visitor" : "mp.access.explorer");
-			var row = new ServerRow(s, g.name, role, [g.role == 1 ? "explorer" : "visitor", "remove"], false);
+			// su papel con lo que puede hacer; el boton dice a que papel pasa (Pasar a visitante), no el que tiene
+			var role = Lang.t(g.role == 1 ? "mp.access.role.visitor" : "mp.access.role.explorer");
+			var row = new ServerRow(s, g.name, role, [g.role == 1 ? "explorer" : "visitor", "remove"], false, 250);
 			row.setInfo(a.allVisitors && g.role != 1 ? Lang.t("mp.access.asvisitor") : "", Theme.DIM);
 			s.rows.push(row);
 			s.add(row, s.listX, s.listY);
@@ -1143,7 +1150,7 @@ class GalaxyApp extends hxd.App {
 		var m = new Screen(ui);
 		var bg = new h2d.Graphics(m);
 		Theme.fullRect(bg, 0x000000, 0.55);
-		Theme.rect(bg, 290, 210, 700, 300, Theme.PANEL, 1);
+		Theme.rect(bg, 290, 210, 700, withRole ? 340 : 300, Theme.PANEL, 1);
 		Theme.rect(bg, 290, 210, 700, 4, Theme.ACCENT);
 		var t = Theme.text(m, title, 2.4, Theme.TEXT, 0, 236);
 		t.x = (W - t.textWidth * t.scaleX) * 0.5;
@@ -1152,10 +1159,19 @@ class GalaxyApp extends hxd.App {
 		var cancel = new Button(m, Lang.t("cancel"), 250, 52);
 		var ok = new Button(m, Lang.t("accept"), 250, 52);
 		m.add(who, 330, 290);
-		if( withRole ) m.add(role, 330, 350);
-		else role.visible = false;
-		m.add(cancel, 380, 430);
-		m.add(ok, 650, 430);
+		var by = 430;
+		if( withRole ) {
+			m.add(role, 330, 350);
+			// lo que podra hacer con el papel elegido
+			var help = Theme.text(m, "", 1.3, Theme.DIM, 334, 412);
+			help.maxWidth = 620 / help.scaleX;
+			function showHelp( i : Int ) help.text = Lang.t(i == 1 ? "mp.access.help.visitor" : "mp.access.help.explorer");
+			showHelp(role.index);
+			role.onChange = showHelp;
+			by = 470;
+		} else role.visible = false;
+		m.add(cancel, 380, by);
+		m.add(ok, 650, by);
 		var close = function() {
 			m.remove();
 			parent.active = true;
@@ -4052,6 +4068,22 @@ class GalaxyApp extends hxd.App {
 		return 0;
 	}
 	var lastStamp = 0.;
+	/** --mpprof con --frametime: de que parte era el fotograma lento (update entero, red, avisos, chat; render) */
+	var profUpdateStart = 0.;
+	var profUpdate = 0.;
+	var profMp = 0.;
+	var profWatch = 0.;
+	var profOverlay = 0.;
+	var profRender = 0.;
+	var profRenderEnd = 0.;
+
+	override function render( e : h3d.Engine ) {
+		var t = haxe.Timer.stamp();
+		profUpdate = (t - profUpdateStart) * 1000;
+		super.render(e);
+		profRender = (haxe.Timer.stamp() - t) * 1000;
+		profRenderEnd = haxe.Timer.stamp();
+	}
 
 	/** VSync de Opciones (--novsync lo quita siempre, para diagnosticar) */
 	function applyVsync() {
@@ -4075,21 +4107,30 @@ class GalaxyApp extends hxd.App {
 	}
 
 	override function update( dt : Float ) {
+		var tFrame = haxe.Timer.stamp();
 		limitFps();
 		frames++;
 		// diagnostico (--frametime): fotogramas lentos y en que estado estaba el juego
 		if( frameTime ) {
 			var now = haxe.Timer.stamp();
-			if( lastStamp > 0 && now - lastStamp > frameMax ) Sys.println("parada " + Std.int((now - lastStamp) * 1000) + " ms en el fotograma " + frames + ", estado " + state + (bgBuilding != null ? ", construyendo fondo" : ""));
+			if( lastStamp > 0 && now - lastStamp > frameMax ) Sys.println("parada " + Std.int((now - lastStamp) * 1000) + " ms en el fotograma " + frames + ", estado " + state + (bgBuilding != null ? ", construyendo fondo" : "")
+				+ (MultiSession.PROF ? " (update " + Std.int(profUpdate) + " ms: red " + Std.int(profMp) + ", avisos " + Std.int(profWatch) + ", chat " + Std.int(profOverlay) + "; render " + Std.int(profRender) + " ms; entre fotogramas " + Std.int((tFrame - profRenderEnd) * 1000) + " ms, limite de FPS " + Std.int((now - tFrame) * 1000) + " ms)" : ""));
 			lastStamp = now;
 		}
 		if( dt > 0.1 ) dt = 0.1;
 		// pruebas (--fixeddt=S): cada fotograma avanza lo mismo; asi un guion da lo mismo en un PC lento o cargado (port/dev/baseline.ps1)
 		if( FIXED_DT > 0 ) dt = FIXED_DT;
 		// multijugador: el servidor del anfitrion y el cliente no se paran nunca (menus, carga, pausa)
+		var tp0 = haxe.Timer.stamp();
+		profUpdateStart = tp0;
 		if( mp != null ) mp.pump(state == Paused && !mpLive() ? 0 : dt);
+		var tp1 = haxe.Timer.stamp();
 		mpWatch();
+		var tp2 = haxe.Timer.stamp();
 		mpOverlay(dt);
+		profMp = (tp1 - tp0) * 1000;
+		profWatch = (tp2 - tp1) * 1000;
+		profOverlay = (haxe.Timer.stamp() - tp2) * 1000;
 		// iconos grandes de la Base de datos ESCorp y de la paleta: unos pocos por fotograma (mas con una de ellas abierta); los de
 		// reserva, solo en la pantalla de carga del planeta, mas deprisa con el mundo ya hecho. Antes seguian jugando, pasados 2 s
 		// de la llegada, dibujando fuera de pantalla en cada imagen: sospechosos del parpadeo que se ve con algunas tarjetas en

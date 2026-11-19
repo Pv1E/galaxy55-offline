@@ -397,7 +397,7 @@ class ServerItems {
 
 	function chestOpen( s : Session, x : Int, y : Int, z : Int ) {
 		var inst = s.instance;
-		if( inst == null || s.rights & RChests == 0 || s.pos == null ) return;
+		if( inst == null || s.rights & RChests == 0 || s.pos == null || !inst.ready() ) return;
 		var b = inst.world.block(x, y, z);
 		if( b == null || !b.hasProp(PContainer) || dist2(inst, s.pos, x + 0.5, y + 0.5, z + 0.5) > USE_REACH * USE_REACH ) return;
 		var k = chestKey(x, y, z);

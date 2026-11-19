@@ -223,6 +223,19 @@ class NetTest {
 		var local = new WorldData(pd.seed, pd.biome, pd.size, null, null, pd.gv);
 		while( !local.genStep(haxe.Timer.stamp(), 1000) ) {}
 		check("mundo: mismo terreno en el cliente y el servidor", local.cellHash() == inst.world.cellHash());
+		// el anfitrion: su servidor toma el planeta que su juego acaba de generar en vez de generarlo otra vez en los mismos
+		// fotogramas (WorldData.adoptGenerated); tiene que quedar igual que generado aqui
+		var src = new WorldData(pd.seed, pd.biome, pd.size, null, null, pd.gv);
+		var taker = new PlanetInstance.ServerWorld(pd.seed, pd.biome, pd.size, inst.world.editsFlat(), null, pd.gv);
+		var took = false;
+		WorldData.onGenerated = function( g ) if( g == src ) took = taker.adoptGenerated(g);
+		while( !src.genStep(haxe.Timer.stamp(), 1000) ) {}
+		WorldData.onGenerated = null;
+		var other = new WorldData(pd.seed + 1, pd.biome, pd.size, null, null, pd.gv);
+		check("mundo: el servidor del anfitrion toma el terreno de su juego (igual que generarlo)", took && taker.isGenerated()
+			&& taker.cellHash() == inst.world.cellHash() && taker.waterLevel() == inst.world.waterLevel()
+			&& taker.anomalies().length == inst.world.anomalies().length
+			&& taker.localId(Block.get(BChest)) == inst.world.localId(Block.get(BChest)) && !other.adoptGenerated(src));
 		var sp = local.spawnPoint();
 		var bx = Std.int(sp.x), by = Std.int(sp.y), bz = Std.int(sp.z) - 1;
 		var b = local.block(bx, by, bz);

@@ -56,6 +56,8 @@ class MultiSession {
 		if( listenPort > 0 ) m.server.listen(bindHost, listenPort);
 		m.client = new NetClient(id, Settings.myPseudo(), "", 0, m.server.fingerprint);
 		m.client.connectLocal(m.server.connectLocal());
+		// el planeta que genera el juego del anfitrion lo toma su servidor (ServerWorlds.adoptTerrain): no se genera dos veces
+		WorldData.onGenerated = function( w ) if( m.server != null && Std.isOfType(w, World) ) m.server.worlds.adoptTerrain(w);
 		return m;
 	}
 
@@ -71,11 +73,22 @@ class MultiSession {
 
 	public inline function isManager() return role == Manager || role == Owner;
 
+	/** diagnostico (--mpprof): lo que tarda mas de 30 ms en una vuelta (el servidor del anfitrion, cada mensaje recibido) */
+	public static var PROF = Sys.args().indexOf("--mpprof") >= 0;
+
 	public function pump( dt : Float ) {
+		var t0 = haxe.Timer.stamp();
 		if( server != null ) server.pump(dt);
+		if( PROF && haxe.Timer.stamp() - t0 > 0.03 ) Sys.println("mpprof servidor " + Std.int((haxe.Timer.stamp() - t0) * 1000) + " ms");
 		if( client == null ) return;
 		client.pump();
-		while( client.events.length > 0 ) event(client.events.shift());
+		while( client.events.length > 0 ) {
+			var e = client.events.shift();
+			var t1 = haxe.Timer.stamp();
+			event(e);
+			if( PROF && haxe.Timer.stamp() - t1 > 0.03 )
+				Sys.println("mpprof " + (switch( e ) { case EMessage(m): Type.enumConstructor(m); default: Type.enumConstructor(e); }) + " " + Std.int((haxe.Timer.stamp() - t1) * 1000) + " ms");
+		}
 		// lo que el cliente acaba de mandar llega al servidor en el mismo fotograma
 		if( server != null ) server.pump(0);
 	}
@@ -152,6 +165,7 @@ class MultiSession {
 		if( server != null ) {
 			server.pump(0);
 			server.stop();
+			WorldData.onGenerated = null;
 		}
 		if( ended == null ) ended = "mp.closed";
 	}
