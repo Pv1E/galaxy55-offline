@@ -1,8 +1,17 @@
 import Common;
 
-/** Prueba del guardado: escribe una partida con inventario y cambios de terreno y la vuelve a leer. */
+/**
+ * Prueba del guardado: escribe una partida con inventario y cambios de terreno y la vuelve a leer.
+ *   haxe port/savetest.hxml   y   GALAXY55_DATA=port/out/testdata hl port/out/savetest.hl
+ * Solo corre con GALAXY55_DATA (una carpeta de datos de prueba): sin ella escribiria en las partidas de verdad (%APPDATA%).
+ */
 class SaveTest {
 	static function main() {
+		var data = Sys.getEnv("GALAXY55_DATA");
+		if( data == null || data == "" ) {
+			Sys.println("SaveTest necesita GALAXY55_DATA (carpeta de datos de prueba, p. ej. port/out/testdata): no se toca %APPDATA%");
+			Sys.exit(1);
+		}
 		// creativo: empieza con el inventario inicial del original (en aventura estaria vacio)
 		var info = SaveData.create("Prueba guardado", 42, "BIMoon", 2, true);
 		info.inv.t[0].n = 7;

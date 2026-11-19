@@ -281,18 +281,16 @@ class Generator {
 	function addHeightDetails() {
 	}
 	
-	function addStep(f #if genDebug, ?p : haxe.PosInfos #end ) {
-		#if !genDebug var p = null; #end
+	function addStep(f, ?p : haxe.PosInfos ) {
 		steps.push( { f : function() { initStep(); f(); }, p : p } );
 	}
 	
-	#if genDebug
+	/** anadido del port: el paso que toca (fichero y linea de su addStep); null al acabar */
 	public function getCurrentStep() {
 		var s = steps[curPosition];
 		if( s == null ) return null;
 		return s.p;
 	}
-	#end
 	
 	function stepRetry() {
 		curPosition--;
@@ -385,6 +383,49 @@ class Generator {
 		if( !j() ) jobs.remove(j);
 	}
 
+	/**
+	 * Anadido del port (GenMain --profile / --steps / genDebug): si no es null, cada paso se hace entero, con sus trabajos, y
+	 * luego se llama con su numero, su addStep y lo que ha tardado en ms. No cambia el mundo.
+	 */
+	public var onStep : Int -> haxe.PosInfos -> Float -> Void;
+
+	/**
+	 * Anadido del port (GenMain --steps): sumas Adler-32 de las alturas y de las alturas reales (cada 3 bytes), y una suma
+	 * (h * 31 + c, 32 bits: cualquier celda cambiada la cambia) de todas las celdas del mundo, cada una con el nombre de su
+	 * bloque (blocks[id].k) en vez de su numero local, que depende del orden de los alloc; los bits TMP / CAVE cuentan aparte.
+	 */
+	public function stepSums() : String {
+		perlin.select();
+		var code = new haxe.ds.Vector<Int>(256);
+		for( v in 0...256 ) {
+			var id = v & TMASK;
+			var n = id < blocks.length ? Type.enumConstructor(blocks[id].k) : "#" + id;
+			var h = 5381;
+			for( i in 0...n.length ) h = ((h << 5) + h + StringTools.fastCodeAt(n, i)) & 0xFFFF;
+			code[v] = h | ((v & TMP) << 9);
+		}
+		var w = 0, i = outPos, end = outPos + (size * size << HBITS);
+		while( i < end )
+			w = (w << 5) - w + code[flash.Memory.getByte(i++)];
+		// mezcla final (cada paso se puede deshacer: dos sumas distintas siguen siendo distintas)
+		w ^= w >>> 16;
+		w ^= w << 11;
+		w ^= w >>> 7;
+		var ha = 1, hb = 0;
+		for( j in 0...size * size ) {
+			ha = (ha + flash.Memory.getByte(outHeight + j)) % 65521;
+			hb = (hb + ha) % 65521;
+		}
+		var da = 1, db = 0, j = perlin.outOffset;
+		var dend = perlin.outOffset + size * size * 8;
+		while( j < dend ) {
+			da = (da + flash.Memory.getByte(j)) % 65521;
+			db = (db + da) % 65521;
+			j += 3;
+		}
+		return "heights=" + StringTools.hex(ha, 4) + StringTools.hex(hb, 4) + " doubles=" + StringTools.hex(da, 4) + StringTools.hex(db, 4) + " world=" + StringTools.hex(w, 8);
+	}
+
 	public function process( maxTimeSlice = 100 ) {
 		var t0 = flash.Lib.getTimer();
 		perlin.select();
@@ -398,40 +439,16 @@ class Generator {
 			else {
 				var cur = steps[curPosition];
 				curPosition++;
-				#if genDebug
-				var dbgT0 = haxe.Timer.stamp();
-				#end
-				cur.f();
-				#if genDebug
-				// el paso entero, con sus trabajos: las sumas son las de antes
-				while( jobs.length > 0 ) runJob();
-				{
-					var a = 1, b = 0, i = outPos, end = outPos + (size * size << HBITS);
-					while( i < end ) {
-						a = (a + flash.Memory.getByte(i)) % 65521;
-						b = (b + a) % 65521;
-						i += 7;
-					}
-					var ha = 1, hb = 0;
-					for( j in 0...size * size ) {
-						ha = (ha + flash.Memory.getByte(outHeight + j)) % 65521;
-						hb = (hb + ha) % 65521;
-					}
-					var da = 1, db = 0, j = perlin.outOffset;
-					var dend = perlin.outOffset + size * size * 8;
-					while( j < dend ) {
-						da = (da + flash.Memory.getByte(j)) % 65521;
-						db = (db + da) % 65521;
-						j += 3;
-					}
-					var msg = "STEP " + (curPosition - 1) + " " + cur.p.fileName + ":" + cur.p.lineNumber + " heights=" + StringTools.hex(ha, 4) + StringTools.hex(hb, 4) + " doubles=" + StringTools.hex(da, 4) + StringTools.hex(db, 4) + " world=" + StringTools.hex(a, 4) + StringTools.hex(b, 4) + " ms=" + Std.int((haxe.Timer.stamp() - dbgT0) * 1000);
-					#if flash
-					flash.Lib.trace(msg);
-					#else
-					Sys.println(msg);
-					#end
+				if( onStep == null )
+					cur.f();
+				else {
+					// el paso entero, con sus trabajos (entre ellos no se toca nada mas: mismo mundo)
+					var st = haxe.Timer.stamp();
+					cur.f();
+					while( jobs.length > 0 ) runJob();
+					onStep(curPosition - 1, cur.p, (haxe.Timer.stamp() - st) * 1000);
+					perlin.select();
 				}
-				#end
 			}
 			var t2 = flash.Lib.getTimer();
 			spentTime += t2 - t;

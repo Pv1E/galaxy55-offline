@@ -2135,6 +2135,8 @@ class GalaxyApp extends hxd.App {
 	// ---------------------------------------------------------------- flujo del juego
 
 	function startGame( info : SaveInfo ) {
+		loadStarted = haxe.Timer.stamp();
+		loadFrames = 0;
 		// antes de cualquier copia para el hangar o la nodriza: las copias comparten la Base de datos ESCorp
 		Kubindex.ensure(info);
 		// kubes del editor de kubes (solo en creativo): sus bloques y su sitio en el atlas antes del mundo y de los iconos
@@ -2154,6 +2156,9 @@ class GalaxyApp extends hxd.App {
 
 	/** lo que queda por hacer en la pantalla de carga antes de tener el mundo (uno por imagen) */
 	var loadSteps : Array<Void -> Void> = [];
+	/** --loadtime (World.LOAD_TIME): cuando empezo la carga en curso (startGame) y cuantas imagenes lleva */
+	var loadStarted = 0.;
+	var loadFrames = 0;
 
 	function createWorld( info : SaveInfo ) {
 		loadWorld = info.mothership == true
@@ -2189,7 +2194,13 @@ class GalaxyApp extends hxd.App {
 			Sys.println("mundo " + loadWorld.biomeName + ": " + loadWorld.faces + " caras, spawn z=" + loadWorld.spawnPoint().z);
 			Sys.println(loadWorld.debugStats());
 		}
+		var tView = haxe.Timer.stamp();
 		game = new GameView(s3d, loadWorld, loadInfo, atlas, loadShip);
+		if( World.LOAD_TIME ) {
+			var t = haxe.Timer.stamp();
+			Sys.println("carga total: " + Std.int((t - loadStarted) * 1000) + " ms en " + loadFrames + " imagenes hasta jugar (GameView "
+				+ Std.int((t - tView) * 1000) + " ms)");
+		}
 		loadWorld = null;
 		loadShip = null;
 		if( loadInfo.uni != null && loadInfo.uni.space == true && loadInfo.hangar != true && loadInfo.mothership != true ) {
@@ -3047,6 +3058,7 @@ class GalaxyApp extends hxd.App {
 			loadAnimPos += 0.1;
 			if( loadAnimPos > 1 ) loadAnimPos--;
 			drawLoadAnim();
+			loadFrames++;
 			if( dev != null ) dev.loadingFrame(this);
 			if( skyDone && loadWorld.isReady() && (loadShip == null || loadShip.isReady()) && !IconMesh.Icons.busy(true) ) finishLoading();
 		}
@@ -3669,7 +3681,7 @@ class GalaxyApp extends hxd.App {
 		for( o in hidden ) o.visible = true;
 		var px = tex.capturePixels();
 		tex.dispose();
-		if( name != null ) sys.io.File.saveBytes("port/out/cover_" + name + ".png", px.toPNG());
+		if( name != null ) sys.io.File.saveBytes(Dev.shotPath("cover_" + name), px.toPNG());
 		inline function magenta( x : Int, y : Int ) {
 			var c = px.getPixel(x, y);
 			return ((c >> 16) & 0xFF) >= 200 && ((c >> 8) & 0xFF) <= 80 && (c & 0xFF) >= 200;

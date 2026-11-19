@@ -1,11 +1,16 @@
-param([string]$Script, [int]$Timeout = 120, [string]$Extra = "", [string]$Data = "")
+param([string]$Script, [int]$Timeout = 120, [string]$Extra = "", [string]$Data = "", [string]$OutFile = "", [string]$Shots = "")
 # Uso: powershell -File port/dev/devrun.ps1 -Script port/dev/synth.txt   (ver Dev.hx para las ordenes). Necesita haber compilado port/game.hxml.
+# -Data: carpeta de datos (port/out/testdata); -OutFile: salida del juego (port/out/dev_out.txt; los errores van al mismo nombre
+# con .err.txt); -Shots: carpeta de las capturas del guion (port/out). runall.ps1 los usa para lanzar varios guiones a la vez.
 $repo = (Resolve-Path "$PSScriptRoot\..\..").Path
 Set-Location $repo
 # con Haxe/HashLink portables junto al repositorio (si existen); si no, hl debe estar en el PATH
 $env1 = "$repo\..\tools-portable\env.ps1"
 if (Test-Path $env1) { . $env1 }
 $env:GALAXY55_DATA = if ($Data) { $Data } else { "$repo\port\out\testdata" }
+$env:GALAXY55_SHOTS = $Shots
+$out = if ($OutFile) { $OutFile } else { "$repo\port\out\dev_out.txt" }
+$err = if ($OutFile) { [IO.Path]::ChangeExtension($OutFile, ".err.txt") } else { "$repo\port\out\dev_err.txt" }
 # como jugar.bat: galaxy55.exe (hl.exe con el icono del juego, port\tools\galaxy55_exe.ps1), asi la ventana de prueba lleva
 # el icono y Discord no la toma por Half-Life. Se crea la primera vez; si no se puede, hl
 $exe = "$repo\port\out\galaxy55.exe"
@@ -67,7 +72,7 @@ public static class DevRun {
 	}
 }
 "@
-if (-not [DevRun]::Run("`"$run`" port/out/galaxy55.hl --script=$Script $Extra", $repo, "$repo\port\out\dev_out.txt", "$repo\port\out\dev_err.txt", $Timeout * 1000)) { "TIMEOUT" }
-Get-Content "$repo\port\out\dev_out.txt" | Where-Object { $_ -notmatch '^(fondo|ruta|mundo)' }
-$e = Get-Content "$repo\port\out\dev_err.txt" -ErrorAction SilentlyContinue | Select-Object -First 8
+if (-not [DevRun]::Run("`"$run`" port/out/galaxy55.hl --script=$Script $Extra", $repo, $out, $err, $Timeout * 1000)) { "TIMEOUT" }
+Get-Content $out | Where-Object { $_ -notmatch '^(fondo|ruta|mundo)' }
+$e = Get-Content $err -ErrorAction SilentlyContinue | Select-Object -First 8
 if ($e) { "ERR: $e" }

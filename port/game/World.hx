@@ -194,6 +194,14 @@ class World {
 	var wrapY = -1e9;
 	var genStarted : Float;
 
+	/**
+	 * --loadtime (anadido del port): lo que ha costado cada fase de la carga, en segundos, y cuantos pasos (step) ha llevado; se
+	 * escribe al acabar (loadTime)
+	 */
+	public static var LOAD_TIME = Sys.args().indexOf("--loadtime") >= 0;
+	var load = { init : 0., gen : 0., cells : 0., sea : 0., edits : 0., light : 0., mesh : 0., steps : 0, editCells : 0 };
+	var menuFog : Bool;
+
 	// luz (Builder.relight del original): 0..15 por celda; LBASE = 10 equivale a luz plena
 	public static inline var LBASE = 10;
 	static inline var NOLIGHT = 8; // enumIndex(BTReduced): a partir de aqui el bloque no deja pasar la luz
@@ -263,6 +271,8 @@ class World {
 
 	/** genVersion: version del generador del planeta (SaveInfo.genVersion); null = la actual (gen.Generator.VERSION) */
 	public function new( seed : Int, biomeName : String, sizeChunks : Int, parent : h3d.scene.Object, atlas : h3d.mat.Texture, menuFog = false, ?savedEdits : Array<Int>, ?shipData : ShipData.ShipDataInfo, ?sharedSky : Sky, ?genVersion : Null<Int> ) {
+		var tNew = haxe.Timer.stamp();
+		this.menuFog = menuFog;
 		this.savedEdits = savedEdits;
 		this.seed = seed;
 		this.biomeName = biomeName;
@@ -311,6 +321,19 @@ class World {
 		for( b in Block.all )
 			if( b.model != null && b.size == null ) b.size = Models.get(b.model).box;
 		genStarted = haxe.Timer.stamp();
+		load.init = genStarted - tNew;
+	}
+
+	/** --loadtime: una linea con el tiempo de cada fase de la carga de este mundo (ms) */
+	function loadTime() {
+		if( !LOAD_TIME ) return;
+		inline function t( v : Float ) return Std.int(v * 1000);
+		var l = load;
+		Sys.println("carga " + biomeName + (isShip ? " (nave)" : "") + (menuFog ? " (menu)" : "") + " " + size + ": inicio " + t(l.init)
+			+ " ms, " + (isShip ? "celdas de la nave " : "generacion ") + t(l.gen) + " ms, celdas " + t(l.cells) + " ms, mar " + t(l.sea)
+			+ " ms, cambios guardados " + t(l.edits) + " ms (" + l.editCells + " celdas), luz " + t(l.light) + " ms, mallas "
+			+ t(l.mesh) + " ms (" + chunk + " trozos), en " + l.steps + " pasos; " + t(haxe.Timer.stamp() - genStarted)
+			+ " ms desde el final del inicio");
 	}
 
 	public inline function isReady() return phase >= 2;
@@ -326,6 +349,7 @@ class World {
 		while( more && (haxe.Timer.stamp() - t0) * 1000 < budgetMs )
 			more = lighting();
 		lightSpent += haxe.Timer.stamp() - t1;
+		load.light = lightSpent;
 		if( more ) return false;
 		lighting = null;
 		lightTime();
@@ -350,9 +374,14 @@ class World {
 	/** Avanza la carga durante budgetMs milisegundos; devuelve el progreso de 0 a 1. */
 	public function step( budgetMs : Float ) : Float {
 		var t0 = haxe.Timer.stamp();
+		if( phase < 2 ) load.steps++;
 		if( phase == 0 && isShip ) {
-			if( shipCells != null && !placeCells(t0, budgetMs) ) return progress = 0.25;
+			if( shipCells != null && !placeCells(t0, budgetMs) ) {
+				load.gen += haxe.Timer.stamp() - t0;
+				return progress = 0.25;
+			}
 			if( lighting == null ) {
+				load.gen += haxe.Timer.stamp() - t0;
 				applySaved();
 				lighting = lightTask();
 			}
@@ -363,14 +392,19 @@ class World {
 			if( lighting == null ) {
 				var p0 = gen.progress;
 				var busy = gen.process(Std.int(budgetMs));
-				if( Sys.args().indexOf("--frametime") >= 0 && haxe.Timer.stamp() - t0 > 0.2 )
-					Sys.println("generador: " + Std.int((haxe.Timer.stamp() - t0) * 1000) + " ms en un paso (progreso " + Std.int(p0 * 100) + "% -> " + Std.int(gen.progress * 100) + "%)");
+				var t1 = haxe.Timer.stamp();
+				load.gen += t1 - t0;
+				if( Sys.args().indexOf("--frametime") >= 0 && t1 - t0 > 0.2 )
+					Sys.println("generador: " + Std.int((t1 - t0) * 1000) + " ms en un paso (progreso " + Std.int(p0 * 100) + "% -> " + Std.int(gen.progress * 100) + "%)");
 				if( busy ) return progress = gen.progress * 0.75;
 				wideCells(gen.getBytes().b);
 				initLightTables();
+				var t2 = haxe.Timer.stamp();
+				load.cells += t2 - t1;
 				// el sitio de la nave se elige antes de aplicar los cambios guardados: si no, con el suelo cavado o construido bajo
 				// la nave, al cargar la partida la nave aparecia en otro sitio
 				if( savedEdits != null && savedEdits.length > 0 ) shipPlace();
+				load.edits += haxe.Timer.stamp() - t2;
 				applySaved();
 				lighting = lightTask();
 			}
@@ -379,12 +413,17 @@ class World {
 		}
 		if( phase == 1 ) {
 			var n = size >> 4;
+			var t1 = haxe.Timer.stamp();
 			while( chunk < n * n ) {
 				buildChunk(chunk % n, Std.int(chunk / n));
 				chunk++;
 				if( (haxe.Timer.stamp() - t0) * 1000 >= budgetMs ) break;
 			}
-			if( chunk >= n * n ) phase = 2;
+			load.mesh += haxe.Timer.stamp() - t1;
+			if( chunk >= n * n ) {
+				phase = 2;
+				loadTime();
+			}
 			return progress = 0.75 + 0.25 * chunk / (n * n);
 		}
 		return progress = 1;
@@ -1046,6 +1085,7 @@ class World {
 	}
 
 	function applySaved() {
+		var t0 = haxe.Timer.stamp();
 		// el mar va antes que los cambios: las capas quitadas son del terreno generado y lo puesto despues se queda
 		if( seaBlock != null ) {
 			var level = seaLevel, flood = 0;
@@ -1059,6 +1099,8 @@ class World {
 			}
 			initSea(level, flood);
 		}
+		var t1 = haxe.Timer.stamp();
+		load.sea += t1 - t0;
 		if( savedEdits == null ) return;
 		var i = 0;
 		while( i + 1 < savedEdits.length ) {
@@ -1070,8 +1112,10 @@ class World {
 			setCell(key, localId(b));
 			editMap.set(key, gi);
 			if( lvl > 0 ) waterLvl.set(key, lvl);
+			load.editCells++;
 		}
 		savedEdits = null;
+		load.edits += haxe.Timer.stamp() - t1;
 	}
 
 	/** cambios para guardar: pares [celda, bloque, celda, bloque, ...] */

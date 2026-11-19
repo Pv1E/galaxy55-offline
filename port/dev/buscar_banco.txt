@@ -1,0 +1,34 @@
+# find y bench (anadido del port, para guiones que no dependan del terreno de la partida de prueba) y --loadtime.
+# - find BLOQUE [radio]: el bloque mas cercano a los pies; fx fy fz (fx+1...) son su celda en las ordenes siguientes
+# - bench x y r z [BLOQUE|none]: cilindro de aire desde z con un suelo de 3 bloques debajo, que sigue hacia abajo por el aire
+#   hasta llegar a algo (como set: cambios del jugador)
+# Esperado: find BMinIron da una celda con BMinIron (print block fx fy fz); find none 3 da el aire mas cercano y tp fx+0.5 ...
+# pone al jugador encima; bench deja aire desde z=60 con BRock debajo en todo el cilindro (top = 60 en el centro y en el
+# borde; 57 a 59 BRock, y el aire de debajo tambien); bench none solo vacia (aire en 80 64 75).
+# Con la opcion --loadtime (en -Extra de devrun.ps1): lineas "carga BIAutumn 128: ..." (planeta, nave y fondo del menu) y
+# "carga total: ...". Captura buscar_banco.png.
+wait 3
+planet
+wait 30
+find BMinIron 40
+print block fx fy fz
+find none 3
+print block fx fy fz
+tp fx+0.5 fy+0.5 top
+print pos
+bench 64 64 6 60
+top 64 64
+top 70 64
+top 58 64
+count BRock 58 58 70 70
+print block 64 64 61
+print block 64 64 59
+print block 64 64 56
+bench 80 64 3 70 none
+print block 80 64 75
+tp 64.5 69.5 top
+lookat 64.5 60.5 60
+wait 10
+shot buscar_banco
+find BNotABlock 3
+quit

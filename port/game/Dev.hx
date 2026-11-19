@@ -89,8 +89,14 @@ import Common;
  *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
  *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
  *   print paldup            paleta creativa abierta: bloques y paginas, los que salen mas de una vez y donde estan las aguas
- *   shot nombre             captura en port/out/nombre.png ("%b" en el nombre = bioma del planeta)
+ *   shot nombre             captura en port/out/nombre.png ("%b" en el nombre = bioma del planeta); con GALAXY55_SHOTS (runall.ps1)
+ *                           las capturas (shot, loadshot, expship, cover) van a esa carpeta
  *   loadshot nombre [N]     captura en la imagen N (5) de la siguiente carga de planeta (mientras carga el guion no corre)
+ *   find Bloque [radio]     el bloque mas cercano a los pies del jugador (a menos de radio, 64; Bloque = none: el aire); en las
+ *                           ordenes siguientes fx, fy y fz (o fx+1, fz-2...) son su celda
+ *   bench x y r z [Bloque|none] terreno conocido: en el cilindro de radio r alrededor de la columna x y, aire desde z hasta arriba
+ *                           y debajo Bloque (BRock) en 3 celdas y en el aire que siga hasta llegar a algo; none: solo el aire.
+ *                           Como set (cambios del jugador)
  *   f2                      pulsa F2 (captura sin HUD en screenshots de la carpeta de datos); print shots las lista
  *   pause                   menu de pausa como Esc (el guion sigue; close lo cierra)
  *   newgame SEMILLA [acc..] Menu principal > Nueva partida como el jugador: pasa a Creativo, escribe la semilla, maneja la fila del bioma con
@@ -192,6 +198,83 @@ class Dev {
 	}
 
 	static function f( s : String ) return Std.parseFloat(s);
+
+	/** carpeta de las capturas de los guiones: GALAXY55_SHOTS (runall.ps1) o port/out */
+	public static var SHOTS = {
+		var d = Sys.getEnv("GALAXY55_SHOTS");
+		d == null || d == "" ? "port/out" : d;
+	};
+
+	/** ruta de la captura NOMBRE (sin .png) */
+	public static function shotPath( name : String ) return SHOTS + "/" + name + ".png";
+
+	/** celda de la ultima orden find (fx, fy, fz) */
+	var found : { x : Int, y : Int, z : Int };
+
+	/** fx, fy y fz (con +N o -N, N puede llevar decimales) en una orden: la celda de la ultima orden find */
+	function foundCoord( s : String ) : String {
+		var r = ~/^f([xyz])([+-][0-9.]+)?$/;
+		if( !r.match(s) ) return s;
+		if( found == null ) throw s + " sin una orden find antes";
+		var v = switch( r.matched(1) ) { case "x": found.x; case "y": found.y; default: found.z; };
+		return "" + (v + (r.matched(2) == null ? 0 : Std.parseFloat(r.matched(2))));
+	}
+
+	/** orden find: el bloque kb (null = aire) mas cercano a la celda de los pies, en una esfera de radio r */
+	function findBlock( w : World, g : GameView, name : String, r : Int ) {
+		var kb = name == "none" ? null : bk(name);
+		var cx = Math.floor(g.px), cy = Math.floor(g.py), cz = Math.floor(g.pz);
+		var best = r * r + 1, bx = 0, by = 0, bz = 0;
+		for( dz in -r...r + 1 ) {
+			var z = cz + dz;
+			if( z < 0 || z >= World.HEIGHT ) continue;
+			for( dy in -r...r + 1 )
+				for( dx in -r...r + 1 ) {
+					var d = dx * dx + dy * dy + dz * dz;
+					if( d >= best || w.block(cx + dx, cy + dy, z) != kb ) continue;
+					best = d;
+					bx = cx + dx;
+					by = cy + dy;
+					bz = z;
+				}
+		}
+		if( best > r * r ) {
+			found = null;
+			Sys.println("find " + name + ": ninguno a menos de " + r);
+			return;
+		}
+		var s = w.size;
+		found = { x : ((bx % s) + s) % s, y : ((by % s) + s) % s, z : bz };
+		Sys.println("find " + name + ": " + found.x + " " + found.y + " " + found.z + " (distancia " + Math.round(Math.sqrt(best) * 10) / 10 + ")");
+	}
+
+	/**
+	 * orden bench: aire desde z hasta arriba en el cilindro y, si floor no es null, floor en las 3 celdas de debajo y en el aire
+	 * que siga debajo hasta llegar a algo (una meseta maciza, sin cuevas justo debajo)
+	 */
+	static function bench( w : World, x : Int, y : Int, r : Int, z : Int, floor : Block ) {
+		var n = 0;
+		for( dy in -r...r + 1 )
+			for( dx in -r...r + 1 ) {
+				if( dx * dx + dy * dy > r * r ) continue;
+				var cx = x + dx, cy = y + dy;
+				for( zz in z...World.HEIGHT - 1 )
+					if( zz >= 1 && w.block(cx, cy, zz) != null ) {
+						w.setBlock(cx, cy, zz, null);
+						n++;
+					}
+				if( floor == null ) continue;
+				var zz = z - 1;
+				while( zz >= 1 && (zz >= z - 3 || w.block(cx, cy, zz) == null) ) {
+					if( w.block(cx, cy, zz) != floor ) {
+						w.setBlock(cx, cy, zz, floor);
+						n++;
+					}
+					zz--;
+				}
+			}
+		Sys.println("bench " + x + " " + y + " " + r + " " + z + ": " + n + " celdas");
+	}
 
 	/** orden edkube: los .kube de la carpeta kubes de los datos de prueba (EditorKubes) */
 	static function editorKube( app : GalaxyApp, g : GameView, a : Array<String> ) {
@@ -603,7 +686,7 @@ class Dev {
 	/** en cada imagen de la carga de un planeta (orden loadshot) */
 	public function loadingFrame( app : GalaxyApp ) {
 		if( loadShot == null || --loadShotWait > 0 ) return;
-		app.capture("port/out/" + loadShot + ".png", false);
+		app.capture(shotPath(loadShot), false);
 		loadShot = null;
 	}
 
@@ -647,6 +730,7 @@ class Dev {
 			var w = g != null ? g.world : null;
 			var sdx = w != null ? w.shipDX : 0, sdy = w != null ? w.shipDY : 0, sz = World.SHIP_Z;
 			try {
+				if( a[0] != "type" ) a = a.map(foundCoord);
 				switch( a[0] ) {
 				case "wait":
 					waiting = Std.parseInt(a[1]);
@@ -742,6 +826,10 @@ class Dev {
 					if( n > 0 ) cs.push({ c : ck, n : n });
 					g.inv.display();
 				case "hand": g.setSlot(bk(a[1])); // hand Bloque: lo pone en la casilla elegida, como la paleta creativa
+				case "find":
+					findBlock(w, g, a[1], a.length > 2 ? Std.parseInt(a[2]) : 64);
+				case "bench":
+					bench(w, Std.parseInt(a[1]), Std.parseInt(a[2]), Std.parseInt(a[3]), Std.parseInt(a[4]), a.length < 6 ? Block.get(BRock) : a[5] == "none" ? null : bk(a[5]));
 				case "tploose":
 					// tploose Bloque: pone al jugador a un bloque (x - 1) del primer suelto de ese bloque, como si llegara andando (justo
 					// encima, la atraccion 0.2 / d^2 lo lanzaria lejos)
@@ -965,7 +1053,7 @@ class Dev {
 				case "expgo": app.explorer.devClickPoint(f(a[1]), f(a[2]));
 				case "expgor": app.explorer.devClickPoint(f(a[1]), f(a[2]), true); // expgor DX DY: punto relativo a la nave
 				case "expangle": Sys.println(app.explorer.devShipAngle());
-				case "expship": app.explorer.devDumpShip("port/out/" + a[1] + ".png");
+				case "expship": app.explorer.devDumpShip(shotPath(a[1]));
 				case "expinfo": Sys.println(app.explorer.devInfo());
 				case "exprobot": app.explorer.devClickRobot();
 				case "exprsys": app.explorer.devClickRobotSystem(); // el sistema abierto mas cercano al robot
@@ -1358,7 +1446,7 @@ class Dev {
 					loadShotWait = a.length > 2 ? Std.parseInt(a[2]) : 5;
 				case "shot":
 					// "%b" = bioma: un mismo guion sirve para varios biomas (--bgbiome)
-					app.capture("port/out/" + (w != null ? StringTools.replace(a[1], "%b", w.biomeName) : a[1]) + ".png", false);
+					app.capture(shotPath(w != null ? StringTools.replace(a[1], "%b", w.biomeName) : a[1]), false);
 				case "quit":
 					return true;
 				default:
