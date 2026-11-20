@@ -103,7 +103,7 @@ class GameServer {
 		worlds = new ServerWorlds(this, db);
 		kubes = new ServerKubes(files);
 		this.dir = dir;
-		files.log("servidor \"" + files.options.name + "\" listo (huella " + fingerprint + ", azar: " + SecureRandom.source + ")");
+		files.log("server \"" + files.options.name + "\" ready (fingerprint " + fingerprint + ", randomness: " + SecureRandom.source + ")");
 	}
 
 	public function publicKey() return keys.pk;
@@ -116,7 +116,7 @@ class GameServer {
 		listener.listen(16);
 		listener.setBlocking(false);
 		this.port = port;
-		files.log("escuchando en " + host + ":" + port);
+		files.log("listening on " + host + ":" + port);
 		// abrir el puerto en el router (UPnP), en un hilo: el resultado lo recoge pump
 		if( files.options.upnp ) {
 			upnp = new Upnp();
@@ -128,7 +128,7 @@ class GameServer {
 				udp.bind(new sys.net.Host(host), port);
 				udp.setBlocking(false);
 			} catch( e : Dynamic ) {
-				files.log("descubrimiento en la red local no disponible: " + e);
+				files.log("LAN discovery unavailable: " + e);
 				udp = null;
 			}
 		}
@@ -167,7 +167,7 @@ class GameServer {
 		if( upnp != null ) {
 			var r = upnp.poll();
 			if( r != null ) {
-				files.log(r.ok ? "UPnP: abierto en " + r.external + ":" + port : "UPnP: " + r.error + " (IP local " + r.local + ")");
+				files.log(r.ok ? "UPnP: opened on " + r.external + ":" + port : "UPnP: " + r.error + " (local IP " + r.local + ")");
 				upnpNotice = r.ok ? SNotice("mp.upnp.ok", [(r.external != "" ? r.external : "?") + ":" + port]) : SNotice("mp.upnp.fail", [port + " → " + r.local]);
 			}
 		}
@@ -184,7 +184,7 @@ class GameServer {
 				try c = listener.accept() catch( e : Dynamic ) c = null;
 				if( c == null ) break;
 				var s = addSession(new TcpTransport(c));
-				files.log("conexion " + s.id + " desde " + s.channel.transport.peerName());
+				files.log("connection " + s.id + " from " + s.channel.transport.peerName());
 			}
 		}
 		pumpUdp();
@@ -204,12 +204,12 @@ class GameServer {
 					break;
 				}
 				if( !s.msgRate.take() ) {
-					if( ++s.floodStrikes > 50 ) drop(s, RFlood, "demasiados mensajes");
+					if( ++s.floodStrikes > 50 ) drop(s, RFlood, "too many messages");
 					continue;
 				}
 				handle(s, m);
 			}
-			if( s.state != SClosed && now - s.lastSeen > TIMEOUT ) drop(s, RProtocol, "sin noticias");
+			if( s.state != SClosed && now - s.lastSeen > TIMEOUT ) drop(s, RProtocol, "timed out");
 			if( s.state != SClosed && s.channel.transport.closed ) leave(s, s.channel.transport.closeReason);
 			s.channel.flush();
 		}
@@ -228,7 +228,7 @@ class GameServer {
 		worlds.close();
 		db.close();
 		stopped = true;
-		files.log("servidor parado");
+		files.log("server stopped");
 	}
 
 	// ---------------------------------------------------------------- mensajes
@@ -238,7 +238,7 @@ class GameServer {
 		case [SHello, CHello(proto, version, content, eph)]:
 			if( proto != Msg.PROTOCOL || version != GameVersion.VERSION || content != GameVersion.contentHash() ) {
 				s.send(SRefuse(RVersion, GameVersion.VERSION));
-				files.log("conexion " + s.id + " rechazada: version " + version + " (protocolo " + proto + ", contenido " + content + ")");
+				files.log("connection " + s.id + " refused: version " + version + " (protocol " + proto + ", content " + content + ")");
 				close(s);
 				return;
 			}
@@ -262,18 +262,18 @@ class GameServer {
 			s.creative = creative;
 			saveMode(s);
 			s.send(SMode(creative));
-			files.log(s.display + " pasa a " + (creative ? "creativo" : "supervivencia"));
+			files.log(s.display + " switches to " + (creative ? "creative" : "survival"));
 		case [_, CBye]:
-			leave(s, "se va");
+			leave(s, "left");
 		default:
 			if( s.state == SPlay && worlds.handle(s, m) ) return;
-			drop(s, RProtocol, "mensaje fuera de lugar: " + Type.enumConstructor(m));
+			drop(s, RProtocol, "unexpected message: " + Type.enumConstructor(m));
 		}
 	}
 
 	function login( s : Session, pk : Bytes, sig : Bytes, pseudo : String, password : String, tuto : Int ) {
 		if( !Nacl.verify(Handshake.loginMessage(s.transcript), sig, pk) ) {
-			refuse(s, RBadLogin, "firma de identidad invalida");
+			refuse(s, RBadLogin, "invalid identity signature");
 			return;
 		}
 		var key = pk.toHex();
@@ -314,7 +314,7 @@ class GameServer {
 		if( files.ownerUid == null ) {
 			files.setOwner(uid);
 			owner = true;
-			files.log(s.display + " (" + uid + ") es el propietario del servidor (primer jugador)");
+			files.log(s.display + " (" + uid + ") is the server owner (first player)");
 		}
 		s.role = uid == files.ownerUid ? Owner : (files.managers.exists(uid) ? Manager : Player);
 		s.creative = loadMode(s, owner);
@@ -333,8 +333,8 @@ class GameServer {
 		kubes.send(s);
 		s.send(SPlayers([for( o in sessions ) if( o.state == SPlay ) netPlayer(o, s)]));
 		for( o in sessions ) if( o != s && o.state == SPlay ) o.send(SUserJoin(netPlayer(s, o)));
-		files.log("entra " + s.display + " (" + uid + ", conexion " + s.id + ", " + s.channel.transport.peerName() + ")" + (first ? " por primera vez" : ""));
-		files.chat("--- entra " + s.display + " (" + uid + ")");
+		files.log(s.display + " joins (" + uid + ", connection " + s.id + ", " + s.channel.transport.peerName() + ")" + (first ? " for the first time" : ""));
+		files.chat("--- " + s.display + " (" + uid + ") joins");
 		if( !needGame ) worlds.onLogin(s);
 		if( s.isManager() ) s.send(serverInfo());
 	}
@@ -414,7 +414,7 @@ class GameServer {
 		}
 		switch( (chan : ChatChan) ) {
 		case CWorld:
-			files.chat("[monde] " + s.display + " (" + s.uid + "): " + msg);
+			files.chat("[world] " + s.display + " (" + s.uid + "): " + msg);
 			for( o in sessions ) if( o.state == SPlay ) o.send(STalk(s.id, s.display, chan, msg));
 		case CPlanet:
 			files.chat("[planete " + (s.where == "" ? "espace" : s.where) + "] " + s.display + " (" + s.uid + "): " + msg);
@@ -425,7 +425,7 @@ class GameServer {
 				s.send(SNotice("mp.chat.nobody", []));
 				return;
 			}
-			files.chat("[prive " + s.display + " (" + s.uid + ") -> " + t.display + " (" + t.uid + ")] " + msg);
+			files.chat("[private " + s.display + " (" + s.uid + ") -> " + t.display + " (" + t.uid + ")] " + msg);
 			t.send(STalk(s.id, s.display, chan, msg));
 			if( t != s ) s.send(STalk(s.id, s.display, chan, msg));
 		default:
@@ -459,27 +459,27 @@ class GameServer {
 			switch( (op : AdminOp) ) {
 			case APromote:
 				files.setManager(t.uid, true);
-				files.log(s.display + " nombra gestionnaire a " + t.display);
+				files.log(s.display + " makes " + t.display + " a manager");
 			case ADemote:
 				files.setManager(t.uid, false);
-				files.log(s.display + " destituye a " + t.display);
+				files.log(s.display + " demotes " + t.display);
 			case AKick:
-				files.log(s.display + " expulsa a " + t.display);
+				files.log(s.display + " kicks " + t.display);
 				drop(t, RKicked, s.display);
 			case ABan:
 				files.setBanned(t.uid, true);
-				files.log(s.display + " prohibe a " + t.display);
+				files.log(s.display + " bans " + t.display);
 				drop(t, RBanned, s.display);
 			default:
 			}
 			applyFiles();
 		case APassword:
 			files.setPassword(arg);
-			files.log(s.display + (arg == "" ? " quita la contrasena" : " cambia la contrasena"));
+			files.log(s.display + (arg == "" ? " removes the password" : " changes the password"));
 		case AServerName:
 			files.options.name = ServerFiles.cleanName(arg);
 			files.saveOptions();
-			files.log(s.display + " llama al servidor \"" + files.options.name + "\"");
+			files.log(s.display + " renames the server \"" + files.options.name + "\"");
 		case ALanVisible:
 			files.options.lanVisible = arg == "1";
 			files.saveOptions();
@@ -517,7 +517,7 @@ class GameServer {
 
 	function refuse( s : Session, r : RefuseReason, detail : String ) {
 		s.send(SRefuse(r, detail));
-		files.log("conexion " + s.id + " rechazada (" + r + ") " + detail);
+		files.log("connection " + s.id + " refused (" + reasonName(r) + ")" + (detail == "" ? "" : " " + detail));
 		close(s);
 	}
 
@@ -526,7 +526,25 @@ class GameServer {
 		if( s.state == SClosed ) return;
 		if( s.state == SPlay ) s.send(SKicked(r, detail));
 		else s.send(SRefuse(r, detail));
-		leave(s, "cerrada (" + r + ") " + detail);
+		leave(s, "closed (" + reasonName(r) + ")" + (detail == "" ? "" : " " + detail));
+	}
+
+	/** el motivo de un rechazo o una expulsion, para el registro */
+	static function reasonName( r : RefuseReason ) : String {
+		return switch( r ) {
+		case RVersion: "version";
+		case RBanned: "banned";
+		case RPassword: "password";
+		case RFull: "full";
+		case RBadLogin: "bad login";
+		case RKicked: "kicked";
+		case RReplaced: "replaced";
+		case RServerStop: "server stopped";
+		case RFlood: "flood";
+		case RProtocol: "protocol";
+		case RHostIdentity: "host identity";
+		default: "" + (r : Int);
+		}
 	}
 
 	function leave( s : Session, why : String ) {
@@ -535,15 +553,15 @@ class GameServer {
 		if( wasPlaying ) worlds.onLeave(s);
 		close(s);
 		if( wasPlaying ) {
-			files.log("sale " + s.display + " (" + why + ")");
-			files.chat("--- sale " + s.display + " (" + s.uid + ")");
+			files.log(s.display + " leaves (" + why + ")");
+			files.chat("--- " + s.display + " (" + s.uid + ") leaves");
 			for( o in sessions ) if( o.state == SPlay ) o.send(SUserLeave(s.id));
 		}
 	}
 
 	function close( s : Session ) {
 		s.state = SClosed;
-		s.channel.close("cerrada por el servidor");
+		s.channel.close("closed by the server");
 		sessions.remove(s);
 	}
 
@@ -552,45 +570,45 @@ class GameServer {
 
 	/** kick, ban, unban, op, deop sobre el jugador de ese pseudo (conectado o no, salvo kick); lo que ha pasado */
 	public function consoleAdmin( cmd : String, pseudo : String ) : String {
-		if( pseudo == "" ) return "falta el pseudo";
+		if( pseudo == "" ) return "missing nickname";
 		var t : Session = null;
 		for( o in sessions ) if( o.state == SPlay && o.display.toLowerCase() == pseudo.toLowerCase() ) t = o;
 		var uid = t != null ? t.uid : db.uidOfDisplay(pseudo);
-		if( uid == null ) return "nadie con el pseudo " + pseudo;
-		if( uid == files.ownerUid ) return "el propietario no se toca (gestionnaires.txt)";
+		if( uid == null ) return "nobody with the nickname " + pseudo;
+		if( uid == files.ownerUid ) return "the owner can only be changed in gestionnaires.txt";
 		var name = t != null ? t.display : pseudo;
 		switch( cmd ) {
 		case "kick":
-			if( t == null ) return name + " no esta conectado";
-			files.log("la consola expulsa a " + name);
+			if( t == null ) return name + " is not online";
+			files.log("the console kicks " + name);
 			drop(t, RKicked, "");
 		case "ban":
 			files.setBanned(uid, true);
-			files.log("la consola prohibe a " + name);
+			files.log("the console bans " + name);
 			if( t != null ) drop(t, RBanned, "");
 		case "unban":
 			files.setBanned(uid, false);
-			files.log("la consola levanta la prohibicion de " + name);
+			files.log("the console unbans " + name);
 		case "op":
 			files.setManager(uid, true);
-			files.log("la consola nombra gestionnaire a " + name);
+			files.log("the console makes " + name + " a manager");
 		case "deop":
 			files.setManager(uid, false);
-			files.log("la consola destituye a " + name);
+			files.log("the console demotes " + name);
 		default:
-			return "orden desconocida";
+			return "unknown command";
 		}
 		applyFiles();
 		for( o in sessions ) if( o.state == SPlay && o.isManager() ) o.send(serverInfo());
-		return "hecho";
+		return "done";
 	}
 
 	/** un mensaje del servidor a todos (canal del mundo), apuntado en chat.log */
 	public function consoleSay( text : String ) {
 		text = clean(text);
 		if( text == "" ) return;
-		files.chat("[serveur] " + text);
-		for( o in sessions ) if( o.state == SPlay ) o.send(STalk(-1, "[Serveur]", CWorld, text));
+		files.chat("[server] " + text);
+		for( o in sessions ) if( o.state == SPlay ) o.send(STalk(-1, "[Server]", CWorld, text));
 	}
 	// ---------------------------------------------------------------- red local
 

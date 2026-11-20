@@ -118,16 +118,16 @@ class ServerEcon {
 
 	static function opName( op : EconOp ) : String {
 		return switch( op ) {
-		case EBuy: "compra";
-		case ESell: "vende";
-		case EDeliver: "entrega el contrato";
-		case EGive: "da al contrato en curso";
-		case EAbandonContract: "abandona el contrato en curso";
-		case EGiveSpecial: "da al contrato especial";
-		case EUpgrade: "compra la mejora";
-		case EMainPlanet: "cambia de planeta principal a";
-		case EEndTutorial: "acaba el tutorial";
-		case ESkipTutorial: "pasa el tutorial";
+		case EBuy: "buys";
+		case ESell: "sells";
+		case EDeliver: "delivers the contract";
+		case EGive: "gives to the current contract";
+		case EAbandonContract: "abandons the current contract";
+		case EGiveSpecial: "gives to the special contract";
+		case EUpgrade: "buys the upgrade";
+		case EMainPlanet: "changes their main planet to";
+		case EEndTutorial: "finishes the tutorial";
+		case ESkipTutorial: "skips the tutorial";
 		default: "?";
 		}
 	}

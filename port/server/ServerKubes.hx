@@ -52,7 +52,7 @@ class ServerKubes {
 				for( b in blocks ) KubeCore.reset(b, "-");
 		}
 		try sys.io.File.saveContent(orderFile, haxe.Json.stringify(order)) catch( e : Dynamic ) {}
-		if( loaded > 0 ) files.log(loaded + " kubes del editor (" + dir + ")");
+		if( loaded > 0 ) files.log(loaded + " editor kubes (" + dir + ")");
 	}
 
 	/** a un jugador que entra: los kubes (los que hay) y cuantos numeros */

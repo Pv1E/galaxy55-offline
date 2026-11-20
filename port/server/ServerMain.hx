@@ -25,8 +25,8 @@ class ServerMain {
 			// partida nueva de un jugador (como la aventura sin tutorial): comprueba que los datos de partida compilan sin el juego
 			var info = TutoSetup.newGame("prueba", Std.parseInt(args[1]), false);
 			var p = ExpData.ExpOffline.make(info.uni.seed, info.uni.start).systems[0].planets[TutoSetup.PLANET];
-			Sys.println("partida nueva: sector " + info.uni.seed + ", planeta " + p.name + " (" + p.biome + ", " + p.size + "), creditos " + info.credits
-				+ ", licencias " + info.uni.licenses.length + ", contratos " + Contracts.active(info).length);
+			Sys.println("new game: sector " + info.uni.seed + ", planet " + p.name + " (" + p.biome + ", " + p.size + "), credits " + info.credits
+				+ ", licenses " + info.uni.licenses.length + ", contracts " + Contracts.active(info).length);
 			return;
 		}
 		var dir = "serveur", port : Null<Int> = null;
@@ -36,10 +36,10 @@ class ServerMain {
 			case "--data" if( i + 1 < args.length ): dir = args[++i];
 			case "--port" if( i + 1 < args.length ): port = Std.parseInt(args[++i]);
 			case "--help", "-h", "/?":
-				Sys.println("uso: server.hl [--data CARPETA] [--port PUERTO]");
+				Sys.println("usage: server.hl [--data FOLDER] [--port PORT]");
 				return;
 			default:
-				Sys.println("orden desconocida: " + args[i] + " (--help)");
+				Sys.println("unknown option: " + args[i] + " (--help)");
 				return;
 			}
 			i++;
@@ -56,8 +56,8 @@ class ServerMain {
 		// kubes del editor: los .kube de <datos>/kubes
 		server.loadKubes(dir + "/kubes");
 		server.listen("0.0.0.0", port);
-		Sys.println("Galaxy 55 - servidor \"" + server.files.options.name + "\" v" + GameVersion.VERSION + " en el puerto " + (port != null ? port : server.files.options.port)
-			+ " (datos: " + sys.FileSystem.absolutePath(dir) + "). Ordenes: help");
+		Sys.println("Galaxy 55 - server \"" + server.files.options.name + "\" v" + GameVersion.VERSION + " on port " + (port != null ? port : server.files.options.port)
+			+ " (data: " + sys.FileSystem.absolutePath(dir) + "). Commands: help");
 		// la consola se lee en otro hilo (readLine espera): las ordenes llegan por la cola
 		var lines = new sys.thread.Deque<String>();
 		sys.thread.Thread.create(function() {
@@ -95,7 +95,7 @@ class ServerMain {
 			return false;
 		case "list":
 			var ps = server.playing();
-			Sys.println(ps.length + " jugadores" + (ps.length == 0 ? "" : ": " + [for( s in ps ) s.display + (s.role == Owner ? " (propietario)" : s.role == Manager ? " (gestionnaire)" : "") + (s.where != "" ? " en un planeta" : " en el espacio")].join(", ")));
+			Sys.println(ps.length + (ps.length == 1 ? " player" : " players") + (ps.length == 0 ? "" : ": " + [for( s in ps ) s.display + (s.role == Owner ? " (owner)" : s.role == Manager ? " (manager)" : "") + (s.where != "" ? " on a planet" : " in space")].join(", ")));
 		case "kick", "ban", "unban", "op", "deop":
 			var r = server.consoleAdmin(cmd, arg);
 			Sys.println(r);
@@ -103,11 +103,11 @@ class ServerMain {
 			if( arg != "" ) server.consoleSay(arg);
 		case "save":
 			server.worlds.commit();
-			Sys.println("guardado");
+			Sys.println("saved");
 		case "help", "?":
-			Sys.println("ordenes: stop | list | kick PSEUDO | ban PSEUDO | unban PSEUDO | op PSEUDO | deop PSEUDO | say TEXTO | save");
+			Sys.println("commands: stop | list | kick NICKNAME | ban NICKNAME | unban NICKNAME | op NICKNAME | deop NICKNAME | say TEXT | save");
 		default:
-			Sys.println("orden desconocida: " + cmd + " (help)");
+			Sys.println("unknown command: " + cmd + " (help)");
 		}
 		return true;
 	}

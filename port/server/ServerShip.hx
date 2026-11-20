@@ -130,7 +130,7 @@ class ServerShip {
 		worlds.markRecord(s);
 		if( changes.length > 0 ) s.send(SShipCells(changes));
 		worlds.items.sendInv(s);
-		worlds.server.files.log(s.display + " fabrica " + Block.get(r.out).k + (fromInv ? " con su inventario" : ""));
+		worlds.server.files.log(s.display + " crafts " + Block.get(r.out).k + (fromInv ? " from their inventory" : ""));
 	}
 
 	// ---------------------------------------------------------------- sueltos de a bordo
@@ -231,7 +231,7 @@ class ServerShip {
 			for( i in 0...c.length ) c[i] = nc[i] == null ? null : { k : nc[i].k, n : nc[i].n };
 			setInv(ni);
 			chestVer++;
-		} else worlds.server.files.log("cantina de la nave rechazada de " + s.display + " en " + k);
+		} else worlds.server.files.log("ship chest refused from " + s.display + " in " + k);
 		s.send(SChest(x, y, z + WorldData.SHIP_Z, chestVer, c, ""));
 	}
 
@@ -255,7 +255,7 @@ class ServerShip {
 		var info = s.record;
 		var why = Hangar.serverCheck(ship, NetZip.inflate);
 		var cur = info.inv;
-		if( why == null && (ni.t.length != cur.t.length || !ServerItems.validSlots(ni.t, cur.maxWeight, cur.t)) ) why = "inventario";
+		if( why == null && (ni.t.length != cur.t.length || !ServerItems.validSlots(ni.t, cur.maxWeight, cur.t)) ) why = "inventory";
 		if( why == null ) {
 			var had = ServerItems.totals(cur.t, cur.charges);
 			var now = ServerItems.totals(ni.t, ni.charges);
@@ -268,7 +268,7 @@ class ServerShip {
 				var got = now.exists(k) ? now.get(k) : 0;
 				// las cargas (claves negativas) no cambian en el hangar: no se gastan ni se ganan
 				if( can < 0 || got > can || (k < 0 && got != can) ) {
-					why = "cuentas (" + (k < 0 ? "carga " + (-1 - k) : "" + Block.all[k].k) + ": tiene " + got + ", podia " + can + ")";
+					why = "counts (" + (k < 0 ? "charge " + (-1 - k) : "" + Block.all[k].k) + ": has " + got + ", could have " + can + ")";
 					break;
 				}
 			}
@@ -280,9 +280,9 @@ class ServerShip {
 			for( i in 0...cur.t.length ) cur.t[i] = ni.t[i] == null ? null : { k : ni.t[i].k, n : ni.t[i].n };
 			s.ship = null;
 			worlds.markRecord(s);
-			worlds.server.files.log(s.display + " guarda una nave nueva en el hangar");
+			worlds.server.files.log(s.display + " stores a new ship in the hangar");
 		} else {
-			worlds.server.files.log("nave del hangar rechazada de " + s.display + ": " + why);
+			worlds.server.files.log("hangar ship refused from " + s.display + ": " + why);
 			s.send(SPatch("ship", haxe.Json.stringify(info.shipData)));
 		}
 		worlds.items.sendInv(s);
@@ -306,7 +306,7 @@ class ServerShip {
 			for( i in 0...cur.t.length ) cur.t[i] = st.t[i] == null ? null : { k : st.t[i].k, n : st.t[i].n };
 			cur.charges = [for( c in st.charges ) if( c.n > 0 ) { c : c.c, n : c.n }];
 			setInv(ni);
-		} else worlds.server.files.log("stockage rechazado de " + s.display);
+		} else worlds.server.files.log("storage refused from " + s.display);
 		s.ack = seq;
 		s.send(SPatch("storage", haxe.Json.stringify(cur)));
 		worlds.items.sendInv(s);

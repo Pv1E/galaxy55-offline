@@ -440,6 +440,7 @@ class Lang {
 		"mp.admin.owner" => ["El propietario del servidor no se puede tocar.", "The server owner cannot be changed.", "Le propriétaire du serveur ne peut pas être modifié."],
 		"mp.admin.done" => ["Hecho.", "Done.", "Fait."],
 		"mp.chat.world" => ["Mundo", "World", "Monde"],
+		"mp.chat.server" => ["[Servidor]", "[Server]", "[Serveur]"],
 		"mp.chat.planet" => ["Planeta", "Planet", "Planète"],
 		"mp.chat.private" => ["Privado", "Private", "Privé"],
 		"mp.chat.help" => ["T: hablar  ·  Tab al escribir: mundo / planeta  ·  /m pseudo texto: privado  ·  Tab mantenido: jugadores", "T: talk  ·  Tab while typing: world / planet  ·  /m nickname text: private  ·  hold Tab: players", "T : parler  ·  Tab en écrivant : monde / planète  ·  /m pseudo texte : privé  ·  Tab maintenu : joueurs"],

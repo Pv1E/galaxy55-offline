@@ -95,7 +95,7 @@ class NetTest {
 		until(() -> false, 0.2);
 		check("privado no llega a carol", !carol.heard("solo para bob"));
 		var log = sys.io.File.getContent(dir + "/chat.log");
-		check("chat.log guarda el privado", log.indexOf("solo para bob") >= 0 && log.indexOf("[prive Alice") >= 0);
+		check("chat.log guarda el privado", log.indexOf("solo para bob") >= 0 && log.indexOf("[private Alice") >= 0);
 
 		bob.client.send(CAdmin(AKick, carol.id, ""));
 		check("un jugador no puede expulsar", until(() -> bob.notice("mp.admin.denied")));

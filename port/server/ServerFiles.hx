@@ -65,7 +65,7 @@ class ServerFiles {
 				if( Std.isOfType(j.upnp, Bool) ) o.upnp = j.upnp;
 				if( Std.isOfType(j.deathDrop, Bool) ) o.deathDrop = j.deathDrop;
 				if( Std.isOfType(j.test, Bool) ) o.test = j.test;
-			} catch( e : Dynamic ) log("serveur.json ilegible (" + e + "): se usan los valores por defecto");
+			} catch( e : Dynamic ) log("serveur.json unreadable (" + e + "): using the default values");
 		}
 		options = o;
 		saveOptions();
@@ -119,11 +119,11 @@ class ServerFiles {
 				seed = haxe.crypto.Base64.decode(j.seed);
 				if( seed.length != 32 ) seed = null;
 			} catch( e : Dynamic ) seed = null;
-			if( seed == null ) throw "cle_serveur.g55 ilegible: no se crea otra (los jugadores verian otro servidor); arreglalo o borralo";
+			if( seed == null ) throw "cle_serveur.g55 unreadable: no new key is made (players would see another server); fix it or delete it";
 		}
 		if( seed == null ) {
 			seed = SecureRandom.bytes(32);
-			writeAtomic(path, haxe.Json.stringify({ v : 1, seed : haxe.crypto.Base64.encode(seed), aviso : "Cle du serveur : ne la donnez a personne." }, null, "\t"));
+			writeAtomic(path, haxe.Json.stringify({ v : 1, seed : haxe.crypto.Base64.encode(seed), warning : "Server key: never give it to anyone." }, null, "\t"));
 		}
 		return Nacl.signKeyPair(seed);
 	}
@@ -153,7 +153,8 @@ class ServerFiles {
 			managers = new Map();
 			for( l in readLines(mp) ) {
 				var f = l.split(" ");
-				if( f[0] == "proprietaire" && f.length > 1 && isUid(f[1]) ) {
+				// "proprietaire": los archivos escritos antes de pasar el servidor al ingles
+				if( (f[0] == "owner" || f[0] == "proprietaire") && f.length > 1 && isUid(f[1]) ) {
 					ownerUid = f[1];
 					managers.set(f[1], true);
 				} else if( isUid(f[0]) ) managers.set(f[0], true);
@@ -215,7 +216,7 @@ class ServerFiles {
 		if( uid == ownerUid ) return;
 		if( on ) banned.set(uid, true) else banned.remove(uid);
 		var s = new StringBuf();
-		s.add("# Joueurs bannis du serveur : une ligne par identifiant (le pseudo apres # est indicatif).\n");
+		s.add("# Players banned from the server: one id per line (the nickname after # is only a reminder).\n");
 		for( u in banned.keys() ) s.add(u + " # " + nameOf(u) + "\n");
 		writeAtomic(dir + "/bannis.txt", s.toString());
 		bannedStamp = stampOf(dir + "/bannis.txt");
@@ -223,9 +224,9 @@ class ServerFiles {
 
 	function saveManagers() {
 		var s = new StringBuf();
-		s.add("# Gestionnaires du serveur. \"proprietaire <id>\" : le proprietaire (ne peut etre destitue que dans ce fichier).\n");
-		s.add("# Une ligne par identifiant ; le pseudo apres # est indicatif.\n");
-		if( ownerUid != null ) s.add("proprietaire " + ownerUid + " # " + nameOf(ownerUid) + "\n");
+		s.add("# Server managers. \"owner <id>\": the owner (can only be removed in this file).\n");
+		s.add("# One id per line; the nickname after # is only a reminder.\n");
+		if( ownerUid != null ) s.add("owner " + ownerUid + " # " + nameOf(ownerUid) + "\n");
 		for( u in managers.keys() ) if( u != ownerUid ) s.add(u + " # " + nameOf(u) + "\n");
 		writeAtomic(dir + "/gestionnaires.txt", s.toString());
 		managersStamp = stampOf(dir + "/gestionnaires.txt");

@@ -18,11 +18,11 @@ class NetZip {
 				var r = u.execute(b, pos, buf, 0);
 				pos += r.read;
 				if( r.write > 0 ) {
-					if( out.length + r.write > max ) throw new NetReader.NetError("datos comprimidos demasiado grandes");
+					if( out.length + r.write > max ) throw new NetReader.NetError("compressed data too large");
 					out.addBytes(buf, 0, r.write);
 				}
 				if( r.done ) break;
-				if( r.read == 0 && r.write == 0 ) throw new NetReader.NetError("datos comprimidos cortados");
+				if( r.read == 0 && r.write == 0 ) throw new NetReader.NetError("compressed data cut off");
 			}
 		} catch( e : NetReader.NetError ) {
 			u.close();
@@ -43,7 +43,7 @@ class NetZip {
 
 	public static function unpackInts( z : Bytes, max : Int ) : Array<Int> {
 		var b = inflate(z, max * 4);
-		if( b.length % 4 != 0 ) throw new NetReader.NetError("lista de enteros mal formada");
+		if( b.length % 4 != 0 ) throw new NetReader.NetError("malformed integer list");
 		return [for( i in 0...b.length >> 2 ) b.getInt32(i * 4)];
 	}
 

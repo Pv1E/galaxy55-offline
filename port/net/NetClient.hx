@@ -99,7 +99,7 @@ class NetClient {
 			if( connecting == null ) return;
 			var r : Dynamic = connecting.pop(false);
 			if( r == null ) {
-				if( haxe.Timer.stamp() - connectStart > CONNECT_TIMEOUT + 2 ) finish("sin respuesta");
+				if( haxe.Timer.stamp() - connectStart > CONNECT_TIMEOUT + 2 ) finish("no answer");
 				return;
 			}
 			if( Std.isOfType(r, String) ) {
@@ -114,7 +114,7 @@ class NetClient {
 			if( b == null ) break;
 			var m : ServerMsg;
 			try m = Msg.decodeServer(b) catch( e : Dynamic ) {
-				finish("mensaje del servidor invalido: " + e);
+				finish("invalid server message: " + e);
 				return;
 			}
 			handle(m);
@@ -132,14 +132,14 @@ class NetClient {
 		case [CHelloSent, SServerHello(name, pk, seph, sig, needPwd)]:
 			var t = Handshake.transcript(eph.pk, seph, pk);
 			if( !Nacl.verify(t, sig, pk) ) {
-				finish("firma del servidor invalida");
+				finish("invalid server signature");
 				return;
 			}
 			fingerprint = Handshake.fingerprint(pk);
 			serverName = name;
 			if( expectedFp != null && expectedFp != fingerprint ) {
 				events.push(EKeyChanged(expectedFp, fingerprint));
-				finish("huella del servidor cambiada");
+				finish("server fingerprint changed");
 				return;
 			}
 			events.push(EServer(name, fingerprint, needPwd));
@@ -166,7 +166,7 @@ class NetClient {
 		case [CPlaying, _]:
 			events.push(EMessage(m));
 		default:
-			finish("mensaje fuera de lugar: " + Type.enumConstructor(m));
+			finish("unexpected message: " + Type.enumConstructor(m));
 		}
 	}
 

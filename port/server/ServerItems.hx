@@ -326,7 +326,7 @@ class ServerItems {
 		if( !validSlots(ni.t, cur.maxWeight, cur.t) ) return;
 		var a = totals(cur.t, cur.charges), b = totals(ni.t, cur.charges);
 		if( !sameTotals(a, b) ) {
-			server.files.log("inventario rechazado de " + s.display + ": no cuadra");
+			server.files.log("inventory refused from " + s.display + ": does not add up");
 			return;
 		}
 		for( i in 0...cur.t.length ) cur.t[i] = ni.t[i] == null ? null : { k : ni.t[i].k, n : ni.t[i].n };
@@ -349,7 +349,7 @@ class ServerItems {
 		worlds.markRecord(s);
 		// como en solo, sale al acabar el fundido de la vuelta a la nave (si no, el que se va lo recogeria al momento)
 		spawn(inst, p.x, p.y, p.z + 0.5, DeathDrops.block(), 1, 0, 0, d, DEATH_DELAY);
-		server.files.log(s.display + (manual ? " vuelve a la nave" : " muere") + " y deja su equipo en " + inst.key);
+		server.files.log(s.display + (manual ? " goes back to the ship" : " dies") + " and leaves their gear in " + inst.key);
 	}
 
 	function creativeSet( s : Session, slot : Int, gi : Int, n : Int ) {
@@ -438,7 +438,7 @@ class ServerItems {
 			inst.items.chestVer.set(k, v + 1);
 			inst.items.dirtyChests.set(k, true);
 			worlds.markRecord(s);
-		} else server.files.log("cantina rechazada de " + s.display + " en " + k);
+		} else server.files.log("chest refused from " + s.display + " in " + k);
 		s.send(SChest(x, y, z, inst.items.chestVer.exists(k) ? inst.items.chestVer.get(k) : 0, c, ""));
 	}
 

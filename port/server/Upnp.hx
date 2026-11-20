@@ -48,9 +48,9 @@ class Upnp {
 
 	function open( port : Int, desc : String ) : UpnpResult {
 		var loc = discover();
-		if( loc == null ) return { ok : false, external : "", local : localIp(null), error : "sin router UPnP" };
+		if( loc == null ) return { ok : false, external : "", local : localIp(null), error : "no UPnP router" };
 		var c = findControl(loc);
-		if( c == null ) return { ok : false, external : "", local : localIp(loc), error : "el router no tiene WANIPConnection" };
+		if( c == null ) return { ok : false, external : "", local : localIp(loc), error : "the router has no WANIPConnection" };
 		var local = localIp(loc);
 		desc = ~/[^A-Za-z0-9 _.\-]/g.replace(desc, "").substr(0, 40);
 		for( proto in ["TCP", "UDP"] ) {
@@ -58,7 +58,7 @@ class Upnp {
 				+ "<NewInternalPort>" + port + "</NewInternalPort><NewInternalClient>" + local + "</NewInternalClient><NewEnabled>1</NewEnabled>"
 				+ "<NewPortMappingDescription>" + desc + "</NewPortMappingDescription><NewLeaseDuration>0</NewLeaseDuration>";
 			var r = soap(c, "AddPortMapping", body);
-			if( r == null ) return { ok : false, external : "", local : local, error : "el router no acepta abrir el puerto (" + proto + ")" };
+			if( r == null ) return { ok : false, external : "", local : local, error : "the router refuses to open the port (" + proto + ")" };
 		}
 		control = c;
 		var ext = "";

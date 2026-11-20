@@ -541,7 +541,7 @@ class Msg {
 		case 36:
 			var x = r.uintIn(0, COORD_MAX); var y = r.uintIn(0, COORD_MAX);
 			CShipMove(x, y);
-		case k: throw new NetReader.NetError("mensaje de cliente desconocido " + k);
+		case k: throw new NetReader.NetError("unknown client message " + k);
 		}
 		r.done();
 		return m;
@@ -748,10 +748,10 @@ class Msg {
 			var box = [for( _ in 0...6 ) r.uintIn(0, KubeCore.SIZE)];
 			var light = r.floatIn(0, 15); var reach = r.floatIn(0, 15); var nc = r.bool(); var faces = r.bytes(KubeCore.FACES.length * KubeCore.FACE_BYTES);
 			var k : KubeCore.NetKube = { id : id, name : KubeCore.cleanName(name), shape : shape, render : render, box : box, light : light, reach : reach, noCollide : nc, faces : faces };
-			if( !KubeCore.valid(k) ) throw new NetReader.NetError("kube no valido");
+			if( !KubeCore.valid(k) ) throw new NetReader.NetError("invalid kube");
 			SKubeDef(i, k);
 		case 35: SKubesEnd(r.uintIn(0, KubeCore.MAX));
-		case k: throw new NetReader.NetError("mensaje de servidor desconocido " + k);
+		case k: throw new NetReader.NetError("unknown server message " + k);
 		}
 		r.done();
 		return m;

@@ -54,7 +54,7 @@ class ServerWorlds {
 			if( row == null || row.record == "" ) return false;
 			try s.record = SaveData.parse(haxe.Json.parse(row.record), s.uid) catch( e : Dynamic ) s.record = null;
 			if( s.record == null ) {
-				server.files.log("partida ilegible de " + s.display + ": se empieza de nuevo");
+				server.files.log("unreadable game of " + s.display + ": starting a new one");
 				return false;
 			}
 		}
@@ -71,7 +71,7 @@ class ServerWorlds {
 		s.ship = null;
 		s.record.dropOnDeath = server.files.options.deathDrop;
 		saveRecord(s);
-		server.files.log(s.display + " empieza en el sector " + seed + (tuto ? " con el tutorial" : ""));
+		server.files.log(s.display + " starts in sector " + seed + (tuto ? " with the tutorial" : ""));
 		sendRecord(s);
 		items.sendInv(s);
 		sendForeign(s);
@@ -112,7 +112,7 @@ class ServerWorlds {
 		}
 		s.record = info;
 		saveRecord(s);
-		server.files.log(s.display + " trae su partida " + save.name + " (" + save.id + ")");
+		server.files.log(s.display + " brings their game " + save.name + " (" + save.id + ")");
 	}
 	/** la partida al cliente; si esta en un planeta, con el terreno de ese planeta (que es del servidor) */
 	function sendRecord( s : Session ) {
@@ -267,7 +267,7 @@ class ServerWorlds {
 		inst = created = new PlanetInstance(row, db.loadEdits(gkey), function( x, y, z, b ) items.onBreak(created, x, y, z, b, false), function( x, y, z, b ) items.lavaBomb(created, x, y, z));
 		items.load(inst);
 		instances.set(gkey, inst);
-		server.files.log("planeta " + gkey + " cargado (" + row.biome + ", " + row.size + ")");
+		server.files.log("planet " + gkey + " loaded (" + row.biome + ", " + row.size + ")");
 		return inst;
 	}
 
@@ -401,7 +401,7 @@ class ServerWorlds {
 		uni.space = null;
 		info.comet = { sys : sys, slot : p.comet, left : Comets.dockTime(Hangar.speedOf(ShipData.current(info))) };
 		saveRecord(s);
-		server.files.log(s.display + " aterriza en la cometa " + row.gkey + " (" + p.biome + ")");
+		server.files.log(s.display + " lands on comet " + row.gkey + " (" + p.biome + ")");
 		s.send(SPlanetData(inst.key, row.seed, row.biome, row.size, row.gen, "", NetZip.packInts(currentEdits(inst)), server.db.displayOf(s.uid), s.rights));
 	}
 
@@ -450,7 +450,7 @@ class ServerWorlds {
 			TutoSetup.seedPlanet(w, info, x, y, gz);
 			saveRecord(s);
 			s.send(SPatch("tuto", haxe.Json.stringify(info.tuto)));
-			server.files.log("tutorial de " + s.display + " preparado en " + inst.key);
+			server.files.log(s.display + "'s tutorial set up in " + inst.key);
 		}
 	}
 
@@ -609,7 +609,7 @@ class ServerWorlds {
 			saveAccess(row, a);
 			sendAccess(s, row);
 			t.send(SNotice("mp.invited", [s.display]));
-			server.files.log(s.display + " invita a " + t.display + " a " + row.gkey + (role == 1 ? " (visitante)" : ""));
+			server.files.log(s.display + " invites " + t.display + " to " + row.gkey + (role == 1 ? " (visitor)" : ""));
 		case CGuest(pid, pub, role):
 			var row = ownedPlanet(s, pid);
 			var uid = db.uidOfPub(pub);
@@ -637,7 +637,7 @@ class ServerWorlds {
 			if( s.record.uni != null && row.galaxy == s.uid ) s.record.uni.licenses = s.record.uni.licenses.filter(l -> l != pid);
 			saveRecord(s);
 			saveAccess(row, a);
-			server.files.log(s.display + " cede " + row.gkey + " a " + t.display);
+			server.files.log(s.display + " gives " + row.gkey + " to " + t.display);
 			t.send(SNotice("mp.transfer.got", [s.display]));
 			s.send(SNotice("mp.transfer.done", [t.display]));
 		case CAbandon(pid):
@@ -663,7 +663,7 @@ class ServerWorlds {
 				saveRecord(s);
 				s.send(SPatch("licenses", haxe.Json.stringify({ licenses : uni.licenses, main : uni.main, abandoned : uni.abandoned, gone : uni.gone })));
 			}
-			server.files.log(s.display + " abandona " + row.gkey);
+			server.files.log(s.display + " abandons " + row.gkey);
 			for( p in server.playing() ) sendForeign(p);
 		default:
 		}
@@ -781,7 +781,7 @@ class ServerWorlds {
 
 	/** un planeta acaba de estar listo: lo del tutorial y las peticiones que esperaban */
 	function generated( inst : PlanetInstance, how : String ) {
-		server.files.log("planeta " + inst.key + " " + how);
+		server.files.log("planet " + inst.key + " " + how);
 		seedTutorial(inst);
 		var w = inst.waiting;
 		inst.waiting = [];
@@ -797,7 +797,7 @@ class ServerWorlds {
 		for( inst in instances ) {
 			if( inst.ready() || inst.generating() ) continue;
 			var t0 = haxe.Timer.stamp();
-			if( inst.adopt(src) ) generated(inst, "tomado del juego del anfitrion (" + Std.int((haxe.Timer.stamp() - t0) * 1000) + " ms)");
+			if( inst.adopt(src) ) generated(inst, "taken from the host's game (" + Std.int((haxe.Timer.stamp() - t0) * 1000) + " ms)");
 			else inst.hostWaitUntil = 0;
 		}
 	}
@@ -812,13 +812,13 @@ class ServerWorlds {
 			if( inst.genError != null ) {
 				if( !reported.exists(inst.key) ) {
 					reported.set(inst.key, true);
-					server.files.log("planeta " + inst.key + ": la generacion ha fallado (" + inst.genError + ")");
+					server.files.log("planet " + inst.key + ": generation failed (" + inst.genError + ")");
 				}
 				continue;
 			}
-			if( inst.generateAsync() ) generated(inst, "generado");
+			if( inst.generateAsync() ) generated(inst, "generated");
 		}
-		if( prof && haxe.Timer.stamp() - t0 > 0.03 ) Sys.println("mpprof generar " + Std.int((haxe.Timer.stamp() - t0) * 1000) + " ms");
+		if( prof && haxe.Timer.stamp() - t0 > 0.03 ) Sys.println("mpprof generate " + Std.int((haxe.Timer.stamp() - t0) * 1000) + " ms");
 		tickAcc += dt;
 		var n = 0;
 		var tt = haxe.Timer.stamp();
@@ -826,7 +826,7 @@ class ServerWorlds {
 			tickAcc -= TICK;
 			tick();
 		}
-		if( prof && haxe.Timer.stamp() - tt > 0.03 ) Sys.println("mpprof tick " + n + " pasos " + Std.int((haxe.Timer.stamp() - tt) * 1000) + " ms");
+		if( prof && haxe.Timer.stamp() - tt > 0.03 ) Sys.println("mpprof tick " + n + " steps " + Std.int((haxe.Timer.stamp() - tt) * 1000) + " ms");
 		if( tickAcc > TICK * 3 ) tickAcc = 0;
 		commitAcc += dt;
 		if( commitAcc >= COMMIT ) {
@@ -873,7 +873,7 @@ class ServerWorlds {
 		inst.cancel();
 		saveInstance(inst);
 		instances.remove(inst.key);
-		server.files.log("planeta " + inst.key + " descargado");
+		server.files.log("planet " + inst.key + " unloaded");
 	}
 
 	function saveInstance( inst : PlanetInstance ) {

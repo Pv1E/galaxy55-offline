@@ -73,10 +73,10 @@ class TcpTransport implements Transport {
 				outPos += n;
 			} catch( e : haxe.io.Error ) {
 				if( e == Blocked ) return;
-				close("envio: " + e);
+				close("send: " + e);
 				return;
 			} catch( e : Dynamic ) {
-				close("envio: " + e);
+				close("send: " + e);
 				return;
 			}
 		}
@@ -89,13 +89,13 @@ class TcpTransport implements Transport {
 			var n = 0;
 			try n = sock.input.readBytes(tmp, 0, tmp.length) catch( e : haxe.io.Error ) {
 				if( e == Blocked ) break;
-				close("lectura: " + e);
+				close("read: " + e);
 				break;
 			} catch( e : haxe.io.Eof ) {
-				close("cerrada por el otro lado");
+				close("closed by the other side");
 				break;
 			} catch( e : Dynamic ) {
-				close("lectura: " + e);
+				close("read: " + e);
 				break;
 			}
 			if( n <= 0 ) break;
@@ -158,7 +158,7 @@ class LocalTransport implements Transport {
 	public function read() : Null<Bytes> {
 		if( reason != null ) return null;
 		if( inbox.length == 0 ) {
-			if( other.reason != null ) reason = "cerrada por el otro lado";
+			if( other.reason != null ) reason = "closed by the other side";
 			return null;
 		}
 		var now = haxe.Timer.stamp();

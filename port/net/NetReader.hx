@@ -22,23 +22,23 @@ class NetReader {
 		buf = b;
 		this.pos = pos;
 		end = len == null ? b.length : pos + len;
-		if( end > b.length ) throw new NetError("longitud fuera del mensaje");
+		if( end > b.length ) throw new NetError("length past the end of the message");
 	}
 
 	public inline function left() return end - pos;
 
 	public function done() {
-		if( pos != end ) throw new NetError("sobran " + (end - pos) + " bytes");
+		if( pos != end ) throw new NetError((end - pos) + " bytes left over");
 	}
 
 	public function byte() : Int {
-		if( pos >= end ) throw new NetError("mensaje corto");
+		if( pos >= end ) throw new NetError("message too short");
 		return buf.get(pos++);
 	}
 
 	public function bool() : Bool {
 		var v = byte();
-		if( v > 1 ) throw new NetError("booleano invalido");
+		if( v > 1 ) throw new NetError("invalid boolean");
 		return v == 1;
 	}
 
@@ -46,11 +46,11 @@ class NetReader {
 		var v = 0, shift = 0;
 		while( true ) {
 			var b = byte();
-			if( shift == 28 && b > 7 ) throw new NetError("entero demasiado grande");
+			if( shift == 28 && b > 7 ) throw new NetError("integer too large");
 			v |= (b & 0x7F) << shift;
 			if( b & 0x80 == 0 ) break;
 			shift += 7;
-			if( shift > 28 ) throw new NetError("entero demasiado largo");
+			if( shift > 28 ) throw new NetError("integer too long");
 		}
 		return v;
 	}
@@ -58,7 +58,7 @@ class NetReader {
 	/** entero sin signo entre min y max */
 	public function uintIn( min : Int, max : Int ) : Int {
 		var v = uint();
-		if( v < min || v > max ) throw new NetError('valor $v fuera de $min..$max');
+		if( v < min || v > max ) throw new NetError('value $v outside $min..$max');
 		return v;
 	}
 
@@ -69,47 +69,47 @@ class NetReader {
 			z |= (b & 0x7F) << shift;
 			if( b & 0x80 == 0 ) break;
 			shift += 7;
-			if( shift > 28 ) throw new NetError("entero demasiado largo");
+			if( shift > 28 ) throw new NetError("integer too long");
 		}
 		return (z >>> 1) ^ -(z & 1);
 	}
 
 	public function intIn( min : Int, max : Int ) : Int {
 		var v = int();
-		if( v < min || v > max ) throw new NetError('valor $v fuera de $min..$max');
+		if( v < min || v > max ) throw new NetError('value $v outside $min..$max');
 		return v;
 	}
 
 	public function float() : Float {
-		if( end - pos < 4 ) throw new NetError("mensaje corto");
+		if( end - pos < 4 ) throw new NetError("message too short");
 		var v = buf.getFloat(pos);
 		pos += 4;
-		if( Math.isNaN(v) || !Math.isFinite(v) ) throw new NetError("real invalido");
+		if( Math.isNaN(v) || !Math.isFinite(v) ) throw new NetError("invalid float");
 		return v;
 	}
 
 	/** real entre min y max */
 	public function floatIn( min : Float, max : Float ) : Float {
 		var v = float();
-		if( v < min || v > max ) throw new NetError('real $v fuera de $min..$max');
+		if( v < min || v > max ) throw new NetError('float $v outside $min..$max');
 		return v;
 	}
 
 	public function double() : Float {
-		if( end - pos < 8 ) throw new NetError("mensaje corto");
+		if( end - pos < 8 ) throw new NetError("message too short");
 		var v = buf.getDouble(pos);
 		pos += 8;
-		if( Math.isNaN(v) || !Math.isFinite(v) ) throw new NetError("real invalido");
+		if( Math.isNaN(v) || !Math.isFinite(v) ) throw new NetError("invalid float");
 		return v;
 	}
 
 	/** cadena UTF-8 de hasta maxChars caracteres (y como mucho 4 bytes por caracter) */
 	public function string( maxChars : Int ) : String {
 		var n = uint();
-		if( n > maxChars * 4 || n > end - pos ) throw new NetError("cadena demasiado larga");
+		if( n > maxChars * 4 || n > end - pos ) throw new NetError("string too long");
 		var chars = utf8Chars(buf, pos, n);
-		if( chars < 0 ) throw new NetError("cadena UTF-8 invalida");
-		if( chars > maxChars ) throw new NetError("cadena demasiado larga");
+		if( chars < 0 ) throw new NetError("invalid UTF-8 string");
+		if( chars > maxChars ) throw new NetError("string too long");
 		var s = buf.getString(pos, n);
 		pos += n;
 		return s;
@@ -141,7 +141,7 @@ class NetReader {
 	/** bytes con su longitud delante, como mucho maxLen */
 	public function bytes( maxLen : Int ) : Bytes {
 		var n = uint();
-		if( n > maxLen || n > end - pos ) throw new NetError("bloque de bytes demasiado largo");
+		if( n > maxLen || n > end - pos ) throw new NetError("byte block too long");
 		var b = buf.sub(pos, n);
 		pos += n;
 		return b;
@@ -149,7 +149,7 @@ class NetReader {
 
 	/** exactamente n bytes (claves, firmas) */
 	public function raw( n : Int ) : Bytes {
-		if( n > end - pos ) throw new NetError("mensaje corto");
+		if( n > end - pos ) throw new NetError("message too short");
 		var b = buf.sub(pos, n);
 		pos += n;
 		return b;
@@ -158,7 +158,7 @@ class NetReader {
 	/** numero de elementos de una lista, como mucho max (y cada uno ocupa al menos minBytes) */
 	public function count( max : Int, minBytes = 1 ) : Int {
 		var n = uint();
-		if( n > max || n * minBytes > end - pos ) throw new NetError("lista demasiado larga");
+		if( n > max || n * minBytes > end - pos ) throw new NetError("list too long");
 		return n;
 	}
 }

@@ -44,7 +44,7 @@ class Channel {
 
 	public function send( msg : Bytes ) {
 		if( transport.closed ) return;
-		if( msg.length > MAX_FRAME ) throw "trama demasiado grande: " + msg.length;
+		if( msg.length > MAX_FRAME ) throw "frame too large: " + msg.length;
 		var payload = sendKey == null ? msg : Nacl.secretbox(msg, nonce(sendCtr++), sendKey);
 		var n = payload.length, h = 0;
 		while( n >= 0x80 ) {
@@ -81,14 +81,14 @@ class Channel {
 			shift += 7;
 			if( shift > 28 ) {
 				inLen = 0;
-				transport.close("longitud de trama invalida");
+				transport.close("invalid frame length");
 				return null;
 			}
 		}
 		var limit = MAX_FRAME + (recvKey != null ? Nacl.TAG : 0);
 		if( n > limit || n < 0 ) {
 			inLen = 0;
-			transport.close("trama demasiado grande (" + n + ")");
+			transport.close("frame too large (" + n + ")");
 			return null;
 		}
 		if( inLen - p < n ) return null;
@@ -99,7 +99,7 @@ class Channel {
 		var msg = Nacl.secretboxOpen(payload, nonce(recvCtr++), recvKey);
 		if( msg == null ) {
 			inLen = 0;
-			transport.close("trama alterada o fuera de orden");
+			transport.close("frame tampered with or out of order");
 			return null;
 		}
 		return msg;

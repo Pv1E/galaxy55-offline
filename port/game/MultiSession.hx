@@ -130,7 +130,8 @@ class MultiSession {
 				players.remove(id);
 				if( p != null ) chat.push({ from : -1, name : p.name, chan : CServer, msg : "leave" });
 			case STalk(from, name, chan, msg):
-				chat.push({ from : from, name : name, chan : chan, msg : msg });
+				// from -1: la consola del servidor dedicado (GameServer.consoleSay), con el nombre en el idioma del jugador
+				chat.push({ from : from, name : from < 0 ? Lang.t("mp.chat.server") : name, chan : chan, msg : msg });
 			case SNotice(key, args):
 				notices.push({ key : key, args : args });
 			case SForeign(l):

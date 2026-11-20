@@ -29,7 +29,7 @@ class NetWriter {
 
 	/** entero sin signo de 0 a 2^31-1, 1 a 5 bytes */
 	public function uint( v : Int ) {
-		if( v < 0 ) throw "NetWriter.uint negativo: " + v;
+		if( v < 0 ) throw "NetWriter.uint negative: " + v;
 		need(5);
 		while( v >= 0x80 ) {
 			buf.set(length++, (v & 0x7F) | 0x80);

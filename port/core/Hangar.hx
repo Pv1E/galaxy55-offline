@@ -186,22 +186,22 @@ class Hangar {
 	 */
 	public static function serverCheck( ship : haxe.io.Bytes, inflate : haxe.io.Bytes -> Int -> haxe.io.Bytes ) : String {
 		var max = 3 + SX * SY * SZ * 2;
-		var raw = try inflate(ship, max) catch( e : Dynamic ) return "no se descomprime";
-		if( raw.length != max || raw.get(0) != SX || raw.get(1) != SY || raw.get(2) != SZ ) return "tamano";
+		var raw = try inflate(ship, max) catch( e : Dynamic ) return "does not inflate";
+		if( raw.length != max || raw.get(0) != SX || raw.get(1) != SY || raw.get(2) != SZ ) return "size";
 		var pos = 3;
 		while( pos < raw.length ) {
 			var id = raw.get(pos) | (raw.get(pos + 1) << 8);
 			pos += 2;
 			if( id == 0 ) continue;
-			if( id >= Block.all.length ) return "bloque desconocido " + id;
+			if( id >= Block.all.length ) return "unknown block " + id;
 			var b = Block.all[id];
-			if( forbidden(b) != null ) return "prohibido " + b.k;
+			if( forbidden(b) != null ) return "forbidden " + b.k;
 		}
 		var h = new Hangar(null);
 		var cells = new Map<Int, Block>();
 		for( c in shedData(ship).cells ) cells.set((c.x << 16) | (c.y << 8) | c.z, Block.all[c.id]);
 		h.blockAt = function(x, y, z) return x < 0 || y < 0 || z < 0 ? null : cells.get((x << 16) | (y << 8) | z);
-		return h.check() ? null : "no vale (" + h.error + ")";
+		return h.check() ? null : "invalid (" + h.error + ")";
 	}
 
 	/**

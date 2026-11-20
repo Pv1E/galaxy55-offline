@@ -13,7 +13,7 @@ class SecureRandom {
 
 	static var key : Bytes;
 	static var counter = 0;
-	/** de donde salio el azar del sistema ("sistema", "semilla" o "solo tiempos"), para el registro */
+	/** de donde salio el azar del sistema ("system", "seed" o "timings only"), para el registro */
 	public static var source(default, null) = "";
 
 	/** dir: carpeta donde guardar la semilla (la de las partidas o la del servidor) */
@@ -37,7 +37,7 @@ class SecureRandom {
 		var h = Nacl.sha512(pool.getBytes());
 		key = h.sub(0, 32);
 		counter = 0;
-		source = os != null ? "sistema" : (hadSeed ? "semilla" : "solo tiempos");
+		source = os != null ? "system" : (hadSeed ? "seed" : "timings only");
 		if( seedFile != null ) {
 			var next = new haxe.io.BytesBuffer();
 			next.add(h);
