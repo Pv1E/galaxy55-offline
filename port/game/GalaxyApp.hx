@@ -2030,6 +2030,12 @@ class GalaxyApp extends hxd.App {
 	}
 
 	/**
+	 * multijugador: los gestionnaires (y el propietario) escanean sin limite de licencias, tambien en una partida de aventura;
+	 * el servidor tampoco se lo pone (ServerWorlds.planetRow, cesion de planeta). Se mira cada vez: op/deop llegan en directo.
+	 */
+	function managerLicenses() : Bool return mp != null && mp.isPlaying() && mp.isManager();
+
+	/**
 	 * Licencias de exploracion (Licenses, anadido del port): cuantas hay en uso, el planeta principal y, si el planeta en el que
 	 * estas no lo es, el boton para hacerlo principal con su precio (con confirmacion); durante la espera, desactivado.
 	 */
@@ -2052,7 +2058,9 @@ class GalaxyApp extends hxd.App {
 			y += t.textHeight * scale + 10;
 			return t;
 		}
-		var count = Licenses.unlimited(info) ? Lang.t("licenses.unlimited") : Lang.t("licenses.count").split("%max%").join("" + Licenses.MAX);
+		var count = Licenses.unlimited(info) ? Lang.t("licenses.unlimited")
+			: managerLicenses() ? Lang.t("licenses.unlimited.manager")
+			: Lang.t("licenses.count").split("%max%").join("" + Licenses.MAX);
 		line(count.split("%n%").join("" + uni.licenses.length), 1.8, Theme.TEXT);
 		line(Lang.t("shop.credits") + " " + (info.credits == null ? Market.START_CREDITS : info.credits), 1.8, Theme.ACCENT);
 		if( Licenses.isMain(uni, here) )
@@ -2548,6 +2556,7 @@ class GalaxyApp extends hxd.App {
 		s2d.under(explorer);
 		space = new Space(spaceInfo);
 		space.tutorial = Tutorial.active(spaceInfo);
+		space.unlimited = managerLicenses;
 		// los avisos largos (licencias) se quedan mas tiempo
 		space.onRefuse = function(msg) showToast(msg, Math.max(2.2, msg.length * 0.06));
 		explorer.onTravel = space.travel;

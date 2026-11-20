@@ -322,6 +322,7 @@ class Lang {
 		// %n% en uso de %max%
 		"licenses.count" => ["Licencias en uso: %n% / %max%", "Licenses in use: %n% / %max%", "Licences utilisées : %n% / %max%"],
 		"licenses.unlimited" => ["Licencias en uso: %n% (sin límite en creativo)", "Licenses in use: %n% (unlimited in creative)", "Licences utilisées : %n% (illimitées en créatif)"],
+		"licenses.unlimited.manager" => ["Licencias en uso: %n% (sin límite para los gestores)", "Licenses in use: %n% (unlimited for managers)", "Licences utilisées : %n% (illimitées pour les gestionnaires)"],
 		"licenses.main" => ["Planeta principal: %name%", "Main planet: %name%", "Planète principale : %name%"],
 		"licenses.here" => ["Este es tu planeta principal.", "This is your main planet.", "Cette planète est ta planète principale."],
 		"licenses.nomain" => ["Aún no tienes planeta principal: lo será el primero que escanees.", "You have no main planet yet: the first planet you scan will be.", "Tu n'as pas encore de planète principale : ce sera la première que tu scanneras."],
