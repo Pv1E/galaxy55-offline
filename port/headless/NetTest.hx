@@ -900,7 +900,12 @@ class NetTest {
 		var bots = [for( i in 0...nbots ) add(new TestClient("Bot" + i, secret(80 + i)))];
 		for( b in bots ) b.tcp(55091);
 		until(() -> Lambda.foreach(bots, b -> b.welcome != null), 10);
-		bots[0].client.send(CSetMode(false));
+		// el propietario es el primero que llega (se conectan a la vez: no siempre Bot0) y empieza en creativo, donde tirar vacia
+		// la casilla sin soltar nada (ServerItems.throwSlot): con el, las rocas que tiraba desaparecian y la cuenta fallaba
+		for( b in bots ) if( b.role == Owner ) b.client.send(CSetMode(false));
+		var survival = until(() -> Lambda.foreach(bots, b -> @:privateAccess server.sessionById(b.id).creative == false), 5);
+		check("endurance: todos en supervivencia (tambien el propietario)", survival,
+			[for( b in bots ) b.name + (b.role == Owner ? "(propietario)" : "") + (@:privateAccess server.sessionById(b.id).creative ? "=creativo" : "")].join(" "));
 		for( b in bots ) b.client.send(CNewGame(false));
 		until(() -> Lambda.foreach(bots, b -> b.has(m -> m.match(SRecord(_)))), 20);
 		var pid = TutoSetup.PLANET;
