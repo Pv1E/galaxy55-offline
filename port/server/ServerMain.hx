@@ -65,6 +65,10 @@ class ServerMain {
 				var l = try Sys.stdin().readLine() catch( e : Dynamic ) null;
 				if( l == null ) break;
 				lines.add(l);
+				// tras una orden de parar no se vuelve a leer: en Linux y macOS exit() espera al cerrojo de stdin, que un
+				// readLine en curso no suelta, y el proceso se quedaba vivo despues de "server stopped"
+				var c = StringTools.trim(l).toLowerCase();
+				if( c == "stop" || c == "quit" || c == "exit" ) break;
 			}
 		});
 		var last = haxe.Timer.stamp();
