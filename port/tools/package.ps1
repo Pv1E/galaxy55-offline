@@ -142,10 +142,24 @@ if (Test-Path $Hlc) {
 	$hz = [IO.Compression.ZipFile]::OpenRead((Resolve-Path $Hlc).Path)
 	try { $names = @($hz.Entries | ForEach-Object { $_.FullName }) } finally { $hz.Dispose() }
 	if (-not ($names -ccontains "hlc/game/galaxy55.c" -and $names -ccontains "hlc/server/server.c")) { throw "$Hlc sin hlc/game/galaxy55.c o hlc/server/server.c" }
+	# macOS y Windows no distinguen mayusculas: dos archivos que solo se diferencian en ellas se pisarian al descomprimir
+	$clash = @($names | Group-Object { $_.ToLowerInvariant() } | Where-Object { $_.Count -gt 1 } | ForEach-Object { $_.Group -join " / " })
+	if ($clash.Count -gt 0) { throw "$Hlc tiene archivos que solo cambian en mayusculas (rehacerlo con build-hlc-sources.sh): $($clash -join ', ')" }
 	$withMac = $true
 }
 if ($withMac) {
-	Save "$mac\compilar.sh" ([IO.File]::ReadAllText("$PSScriptRoot\build-hlc.sh")) "`n"
+	Save "$mac\compilar.sh" ([IO.File]::ReadAllText("$PSScriptRoot\build-hlc.sh").Replace("__VERSION__", $Version)) "`n"
+	# icono de "Galaxy 55.app": la imagen de 256x256 de port\galaxy55.ico, que ya es un PNG dentro del .ico (se copia tal cual:
+	# System.Drawing la lee mal); compilar.sh la pasa a .icns en el Mac
+	$ib = [IO.File]::ReadAllBytes((Resolve-Path "port\galaxy55.ico").Path)
+	$png = $null
+	for ($k = 0; $k -lt [BitConverter]::ToUInt16($ib, 4); $k++) {
+		$e = 6 + 16 * $k
+		if ($ib[$e] -ne 0 -or $ib[$e + 1] -ne 0) { continue }
+		$len = [BitConverter]::ToInt32($ib, $e + 8); $off = [BitConverter]::ToInt32($ib, $e + 12)
+		if ($ib[$off] -eq 0x89 -and $ib[$off + 1] -eq 0x50) { $png = New-Object byte[] $len; [Array]::Copy($ib, $off, $png, 0, $len) }
+	}
+	if ($png) { [IO.File]::WriteAllBytes("$mac\icon.png", $png) } else { "aviso: port\galaxy55.ico sin imagen PNG de 256x256: la app de macOS ira sin icono" }
 	function MacRun([string]$what, [string]$bin, [string]$file, [string]$extra) {
 		"#!/bin/sh`n# Galaxy 55 (offline) v$Version - $what`ncd `"`$(dirname `"`$0`")`"`nif [ -x ./$bin ]; then exec ./$bin$extra `"`$@`"; fi`nif command -v hl > /dev/null 2>&1; then exec hl $file$extra `"`$@`"; fi`necho `"Primero / First / D'abord : sh compilar.sh`"`nexit 1`n"
 	}
@@ -157,32 +171,38 @@ Galaxy 55 (offline) v$Version - macOS
 Port NO oficial de Galaxy 55 (Motion Twin, 2012). Licencia CC BY-NC-SA 4.0 (ver LICENSE y NOTICE).
 Codigo y novedades: https://github.com/Pv1E/galaxy55-offline
 
-En los Mac con procesador Apple (M1 y siguientes) HashLink no tiene maquina virtual: el juego se compila una vez en tu Mac
-desde el codigo C de la carpeta "hlc" (unos minutos). Sirve igual en un Mac Intel.
-1. Instala Homebrew (https://brew.sh) y las herramientas de Xcode (en una terminal: xcode-select --install).
-2. Descomprime esta carpeta ENTERA y, en una terminal dentro de ella:  sh compilar.sh
-   (instala "hashlink" con Homebrew si falta y crea galaxy55 y galaxy55-serveur).
-3. Para jugar:  sh jugar.sh      Servidor dedicado sin ventana:  sh galaxy55-serveur.sh  (puerto 55055 TCP y UDP)
-NO PROBADO en un Mac por nosotros: si falla, cuentanoslo con lo que sale en la terminal.
+No hay aplicacion lista para Mac: en los Mac con procesador Apple (M1 y siguientes) HashLink no tiene maquina virtual, asi
+que el juego se compila UNA VEZ en tu Mac (unos minutos) y eso crea la aplicacion "Galaxy 55.app". Sirve igual en un Mac Intel.
+1. Instala Homebrew (https://brew.sh) y las herramientas de Xcode (en Terminal: xcode-select --install).
+2. Descomprime esta carpeta ENTERA. Abre Terminal (Aplicaciones > Utilidades), escribe  sh  y un espacio, arrastra el
+   archivo compilar.sh desde el Finder a la ventana de Terminal y pulsa Intro. Instala "hashlink" con Homebrew si falta.
+3. Aparece "Galaxy 55.app" en esta carpeta: doble clic para jugar (puedes moverla a Aplicaciones). No desinstales hashlink.
+Servidor dedicado sin ventana: sh galaxy55-serveur.sh (en Terminal, igual que en el paso 2; puerto 55055 TCP y UDP).
+NO PROBADO en un Mac por nosotros: si falla, cuentanoslo con lo que sale en Terminal.
 Las partidas, los ajustes y tu identidad del multijugador (identite.g55, no se la des a nadie) van en ~/Galaxy55.
 Multijugador con jugadores de Windows, Linux y macOS a la vez, si todos tienen ESTA version.
 
 ---
-English: unofficial native port of Motion Twin's Galaxy 55 (2012). On Apple Silicon Macs HashLink has no virtual machine,
-so the game is compiled once on your Mac from the C code in "hlc" (a few minutes; also works on Intel Macs). Install
-Homebrew (https://brew.sh) and the Xcode tools (xcode-select --install), unzip the whole folder, then in a terminal inside
-it: "sh compilar.sh" (installs hashlink with Homebrew if needed), then "sh jugar.sh" to play, or "sh galaxy55-serveur.sh"
-for a dedicated server (port 55055 TCP and UDP). NOT tested on a Mac by us: please report what the terminal shows.
-Saves and your multiplayer identity (identite.g55, never share it) go to ~/Galaxy55. Multiplayer works between Windows,
-Linux and macOS players on THIS same version.
+English: there is no ready-made Mac app: on Apple Silicon Macs HashLink has no virtual machine, so the game is compiled
+ONCE on your Mac (a few minutes), which creates the app "Galaxy 55.app" (also works on Intel Macs).
+1. Install Homebrew (https://brew.sh) and the Xcode tools (in Terminal: xcode-select --install).
+2. Unzip the whole folder. Open Terminal (Applications > Utilities), type  sh  and a space, drag the file compilar.sh from
+   the Finder into the Terminal window and press Return. It installs "hashlink" with Homebrew if needed.
+3. "Galaxy 55.app" appears in this folder: double-click it to play (you can move it to Applications). Keep hashlink installed.
+Dedicated server without a window: sh galaxy55-serveur.sh (port 55055 TCP and UDP). NOT tested on a Mac by us: please
+report what Terminal shows. Saves and your multiplayer identity (identite.g55, never share it) go to ~/Galaxy55.
+Multiplayer works between Windows, Linux and macOS players on THIS same version.
 
-Francais : portage non officiel de Galaxy 55 (Motion Twin, 2012). Sur les Mac a puce Apple, HashLink n'a pas de machine
-virtuelle : le jeu se compile une fois sur ton Mac a partir du code C du dossier "hlc" (quelques minutes ; marche aussi
-sur Mac Intel). Installe Homebrew (https://brew.sh) et les outils Xcode (xcode-select --install), decompresse tout le
-dossier, puis dans un terminal ouvert dedans : "sh compilar.sh" (installe hashlink avec Homebrew si besoin), ensuite
-"sh jugar.sh" pour jouer ou "sh galaxy55-serveur.sh" pour un serveur dedie (port 55055 TCP et UDP). PAS teste sur Mac
-par nous : signale ce qu'affiche le terminal en cas de souci. Parties et identite du multijoueur (identite.g55, ne la
-donne a personne) dans ~/Galaxy55. Le multijoueur marche entre joueurs Windows, Linux et macOS sur CETTE meme version.
+Francais : il n'y a pas d'application Mac toute prete : sur les Mac a puce Apple, HashLink n'a pas de machine virtuelle,
+donc le jeu se compile UNE FOIS sur ton Mac (quelques minutes), ce qui cree l'application "Galaxy 55.app" (marche aussi
+sur Mac Intel).
+1. Installe Homebrew (https://brew.sh) et les outils Xcode (dans Terminal : xcode-select --install).
+2. Decompresse tout le dossier. Ouvre Terminal (Applications > Utilitaires), tape  sh  et un espace, glisse le fichier
+   compilar.sh depuis le Finder dans la fenetre de Terminal, puis Entree. Il installe "hashlink" avec Homebrew si besoin.
+3. "Galaxy 55.app" apparait dans ce dossier : double-clic pour jouer (tu peux la ranger dans Applications). Garde hashlink.
+Serveur dedie sans fenetre : sh galaxy55-serveur.sh (port 55055 TCP et UDP). PAS teste sur Mac par nous : signale ce
+qu'affiche Terminal en cas de souci. Parties et identite du multijoueur (identite.g55, ne la donne a personne) dans
+~/Galaxy55. Le multijoueur marche entre joueurs Windows, Linux et macOS sur CETTE meme version.
 "@ "`n"
 } else { "aviso: sin $Hlc (port/tools/build-hlc-sources.sh) no se hace el zip de macOS" }
 

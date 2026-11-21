@@ -4,8 +4,10 @@
 # maquina virtual hl, solo HashLink/C. Sirve igual en un Mac Intel o en Linux.
 #   macOS: sh compilar.sh   (instala hashlink con Homebrew si falta; Xcode Command Line Tools: xcode-select --install)
 #   otro:  HASHLINK=/ruta/de/hashlink sh compilar.sh   (con include/hl.h, hlc.h, hlc_main.c y lib/libhl + *.hdll)
-# Crea galaxy55 (el juego) y galaxy55-serveur (el servidor dedicado) en esta carpeta.
+# Crea galaxy55 (el juego) y galaxy55-serveur (el servidor dedicado) en esta carpeta y, en macOS, la aplicacion
+# "Galaxy 55.app" (doble clic; se puede mover a Aplicaciones), con el juego, sus recursos y el icono.
 set -e
+APPVER="__VERSION__"
 cd "$(dirname "$0")"
 if [ -z "$HASHLINK" ]; then
 	if ! command -v brew > /dev/null 2>&1; then
@@ -46,4 +48,52 @@ build() {
 }
 build hlc/game galaxy55.c galaxy55 "$GAMEEXTRA" fmt sdl openal ssl ui uv sqlite
 build hlc/server server.c galaxy55-serveur "" fmt ssl sqlite
-echo "OK: ./jugar.sh"
+
+# la aplicacion de macOS: el ejecutable de la app es un script que entra en Resources (donde estan el juego y "res", que el
+# juego busca en la carpeta actual) y lo abre. Hecha en este Mac, no lleva la marca de cuarentena de lo descargado: se abre
+# sin el aviso de Gatekeeper. Necesita el hashlink de Homebrew que ha usado la compilacion (no desinstalarlo).
+mkapp() {
+	app="Galaxy 55.app"
+	rm -rf "$app"
+	mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
+	cp galaxy55 "$app/Contents/Resources/galaxy55"
+	cp -R res "$app/Contents/Resources/res"
+	printf '#!/bin/sh\ncd "$(dirname "$0")/../Resources" && exec ./galaxy55 "$@"\n' > "$app/Contents/MacOS/Galaxy55"
+	chmod +x "$app/Contents/MacOS/Galaxy55" "$app/Contents/Resources/galaxy55"
+	short="${APPVER%%-*}"
+	cat > "$app/Contents/Info.plist" << PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key><string>Galaxy 55</string>
+	<key>CFBundleDisplayName</key><string>Galaxy 55</string>
+	<key>CFBundleIdentifier</key><string>local.galaxy55-offline.game</string>
+	<key>CFBundleExecutable</key><string>Galaxy55</string>
+	<key>CFBundlePackageType</key><string>APPL</string>
+	<key>CFBundleShortVersionString</key><string>$short</string>
+	<key>CFBundleVersion</key><string>$APPVER</string>
+	<key>CFBundleIconFile</key><string>galaxy55</string>
+	<key>LSMinimumSystemVersion</key><string>11.0</string>
+</dict>
+</plist>
+PLIST
+	# icono: icon.png del paquete (256x256) a galaxy55.icns con las herramientas de macOS; sin ellas, la app sin icono
+	if [ -f icon.png ] && command -v sips > /dev/null 2>&1 && command -v iconutil > /dev/null 2>&1; then
+		iconset="$(mktemp -d)/galaxy55.iconset"
+		mkdir -p "$iconset"
+		for s in 16 32 128 256; do
+			sips -z $s $s icon.png --out "$iconset/icon_${s}x${s}.png" > /dev/null 2>&1 || true
+			d=$((s * 2))
+			sips -z $d $d icon.png --out "$iconset/icon_${s}x${s}@2x.png" > /dev/null 2>&1 || true
+		done
+		iconutil -c icns "$iconset" -o "$app/Contents/Resources/galaxy55.icns" > /dev/null 2>&1 || echo "(sin icono / no icon / sans icone)"
+	fi
+	echo "== $app"
+}
+if [ "$OS" = "Darwin" ] || [ -n "$MAKEAPP" ]; then mkapp; fi
+if [ "$OS" = "Darwin" ]; then
+	echo "OK: Galaxy 55.app (doble clic / double-click / double-clic) - ./jugar.sh"
+else
+	echo "OK: ./jugar.sh"
+fi
