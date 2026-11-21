@@ -1,0 +1,4 @@
+# carga del planeta de la partida de prueba: con -Extra "--loadtime --frametime=50 --bgbiome=BIMars --size=3 --seed=7" dice lo
+# que ha costado cada fase (carga ...) y los fotogramas de mas de 50 ms mientras carga (parada ...). Lo justo para medir.
+wait 5
+quit

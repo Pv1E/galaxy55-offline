@@ -311,6 +311,8 @@ class GalaxyApp extends hxd.App {
 	var shotFrames = 30;
 	var demoSaves = false;
 	var shotBiome : String = null;
+	/** --size=N (anadido del port): tamano en trozos de la partida de prueba (1, 2 o 3) */
+	var shotSize = 1;
 	var shotCont = false;
 	var shotN = 20;
 	var shotSlot = 2;
@@ -355,6 +357,7 @@ class GalaxyApp extends hxd.App {
 			else if( StringTools.startsWith(a, "--slot=") ) shotSlot = Std.parseInt(a.substr(7));
 			else if( StringTools.startsWith(a, "--at=") ) shotAt = a.substr(5).split(",").map(Std.parseFloat);
 			else if( StringTools.startsWith(a, "--bgbiome=") ) shotBiome = a.substr(10);
+			else if( StringTools.startsWith(a, "--size=") ) shotSize = Std.parseInt(a.substr(7));
 			else if( StringTools.startsWith(a, "--lang=") ) Lang.setCode(a.substr(7));
 		}
 		Theme.init();
@@ -3584,7 +3587,7 @@ class GalaxyApp extends hxd.App {
 					shotCont = true;
 					shotScreen = "mine";
 				}
-				var info = shotLoad != null ? SaveData.read(shotLoad) : shotCont ? (SaveData.list().length > 0 ? SaveData.read(SaveData.list()[0].id) : null) : SaveData.create("Prueba", shotSeed, shotBiome != null ? shotBiome : "BIAutumn", 1);
+				var info = shotLoad != null ? SaveData.read(shotLoad) : shotCont ? (SaveData.list().length > 0 ? SaveData.read(SaveData.list()[0].id) : null) : SaveData.create("Prueba", shotSeed, shotBiome != null ? shotBiome : "BIAutumn", shotSize);
 				if( info == null ) {
 					Sys.println("no se encontro la partida; hay: " + [for( i in SaveData.list() ) i.id].join(", ") + "  carpeta=" + SaveData.dir());
 					Sys.exit(1);
