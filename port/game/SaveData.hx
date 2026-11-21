@@ -214,6 +214,18 @@ class SaveData {
 		};
 	}
 
+	/**
+	 * Una partida de antes del generador actual (anadido del port): un planeta suyo (el actual o uno ya visitado) es de una
+	 * version anterior a gen.Generator.VERSION. Se genera con la actual: sus cambios siguen, pero el terreno de alrededor puede
+	 * no cuadrar. La lista la marca ("Ancienne partie") y se avisa cada vez que se abre (GalaxyApp.playSave)
+	 */
+	public static function isOldGeneration( info : SaveInfo ) : Bool {
+		if( genVersion(info.genVersion) < gen.Generator.VERSION ) return true;
+		if( info.uni != null && info.uni.planets != null )
+			for( p in info.uni.planets ) if( genVersion(p.genVersion) < gen.Generator.VERSION ) return true;
+		return false;
+	}
+
 	/** version del generador guardada (SaveInfo.genVersion, UniPlanet.genVersion, tambien recien leida del json): null = 0 */
 	public static function genVersion( v : Dynamic ) : Int {
 		return v == null ? 0 : Std.int(v);
@@ -506,6 +518,7 @@ class SaveData {
 				var info = readLegacy(jsonPath(id), id, SaveNames.lineage());
 				info.listOnly = true;
 				info.legacy = true;
+				info.oldGeneration = isOldGeneration(info);
 				info.inSpace = info.uni != null && info.uni.space == true;
 				out.push(info);
 			} catch( e : Dynamic ) {

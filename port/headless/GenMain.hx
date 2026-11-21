@@ -19,6 +19,15 @@ import Common;
 	                                                    en cada caso, sin mirar fichero y linea (sale con codigo 1 si cambia algo)
 	  hl port/out/gen.hl --census [CASOS]               anomalias puestas (DetailsGenerator.placed) por nombre y bioma: cuantas y
 	                                                    en cuantos planetas
+	  hl port/out/gen.hl --locality [CASOS]             generador version 1: cada caso dos veces (igual) y con una estructura de
+	                                                    prueba mas: lo que cambia esta en la caja de lo que cambia (1-10, 1 y 2)
+	  hl port/out/gen.hl --allstructures [--seeds A-B] [--sizes S]
+	                                                    cada estructura del registro forzada en cada bioma: acaba, sale y su caja
+	                                                    es razonable (1-3, tamanos 1 y 2: en Marte las grutas y en el
+	                                                    bosque acido el artefacto y la cascada solo caben en los grandes)
+	  hl port/out/gen.hl --fuzz N [--limit S]           todos los biomas (hangar y cometas incluidos) y tamanos con N semillas al
+	                                                    azar: cada planeta acaba en S segundos (60)
+	  hl port/out/gen.hl --registry                     tipos de las estructuras (Structures) frente a las anomalias de kubindex.json
 	CASOS: --seeds A-B (o una sola), --biomes B1,B2 (todos menos BITest y BIShed; las cometas miden COMET_SIZE con cualquier
 	tamano), --sizes 1,2,3 (en trozos), --version N (Generator.VERSION). Por defecto: --profile 1-5 de tamano 3, --steps 1-100
 	de tamano 1, --census 1-50 de tamano 2.
@@ -79,11 +88,7 @@ class GenMain {
 		var gen = new gen.DetailsGenerator(sizeChunks << Const.BITS, seed);
 		#end
 		gen.version = version;
-		var bd = Data.getBiome(biome);
-		gen.alloc(bd.water);
-		gen.alloc(BMinIron);
-		gen.alloc(BMinAluminium);
-		for( s in bd.soils ) gen.alloc(s);
+		gen.reserveBlocks(biome);
 		gen.startGenerate(biome);
 		return gen;
 	}
@@ -442,6 +447,241 @@ class GenMain {
 		}
 		out("CENSUS " + cases.length + " casos");
 	}
+
+	// ---------------------------------------------------------------- pruebas del generador version 1 (anadido del port)
+
+	/** el bloque (indice de BlockKind) de cada numero local de un generador: dos mundos se comparan por nombre de bloque */
+	static function kindTable( g : gen.Generator ) : Array<Int> {
+		return [for( v in 0...256 ) (v & 127) < g.blocks.length ? Type.enumIndex(g.blocks[v & 127].k) : -1 - v];
+	}
+
+	/** los bytes del mundo de un generador */
+	static function worldBytes( g : gen.Generator ) : haxe.io.Bytes return g.getBytes().b;
+
+	/** los dos mundos tienen los mismos bloques en las mismas celdas */
+	static function sameWorld( a : gen.Generator, b : gen.Generator ) : Bool {
+		var ka = kindTable(a), kb = kindTable(b), wa = worldBytes(a), wb = worldBytes(b);
+		if( wa.length != wb.length ) return false;
+		for( i in 0...wa.length ) if( ka[wa.get(i)] != kb[wb.get(i)] ) return false;
+		return true;
+	}
+
+	static function poseKey( p : gen.DetailsGenerator.Pose ) : String return p.id + "@" + p.x + "," + p.y + "," + p.z + "/" + p.box.join(",");
+
+	/** distancia en el mapa que da la vuelta (como Generator.realDist) */
+	static inline function wrap( d : Int, size : Int ) : Int {
+		var half = size >> 1;
+		return d <= -half ? d + size : (d > half ? d - size : d);
+	}
+
+	/**
+	 * --locality [CASOS]: la garantia de localidad del generador version 1. Cada caso se genera dos veces (tiene que salir igual)
+	 * y otra con una estructura de prueba mas en el registro (un cubo de cristal de 5x5x5 sobre el suelo, etapa Surface): toda
+	 * celda que cambia (por nombre de bloque) tiene que estar en la caja de una pose que ha cambiado, con un margen: en x e y,
+	 * 1 mas la cadena de propagacion mas larga (una cascada o la lava que la estructura desvia baja y se extiende una celda por
+	 * eslabon), 1 por arriba y hasta abajo del todo (lo que se propaga cae)
+	 */
+	static function locality( args : Array<String> ) {
+		var cases = parseCases(args, "1-10", "1,2");
+		var test : gen.Structures.StructureDef = { id : "localitytest", group : null, stage : gen.Structures.StructureStage.Surface, p : 1,
+			biomes : null, since : null, until : null, f : function(g, x, y, z) @:privateAccess {
+				if( z <= g.waterLevel || g.get(x, y, z) != 0 ) return false;
+				var glass = g.alloc(BGlass);
+				for( dz in 0...5 ) for( dy in -2...3 ) for( dx in -2...3 ) g.set(x + dx, y + dy, z + dz, glass);
+				return true;
+			} };
+		// margen en x e y: lo que se propaga (cascadas, lava) baja y se extiende una celda por eslabon de su cadena (Generator.coverAll)
+		var chain = 0;
+		for( b in Block.all ) {
+			var n = 0, k = b;
+			while( k != null && k.propagate != null && n < 20 ) {
+				n++;
+				k = k.propagate == k ? null : k.propagate;
+			}
+			if( n > chain ) chain = n;
+		}
+		var m = 1 + chain;
+		out("margen " + m + " (cadena de propagacion mas larga: " + chain + ")");
+		var bad = 0, nondet = 0, posed = 0;
+		for( c in cases ) {
+			var a = generate(c);
+			if( !sameWorld(a, generate(c)) ) {
+				nondet++;
+				out("NO DETERMINISTA " + caseName(c));
+			}
+			gen.Structures.ALL.push(test);
+			var b = try generate(c) catch( e : Dynamic ) {
+				gen.Structures.ALL.pop();
+				throw e;
+			}
+			gen.Structures.ALL.pop();
+			var ka = [for( p in a.poses ) poseKey(p) => true], kb = [for( p in b.poses ) poseKey(p) => true];
+			var changed = [for( p in a.poses ) if( !kb.exists(poseKey(p)) ) p].concat([for( p in b.poses ) if( !ka.exists(poseKey(p)) ) p]);
+			var tests = [for( p in b.poses ) if( p.id == test.id ) p].length;
+			posed += tests;
+			var ta = kindTable(a), tb = kindTable(b), wa = worldBytes(a), wb = worldBytes(b);
+			var size = a.size, diff = 0, outside = 0, first = null;
+			for( i in 0...wa.length ) {
+				if( ta[wa.get(i)] == tb[wb.get(i)] ) continue;
+				diff++;
+				var col = i >> Const.ZBITS, z = i & (Const.ZSIZE - 1);
+				var x = col % size, y = Std.int(col / size), inside = false;
+				for( p in changed ) {
+					var dx = wrap(x - p.x, size), dy = wrap(y - p.y, size), bx = p.box;
+					if( dx >= bx[0] - m && dx <= bx[3] + m && dy >= bx[1] - m && dy <= bx[4] + m && z <= bx[5] + 1 ) {
+						inside = true;
+						break;
+					}
+				}
+				if( !inside ) {
+					outside++;
+					if( first == null ) {
+						inline function kn( t : Array<Int>, v : Int ) return t[v] < 0 ? "#" + v : Type.getEnumConstructs(BlockKind)[t[v]];
+						first = x + "," + y + "," + z + " " + kn(ta, wa.get(i)) + " -> " + kn(tb, wb.get(i)) + "; poses cambiadas "
+							+ [for( p in changed ) p.id + "@" + p.x + "," + p.y + "," + p.z + " caja " + p.box.join(",")].join(" | ");
+					}
+				}
+			}
+			if( outside > 0 ) bad++;
+			out((outside > 0 ? "FUERA  " : "OK     ") + caseName(c) + ": " + tests + " de prueba, " + changed.length + " poses cambiadas, "
+				+ diff + " celdas cambiadas" + (outside > 0 ? ", " + outside + " fuera de sus cajas (la primera " + first + ")" : ""));
+		}
+		out(bad == 0 && nondet == 0 ? 'LOCALITY OK (${cases.length} casos, $posed estructuras de prueba)' : 'LOCALITY FALLA ($bad casos fuera de las cajas, $nondet no deterministas)');
+		Sys.exit(bad == 0 && nondet == 0 ? 0 : 1);
+	}
+
+	/** genera un caso por tandas, con un limite de tiempo (s); null si no acaba */
+	static function generateTimed( c : GenCase, limit : Float, ?force : String ) : gen.DetailsGenerator {
+		var g = makeGen(c.seed, c.biome, c.size, versionOf(c));
+		if( force != null ) g.forceStructure = force;
+		var t0 = haxe.Timer.stamp();
+		while( g.process(200) )
+			if( haxe.Timer.stamp() - t0 > limit ) return null;
+		return g;
+	}
+
+	/** los biomas de planeta (sin BITest; con BIShed, el hangar) y los de cometa */
+	static function allBiomes( comets : Bool ) : Array<String> {
+		return [for( b in Type.allEnums(BiomeKind) ) if( b != BITest && (comets || !isComet(Type.enumConstructor(b))) ) Type.enumConstructor(b)];
+	}
+
+	/**
+	 * --allstructures [--seeds A-B] [--sizes S]: cada estructura del registro, forzada en cada region (sin tirar su p), en cada
+	 * bioma en el que puede salir (con mas semillas, hasta 12, si no ha salido con las pedidas): tiene que acabar (60 s), ponerse
+	 * al menos una vez y quedarse en una caja razonable (3/4 del
+	 * planeta mas grande probado, 128 como poco: los relieves y el gran crater crecen con el planeta)
+	 */
+	static function allStructures( args : Array<String> ) {
+		var seeds = "1-3", sizes = "1,2", i = 1;
+		while( i + 1 < args.length ) {
+			switch( args[i] ) {
+			case "--seeds": seeds = args[i + 1];
+			case "--sizes": sizes = args[i + 1];
+			default: throw "opcion desconocida: " + args[i];
+			}
+			i += 2;
+		}
+		var r = seeds.split("-").map(Std.parseInt), sz = sizes.split(",").map(Std.parseInt);
+		var bad = 0, runs = 0;
+		for( e in gen.Structures.ALL )
+			for( biome in allBiomes(false) ) {
+				var stage = e.stage;
+				if( gen.Structures.active(biome, stage, gen.Generator.VERSION, e.id).length == 0 ) continue;
+				var n = 0, worst = 0, slow = 0., err = null;
+				// las semillas pedidas y, si no ha salido, mas (hasta 12): en algunos biomas una estructura cabe pocas veces
+				var last = r.length > 1 ? r[1] : r[0], seed = r[0];
+				while( seed <= last || (n == 0 && err == null && seed < r[0] + 12) ) {
+					var s0 = seed++;
+					for( s in sz ) {
+						var seed = s0;
+						runs++;
+						var t0 = haxe.Timer.stamp();
+						var g = try generateTimed({ seed : seed, biome : biome, size : s }, 60, e.id) catch( ex : Dynamic ) {
+							err = Std.string(ex);
+							null;
+						}
+						var dt = haxe.Timer.stamp() - t0;
+						if( dt > slow ) slow = dt;
+						if( g == null ) {
+							if( err == null ) err = "no acaba en 60 s (semilla " + seed + ")";
+							continue;
+						}
+						for( p in g.poses )
+							if( p.id == e.id ) {
+								n++;
+								var w = p.box[3] - p.box[0] + 1, h = p.box[4] - p.box[1] + 1;
+								if( w > worst ) worst = w;
+								if( h > worst ) worst = h;
+							}
+					}
+				}
+				// razonable: como mucho 3/4 del planeta (los relieves y el gran crater crecen con el), y no menos de 128
+				var limit = Std.int(Math.max(128, (sz[sz.length - 1] << Const.BITS) * 0.75));
+				var ok = err == null && n > 0 && worst <= limit;
+				if( !ok ) bad++;
+				out((ok ? "OK     " : "FALLA  ") + pad(e.id, 16) + pad(biome, 16) + lpad("" + n, 5) + " puestas, caja " + worst + ", "
+					+ ms(slow * 1000) + " ms como mucho" + (err != null ? ", " + err : "") + (n == 0 && err == null ? ", ninguna puesta" : ""));
+			}
+		out(bad == 0 ? 'ALLSTRUCTURES OK ($runs planetas)' : 'ALLSTRUCTURES FALLA ($bad estructuras y biomas)');
+		Sys.exit(bad == 0 ? 0 : 1);
+	}
+
+	/**
+	 * --fuzz N [--limit S]: todos los biomas (con el hangar BIShed y las cometas) en todos los tamanos (1 a 3; las cometas, el
+	 * suyo) con N semillas al azar: cada planeta tiene que acabar en S segundos (60)
+	 */
+	static function fuzz( args : Array<String> ) {
+		var n = args.length > 1 ? Std.parseInt(args[1]) : 5, limit = 60.;
+		if( args.length > 3 && args[2] == "--limit" ) limit = Std.parseFloat(args[3]);
+		var bad = 0, runs = 0, worst = 0., worstCase = "";
+		var rnd = new gen.Rng(Std.int(haxe.Timer.stamp() * 1000) & 0xFFFFFF);
+		for( biome in allBiomes(true) )
+			for( s in (isComet(biome) ? [1] : [1, 2, 3]) )
+				for( k in 0...n ) {
+					var c = { seed : rnd.random(1 << 30), biome : biome, size : s };
+					runs++;
+					var t0 = haxe.Timer.stamp();
+					var g = try generateTimed(c, limit) catch( e : Dynamic ) {
+						bad++;
+						out("ERROR  " + caseName(c) + ": " + Std.string(e));
+						continue;
+					}
+					var dt = haxe.Timer.stamp() - t0;
+					if( g == null ) {
+						bad++;
+						out("LENTO  " + caseName(c) + ": no acaba en " + limit + " s");
+						continue;
+					}
+					if( dt > worst ) {
+						worst = dt;
+						worstCase = caseName(c);
+					}
+				}
+		out((bad == 0 ? "FUZZ OK" : "FUZZ FALLA (" + bad + ")") + " (" + runs + " planetas, el mas lento " + ms(worst * 1000) + " ms: " + worstCase + ")");
+		Sys.exit(bad == 0 ? 0 : 1);
+	}
+
+	/**
+	 * --registry: los tipos (group) de las estructuras del registro estan en las anomalias de kubindex.json (Base de datos
+	 * ESCorp), y que anomalias no tiene ninguna estructura (bonus y cavebonus: los bonus, no son estructuras)
+	 */
+	static function registry() {
+		var o : Dynamic = haxe.Json.parse(sys.io.File.getContent("src/G55/fla/client/gfx/kubindex.json"));
+		var ids = [for( a in (o.anomalies : Array<Dynamic>) ) Std.string(a.id)];
+		var groups = new Map<String, Bool>(), ids2 = new Map<String, Bool>(), missing = [];
+		for( e in gen.Structures.ALL ) {
+			if( ids2.exists(e.id) ) missing.push("id repetido " + e.id);
+			ids2.set(e.id, true);
+			if( e.group == null ) continue;
+			groups.set(e.group, true);
+			if( ids.indexOf(e.group) < 0 && missing.indexOf(e.group) < 0 ) missing.push(e.group);
+		}
+		var unused = [for( i in ids ) if( !groups.exists(i) && i != "bonus" && i != "cavebonus" ) i];
+		out("estructuras: " + gen.Structures.ALL.length + ", tipos: " + [for( g in groups.keys() ) g].length + ", anomalias en kubindex.json: " + ids.length);
+		if( unused.length > 0 ) out("anomalias sin estructura: " + unused.join(", "));
+		out(missing.length == 0 ? "REGISTRY OK" : "REGISTRY FALLA: " + missing.join(", "));
+		Sys.exit(missing.length == 0 ? 0 : 1);
+	}
 	#end
 
 	static function main() {
@@ -460,6 +700,10 @@ class GenMain {
 			case "--steps": stepSums(args);
 			case "--compare" if( args.length >= 3 ): compare(args[1], args[2]);
 			case "--census": census(args);
+			case "--locality": locality(args);
+			case "--allstructures": allStructures(args);
+			case "--fuzz": fuzz(args);
+			case "--registry": registry();
 			default:
 				if( args.length >= 3 )
 					runAll([{ seed : Std.parseInt(args[0]), biome : args[1], size : Std.parseInt(args[2]), version : args.length >= 4 ? Std.parseInt(args[3]) : null }]);

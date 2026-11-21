@@ -6,16 +6,19 @@ wait 3
 planet
 wait 30
 find ship
-tp fx+6.5 fy+3.5 top 0 -0.25
+# una plataforma de roca en el aire junto a la nave (z 79, se anda en 80): no depende del terreno del sitio de aterrizaje
+filla fx+3 fy-1 fx+13 fy+7 79 79 BRock
+filla fx+3 fy-1 fx+13 fy+7 80 86 none
+tp fx+6.5 fy+3.5 80 0 -0.25
 wait 19
-setp fx+8 fy+3 top BChest
+setp fx+8 fy+3 80 BChest
 find BChest 4
 give BWood 20
 print inv
 activate fx fy fz
 wait 4
 print chest
-# con la ventana abierta no se salta (jetpack) ni se excava (Game.actionKeys = false): sigue en z 36, la cantina apuntada
+# con la ventana abierta no se salta (jetpack) ni se excava (Game.actionKeys = false): sigue en z 80, la cantina apuntada
 # no acumula poder (0) y sigue ahi. La cantina va a 8,3 de donde aterriza la nave (find ship) y find BChest la encuentra con
 # la x ya envuelta (el planeta da la vuelta en 128: 132 = 4), la que necesita lookat
 lookat fx+0.5 fy+0.5 fz+0.4

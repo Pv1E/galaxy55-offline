@@ -220,6 +220,10 @@ class SaveTest {
 		check("en la lista, solo con meta.json", l.length == 1 && l[0].listOnly == true && l[0].name == info.name && l[0].seed == 4242
 			&& l[0].biome == "BIMoon" && l[0].sizeChunks == 2 && l[0].creative == true && l[0].playSeconds == info.playSeconds);
 		check("miniatura", SaveData.thumb(info.id) != null && SaveData.thumb(info.id).compare(THUMB) == 0);
+		// planeta actual de la version de ahora y uno visitado de la 0: Ancienne partie (meta.json y la lista)
+		check("con un planeta de la version 0: antigua", SaveData.isOldGeneration(info) && l[0].oldGeneration == true);
+		var fresh = SaveData.create("Nueva", 1, "BIAutumn", 1);
+		check("partida nueva: no es antigua", !SaveData.isOldGeneration(fresh) && SaveArchive.meta(fresh).oldGeneration == false);
 		// guardado automatico (sin miniatura): deja la que habia; el anterior pasa a .bak
 		var before = info.playSeconds;
 		info.playSeconds += 10;
@@ -328,6 +332,7 @@ class SaveTest {
 		sys.io.File.saveBytes(SaveData.thumbPath(id), THUMB);
 		var l = [for( x in SaveData.list() ) if( x.id == id ) x];
 		check("la de antes en la lista", l.length == 1 && l[0].legacy == true && l[0].name == "Partida de antes");
+		check("la de antes: antigua (version 0)", l[0].oldGeneration == true);
 		var m = SaveData.read(id);
 		check("migrada al leerla", m != null, SaveData.lastError);
 		var bk = SaveData.backupDir();

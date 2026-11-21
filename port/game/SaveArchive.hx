@@ -272,9 +272,7 @@ class SaveArchive {
 
 	/** lo que lee la lista de partidas (SaveData.list): sin abrir game.json */
 	public static function meta( info : SaveInfo ) : Dynamic {
-		var old = info.genVersion != null && info.genVersion < gen.Generator.VERSION;
-		if( info.uni != null && info.uni.planets != null )
-			for( p in info.uni.planets ) if( SaveData.genVersion(p.genVersion) < gen.Generator.VERSION ) old = true;
+		var old = SaveData.isOldGeneration(info);
 		return {
 			format : FORMAT, name : info.name, created : info.created, saved : info.saved, createdWith : info.createdWith,
 			savedWith : info.savedWith, playSeconds : info.playSeconds, seed : info.seed, biome : info.biome,

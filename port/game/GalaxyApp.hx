@@ -63,6 +63,11 @@ class SaveRow extends Widget {
 			var t = Theme.text(this, ver, 1.5, Theme.DIM, 0, 74);
 			t.x = Std.int(w - 14 - t.textWidth * t.scaleX);
 		}
+		// anadido del port: generada con un generador anterior (SaveData.isOldGeneration), encima de las versiones
+		if( info.oldGeneration == true ) {
+			var t = Theme.text(this, Lang.t("save.old"), 1.5, Theme.ACCENT, 0, 52);
+			t.x = Std.int(w - 14 - t.textWidth * t.scaleX);
+		}
 		// botones de las acciones, arriba a la derecha (el nombre tiene 24 letras como mucho y no llega a ellos)
 		acts = new h2d.Object(this);
 		actBg = [];
@@ -788,10 +793,11 @@ class GalaxyApp extends hxd.App {
 	}
 
 	/**
-	 * Jugar una partida de la lista (anadido del port): se lee entera (la lista solo tiene meta.json). Si tiene bloques que esta
-	 * version no conoce (UnknownBlocks: la guardo una version mas reciente), antes se avisa: se veran como bloques de remplazo y se
-	 * guardan tal cual. Una de antes (.json) solo se migra si se juega (con No se queda como estaba). Una que no se puede leer no
-	 * se abre.
+	 * Jugar una partida de la lista (anadido del port): se lee entera (la lista solo tiene meta.json). Una partida de un
+	 * generador anterior (SaveData.isOldGeneration) avisa cada vez que se abre: el terreno alrededor de lo construido puede no
+	 * cuadrar. Si tiene bloques que esta version no conoce (UnknownBlocks: la guardo una version mas reciente), antes se avisa:
+	 * se veran como bloques de remplazo y se guardan tal cual. Una de antes (.json) solo se migra si se juega (con No o Volver se
+	 * queda como estaba). Una que no se puede leer no se abre.
 	 */
 	function playSave( parent : Screen, listed : SaveInfo ) {
 		var info = listed.unreadable != null ? null : SaveData.peek(listed.id);
@@ -804,12 +810,16 @@ class GalaxyApp extends hxd.App {
 			var full = listed.legacy == true ? SaveData.read(listed.id) : info;
 			if( full == null ) unreadable(SaveData.lastError) else startGame(full);
 		}
-		var r = UnknownBlocks.count(info);
-		if( UnknownBlocks.total(r) == 0 ) {
-			play();
-			return;
+		function unknown() {
+			var r = UnknownBlocks.count(info);
+			if( UnknownBlocks.total(r) == 0 ) play();
+			else askConfirm(parent, Lang.t("unknown.ask").split("%n%").join("" + UnknownBlocks.total(r)), Lang.t("unknown.warn"), Theme.DANGER, play);
 		}
-		askConfirm(parent, Lang.t("unknown.ask").split("%n%").join("" + UnknownBlocks.total(r)), Lang.t("unknown.warn"), Theme.DANGER, play);
+		// una partida de un generador anterior: cada vez que se abre (Continuar / Volver)
+		if( SaveData.isOldGeneration(info) )
+			askConfirm(parent, Lang.t("old.ask"), Lang.t("old.warn"), Theme.ACCENT, unknown, null, null, Lang.t("continue"), Lang.t("back"));
+		else
+			unknown();
 	}
 	/** aviso que se muestra al terminar de cargar la partida (playSave) */
 	var loadToast : String;
@@ -1514,7 +1524,7 @@ class GalaxyApp extends hxd.App {
 
 	/** ventana de confirmacion (como askSkip): titulo, aviso (de color col) y No / Si. parent queda inactivo mientras tanto.
 	    host: donde se pone (ui; los paneles que van encima de ui, como los contratos, la ponen en s2d para que se vea) */
-	function askConfirm( parent : Screen, title : String, warn : String, col : Int, onYes : Void -> Void, ?onClose : Void -> Void, ?host : h2d.Object ) {
+	function askConfirm( parent : Screen, title : String, warn : String, col : Int, onYes : Void -> Void, ?onClose : Void -> Void, ?host : h2d.Object, ?yesLabel : String, ?noLabel : String ) {
 		if( modal != null && modal.parent != null ) return;
 		if( parent != null ) parent.active = false;
 		var m = new Screen(host != null ? host : ui);
@@ -1528,8 +1538,8 @@ class GalaxyApp extends hxd.App {
 		var n = Theme.text(m, warn, 1.7, col, 290, 236 + t.textHeight * t.scaleY + 20);
 		n.maxWidth = 700 / n.scaleX;
 		n.textAlign = Center;
-		var no = new Button(m, Lang.t("no"), 210, 52);
-		var yes = new Button(m, Lang.t("yes"), 210, 52);
+		var no = new Button(m, noLabel != null ? noLabel : Lang.t("no"), 210, 52);
+		var yes = new Button(m, yesLabel != null ? yesLabel : Lang.t("yes"), 210, 52);
 		m.add(no, 410, 430);
 		m.add(yes, 650, 430);
 		m.setFocus(0);
@@ -2934,7 +2944,7 @@ class GalaxyApp extends hxd.App {
 			for( c in i.inv.charges ) charges += c.n;
 			out.push("'" + i.name + "' " + (i.creative == true ? (i.survival == true ? "creativo(supervivencia)" : "creativo") : "aventura") + " tutorial=" + i.tutorial + " " + i.biome + "/" + i.sizeChunks
 				+ " bloques=" + blocks + " cargas=" + charges + " miniatura=" + (SaveData.thumb(i.id) != null ? "si" : "no") + " guardado=" + DateTools.format(Date.fromTime(i.saved), "%d/%m %H:%M:%S")
-				+ " version=" + i.createdWith + "/" + i.savedWith + " fila='" + SaveRow.versions(i) + "'"
+				+ " version=" + i.createdWith + "/" + i.savedWith + " fila='" + SaveRow.versions(i) + "'" + (SaveData.isOldGeneration(i) ? " antigua" : "")
 				+ " semilla=" + (i.uni != null ? i.uni.seed : i.seed) + " equipo_suelo=" + (DeathDrops.enabled(i) ? "si" : "no"));
 		}
 		return out.length + " partidas:\n  " + out.join("\n  ");

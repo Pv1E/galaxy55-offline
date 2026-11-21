@@ -309,14 +309,13 @@ class World {
 			wave.time = 0;
 		}
 		gen = comet ? new CometGenerator(size, seed) : new gen.DetailsGenerator(size, seed);
-		if( genVersion != null ) gen.version = genVersion;
+		// la version 0 (el generador del original) ya no existe: un planeta de antes se genera con la 1 y la partida guarda su 0
+		// (SaveData: "Ancienne partie")
+		if( genVersion != null ) gen.version = genVersion < 1 ? 1 : genVersion;
 		var bd = Data.getBiome(biome);
 		sunP = bd.sunPower;
 		sunF = bd.sunFalloff == null ? 1 : bd.sunFalloff;
-		gen.alloc(bd.water);
-		gen.alloc(BMinIron);
-		gen.alloc(BMinAluminium);
-		for( s in bd.soils ) gen.alloc(s);
+		gen.reserveBlocks(biome);
 		if( shipData == null ) {
 			gen.startGenerate(biome);
 			seaLevel = gen.getWaterInfos().level;

@@ -60,10 +60,27 @@ class Comets {
 	public static function make( seed : Int, sys : Int, k : Int ) : ExpPlanet {
 		var r = rand(seed, sys, k);
 		draw(r);
+		var s = r.random(1000000);
 		return {
-			id : idOf(sys), seed : r.random(1000000), size : 1, distance : -1, name : Lang.t("exp.comet"), status : PUnexplored, gas : false,
-			biome : KINDS[r.random(KINDS.length)], comet : k,
+			id : idOf(sys), seed : s, size : 1, distance : -1, name : Lang.t("exp.comet"), status : PUnexplored, gas : false,
+			biome : kindOf(s), comet : k,
 		};
+	}
+
+	/**
+	 * Tipo de una cometa (generador version 1): el de mayor hash (semilla de la cometa, nombre del tipo). Un tipo nuevo solo
+	 * cambia las cometas que pasan a ser de el (antes KINDS[random(n)]: un tipo mas cambiaba el de todas)
+	 */
+	public static function kindOf( cometSeed : Int ) : String {
+		var best = null, bestH = 0;
+		for( k in KINDS ) {
+			var h = gen.Rng.hash(cometSeed, k) & 0x7FFFFFFF;
+			if( best == null || h > bestH ) {
+				best = k;
+				bestH = h;
+			}
+		}
+		return best;
 	}
 
 	/** el sistema tiene cometa en la franja k (aunque ya se visitara) */

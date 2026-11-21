@@ -9,6 +9,7 @@
   "savedWith": "0.8.1",
   "playSeconds": 600,
   "creative": true,
+  "genVersion": 1,
   "inv": {
     "maxWeight": 64,
     "t": [{ "k": 400, "n": 5 }, { "k": 401, "n": 2 }, { "k": 5, "n": 3 }, null, null, null, null, null, null, null],

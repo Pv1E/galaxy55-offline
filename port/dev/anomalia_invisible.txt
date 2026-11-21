@@ -1,9 +1,9 @@
 # Anomalia Invisible (anadido del port, como los Invisibles de Kube): un cubo de 4x4x4, 8 Cofres de Kube envueltos en Kubes
 # invisibles, flotando sobre el terreno. Los Kubes invisibles pintan el cielo de detras; a traves de la vitre blindee teintee
 # o de la glace noire se ven como bajo una luz negra (aristas azules). Pasar por debajo identifica la anomalia.
-# uso: devrun.ps1 -Script port/dev/anomalia_invisible.txt -Extra "--lang=fr --seed=30"
-# semilla 30, otono, tamano 1: el cubo va de 112,2,51 a 115,5,54, los cofres de 113,3,52 a 114,4,53 (debajo, suelo hasta 40).
-# Las coordenadas van respecto a la anomalia (find anomaly invisible: fx fy = 114 4, el centro; fz = 54, lo alto del cubo)
+# uso: devrun.ps1 -Script port/dev/anomalia_invisible.txt -Extra "--lang=fr --seed=55"
+# semilla 55, otono, tamano 1 (generador version 1: la Invisible es su unica anomalia). Las coordenadas van respecto a la
+# anomalia (find anomaly invisible: fx fy = el centro del cubo, fz = lo alto del cubo)
 wait 3
 kub forget
 print kub

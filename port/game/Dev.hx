@@ -278,7 +278,8 @@ class Dev {
 			var an = null;
 			for( p in w.anomalies() ) if( an == null && p.n == a[2] ) an = p;
 			if( an == null && ~/^[0-9]+$/.match(a[2]) ) an = w.anomalies()[Std.parseInt(a[2])];
-			found = an == null ? null : { x : an.x, y : an.y, z : an.z + (an.h == null ? 0 : an.h) };
+			// la Invisible: arriba de su cubo (su caja: del suelo a lo mas alto); las demas: su origen
+			found = an == null ? null : { x : an.x, y : an.y, z : an.id == "invisible" ? an.box[5] : an.z };
 			if( found == null ) Sys.println("find anomaly " + a[2] + ": no hay (" + [for( p in w.anomalies() ) p.n].join(" ") + ")");
 		case "shore":
 			var hx = a.length > 3 ? Std.parseInt(a[2]) : -1, hy = a.length > 3 ? Std.parseInt(a[3]) : -1, best = -1;
@@ -493,7 +494,7 @@ class Dev {
 		if( info.uni == null )
 			info.uni = { seed : info.seed, planetId : 0, pos : [2, 0], start : { seed : info.seed, biome : info.biome, size : info.sizeChunks }, planets : [],
 				licenses : [0], main : 0, mainChanges : 0, abandoned : [], gone : [] };
-		if( info.uni.planets.length == 0 ) info.uni.planets.push({ id : 1, edits : [] });
+		if( info.uni.planets.length == 0 ) info.uni.planets.push({ id : 1, edits : [], genVersion : gen.Generator.VERSION });
 		info.uni.planets[0].edits = info.uni.planets[0].edits.concat([cell(1, 1, 60, 128), u[0]]);
 		if( info.market == null ) info.market = Market.create();
 		info.market.items.push({ key : "b" + u[0], bought : 1., sold : 0. });
