@@ -1,0 +1,94 @@
+# App de macOS del multijugador (anadido del port): el codigo C (HashLink/C) se genera en Linux, que distingue mayusculas
+# (port/tools/build-hlc-sources.sh), y un Mac con procesador Apple lo compila en "Galaxy 55.app" autonoma
+# (port/tools/mac-app.sh), comprueba las planetas de referencia (port/headless/gen_ref.txt) y publica la app en la
+# pre-version "multijoueur-mac". Las dependencias son las de tools-portable (HashLink 1.16, heaps y format fijados).
+name: macOS
+
+on:
+  push:
+    branches: [feat/multijoueur]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  HEAPS_COMMIT: 7646b57589ca621c539c5f61b92fb41586e09f1f
+
+jobs:
+  hlc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: repo
+      - name: Dependencias (HashLink 1.16, heaps, format 3.8.0)
+        run: |
+          git clone --quiet --depth 1 --branch 1.16 https://github.com/HaxeFoundation/hashlink.git tp/src/hashlink
+          git init --quiet tp/src/heaps
+          git -C tp/src/heaps fetch --quiet --depth 1 https://github.com/HeapsIO/heaps.git "$HEAPS_COMMIT"
+          git -C tp/src/heaps checkout --quiet FETCH_HEAD
+          mkdir -p tp/haxelib/format/3,8,0
+          curl -fsSL -o format.zip https://lib.haxe.org/p/format/3.8.0/download/
+          unzip -q format.zip -d tp/haxelib/format/3,8,0
+          ls tp/haxelib/format/3,8,0
+      - name: Codigo C (juego, servidor y comprobador de planetas)
+        run: |
+          mkdir -p out
+          docker run --rm -e GEN=1 -v "$PWD/repo:/repo:ro" -v "$PWD/tp:/tp:ro" -v "$PWD/out:/out" haxe:4.3.7 \
+            sh /repo/port/tools/build-hlc-sources.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hlc
+          path: out/*.zip
+
+  mac:
+    needs: hlc
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: hlc
+          path: hlc
+      - name: Homebrew (hashlink, dylibbundler)
+        run: brew install hashlink dylibbundler
+      - name: Planetas de referencia en Apple Silicon
+        run: |
+          uname -m
+          HL="$(brew --prefix hashlink)"
+          mkdir -p gen && unzip -q hlc/hlc-gen.zip -d gen
+          for mode in off on; do
+            clang -O2 -std=c11 -ffp-contract=$mode -w -I gen/hlc/gen -I "$HL/include" gen/hlc/gen/gen.c -o gen/gen_$mode \
+              -L "$HL/lib" -lhl "$HL/lib/fmt.hdll" -Wl,-rpath,"$HL/lib"
+            echo "== -ffp-contract=$mode"
+            gen/gen_$mode --check port/headless/gen_ref.txt | grep -v "^OK " || true
+          done
+          gen/gen_off --check port/headless/gen_ref.txt | tail -1 | grep -q "GENREF OK"
+      - name: Galaxy 55.app
+        run: sh port/tools/mac-app.sh "0.8.1-multijoueur" hlc/hlc.zip dist
+      - name: Comprobaciones de la app
+        run: |
+          APP="$(cat dist/app-path.txt)"
+          cd "$APP/Contents/Resources"
+          ./galaxy55-serveur --newplayer 4242
+          ./galaxy55-serveur --gen 776733 BIWinterPeaks 2
+          ./galaxy55-serveur --gen 31782 BIMoon 2
+          printf 'waitfor planet\nwait 30\nprint mp\nquit\n' > /tmp/s.txt
+          GALAXY55_DATA=/tmp/g55data "$APP/Contents/MacOS/Galaxy55" --script=/tmp/s.txt > /tmp/game.txt 2>&1 &
+          P=$!
+          for i in $(seq 1 120); do kill -0 $P 2> /dev/null || break; sleep 1; done
+          kill $P 2> /dev/null && echo "(juego parado tras 120 s)" || true
+          grep -v "^[0-9]*:B" /tmp/game.txt | tail -8
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Galaxy55-macOS
+          path: dist/*.zip
+      - name: Pre-version multijoueur-mac
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete multijoueur-mac --yes --cleanup-tag 2> /dev/null || true
+          gh release create multijoueur-mac dist/*.zip --prerelease --target "$GITHUB_SHA" \
+            --title "Galaxy 55 multijoueur - macOS (test)" \
+            --notes "App macOS (Apple Silicon) de la branche feat/multijoueur, commit $GITHUB_SHA. Non signee : premiere ouverture via Reglages Systeme > Confidentialite et securite > Ouvrir quand meme."
