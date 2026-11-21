@@ -1,0 +1,32 @@
+# multijugador entre sistemas (anadido del port): dos juegos (Windows, Linux o macOS, a la vez) entran en un servidor
+# dedicado en 127.0.0.1:47055 (galaxy55-serveur.sh --port 47055 en Linux; en WSL2, Windows lo ve tambien en 127.0.0.1),
+# cada uno aterriza en su planeta, imprime la suma del terreno (la misma que server.hl --gen SEMILLA BIOMA TAMANO), rompe un
+# bloque (print remotes: "aceptados 1 rechazados 0" si el terreno del juego es el del servidor), espera al otro y se saludan.
+waitfor planet
+mp joinat 127.0.0.1 47055
+waitfor mp 6000
+waitfor map 6000
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+wait 60
+print cellhash
+tp 64 64 top 0.8 -0.9
+wait 30
+slot 0
+# en supervivencia romper lleva su tiempo (el primero que entra es el propietario, en creativo: rompe enseguida)
+key dig
+wait 240
+unkey
+wait 90
+print remotes
+waitfor mpplayers2 9000
+mp say bonjour multi-os
+waitfor mpchat3 9000
+wait 60
+print mp
+mp leave
+waitfor mpend 600
+quit

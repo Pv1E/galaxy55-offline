@@ -20,6 +20,10 @@ class NetGame {
 	var seq = 0;
 	/** celda de cada peticion sin respuesta (para deshacerla si el servidor dice que no) */
 	var pending = new Map<Int, Int>();
+	/** pruebas (print remotes): cambios aceptados y rechazados por el servidor; con un terreno distinto del suyo (otro sistema
+	    con otras cuentas de coma flotante), los rechazados suben */
+	var accepted = 0;
+	var refused = 0;
 	/** lo que el jugador ha quitado de sus casillas sin respuesta aun (poner, tirar): se rehace sobre cada SInventory */
 	var predicted = new Array<{ seq : Int, slot : Int, n : Int }>();
 	/** sueltos del servidor en este mundo */
@@ -227,6 +231,7 @@ class NetGame {
 		case SSetResult(s, ok, current):
 			var key = pending.get(s);
 			pending.remove(s);
+			if( ok ) accepted++ else refused++;
 			// el servidor manda tambien el cambio real (SChanges) si lo habia; aqui solo hace falta deshacer lo que no se acepto
 			if( !ok && key != null ) apply(key, current, false);
 		case SStates(list):
@@ -364,5 +369,5 @@ class NetGame {
 
 	inline function cellKey( x : Int, y : Int, z : Int ) return ((x + y * g.world.size) << WorldData.ZBITS) | z;
 
-	public function devInfo() return remotes.devInfo() + " pendientes " + Lambda.count(pending) + " sueltos " + Lambda.count(loots);
+	public function devInfo() return remotes.devInfo() + " pendientes " + Lambda.count(pending) + " aceptados " + accepted + " rechazados " + refused + " sueltos " + Lambda.count(loots);
 }

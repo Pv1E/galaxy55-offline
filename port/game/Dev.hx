@@ -1495,6 +1495,11 @@ class Dev {
 			var m = MultiSession.join("127.0.0.1", Std.parseInt(a[2]), a.length > 3 ? a[3] : "", null, 0);
 			m.autoNewGame = false;
 			app.startMulti(m);
+		case "joinat":
+			// mp joinat HOST PUERTO: un servidor de otro equipo o sistema (pruebas entre Windows, Linux y macOS)
+			var m = MultiSession.join(a[2], Std.parseInt(a[3]), "", null, 0);
+			m.autoNewGame = false;
+			app.startMulti(m);
 		case "say":
 			app.mp.say(rest);
 		case "pm":
