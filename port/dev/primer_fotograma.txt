@@ -1,0 +1,6 @@
+# primer fotograma jugando, justo al acabar de cargar el planeta, con -Extra "--novsync --frametime=100 --bgbiome=BIMars": dice
+# los fotogramas de mas de 100 ms (parada ... estado X). Esperado: ninguna parada en estado Playing (las de Boot y Menu son del
+# fondo del menu). Antes, el recuento de bloques de las pruebas (ahora --blockcount) daba 110-230 ms aqui y 0.4-1.3 s en un
+# planeta de tamano 3
+wait 5
+quit
