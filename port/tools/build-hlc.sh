@@ -16,11 +16,32 @@ if [ -z "$HASHLINK" ]; then
 	fi
 	brew list hashlink > /dev/null 2>&1 || brew install hashlink
 	HASHLINK="$(brew --prefix hashlink)"
+	BREWHL=1
 fi
 INC="$HASHLINK/include"
 LIB="$HASHLINK/lib"
 [ -d "$LIB" ] || LIB="$HASHLINK"
 CC="${CC:-cc}"
+# el hashlink ya compilado de Homebrew puede venir roto: su fmt.hdll se enlazo cuando libturbojpeg aun daba adler32 y la de
+# ahora no ("Symbol not found: _adler32" al abrir el juego). Se comprueba que sus hdll cargan; si no, se compila desde el codigo
+hdllcheck() {
+	cat > /tmp/g55_hdllcheck.c << 'C'
+#include <dlfcn.h>
+#include <stdio.h>
+int main( int c, char **v ) {
+	int ok = 1;
+	for( int i = 1; i < c; i++ ) if( !dlopen(v[i], RTLD_NOW) ) { printf("%s\n", dlerror()); ok = 0; }
+	return ok ? 0 : 1;
+}
+C
+	$CC /tmp/g55_hdllcheck.c -o /tmp/g55_hdllcheck -ldl 2> /dev/null || $CC /tmp/g55_hdllcheck.c -o /tmp/g55_hdllcheck || return 0
+	/tmp/g55_hdllcheck "$LIB/fmt.hdll" "$LIB/sdl.hdll" "$LIB/openal.hdll" "$LIB/ssl.hdll" "$LIB/uv.hdll" "$LIB/sqlite.hdll" "$LIB/ui.hdll"
+}
+if [ -n "$BREWHL" ] && ! hdllcheck; then
+	echo "== hashlink de Homebrew roto: se compila desde el codigo / broken: building it from source / casse : compilation depuis les sources"
+	brew reinstall --build-from-source hashlink
+	hdllcheck || { echo "hashlink sigue sin cargar / still broken / toujours casse"; exit 1; }
+fi
 # -ffp-contract=off: sin multiplicaciones-sumas fusionadas (FMA, que clang usa en los procesadores ARM), los calculos del
 # generador de planetas dan lo mismo que en Windows y Linux; si no, el terreno del juego y el del servidor podrian diferir
 CFLAGS="-O2 -std=c11 -ffp-contract=off -w"

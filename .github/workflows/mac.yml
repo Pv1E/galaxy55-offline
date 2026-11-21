@@ -64,6 +64,22 @@ jobs:
           . ./note.sh
           HL="$(brew --prefix hashlink)"
           note notice "hashlink" "$(uname -m) $(sw_vers -productVersion); include: $(ls "$HL/include" | tr '\n' ' '); lib: $(ls "$HL/lib" | tr '\n' ' ')"
+          # el hashlink ya compilado de Homebrew puede no cargar (fmt.hdll pide adler32 a libturbojpeg): desde el codigo
+          cat > check.c << 'C'
+          #include <dlfcn.h>
+          #include <stdio.h>
+          int main( int c, char **v ) {
+            int ok = 1;
+            for( int i = 1; i < c; i++ ) if( !dlopen(v[i], RTLD_NOW) ) { printf("%s\n", dlerror()); ok = 0; }
+            return ok ? 0 : 1;
+          }
+          C
+          clang check.c -o check
+          if ! out=$(./check "$HL"/lib/*.hdll 2>&1); then
+            note warning "hashlink de Homebrew roto, se compila desde el codigo" "$out"
+            brew reinstall --build-from-source hashlink
+            if ! out=$(./check "$HL"/lib/*.hdll 2>&1); then note error "hashlink sigue sin cargar" "$out"; exit 1; fi
+          fi
       - name: Planetas de referencia en Apple Silicon
         continue-on-error: true
         run: |
