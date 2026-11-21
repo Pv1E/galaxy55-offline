@@ -26,7 +26,7 @@ class Lang {
 		"custom" => ["Personalizar", "Customize", "Personnaliser"],
 		"custom.title" => ["PERSONALIZAR PARTIDA", "CUSTOMIZE GAME", "PERSONNALISER LA PARTIE"],
 		"custom.kept" => ["equipo conservado", "equipment kept", "équipement gardé"],
-		"deathdrop.option" => ["Equipo al suelo", "Drop equipment", "Équipement à terre"],
+		"deathdrop.option" => ["Equipo al suelo", "Drop equipment", "Dépôt de l'équipement à la mort"],
 		"biome" => ["Bioma", "Biome", "Biome"],
 		"size" => ["Tamaño", "Size", "Taille"],
 		"size.small" => ["Pequeño (128)", "Small (128)", "Petit (128)"],
