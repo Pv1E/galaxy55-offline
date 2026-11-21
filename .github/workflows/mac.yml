@@ -28,9 +28,11 @@ jobs:
           git init --quiet tp/src/heaps
           git -C tp/src/heaps fetch --quiet --depth 1 https://github.com/HeapsIO/heaps.git "$HEAPS_COMMIT"
           git -C tp/src/heaps checkout --quiet FETCH_HEAD
-          mkdir -p tp/haxelib/format/3,8,0
+          # el zip de lib.haxe.org trae la libreria dentro de una carpeta (release/): se toma la que tiene haxelib.json
           curl -fsSL -o format.zip https://lib.haxe.org/p/format/3.8.0/download/
-          unzip -q format.zip -d tp/haxelib/format/3,8,0
+          unzip -q format.zip -d fmt
+          mkdir -p tp/haxelib/format/3,8,0
+          cp -R "$(dirname "$(find fmt -name haxelib.json | head -1)")"/. tp/haxelib/format/3,8,0/
           ls tp/haxelib/format/3,8,0
       - name: Codigo C (juego, servidor y comprobador de planetas)
         run: |
