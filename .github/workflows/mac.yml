@@ -55,34 +55,51 @@ jobs:
           name: hlc
           path: hlc
       - name: Homebrew (hashlink, dylibbundler)
-        run: brew install hashlink dylibbundler
-      - name: Planetas de referencia en Apple Silicon
         run: |
-          uname -m
+          brew install hashlink dylibbundler
+          # lo que se ensena tambien va a las anotaciones: la API de GitHub las da sin cuenta (el registro no)
+          cat > note.sh << 'SH'
+          note() { echo "::$1 title=$2::$(printf '%s\n' "$3" | tail -40 | sed -e 's/%/%25/g' | awk '{ printf "%s%%0A", $0 }')"; }
+          SH
+          . ./note.sh
+          HL="$(brew --prefix hashlink)"
+          note notice "hashlink" "$(uname -m) $(sw_vers -productVersion); include: $(ls "$HL/include" | tr '\n' ' '); lib: $(ls "$HL/lib" | tr '\n' ' ')"
+      - name: Planetas de referencia en Apple Silicon
+        continue-on-error: true
+        run: |
+          . ./note.sh
           HL="$(brew --prefix hashlink)"
           mkdir -p gen && unzip -q hlc/hlc-gen.zip -d gen
           for mode in off on; do
-            clang -O2 -std=c11 -ffp-contract=$mode -w -I gen/hlc/gen -I "$HL/include" gen/hlc/gen/gen.c -o gen/gen_$mode \
-              -L "$HL/lib" -lhl "$HL/lib/fmt.hdll" -Wl,-rpath,"$HL/lib"
-            echo "== -ffp-contract=$mode"
-            gen/gen_$mode --check port/headless/gen_ref.txt | grep -v "^OK " || true
+            if ! out=$(clang -O2 -std=c11 -ffp-contract=$mode -w -I gen/hlc/gen -I "$HL/include" gen/hlc/gen/gen.c -o gen/gen_$mode \
+              -L "$HL/lib" -lhl "$HL/lib/fmt.hdll" -Wl,-rpath,"$HL/lib" 2>&1); then
+              note error "clang gen -ffp-contract=$mode" "$out"
+              continue
+            fi
+            note notice "planetas -ffp-contract=$mode" "$(gen/gen_$mode --check port/headless/gen_ref.txt 2>&1 | grep -v '^OK ')"
           done
           gen/gen_off --check port/headless/gen_ref.txt | tail -1 | grep -q "GENREF OK"
       - name: Galaxy 55.app
-        run: sh port/tools/mac-app.sh "0.8.1-multijoueur" hlc/hlc.zip dist
+        run: |
+          . ./note.sh
+          if ! sh port/tools/mac-app.sh "0.8.1-multijoueur" hlc/hlc.zip dist > app.log 2>&1; then
+            note error "mac-app.sh" "$(cat app.log)"
+            exit 1
+          fi
+          tail -5 app.log
       - name: Comprobaciones de la app
         run: |
+          . ./note.sh
           APP="$(cat dist/app-path.txt)"
           cd "$APP/Contents/Resources"
-          ./galaxy55-serveur --newplayer 4242
-          ./galaxy55-serveur --gen 776733 BIWinterPeaks 2
-          ./galaxy55-serveur --gen 31782 BIMoon 2
+          srv="$(./galaxy55-serveur --newplayer 4242 2>&1; ./galaxy55-serveur --gen 776733 BIWinterPeaks 2 2>&1; ./galaxy55-serveur --gen 31782 BIMoon 2 2>&1)"
+          note notice "servidor C (esperado 0EEEDFA1 y E491F395)" "$srv"
           printf 'waitfor planet\nwait 30\nprint mp\nquit\n' > /tmp/s.txt
           GALAXY55_DATA=/tmp/g55data "$APP/Contents/MacOS/Galaxy55" --script=/tmp/s.txt > /tmp/game.txt 2>&1 &
           P=$!
           for i in $(seq 1 120); do kill -0 $P 2> /dev/null || break; sleep 1; done
-          kill $P 2> /dev/null && echo "(juego parado tras 120 s)" || true
-          grep -v "^[0-9]*:B" /tmp/game.txt | tail -8
+          kill $P 2> /dev/null && echo "(juego parado tras 120 s)" >> /tmp/game.txt || true
+          note notice "juego (la app)" "$(grep -v '^[0-9]*:B' /tmp/game.txt)"
       - uses: actions/upload-artifact@v4
         with:
           name: Galaxy55-macOS
