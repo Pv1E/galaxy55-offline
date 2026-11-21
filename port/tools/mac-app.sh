@@ -35,7 +35,16 @@ cp "$W/galaxy55-serveur" "$APP/Contents/Resources/galaxy55-serveur"
 HL="$(brew --prefix hashlink)/lib"
 dylibbundler -od -b -cd -x "$APP/Contents/Resources/galaxy55" -x "$APP/Contents/Resources/galaxy55-serveur" \
 	-d "$APP/Contents/libs/" -p "@executable_path/../libs/" -s "$HL" -s "$(brew --prefix)/lib"
-codesign --force --deep -s - "$APP"
+# dylibbundler deja el mismo LC_RPATH dos veces y los macOS de ahora no cargan nada asi ("duplicate LC_RPATH"); como todas las
+# referencias son ya @executable_path/../libs/..., no hace falta ninguno: se quitan todos (tambien los de Homebrew). Despues,
+# cada archivo cambiado se vuelve a firmar (ad hoc), o en Apple Silicon no se abre
+for f in "$APP/Contents/Resources/galaxy55" "$APP/Contents/Resources/galaxy55-serveur" "$APP"/Contents/libs/*; do
+	for r in $(otool -l "$f" | awk '/cmd LC_RPATH/ { getline; getline; print $2 }'); do
+		install_name_tool -delete_rpath "$r" "$f" 2> /dev/null || true
+	done
+	codesign --force -s - "$f"
+done
+codesign --force -s - "$APP"
 if otool -L "$APP/Contents/Resources/galaxy55" "$APP/Contents/Resources/galaxy55-serveur" "$APP"/Contents/libs/* | grep -q "$(brew --prefix)"; then
 	echo "la app aun usa bibliotecas de Homebrew:"
 	otool -L "$APP/Contents/Resources/galaxy55" "$APP"/Contents/libs/* | grep "$(brew --prefix)"
