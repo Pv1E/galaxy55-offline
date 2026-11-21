@@ -108,8 +108,16 @@ class ServerMain {
 		case "save":
 			server.worlds.commit();
 			Sys.println("saved");
+		case "port":
+			// port: el de ahora; port N: escuchar en N desde ya (y en serveur.json); los conectados siguen
+			if( arg == "" ) Sys.println("port " + server.port);
+			else {
+				var p = Std.parseInt(arg);
+				var err = p == null ? "not a number: " + arg : server.setPort(p);
+				Sys.println(err == null ? "listening on port " + server.port : "port not changed: " + err);
+			}
 		case "help", "?":
-			Sys.println("commands: stop | list | kick NICKNAME | ban NICKNAME | unban NICKNAME | op NICKNAME | deop NICKNAME | say TEXT | save");
+			Sys.println("commands: stop | list | kick NICKNAME | ban NICKNAME | unban NICKNAME | op NICKNAME | deop NICKNAME | say TEXT | save | port [NUMBER]");
 		default:
 			Sys.println("unknown command: " + cmd + " (help)");
 		}

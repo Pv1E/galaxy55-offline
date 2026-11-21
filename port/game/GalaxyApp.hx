@@ -992,10 +992,18 @@ class GalaxyApp extends hxd.App {
 			name.maxLen = Msg.SERVER_NAME_MAX;
 			s.add(name, 490, y);
 			name.onEnter = function() if( mp != null ) mp.client.send(CAdmin(AServerName, 0, StringTools.trim(name.text)));
-			var pw = new TextField(s, Lang.t(info != null && info.password ? "mp.password.change" : "mp.password.set"), "", 1040, 48, 300);
+			// el anfitrion (su servidor esta en este juego) cambia tambien el puerto: Intro y se escucha en el nuevo
+			var host = mp.server;
+			var pw = new TextField(s, Lang.t(info != null && info.password ? "mp.password.change" : "mp.password.set"), "", host != null ? 680 : 1040, 48, 300);
 			pw.maxLen = 64;
 			s.add(pw, 130, y + 56);
 			pw.onEnter = function() if( mp != null ) mp.client.send(CAdmin(APassword, 0, pw.text));
+			if( host != null ) {
+				var port = new TextField(s, Lang.t("mp.create.port"), host.listening ? "" + host.port : "", 340, 48, 120);
+				port.maxLen = 5;
+				s.add(port, 830, y + 56);
+				port.onEnter = function() changeHostPort(port.text);
+			}
 			var lan = new CheckBox(s, Lang.t("mp.create.lan"), info == null || info.lan, 510, 48);
 			s.add(lan, 130, y + 112);
 			lan.onChange = function( v ) if( mp != null ) mp.client.send(CAdmin(ALanVisible, 0, v ? "1" : "0"));
@@ -1008,6 +1016,24 @@ class GalaxyApp extends hxd.App {
 		back.onActivate = function() show("pause");
 		s.onBack = function() show("pause");
 		return s;
+	}
+
+	/** Pausa > Opciones del multijugador, campo Puerto del anfitrion: su servidor escucha en el nuevo (GameServer.setPort) */
+	function changeHostPort( text : String ) {
+		if( mp == null || mp.server == null ) return;
+		var p = Std.parseInt(StringTools.trim(text));
+		if( p == null || p <= 0 || p > 65535 ) {
+			showToast(Lang.t("mp.server.bad"));
+			return;
+		}
+		var err = mp.server.setPort(p);
+		if( err != null ) {
+			showToast(Lang.t("mp.port.fail").split("%n%").join("" + p).split("%e%").join(err), 6);
+			return;
+		}
+		Settings.hostPort = p;
+		Settings.save();
+		showToast(Lang.t("mp.port.changed").split("%n%").join("" + p), 4);
 	}
 
 	function reopenMpOptions() {
@@ -1280,8 +1306,10 @@ class GalaxyApp extends hxd.App {
 		if( saves.length > 0 ) from.index = 1;
 		var name = new TextField(m, Lang.t("mp.create.name"), Lang.t("mp.create.default").split("%n%").join(Settings.myPseudo()), 700, 50, 330);
 		name.maxLen = Msg.SERVER_NAME_MAX;
-		var port = new TextField(m, Lang.t("mp.create.port"), "" + MultiServers.PORT, 700, 50, 200);
+		var port = new TextField(m, Lang.t("mp.create.port"), "" + hostPortFor(saves.length > 0 ? saves[0] : null), 700, 50, 200);
 		port.maxLen = 5;
+		// el puerto de la partida elegida (el de su servidor si ya se hospedo), si no el ultimo con el que se hospedo
+		from.onChange = function( i ) port.text = "" + hostPortFor(i == 0 ? null : saves[i - 1]);
 		var pw = new TextField(m, Lang.t("mp.create.password"), "", 700, 50, 250);
 		pw.maxLen = 64;
 		var lan = new CheckBox(m, Lang.t("mp.create.lan"), true, 700, 50);
@@ -1344,6 +1372,15 @@ class GalaxyApp extends hxd.App {
 	/** el servidor de una partida guardada esta a su lado: saves/<id>.serveur */
 	static function serverDir( info : SaveInfo ) return SaveData.dir() + "/" + info.id + ".serveur";
 
+	/** puerto para hospedar info: el de su servidor (serveur.json) si ya se hospedo, si no el ultimo usado (Settings.hostPort) */
+	static function hostPortFor( info : SaveInfo ) : Int {
+		if( info != null ) {
+			var o : Dynamic = try haxe.Json.parse(sys.io.File.getContent(serverDir(info) + "/serveur.json")) catch( e : Dynamic ) null;
+			if( o != null && Std.isOfType(o.port, Int) && o.port > 0 && o.port < 65536 ) return o.port;
+		}
+		return Settings.hostPort;
+	}
+
 	/** hospedar la partida guardada info (la primera vez su partida pasa al servidor; despues sigue la del servidor) */
 	function hostSave( info : SaveInfo, name : String, port : Int, password : String, lan : Bool, upnp : Bool, drop : Bool ) {
 		if( mp != null ) return;
@@ -1361,6 +1398,8 @@ class GalaxyApp extends hxd.App {
 			o.deathDrop = drop;
 			files.saveOptions();
 			files.setPassword(password);
+			Settings.hostPort = port;
+			Settings.save();
 			MultiSession.host(dir, port, "0.0.0.0", fresh ? info : null);
 		} catch( e : Dynamic ) {
 			showToast(Lang.t("mp.create.fail").split("%e%").join(Std.string(e)), 6);

@@ -29,6 +29,8 @@ class Settings {
 	public static var FPS_STEPS = [0, 30, 60, 120, 144, 240];
 	/** pseudo del multijugador (anadido del port): por defecto "User" y 6 cifras al azar, se cambia en Multijugador > Opciones */
 	public static var pseudo : String = null;
+	/** puerto con el que se hospedo la ultima vez (Crear una partida, Pausa > Opciones del multijugador): el de la proxima */
+	public static var hostPort = 55055;
 	/** primera vez que se abre el juego (no habia settings.json): se pregunta el idioma */
 	public static var firstRun = false;
 
@@ -70,6 +72,7 @@ class Settings {
 			if( o.vsync != null ) vsync = o.vsync;
 			if( o.maxFps != null ) maxFps = Std.int(o.maxFps);
 			if( Std.isOfType(o.pseudo, String) && o.pseudo != "" ) pseudo = o.pseudo;
+			if( Std.isOfType(o.hostPort, Int) && o.hostPort > 0 && o.hostPort < 65536 ) hostPort = o.hostPort;
 			// teclas cambiadas en Opciones > Controles (Keys): solo las que no son las de por defecto
 			if( keysLoad != null ) keysLoad(o.keys);
 		} catch( e : Dynamic ) {}
@@ -86,7 +89,7 @@ class Settings {
 	}
 
 	public static function save() {
-		var o = { lang : lang, mouseSens : mouseSens, fov : fov, volume : volume, fullscreen : fullscreen, invertY : invertY, turnKeys : turnKeys, wheelWrap : wheelWrap, showHelp : showHelp, placePreview : placePreview, selectBox : selectBox, waterWaves : waterWaves, targetName : targetName, vsync : vsync, maxFps : maxFps, pseudo : pseudo, keys : keysSave != null ? keysSave() : null };
+		var o = { lang : lang, mouseSens : mouseSens, fov : fov, volume : volume, fullscreen : fullscreen, invertY : invertY, turnKeys : turnKeys, wheelWrap : wheelWrap, showHelp : showHelp, placePreview : placePreview, selectBox : selectBox, waterWaves : waterWaves, targetName : targetName, vsync : vsync, maxFps : maxFps, pseudo : pseudo, hostPort : hostPort, keys : keysSave != null ? keysSave() : null };
 		try sys.io.File.saveContent(dir() + "/settings.json", haxe.Json.stringify(o, null, "  ")) catch( e : Dynamic ) {}
 	}
 }

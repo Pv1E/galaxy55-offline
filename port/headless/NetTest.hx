@@ -177,6 +177,31 @@ class NetTest {
 		});
 		check("descubrimiento en la red local", reply != null && StringTools.startsWith(reply, "G55!") && reply.indexOf("\"password\":true") >= 0, reply);
 
+		// puerto cambiado con la partida en marcha (GameServer.setPort, Pausa > Opciones del anfitrion, orden "port"): los
+		// conectados siguen, se entra por el nuevo, el anterior ya no contesta y la sonda en el puerto de siempre da el nuevo
+		var newPort = 55089;
+		check("puerto: el servidor pasa a " + newPort, server.setPort(newPort) == null && server.port == newPort
+			&& haxe.Json.parse(sys.io.File.getContent(dir + "/serveur.json")).port == newPort);
+		alice.client.send(CTalk(CWorld, 0, "sigo aqui"));
+		check("puerto: los conectados siguen", until(() -> dan3.heard("sigo aqui")));
+		var fred = add(new TestClient("Fred", secret(7), "secreto"));
+		fred.tcp(newPort);
+		check("puerto: se entra por el nuevo", until(() -> fred.welcome != null), fred.lastEvent());
+		var old = add(new TestClient("Olaf", secret(8), "secreto"));
+		old.tcp(55099);
+		check("puerto: el anterior ya no contesta", until(() -> old.closed, 8) && old.welcome == null, old.lastEvent());
+		if( @:privateAccess server.udps.length == 2 ) {
+			a.port = GameServer.DEFAULT_PORT;
+			reply = null;
+			u.sendTo(Bytes.ofString("G55?"), 0, 4, a);
+			until(() -> {
+				try { var n = u.readFrom(rb, 0, 512, from); if( n > 4 ) reply = rb.getString(0, n); } catch( e : Dynamic ) {}
+				reply != null;
+			});
+			check("puerto: la sonda en el puerto de siempre da el nuevo", reply != null && reply.indexOf("\"port\":" + newPort) >= 0, reply);
+		} else Sys.println("(sin sonda en " + GameServer.DEFAULT_PORT + ": otro programa lo usa en este PC)");
+		check("puerto: no se cambia a uno invalido", server.setPort(70000) != null && server.port == newPort);
+
 		server.stop();
 		check("al parar el servidor los jugadores lo saben", until(() -> alice.kicked == RServerStop || alice.closed));
 		Sys.println(fails == 0 ? "FIN OK" : "FALLOS: " + fails);

@@ -71,7 +71,7 @@ class GameServer {
 	/** escucha en la red (false: solo el juego del anfitrion, una partida guardada jugada sin red) */
 	public var listening(get, never) : Bool;
 	inline function get_listening() return listener != null;
-	var udp : sys.net.UdpSocket;
+	var udps = new Array<sys.net.UdpSocket>();
 	var sessions = new Array<Session>();
 	var nextId = 1;
 	var udpBuf = Bytes.alloc(64);
@@ -108,30 +108,91 @@ class GameServer {
 
 	public function publicKey() return keys.pk;
 
+	/** el puerto de siempre: los juegos buscan partidas en la red local en el (MultiServers.PORT) */
+	public static inline var DEFAULT_PORT = 55055;
+	/** donde se escucha ("0.0.0.0" todas las interfaces, "127.0.0.1" solo este PC); el de setPort sin listen antes */
+	var listenHost = "0.0.0.0";
+
 	/** abre el puerto TCP (y el de descubrimiento UDP si lanVisible); host "0.0.0.0" = todas las interfaces */
 	public function listen( host = "0.0.0.0", ?port : Int ) {
 		if( port == null ) port = files.options.port;
-		listener = new sys.net.Socket();
-		listener.bind(new sys.net.Host(host), port);
-		listener.listen(16);
-		listener.setBlocking(false);
+		listenHost = host;
+		listener = openListener(host, port);
 		this.port = port;
 		files.log("listening on " + host + ":" + port);
-		// abrir el puerto en el router (UPnP), en un hilo: el resultado lo recoge pump
-		if( files.options.upnp ) {
-			upnp = new Upnp();
-			upnp.start(port, files.options.name);
+		openUpnp();
+		openLan();
+	}
+
+	/**
+	 * Cambia el puerto con la partida en marcha (Pausa > Opciones del multijugador del anfitrion, orden "port" de la consola):
+	 * escucha en el nuevo y deja el anterior (las conexiones abiertas siguen), con su UPnP y su descubrimiento en la red local,
+	 * y lo guarda en serveur.json. Un servidor que no escuchaba (partida multijugador abierta sin red) empieza a escuchar.
+	 * null si se hizo; si no, el error, y sigue el puerto de antes.
+	 */
+	public function setPort( newPort : Int ) : String {
+		if( newPort <= 0 || newPort > 65535 ) return "invalid port " + newPort;
+		if( stopped ) return "server stopped";
+		if( listener != null && newPort == port ) return null;
+		var l = try openListener(listenHost, newPort) catch( e : Dynamic ) return Std.string(e);
+		if( listener != null ) try listener.close() catch( e : Dynamic ) {}
+		closeUpnp();
+		closeLan();
+		var old = port;
+		listener = l;
+		port = newPort;
+		files.options.port = newPort;
+		files.saveOptions();
+		files.log("listening on " + listenHost + ":" + port + (old > 0 ? " (port " + old + " closed)" : ""));
+		openUpnp();
+		openLan();
+		return null;
+	}
+
+	static function openListener( host : String, port : Int ) : sys.net.Socket {
+		var l = new sys.net.Socket();
+		try {
+			l.bind(new sys.net.Host(host), port);
+			l.listen(16);
+		} catch( e : Dynamic ) {
+			try l.close() catch( _ : Dynamic ) {}
+			throw e;
 		}
-		if( files.options.lanVisible ) {
+		l.setBlocking(false);
+		return l;
+	}
+
+	/** abrir el puerto en el router (UPnP), en un hilo: el resultado lo recoge pump */
+	function openUpnp() {
+		if( !files.options.upnp ) return;
+		upnp = new Upnp();
+		upnp.start(port, files.options.name);
+	}
+
+	function closeUpnp() {
+		if( upnp != null ) upnp.close();
+		upnp = null;
+	}
+
+	/**
+	 * Descubrimiento en la red local: contesta a "G55?" en su puerto y, si es otro, tambien en el de siempre, que es donde
+	 * buscan los juegos (la respuesta lleva el puerto de verdad). Si el de siempre lo tiene otro servidor de este PC, solo el suyo.
+	 */
+	function openLan() {
+		if( !files.options.lanVisible || listener == null ) return;
+		for( p in (port == DEFAULT_PORT ? [port] : [port, DEFAULT_PORT]) ) {
 			try {
-				udp = new sys.net.UdpSocket();
-				udp.bind(new sys.net.Host(host), port);
-				udp.setBlocking(false);
-			} catch( e : Dynamic ) {
-				files.log("LAN discovery unavailable: " + e);
-				udp = null;
-			}
+				var u = new sys.net.UdpSocket();
+				u.bind(new sys.net.Host(listenHost), p);
+				u.setBlocking(false);
+				udps.push(u);
+			} catch( e : Dynamic ) files.log("LAN discovery unavailable on port " + p + ": " + e);
 		}
+	}
+
+	function closeLan() {
+		for( u in udps ) try u.close() catch( e : Dynamic ) {}
+		udps = [];
 	}
 
 	/** conexion en memoria (el jugador del anfitrion): devuelve el extremo del cliente */
@@ -219,12 +280,12 @@ class GameServer {
 
 	/** el anfitrion o el servidor dedicado se paran: avisa y cierra todo */
 	public function stop() {
-		if( upnp != null ) upnp.close();
+		closeUpnp();
 		if( stopped ) return;
 		for( s in sessions.copy() ) if( s.state != SClosed ) drop(s, RServerStop, "");
 		for( s in sessions ) s.channel.flush();
 		if( listener != null ) try listener.close() catch( e : Dynamic ) {}
-		if( udp != null ) try udp.close() catch( e : Dynamic ) {}
+		closeLan();
 		worlds.close();
 		db.close();
 		stopped = true;
@@ -483,6 +544,9 @@ class GameServer {
 		case ALanVisible:
 			files.options.lanVisible = arg == "1";
 			files.saveOptions();
+			// en el momento, no al volver a hospedar
+			closeLan();
+			openLan();
 		case ADeathDrop:
 			files.options.deathDrop = arg == "1";
 			files.saveOptions();
@@ -614,16 +678,16 @@ class GameServer {
 
 	/** responde a las sondas "G55?" de los clientes que buscan partidas en la red local */
 	function pumpUdp() {
-		if( udp == null ) return;
-		for( _ in 0...16 ) {
+		for( u in udps ) for( _ in 0...16 ) {
 			var n = -1;
-			try n = udp.readFrom(udpBuf, 0, udpBuf.length, udpFrom) catch( e : Dynamic ) n = -1;
-			if( n < 0 ) return;
+			try n = u.readFrom(udpBuf, 0, udpBuf.length, udpFrom) catch( e : Dynamic ) n = -1;
+			if( n < 0 ) break;
 			if( n != 4 || udpBuf.getString(0, 4) != "G55?" ) continue;
+			// el puerto de verdad (TCP), aunque la sonda haya llegado por el de siempre
 			var info = haxe.Json.stringify({ name : files.options.name, version : GameVersion.VERSION, content : GameVersion.contentHash(),
 				players : playersOnline(), port : port, password : files.hasPassword() });
 			var b = Bytes.ofString("G55!" + info);
-			try udp.sendTo(b, 0, b.length, udpFrom) catch( e : Dynamic ) {}
+			try u.sendTo(b, 0, b.length, udpFrom) catch( e : Dynamic ) {}
 		}
 	}
 }

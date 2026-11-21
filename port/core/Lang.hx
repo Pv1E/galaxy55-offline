@@ -410,6 +410,8 @@ class Lang {
 		"mp.create.upnp" => ["Abrir en Internet (UPnP)", "Open to the Internet (UPnP)", "Ouvrir sur Internet (UPnP)"],
 		"mp.create.go" => ["Crear", "Create", "Créer"],
 		"mp.create.fail" => ["No se pudo crear la partida: %e%", "Could not create the game: %e%", "Impossible de créer la partie : %e%"],
+		"mp.port.changed" => ["La partida escucha ahora en el puerto %n%", "The game now listens on port %n%", "La partie écoute maintenant sur le port %n%"],
+		"mp.port.fail" => ["No se puede usar el puerto %n%: %e%", "Port %n% cannot be used: %e%", "Impossible d'utiliser le port %n% : %e%"],
 		"mp.closed" => ["Conexión cerrada", "Connection closed", "Connexion fermée"],
 		"mp.keychanged" => ["La clave de este servidor ha cambiado: puede ser otro servidor que se hace pasar por él. Bórralo de la lista y añádelo de nuevo si confías en él.", "This server's key has changed: it may be another server pretending to be it. Remove it from the list and add it again if you trust it.", "La clé de ce serveur a changé : ce peut être un autre serveur qui se fait passer pour lui. Retire-le de la liste et ajoute-le de nouveau si tu lui fais confiance."],
 		"mp.refuse.0" => ["Versión distinta: el servidor y tu juego deben tener la misma versión.", "Different version: the server and your game must have the same version.", "Version différente : le serveur et ton jeu doivent avoir la même version."],
