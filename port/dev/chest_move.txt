@@ -5,17 +5,23 @@
 wait 3
 planet
 wait 30
-tp 130.5 24.5 top 0 -0.25
-wait 20
-setp 132 24 top BChest
+find ship
+# una plataforma de roca en el aire junto a la nave (z 79, se anda en 80): no depende del terreno del sitio de aterrizaje
+filla fx+3 fy-1 fx+13 fy+14 79 79 BRock
+filla fx+3 fy-1 fx+13 fy+14 80 86 none
+tp fx+6.5 fy+3.5 80 0 -0.25
+wait 19
+setp fx+8 fy+3 80 BChest
+find BChest 4
 give BWood 20
 print inv
-activate 132 24 36
-wait 5
+activate fx fy fz
+wait 4
 print chest
-# con la ventana abierta no se salta (jetpack) ni se excava (Game.actionKeys = false): sigue en z 36, la cantina apuntada
-# no acumula poder (0) y sigue ahi. lookat lleva la x ya envuelta (el planeta da la vuelta en 128: 132 = 4)
-lookat 4.5 24.5 36.4
+# con la ventana abierta no se salta (jetpack) ni se excava (Game.actionKeys = false): sigue en z 80, la cantina apuntada
+# no acumula poder (0) y sigue ahi. La cantina va a 8,3 de donde aterriza la nave (find ship) y find BChest la encuentra con
+# la x ya envuelta (el planeta da la vuelta en 128: 132 = 4), la que necesita lookat
+lookat fx+0.5 fy+0.5 fz+0.4
 jet 1
 key dig
 wait 20
@@ -23,7 +29,7 @@ print select
 jet 0
 unkey
 print pos
-print block 132 24 36
+print block fx fy fz
 print chest
 # girar y mirar no la cierra
 look 1.2 0.4
@@ -51,7 +57,7 @@ print pos
 print chest
 print inv
 # se abre otra vez desde aqui y se aleja andando de lado
-activate 132 24 36
+activate fx fy fz
 wait 5
 print chest
 walk 0 1
@@ -61,7 +67,7 @@ wait 5
 print pos
 print chest
 # guardar con la ventana abierta (Menu principal y Continuar): la madera vuelve al inventario antes de guardar
-activate 132 24 36
+activate fx fy fz
 wait 5
 chestclick 0 0
 chestclick 1 9
@@ -72,12 +78,12 @@ wait 30
 print chest
 print inv
 # romperla con la ventana abierta: se cierra y lo que tenia sale suelto una sola vez
-activate 132 24 36
+activate fx fy fz
 wait 5
 chestclick 1 9
 chestclick 0 2
 print chest
-breakp 132 24 36
+breakp fx fy fz
 wait 2
 print chest
 print loose

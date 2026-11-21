@@ -229,6 +229,10 @@ class GameView {
 			pz = info.pz;
 			yaw = info.yaw;
 			pitch = info.pitch;
+			// anadido del port: si el sitio guardado ha quedado dentro de algo solido (una partida migrada con la tabla que no era, un
+			// planeta que ahora se genera distinto), el jugador sube a la superficie
+			var ix = Math.floor(px), iy = Math.floor(py), iz = Math.floor(pz);
+			if( world.solid(ix, iy, iz) || world.solid(ix, iy, iz + 1) ) pz = world.topCollide(ix, iy) + 0.01;
 		}
 		// el equipo dejado aqui al morir o con Mayus+K, en el planeta o la cometa y en la nave
 		DeathDrops.spawnAll(this);
@@ -733,13 +737,18 @@ class GameView {
 	 * Base de datos ESCorp: una anomalia queda identificada al pasar cerca de ella (16 bloques; en las cuevas, a su altura). La
 	 * Invisible, que flota, desde el suelo de debajo hasta su altura (h)
 	 */
+	/** cuantos bloques alrededor de la caja de una anomalia se identifica (Base de datos ESCorp) */
+	static inline var ANOMALY_MARGIN = 12;
+
 	function updateAnomalies( dt : Float ) {
 		if( (anomalyCheck -= dt) > 0 || hangar != null || info.mothership == true || pz >= World.SHIP_Z ) return;
 		anomalyCheck = 0.5;
+		// en la caja de la anomalia (lo que cambio el generador al ponerla, respecto a su origen), con un margen alrededor
+		var m = ANOMALY_MARGIN;
 		for( a in world.anomalies() ) {
-			var dx = wrapDist(a.x + 0.5 - px), dy = wrapDist(a.y + 0.5 - py);
-			var top = a.z + (a.h == null ? 0 : a.h);
-			if( dx * dx + dy * dy <= 16 * 16 && pz >= a.z - 12 && pz <= top + 12 ) Kubindex.encounter(info, a.n);
+			var b = a.box, dx = wrapDist(px - a.x), dy = wrapDist(py - a.y);
+			if( dx >= b[0] - m && dx <= b[3] + 1 + m && dy >= b[1] - m && dy <= b[4] + 1 + m && pz >= b[2] - m && pz <= b[5] + 1 + m )
+				Kubindex.encounter(info, a.n);
 		}
 	}
 

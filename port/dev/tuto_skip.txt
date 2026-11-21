@@ -13,9 +13,10 @@ wait 10
 tuto step 3
 tuto goto
 tuto mine
-print block 107 75 36
+tuto spot 0
+print block fx fy fz
 pause
-wait 5
+wait 4
 shot tuto_pausa
 close
 wait 5
@@ -34,8 +35,11 @@ waitfor planet
 wait 30
 print tuto
 print inv
-print block 95 71 135
-print block 109 90 36
-print block 76 83 34
-print block 107 75 36
+print blockl 59 62 5
+tuto spot 4
+print block fx fy fz
+tuto spot 7
+print block fx fy fz
+tuto spot 0
+print block fx fy fz
 quit

@@ -1,0 +1,24 @@
+# Continuar > Modificar sobre una partida que ya no se puede escribir (anadido del port): un error al guardar el cambio se avisa
+# siempre, con el motivo (como al guardar la partida). breaksave corta el .g55 de la primera partida de la lista despues de abrirla.
+# Esperado: aviso "No se pudo modificar la partida: ..." y la fila pasa a "Partida ilegible". Mira modificar_error.png
+wait 3
+devsaves 2
+menu
+waitfor menu
+screen load
+wait 3
+print menu
+breaksave
+# primera fila, derecha = Modificar, Intro; otro nombre e Intro
+tap pgup
+tap pgup
+tap right
+tap enter
+wait 2
+type Otro nombre
+tap enter
+wait 3
+print toast
+print menu
+shot modificar_error
+quit

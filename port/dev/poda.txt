@@ -1,0 +1,15 @@
+# Poda de los cambios del terreno (World.prune, anadido del port): una celda cambiada y vuelta a lo que puso el generador sale de
+# los cambios que se guardan; una de agua del mar quitada y vuelta a poner se queda (initSea y la bajada del mar quitan capas
+# generadas). Al guardar y volver a cargar, applySaved poda igual: los mismos cambios.
+#   powershell -File port/dev/devrun.ps1 -Script port/dev/poda.txt
+wait 3
+planet
+wait 20
+print prune
+print prune
+closewin
+reload
+waitfor planet
+wait 10
+print prune
+quit

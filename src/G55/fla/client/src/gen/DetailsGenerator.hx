@@ -1,11 +1,17 @@
 package gen;
 import Common;
+import gen.Structures;
 
 /**
- * Anadido del port: una linea de las listas de anomalias (addDetails, addCaveDetails). since: primera version del generador que
- * la tiene; until: primera que ya no (Generator.VERSION); null = desde siempre / sin fin
+ * Anadido del port: una estructura o un bonus puesto (DetailsGenerator.poses). n: su tipo de anomalia (kubindex.json; null en los
+ * relieves y los bonus); x, y, z: su origen; box: lo que ha cambiado, respecto al origen (x0, y0, z0, x1, y1, z1, incluidos; en x
+ * e y con realDist: sigue bien en el borde del mapa); samples: algunas celdas puestas (direccion, valor); covered: otra estructura
+ * puesta despues la ha tapado entera (no sale en placed)
  */
-typedef AnomalyDef = { f : Int -> Int -> Int -> Bool, p : Int, n : String, ?since : Null<Int>, ?until : Null<Int> };
+typedef Pose = { id : String, n : String, stage : String, x : Int, y : Int, z : Int, box : Array<Int>, samples : Array<Int>, ?covered : Bool };
+
+/** una anomalia del planeta (World.anomalies, Base de datos ESCorp) */
+typedef PlacedAnomaly = { x : Int, y : Int, z : Int, n : String, id : String, box : Array<Int> };
 
 class DetailsGenerator extends BiomeGenerator {
 
@@ -16,201 +22,147 @@ class DetailsGenerator extends BiomeGenerator {
 	static inline var WATER = Generator.WATER;
 	static inline var BEDROCK = Generator.BEDROCK;
 	static inline var CAVE = Generator.CAVE;
-	
-	public static var DETAILS = [];
+
 	/**
-	 * anadido del port: anomalias puestas en este planeta (n = su tipo en kubindex.json; Base de datos ESCorp). h: lo que ocupa por
-	 * encima de z (la anomalia Invisible flota sobre el suelo; las demas no lo ponen)
+	 * Anadido del port: anomalias de este planeta (las estructuras con tipo que siguen a la vista), para la Base de datos ESCorp.
+	 * Se rellena al acabar las estructuras (etapa del aire)
 	 */
-	public var placed : Array<{ x : Int, y : Int, z : Int, n : String, ?h : Int }> = [];
-	
-	override function addHeightDetails() {
-		// p(X) ~= 1 planete sur X
-		var det = [
-			{ f : hdetHole, p : 50 },
-			{ f : hdetPilars, p : 20 },
-			{ f : hdetPlateau, p : 10 },
-			{ f : hdetNoise, p : 7 },
-			{ f : hdetPilarField, p : 10 },
-		];
-		FlashSort.sort(det, function(d1, d2) return Reflect.compare(d2.p, d1.p));
-		var surf = size / 128;
-		for( i in 0...Math.ceil(surf*surf) ) {
-			var found = null;
-			for( d in det )
-				if( rnd.random(d.p*4) == 0 ) {
-					found = d;
-					break;
-				}
-			if( found == null )
-				continue;
-			var ntry = 1000;
-			while( ntry-- > 0 ) {
-				var x = rnd.random(size);
-				var y = rnd.random(size);
-				if( found.f(x, y) ) {
-					DETAILS.push( { x:x, y:y, z:0 } );
-					break;
-				}
-			}
-			if( found.p == 0 )
-				break;
-		}
-	}
-	
-	/**
-	 * Anadido del port: las anomalias de la lista que tiene la version de este planeta, en el mismo orden. Un planeta de una
-	 * version anterior tiene la misma lista que entonces, asi que hace las mismas tiradas de rnd y sale igual.
-	 */
-	function forVersion( det : Array<AnomalyDef> ) : Array<AnomalyDef> {
-		return [for( d in det ) if( (d.since == null || d.since <= version) && (d.until == null || version < d.until) ) d];
+	public var placed : Array<PlacedAnomaly> = [];
+	/** todo lo puesto, tambien los relieves y los bonus (GenMain --locality, --census) */
+	public var poses : Array<Pose> = [];
+	/** sin estructuras ni bonus (las cometas: CometGenerator) */
+	var structuresOn = true;
+
+	/** estructuras y bonus: solo en los planetas de verdad (Structures.PLANET_BIOMES: nunca el hangar ni el bioma de prueba) */
+	inline function hasStructures() return structuresOn && Structures.isPlanet(biomeName);
+	/** GenMain --allstructures: en cada region solo esta estructura, siempre (sin tirar su p) */
+	public var forceStructure : String = null;
+	/** origen de la estructura que se acaba de poner, si no es donde se probo (la Invisible: su centro, sobre el suelo) */
+	var poseOrigin : Array<Int>;
+
+	/** lado de una region (128; una cometa de 96 es una sola region) */
+	inline function regionSize() return size < 128 ? size : 128;
+
+	// ---------------------------------------------------------------- etapas
+
+	override function stageRelief() {
+		placeStage(Relief);
 	}
 
-	override function addCaveDetails() {
-		var det = forVersion([
-			{ f : detCaveField, p : 3, n : "cavegarden" },
-			{ f : detCaveCeilPlant, p : 3, n : "cavegarden" },
-			{ f : detCaveSphere, p : 15, n : "cavesphere" },
-			{ f : detCaveBuilding, p : 15, n : "caveruins" },
-			{ f : detCaveCascade, p : 1, n : "cavecascade" },
-			{ f : detCaveCeilCascade, p : 1, n : "cavecascade" },
-			{ f : detCaveMaterial, p : 3, n : "caveveins" },
-			{ f : detCaveFrozen, p : 6, n : "cavefrozen" },
-			{ f : detCaveToxicPlants, p : 4, n : "cavegarden" },
-			{ f : detCaveCeilCharges, p : 3, n : "cavecharges" },
-			{ f : detCaveWallDetails, p : 2, n : "caveveins" },
-			{ f : detCaveHeal, p : 5, n : "cavegarden" },
-		]);
-		
-		FlashSort.sort(det, function(d1, d2) return Reflect.compare(d2.p, d1.p));
-		var surf = size / 128;
-		for( i in 0...Math.ceil(surf*surf) ) {
-			var found = null;
-			for( d in det )
-				if( rnd.random(d.p*4) == 0 ) {
-					found = d;
-					break;
+	/**
+	 * Las grutas: las celdas guardadas por saveCaveMask (donde los biomas llamaban a addCaveDetails) que siguen vacias vuelven a
+	 * ser CAVE, se ponen sus estructuras y sus bonus, y lo que queda de CAVE se vacia
+	 */
+	override function stageCave() {
+		if( caveMask == null ) return;
+		var total = size * size * HEIGHT;
+		gcFree(true);
+		for( addr in 0...total )
+			if( caveMask.get(addr >> 3) & (1 << (addr & 7)) != 0 && fget(addr) == EMPTY )
+				fset(addr, CAVE);
+		gcFree(false);
+		if( hasStructures() ) {
+			placeStage(Cave);
+			caveBonus();
+		}
+		gcFree(true);
+		var addr = findCell(0, total, CAVE);
+		while( addr < total ) {
+			fset(addr, EMPTY);
+			addr = findCell(addr + 1, total, CAVE);
+		}
+		gcFree(false);
+		caveMask = null;
+	}
+
+	override function stageSurface() {
+		placeStage(Surface);
+	}
+
+	/** la Invisible, y despues la lista de anomalias: sin las que ha tapado otra estructura (fosa, gran crater...) */
+	override function stageAir() {
+		placeStage(Air);
+		for( p in poses )
+			if( p.samples != null && p.samples.length > 0 ) {
+				var seen = false, i = 0;
+				while( i < p.samples.length && !seen ) {
+					if( fget(p.samples[i]) == p.samples[i + 1] ) seen = true;
+					i += 2;
 				}
-			if( found == null )
-				continue;
-			initStep();
-			var ntry = 1000;
-			while( ntry-- > 0 ) {
-				var x = rnd.random(size);
-				var y = rnd.random(size);
-				var z = rnd.random(height(x, y));
+				if( !seen ) p.covered = true;
+			}
+		placed = [for( p in poses ) if( p.n != null && p.covered != true ) { x : p.x, y : p.y, z : p.z, n : p.n, id : p.id, box : p.box }];
+	}
+
+	/**
+	 * Las estructuras de una etapa: en cada region, la primera (de la mas rara a la mas comun: Structures.active) que sale con su
+	 * azar de la region (stream(id + "/pick", rx, ry): 1 de p * 4), y se pone con el suyo (pose)
+	 */
+	function placeStage( stage : StructureStage ) {
+		if( !hasStructures() ) return;
+		var list = Structures.active(biomeName, stage, version, forceStructure);
+		if( list.length == 0 ) return;
+		var rs = regionSize(), n = Std.int(size / rs);
+		for( ry in 0...n )
+			for( rx in 0...n ) {
+				var found = null;
+				for( e in list )
+					if( forceStructure != null || stream(e.id + "/pick", rx, ry).random(e.p * 4) == 0 ) {
+						found = e;
+						break;
+					}
+				if( found != null ) pose(found, rx, ry, rs);
+			}
+	}
+
+	/**
+	 * Pone una estructura en la region rx, ry: hasta 1000 sitios de la region, con su azar (stream(id + "/place", rx, ry): sitio y
+	 * forma) y su semilla de perlin. Cuenta si ha cambiado al menos una celda o una altura; queda en poses con su caja
+	 */
+	function pose( e : StructureDef, rx : Int, ry : Int, rs : Int ) {
+		var keep = rnd, keepSeed = perlin.seed;
+		rnd = stream(e.id + "/place", rx, ry);
+		perlin.seed = stream(e.id + "/perlin", rx, ry).random(0x1FFFFFFF);
+		var ntry = 1000;
+		while( ntry-- > 0 ) {
+			var x = rx * rs + rnd.random(rs), y = ry * rs + rnd.random(rs), z = 0;
+			switch( e.stage ) {
+			case Cave:
+				z = rnd.random(height(x, y));
 				if( get(x, y, z) != CAVE ) continue;
-				while( get(x, y, z-1) == CAVE )
+				while( get(x, y, z - 1) == CAVE )
 					z--;
-				if( found.f(x, y, z) ) {
-					DETAILS.push( { x:x, y:y, z:z } );
-					placed.push({ x : x, y : y, z : z, n : found.n });
-					break;
-				}
+			case Surface:
+				z = height(x, y);
+			case Relief, Air:
 			}
+			poseOrigin = null;
+			beginTrack(x, y);
+			var ok = e.f(this, x, y, z);
+			endTrack();
+			if( !ok || trackChanged == 0 ) continue;
+			addPose(e.id, e.group, Std.string(e.stage), x, y, z);
+			break;
 		}
-		
-		
-		// CAVE BONUS
-		initStep();
-		var small = alloc(BBonusSmall);
-		var medium = alloc(BBonusMedium);
-		var large = alloc(BBonusLarge);
-		
-		// gros bonus
-		var n = rnd.random(3);
-		var tries = n*500;
-		while(n>0 && tries-->0) {
-			var x = rnd.random(size);
-			var y = rnd.random(size);
-			var z = rnd.random( height(x,y)-2 );
-			if( get(x,y,z)!=CAVE )
-				continue;
-				while( z>0 && !isSolidAt(x,y,z-1) )
-					z--;
-				if( get(x,y,z)!=CAVE )
-					continue;
-				set(x,y,z, large);
-				bonusHerb(x,y,z, CAVE);
-				n--;
-		}
-		
-		// packs
-		var n = rnd.random(7)+3;
-		var tries = n*500;
-		while(n>0 && tries-->0) {
-			var x = rnd.random(size);
-			var y = rnd.random(size);
-			var z = rnd.random( height(x,y)-2 );
-			if( get(x,y,z)!=CAVE )
-				continue;
-				while( z>0 && !isSolidAt(x,y,z-1) )
-					z--;
-				if( get(x,y,z)!=CAVE )
-					continue;
-				elipse(4,4,5, function(dx,dy,dz) {
-					var x=x+dx, y=y+dy, z=z+dz;
-					if( rnd.random(100)<30 && get(x,y,z)==CAVE && isSolidAt(x,y,z-1) )
-						set(x,y,z, rnd.random(100)<75 ? small: medium);
-				});
-				bonusHerb(x,y,z, CAVE);
-				n--;
-		}
+		rnd = keep;
+		perlin.seed = keepSeed;
 	}
-	
-	override function addDetails() {
-		// p(X) ~= 1 planete sur X
-		var det = forVersion([
-			{ f : detBigCrater, p : 100, n : "bigcrater" },
-			{ f : detSmallCrater, p : 10, n : "crater" },
-			{ f : detStrangePilars, p : 200, n : "pillars" },
-			{ f : detHighBuilding, p : 40, n : "ruins" },
-			{ f : detGroundBuilding, p : 60, n : "ruins" },
-			{ f : detGroundArtifact, p : 20, n : "artifact" },
-			{ f : detFence, p : 15, n : "fence" },
-			{ f : detCapsule, p : 250, n : "capsule" },
-			{ f : detBigChampi, p : 50, n : "bigmush" },
-			{ f : detVolcano, p : 15, n : "volcano" },
-			{ f : detAlienRobot, p : 130, n : "robot" },
-			{ f : detPyramid, p : 100, n : "pyramid" },
-			{ f : detTree, p : 6, n : "tree" },
-			{ f : detForest, p : 30, n : "grove" },
-			{ f : detIce, p : 40, n : "ice" },
-			{ f : detBurned, p : 6, n : "burned" },
-			{ f : detField, p : 8, n : "meadow" },
-			{ f : detLargePit, p : 50, n : "largepit" },
-			{ f : detSmallPit, p : 20, n : "pit" },
-			{ f : detRuin, p : 50, n : "ruins" },
-			{ f : detCascade, p : 7, n : "cascade" },
-			{ f : detHeal, p : 5, n : "heal" },
-		]);
-		
-		FlashSort.sort(det, function(d1, d2) return Reflect.compare(d2.p, d1.p));
-		var surf = size / 128;
-		for( i in 0...Math.ceil(surf*surf) ) {
-			var found = null;
-			for( d in det )
-				if( rnd.random(d.p*4) == 0 ) {
-					found = d;
-					break;
-				}
-			if( found == null )
-				continue;
-			initStep();
-			var ntry = 1000;
-			while( ntry-- > 0 ) {
-				var x = rnd.random(size);
-				var y = rnd.random(size);
-				var z = height(x, y);
-				if( found.f(x, y, z) ) {
-					DETAILS.push( { x:x, y:y, z:z } );
-					placed.push({ x : x, y : y, z : z, n : found.n });
-					break;
-				}
-			}
+
+	/** lo que se acaba de poner (beginTrack ... endTrack) en poses, con su caja respecto a su origen (poseOrigin o x, y, z) */
+	function addPose( id : String, n : String, stage : String, x : Int, y : Int, z : Int ) {
+		var box = trackBox;
+		if( poseOrigin != null ) {
+			var dx = realDist(trackX - real(poseOrigin[0])), dy = realDist(trackY - real(poseOrigin[1]));
+			box = [box[0] + dx, box[1] + dy, box[2], box[3] + dx, box[4] + dy, box[5]];
+			x = real(poseOrigin[0]);
+			y = real(poseOrigin[1]);
+			z = poseOrigin[2];
 		}
+		poses.push({ id : id, n : n, stage : stage, x : x, y : y, z : z, box : box, samples : stage == "Relief" ? null : trackSamples });
 	}
-	
+
+	// ---------------------------------------------------------------- bonus
+
 	private function bonusHerb(x,y,z, ?empty=EMPTY) {
 		var herb1 = alloc(BBonusHerb1);
 		var herb2 = alloc(BBonusHerb2);
@@ -220,97 +172,109 @@ class DetailsGenerator extends BiomeGenerator {
 				set(x,y,z, rnd.random(100)<50 ? herb1 : herb2);
 		});
 	}
-	
-	
+
+	/**
+	 * Un bonus (o un paquete de bonus) con su propio azar (stream(name, i)): su region (de todas las del planeta), hasta 500
+	 * sitios en ella y lo que pone. place(x, y) dice si el sitio vale y lo pone. Queda en poses
+	 */
+	function placeBonus( name : String, i : Int, cave : Bool, place : Int -> Int -> Int -> Bool ) {
+		var keep = rnd;
+		rnd = stream(name, i);
+		var rs = regionSize(), n = Std.int(size / rs);
+		var r = rnd.random(n * n);
+		var rx = r % n, ry = Std.int(r / n);
+		var tries = 500;
+		while( tries-- > 0 ) {
+			var x = rx * rs + rnd.random(rs), y = ry * rs + rnd.random(rs);
+			var z = cave ? rnd.random(height(x, y) - 2) : height(x, y);
+			beginTrack(x, y);
+			var ok = place(x, y, z);
+			endTrack();
+			if( !ok ) continue;
+			if( trackChanged > 0 ) {
+				poseOrigin = null;
+				addPose(name, null, "Bonus", x, y, z);
+			}
+			break;
+		}
+		rnd = keep;
+	}
+
+	/**
+	 * Bonus de la superficie: los mismos que en el original (15 sueltos y de 0 a 5 paquetes con hierbas), cada uno en una region
+	 * con su propio azar (placeBonus)
+	 */
 	override function addBonus() {
+		if( !hasStructures() ) return;
 		var small = alloc(BBonusSmall);
 		var medium = alloc(BBonusMedium);
-
-		// bonus isolés
-		var n = 15;
-		var tries = n*500;
-		while(n>0 && tries-->0) {
-			var x = rnd.random(size);
-			var y = rnd.random(size);
-			var z = height(x,y);
-			if( z<=waterLevel || get(x,y,z)!=EMPTY || !isSolidAt(x,y,z-1) )
-				continue;
-			set(x,y,z, rnd.random(100)<66 ? small : medium);
-			//bonusHerb(x,y,z);
-			n--;
-		}
-		
-		// packs
-		var n = rnd.random(6);
-		var tries = n*500;
-		while(n>0 && tries-->0) {
-			var x = rnd.random(size);
-			var y = rnd.random(size);
-			var z = height(x,y);
-			if( z<=waterLevel || get(x,y,z)!=EMPTY || !isSolidAt(x,y,z-1) )
-				continue;
-			elipse(4,4,5, function(dx,dy,dz) {
-				var x=x+dx, y=y+dy, z=z+dz;
-				if( rnd.random(100)<30 && get(x,y,z)==EMPTY && isSolidAt(x,y,z-1) )
-					set(x,y,z, rnd.random(100)<75 ? small: medium);
+		inline function free( x : Int, y : Int, z : Int ) return z > waterLevel && get(x, y, z) == EMPTY && isSolidAt(x, y, z - 1);
+		for( i in 0...15 )
+			placeBonus("bonus", i, false, function(x, y, z) {
+				if( !free(x, y, z) ) return false;
+				set(x, y, z, rnd.random(100) < 66 ? small : medium);
+				return true;
 			});
-			bonusHerb(x,y,z);
-			n--;
-		}
-	
-		addInvisible();
+		for( i in 0...stream("bonuspacks").random(6) )
+			placeBonus("bonuspack", i, false, function(x, y, z) {
+				if( !free(x, y, z) ) return false;
+				elipse(4, 4, 5, function(dx, dy, dz) {
+					var x = x + dx, y = y + dy, z = z + dz;
+					if( rnd.random(100) < 30 && get(x, y, z) == EMPTY && isSolidAt(x, y, z - 1) )
+						set(x, y, z, rnd.random(100) < 75 ? small : medium);
+				});
+				bonusHerb(x, y, z);
+				return true;
+			});
 	}
-	
-	/** anadido del port: p de la anomalia Invisible (~1 planeta normal de cada INVISIBLE_P, como la p de addDetails) */
-	static inline var INVISIBLE_P = 8;
+
+	/** bonus de las grutas: de 0 a 2 grandes y de 3 a 9 paquetes, en el suelo de una gruta (placeBonus) */
+	function caveBonus() {
+		var small = alloc(BBonusSmall);
+		var medium = alloc(BBonusMedium);
+		var large = alloc(BBonusLarge);
+		/** el suelo de la gruta debajo de x, y, z (o -1 si no es una gruta) */
+		function floor( x : Int, y : Int, z : Int ) : Int {
+			if( get(x, y, z) != CAVE ) return -1;
+			while( z > 0 && !isSolidAt(x, y, z - 1) )
+				z--;
+			return get(x, y, z) == CAVE ? z : -1;
+		}
+		for( i in 0...stream("cavebonus").random(3) )
+			placeBonus("cavebonus", i, true, function(x, y, z) {
+				z = floor(x, y, z);
+				if( z < 0 ) return false;
+				set(x, y, z, large);
+				bonusHerb(x, y, z, CAVE);
+				return true;
+			});
+		for( i in 0...stream("cavebonuspacks").random(7) + 3 )
+			placeBonus("cavebonuspack", i, true, function(x, y, z) {
+				z = floor(x, y, z);
+				if( z < 0 ) return false;
+				elipse(4, 4, 5, function(dx, dy, dz) {
+					var x = x + dx, y = y + dy, z = z + dz;
+					if( rnd.random(100) < 30 && get(x, y, z) == CAVE && isSolidAt(x, y, z - 1) )
+						set(x, y, z, rnd.random(100) < 75 ? small : medium);
+				});
+				bonusHerb(x, y, z, CAVE);
+				return true;
+			});
+	}
+
+	// ---------------------------------------------------------------- Invisible
+
 	/** su cubo: lado exterior (2x2x2 cofres y una capa de Kubes invisibles alrededor) y altura minima y maxima sobre lo que haya debajo */
 	static inline var INVISIBLE_SIZE = 4;
 	static inline var INVISIBLE_GAP_MIN = 10;
 	static inline var INVISIBLE_GAP_MAX = 20;
-	
+
 	/**
 	 * Anadido del port: anomalia Invisible, como los Invisibles de Kube. Un cubo de 4x4x4: 8 Cofres de Kube en el centro envueltos
-	 * en una capa de Kubes invisibles, flotando sobre el terreno (World dibuja los Kubes invisibles como el cielo de detras).
-	 * Va despues de todo lo demas y con su propio generador aleatorio: no toca la serie de rnd ni genStep, asi los planetas que
-	 * no la tienen salen igual que antes y en los que si, solo cambian las celdas del cubo (las partidas guardadas siguen valiendo).
+	 * en una capa de Kubes invisibles, flotando sobre el terreno (World dibuja los Kubes invisibles como el cielo de detras). Pone
+	 * el cubo con su esquina en x,y si cabe; devuelve la altura del suelo justo encima de lo mas alto de debajo, o -1. Su origen
+	 * (poseOrigin) es el centro, a esa altura: se identifica al pasar por debajo o a su lado (su caja llega hasta el suelo)
 	 */
-	function addInvisible() {
-		var keep = rnd;
-		// semilla mezclada (xorshift, solo operaciones de bits: igual en Flash y en HashLink): con seed * k + c, el primer valor del
-		// LCG de mt.Rand dependia de seed modulo 32 y la anomalia salia en las semillas 24, 56, 88...
-		var h = seed ^ 0x5BD1E995;
-		for( i in 0...3 ) {
-			h ^= h << 13;
-			h ^= h >>> 17;
-			h ^= h << 5;
-		}
-		rnd = new mt.Rand(h & 0x3FFFFFFF);
-		rnd.random(2);
-		var surf = size / 128;
-		for( i in 0...Math.ceil(surf*surf) ) {
-			if( rnd.random(INVISIBLE_P*4) != 0 )
-				continue;
-			var ntry = 1000;
-			while( ntry-- > 0 ) {
-				var x = rnd.random(size);
-				var y = rnd.random(size);
-				var top = detInvisible(x, y);
-				if( top >= 0 ) {
-					var c = INVISIBLE_SIZE >> 1;
-					DETAILS.push( { x:x+c, y:y+c, z:top } );
-					// desde el suelo (lo mas alto debajo) hasta arriba del cubo: se identifica al pasar por debajo o a su lado
-					placed.push({ x : x + c, y : y + c, z : top, n : "invisible", h : invisibleTop - top });
-					break;
-				}
-			}
-		}
-		rnd = keep;
-	}
-	
-	/** altura de arriba del ultimo cubo puesto (detInvisible) */
-	var invisibleTop = 0;
-	
-	/** pone el cubo con su esquina en x,y si cabe; devuelve la altura del suelo justo encima de lo mas alto de debajo, o -1 */
 	function detInvisible(x:Int, y:Int) : Int {
 		var s = INVISIBLE_SIZE;
 		// lo mas alto que haya debajo y alrededor (relieve, arboles, edificios), con un borde de 1: nada lo toca
@@ -334,11 +298,13 @@ class DetailsGenerator extends BiomeGenerator {
 					var shell = dx == 0 || dy == 0 || dz == 0 || dx == s-1 || dy == s-1 || dz == s-1;
 					set(x+dx, y+dy, z0+dz, shell ? inv : chest);
 				}
-		invisibleTop = z0 + s - 1;
+		var c = s >> 1;
+		poseOrigin = [x + c, y + c, top + 1];
+		// la caja baja hasta el suelo: alli ya se identifica (GameView.updateAnomalies)
+		trackPoint(realDist(real(x + c) - trackX), realDist(real(y + c) - trackY), top + 1, top + 1);
 		return top + 1;
 	}
-	
-	
+
 	function detStrangePilars(x, y, z) {
 		if( z > 85 )
 			return false;
@@ -585,8 +551,10 @@ class DetailsGenerator extends BiomeGenerator {
 					}
 		}
 		
+		// version 1: como mucho 4000 celdas de lava por volcan (antes, con la lava en el numero de ROCK, todo el planeta)
+		var budget = 4000;
 		function fillLava(x, y, z, k=30) {
-			if( get(x, y, z) != lavaRock )
+			if( get(x, y, z) != lavaRock || --budget < 0 )
 				return false;
 			var empty = around(x, y, z, EMPTY);
 			if( !empty || rnd.random(15) == 0 ) {
@@ -948,7 +916,9 @@ class DetailsGenerator extends BiomeGenerator {
 		var minRadius = 1 + rnd.random(3);
 		var maxRadius = minRadius + 3 + rnd.random(8);
 		for(zz in 2...HEIGHT) {
+			// version 1: el radio no pasa de maxRadius + 4 por encima del suelo (con z pequeno llegaba a cientos: sin fin)
 			var radius = minRadius + (maxRadius-minRadius)*(zz/z);
+			if( radius > maxRadius + 4 ) radius = maxRadius + 4;
 			circle(radius+rnd.random(2), radius+rnd.random(2), function(dx,dy) {
 				set(x+dx, y+dy, zz, EMPTY);
 			});

@@ -84,15 +84,86 @@ class MeshBuf {
 }
 
 /**
- * Malla de un trozo del mundo (anadido del port): un Polygon que, al subirse a la tarjeta, suelta sus puntos, normales, uvs y
- * colores (cuatro objetos por vertice) y se queda solo con los floats ya preparados, por si hubiera que volver a subirlos.
- * Con los de todo el planeta vivos, cada pasada del recolector de memoria de HashLink tardaba decenas de ms (al construir
- * los trozos en la carga y al jugar)
+ * Malla de un trozo mientras se construye (anadido del port, paso 5 de la refundicion): los floats de cada vertice tal como los
+ * sube ChunkPrim (posicion, normal, uv y color: 11; el mismo orden que Polygon.getCPUBuffer) y sus indices, sin un objeto por
+ * vertice. Antes cada cara eran 4 Point, 4 UV y 4 colores, y luego otra pasada para las normales y otra para los floats: mas de
+ * la mitad del tiempo de las mallas en la carga. Lo que se sube a la tarjeta es lo mismo (las normales, que el shader no usa,
+ * se suman por triangulo como Polygon.addNormals)
+ */
+class ChunkBuf {
+	public static inline var STRIDE = 11;
+	public var data = new hxd.FloatBuffer();
+	public var idx = new hxd.IndexBuffer();
+	public var verts = 0;
+	public var bounds = new h3d.col.Bounds();
+	public function new() {}
+
+	/** un vertice (la normal se suma despues con sus triangulos: tri) */
+	public inline function vertex( x : Float, y : Float, z : Float, u : Float, v : Float, c : Float ) {
+		data.push(x);
+		data.push(y);
+		data.push(z);
+		data.push(0.);
+		data.push(0.);
+		data.push(0.);
+		data.push(u);
+		data.push(v);
+		data.push(c);
+		data.push(c);
+		data.push(c);
+		bounds.addPos(x, y, z);
+		verts++;
+	}
+
+	/** un triangulo: sus indices y su normal sumada en sus tres vertices (Polygon.addNormals) */
+	public function tri( i0 : Int, i1 : Int, i2 : Int ) {
+		idx.push(i0);
+		idx.push(i1);
+		idx.push(i2);
+		var a = i0 * STRIDE, b = i1 * STRIDE, c = i2 * STRIDE;
+		var ux = data[b] - data[a], uy = data[b + 1] - data[a + 1], uz = data[b + 2] - data[a + 2];
+		var vx = data[c] - data[a], vy = data[c + 1] - data[a + 1], vz = data[c + 2] - data[a + 2];
+		var nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+		data[a + 3] += nx; data[a + 4] += ny; data[a + 5] += nz;
+		data[b + 3] += nx; data[b + 4] += ny; data[b + 5] += nz;
+		data[c + 3] += nx; data[c + 4] += ny; data[c + 5] += nz;
+	}
+
+	/** las normales de longitud 1 (como h3d.Vector.normalize), al acabar */
+	public function finish() {
+		var o = 3;
+		for( i in 0...verts ) {
+			var x = data[o], y = data[o + 1], z = data[o + 2];
+			var k = x * x + y * y + z * z;
+			k = k < hxd.Math.EPSILON2 ? 0 : 1 / Math.sqrt(k);
+			data[o] = x * k;
+			data[o + 1] = y * k;
+			data[o + 2] = z * k;
+			o += STRIDE;
+		}
+	}
+}
+
+/**
+ * Malla de un trozo del mundo (anadido del port): un Polygon que solo guarda los floats ya preparados (ofBuf: los de ChunkBuf; si
+ * no, al subirse a la tarjeta suelta sus puntos, normales, uvs y colores), por si hubiera que volver a subirlos. Con los objetos
+ * de todo el planeta vivos, cada pasada del recolector de memoria de HashLink tardaba decenas de ms (al construir los trozos en la
+ * carga y al jugar)
  */
 class ChunkPrim extends h3d.prim.Polygon {
 	var data : hxd.FloatBuffer;
 	var format : hxd.BufferFormat;
 	var verts = 0;
+
+	/** la malla de un ChunkBuf, ya con sus floats, su caja y sus indices (posicion, normal, uv, color: Polygon con los cuatro) */
+	public static function ofBuf( b : ChunkBuf ) : ChunkPrim {
+		var p = new ChunkPrim(null, b.idx);
+		p.data = b.data;
+		p.verts = b.verts;
+		p.format = hxd.BufferFormat.POS3D.append("normal", DVec3).append("uv", DVec2).append("color", DVec3);
+		p.bounds = b.bounds;
+		return p;
+	}
 
 	override function alloc( engine : h3d.Engine ) {
 		if( data == null ) {
@@ -194,6 +265,33 @@ class World {
 	var wrapY = -1e9;
 	var genStarted : Float;
 
+	/**
+	 * --loadtime (anadido del port): lo que ha costado cada fase de la carga, en segundos, y cuantos pasos (step) ha llevado; se
+	 * escribe al acabar (loadTime)
+	 */
+	public static var LOAD_TIME = Sys.args().indexOf("--loadtime") >= 0;
+	/**
+	 * Anadido del port (HashLink): el planeta se genera en otro hilo y la pantalla de carga sigue a su ritmo (antes, por tandas en
+	 * cada imagen, un paso largo del generador la paraba hasta casi un segundo). --nothread lo hace como antes; --gencheck vuelve a
+	 * generarlo en el hilo principal al acabar y dice si sale igual. Cada generador tiene su propio tampon (paso 2 de la
+	 * refundicion): no comparte nada con el resto del juego mientras trabaja
+	 */
+	public static var GEN_THREAD = #if hl Sys.args().indexOf("--nothread") < 0 #else false #end;
+	/** el hilo ha acabado (lo suelta al terminar); null hasta que empieza */
+	var genLock : sys.thread.Lock;
+	/** error del generador en el hilo (se lanza en el principal) */
+	var genError : Dynamic;
+	/** lo que ha tardado en el hilo (s) */
+	var genSpent = 0.;
+	/** la generacion ha acabado (en el hilo o por tandas) */
+	var genFinished = false;
+	/** el mundo se ha soltado antes de acabar: el hilo para entre dos pasos */
+	var genCancel = false;
+	/** con que se creo el generador (--gencheck lo vuelve a crear igual) */
+	var genArgs : { seed : Int, biome : BiomeKind, comet : Bool, version : Null<Int> };
+	var load = { init : 0., gen : 0., cells : 0., sea : 0., edits : 0., light : 0., mesh : 0., meshEmit : 0., steps : 0, editCells : 0 };
+	var menuFog : Bool;
+
 	// luz (Builder.relight del original): 0..15 por celda; LBASE = 10 equivale a luz plena
 	public static inline var LBASE = 10;
 	static inline var NOLIGHT = 8; // enumIndex(BTReduced): a partir de aqui el bloque no deja pasar la luz
@@ -207,6 +305,12 @@ class World {
 	var useMask = false;
 	/** cambios del jugador sobre el terreno: celda -> indice global de bloque (0 = aire); se guardan con la partida */
 	public var editMap = new Map<Int, Int>();
+	/**
+	 * Anadido del port: lo que habia en cada celda de editMap antes de su primer cambio (lo generado; indice global). Una celda que
+	 * vuelve a eso sale de editMap (prune): la partida no guarda lo que el generador ya pone. El agua del mar no: initSea y la
+	 * bajada del mar quitan capas generadas, y una celda de mar vuelta a poner tiene que seguir guardada
+	 */
+	var generated = new Map<Int, Int>();
 	var savedEdits : Array<Int>;
 	/**
 	 * Nivel del agua que fluye (anadido del port, como Minecraft): celda -> 1..7 (cada vez mas baja) u 8 (cayendo).
@@ -263,6 +367,8 @@ class World {
 
 	/** genVersion: version del generador del planeta (SaveInfo.genVersion); null = la actual (gen.Generator.VERSION) */
 	public function new( seed : Int, biomeName : String, sizeChunks : Int, parent : h3d.scene.Object, atlas : h3d.mat.Texture, menuFog = false, ?savedEdits : Array<Int>, ?shipData : ShipData.ShipDataInfo, ?sharedSky : Sky, ?genVersion : Null<Int> ) {
+		var tNew = haxe.Timer.stamp();
+		this.menuFog = menuFog;
 		this.savedEdits = savedEdits;
 		this.seed = seed;
 		this.biomeName = biomeName;
@@ -292,15 +398,11 @@ class World {
 			wave.amp = Settings.waterWaves ? WAVE_AMP : 0;
 			wave.time = 0;
 		}
-		gen = comet ? new CometGenerator(size, seed) : new gen.DetailsGenerator(size, seed);
-		if( genVersion != null ) gen.version = genVersion;
+		genArgs = { seed : seed, biome : biome, comet : comet, version : genVersion };
+		gen = newGenerator();
 		var bd = Data.getBiome(biome);
 		sunP = bd.sunPower;
 		sunF = bd.sunFalloff == null ? 1 : bd.sunFalloff;
-		gen.alloc(bd.water);
-		gen.alloc(BMinIron);
-		gen.alloc(BMinAluminium);
-		for( s in bd.soils ) gen.alloc(s);
 		if( shipData == null ) {
 			gen.startGenerate(biome);
 			seaLevel = gen.getWaterInfos().level;
@@ -311,6 +413,59 @@ class World {
 		for( b in Block.all )
 			if( b.model != null && b.size == null ) b.size = Models.get(b.model).box;
 		genStarted = haxe.Timer.stamp();
+		load.init = genStarted - tNew;
+	}
+
+	/** el generador de este mundo, con sus bloques reservados (sin empezar: startGenerate o initShip) */
+	function newGenerator() : gen.DetailsGenerator {
+		var a = genArgs;
+		var g = a.comet ? new CometGenerator(size, a.seed) : new gen.DetailsGenerator(size, a.seed);
+		// la version 0 (el generador del original) ya no existe: un planeta de antes se genera con la 1 y la partida guarda su 0
+		// (SaveData: "Ancienne partie")
+		if( a.version != null ) g.version = a.version < 1 ? 1 : a.version;
+		g.reserveBlocks(a.biome);
+		return g;
+	}
+
+	/** genera el planeta en otro hilo (GEN_THREAD); genLock se suelta al acabar, con genError si ha fallado */
+	function startGenThread() {
+		genLock = new sys.thread.Lock();
+		var g = gen, lock = genLock;
+		sys.thread.Thread.create(function() {
+			var t0 = haxe.Timer.stamp();
+			try {
+				while( !genCancel && g.process(50) ) {}
+			} catch( e : Dynamic ) {
+				genError = e;
+			}
+			genSpent = haxe.Timer.stamp() - t0;
+			lock.release();
+		});
+	}
+
+	/** --gencheck: el planeta otra vez, en el hilo principal: tiene que salir igual que en el hilo (por nombre de bloque) */
+	function checkThreadGen() {
+		if( Sys.args().indexOf("--gencheck") < 0 ) return;
+		var g = newGenerator();
+		g.startGenerate(genArgs.biome);
+		while( g.process(1000000) ) {}
+		var a = gen.getBytes().b, b = g.getBytes().b, diff = 0;
+		inline function kind( x : gen.DetailsGenerator, v : Int ) return (v & 127) < x.blocks.length ? Type.enumIndex(x.blocks[v & 127].k) : -1;
+		for( i in 0...a.length ) if( kind(gen, a.get(i)) != kind(g, b.get(i)) ) diff++;
+		var same = diff == 0 && [for( p in gen.placed ) p.n + p.x + "," + p.y + "," + p.z].join(" ") == [for( p in g.placed ) p.n + p.x + "," + p.y + "," + p.z].join(" ");
+		Sys.println("generacion en otro hilo " + biomeName + " " + size + ": " + (same ? "igual que en el principal" : "DISTINTA (" + diff + " celdas)"));
+	}
+
+	/** --loadtime: una linea con el tiempo de cada fase de la carga de este mundo (ms) */
+	function loadTime() {
+		if( !LOAD_TIME ) return;
+		inline function t( v : Float ) return Std.int(v * 1000);
+		var l = load;
+		Sys.println("carga " + biomeName + (isShip ? " (nave)" : "") + (menuFog ? " (menu)" : "") + " " + size + ": inicio " + t(l.init)
+			+ " ms, " + (isShip ? "celdas de la nave " : "generacion ") + t(l.gen) + " ms, celdas " + t(l.cells) + " ms, mar " + t(l.sea)
+			+ " ms, cambios guardados " + t(l.edits) + " ms (" + l.editCells + " celdas), luz " + t(l.light) + " ms, mallas "
+			+ t(l.mesh) + " ms (" + chunk + " trozos; de ellos " + t(l.meshEmit) + " ms en hacer y subir las mallas), en " + l.steps + " pasos; " + t(haxe.Timer.stamp() - genStarted)
+			+ " ms desde el final del inicio");
 	}
 
 	public inline function isReady() return phase >= 2;
@@ -326,6 +481,7 @@ class World {
 		while( more && (haxe.Timer.stamp() - t0) * 1000 < budgetMs )
 			more = lighting();
 		lightSpent += haxe.Timer.stamp() - t1;
+		load.light = lightSpent;
 		if( more ) return false;
 		lighting = null;
 		lightTime();
@@ -350,9 +506,14 @@ class World {
 	/** Avanza la carga durante budgetMs milisegundos; devuelve el progreso de 0 a 1. */
 	public function step( budgetMs : Float ) : Float {
 		var t0 = haxe.Timer.stamp();
+		if( phase < 2 ) load.steps++;
 		if( phase == 0 && isShip ) {
-			if( shipCells != null && !placeCells(t0, budgetMs) ) return progress = 0.25;
+			if( shipCells != null && !placeCells(t0, budgetMs) ) {
+				load.gen += haxe.Timer.stamp() - t0;
+				return progress = 0.25;
+			}
 			if( lighting == null ) {
+				load.gen += haxe.Timer.stamp() - t0;
 				applySaved();
 				lighting = lightTask();
 			}
@@ -361,16 +522,33 @@ class World {
 		}
 		if( phase == 0 ) {
 			if( lighting == null ) {
-				var p0 = gen.progress;
-				var busy = gen.process(Std.int(budgetMs));
-				if( Sys.args().indexOf("--frametime") >= 0 && haxe.Timer.stamp() - t0 > 0.2 )
-					Sys.println("generador: " + Std.int((haxe.Timer.stamp() - t0) * 1000) + " ms en un paso (progreso " + Std.int(p0 * 100) + "% -> " + Std.int(gen.progress * 100) + "%)");
-				if( busy ) return progress = gen.progress * 0.75;
+				if( !genFinished ) {
+					if( GEN_THREAD ) {
+						if( genLock == null ) startGenThread();
+						if( !genLock.wait(0.) ) return progress = gen.progress * 0.75;
+						if( genError != null ) throw genError;
+						load.gen = genSpent;
+						checkThreadGen();
+					} else {
+						var p0 = gen.progress;
+						var busy = gen.process(Std.int(budgetMs));
+						var tg = haxe.Timer.stamp();
+						load.gen += tg - t0;
+						if( Sys.args().indexOf("--frametime") >= 0 && tg - t0 > 0.2 )
+							Sys.println("generador: " + Std.int((tg - t0) * 1000) + " ms en un paso (progreso " + Std.int(p0 * 100) + "% -> " + Std.int(gen.progress * 100) + "%)");
+						if( busy ) return progress = gen.progress * 0.75;
+					}
+					genFinished = true;
+				}
+				var t1 = haxe.Timer.stamp();
 				wideCells(gen.getBytes().b);
 				initLightTables();
+				var t2 = haxe.Timer.stamp();
+				load.cells += t2 - t1;
 				// el sitio de la nave se elige antes de aplicar los cambios guardados: si no, con el suelo cavado o construido bajo
 				// la nave, al cargar la partida la nave aparecia en otro sitio
 				if( savedEdits != null && savedEdits.length > 0 ) shipPlace();
+				load.edits += haxe.Timer.stamp() - t2;
 				applySaved();
 				lighting = lightTask();
 			}
@@ -379,18 +557,25 @@ class World {
 		}
 		if( phase == 1 ) {
 			var n = size >> 4;
+			var t1 = haxe.Timer.stamp();
 			while( chunk < n * n ) {
 				buildChunk(chunk % n, Std.int(chunk / n));
 				chunk++;
 				if( (haxe.Timer.stamp() - t0) * 1000 >= budgetMs ) break;
 			}
-			if( chunk >= n * n ) phase = 2;
+			load.mesh += haxe.Timer.stamp() - t1;
+			if( chunk >= n * n ) {
+				phase = 2;
+				loadTime();
+			}
 			return progress = 0.75 + 0.25 * chunk / (n * n);
 		}
 		return progress = 1;
 	}
 
 	public function dispose() {
+		// un hilo de generacion que no ha acabado para en el siguiente paso (el generador sigue vivo en el hasta entonces)
+		genCancel = true;
 		if( ship != null ) ship.dispose();
 		if( ownSky ) sky.dispose();
 		for( m in meshes ) {
@@ -1046,6 +1231,7 @@ class World {
 	}
 
 	function applySaved() {
+		var t0 = haxe.Timer.stamp();
 		// el mar va antes que los cambios: las capas quitadas son del terreno generado y lo puesto despues se queda
 		if( seaBlock != null ) {
 			var level = seaLevel, flood = 0;
@@ -1059,6 +1245,8 @@ class World {
 			}
 			initSea(level, flood);
 		}
+		var t1 = haxe.Timer.stamp();
+		load.sea += t1 - t0;
 		if( savedEdits == null ) return;
 		var i = 0;
 		while( i + 1 < savedEdits.length ) {
@@ -1067,11 +1255,32 @@ class World {
 			if( key < 0 ) continue;
 			var lvl = gi >> 16;
 			var b = (gi & 0xFFFF) == 0 ? null : Block.all[gi & 0xFFFF];
+			noteGenerated(key);
 			setCell(key, localId(b));
 			editMap.set(key, gi);
+			prune(key);
 			if( lvl > 0 ) waterLvl.set(key, lvl);
+			load.editCells++;
 		}
 		savedEdits = null;
+		load.edits += haxe.Timer.stamp() - t1;
+	}
+
+	/** indice global (Block.all) del bloque de la celda p */
+	inline function globalAt( p : Int ) : Int {
+		var b = gen.blocks[cell(p)];
+		return b == null ? 0 : b.index;
+	}
+
+	/** antes de cambiar la celda p: si es la primera vez, lo que tenia (generated) */
+	inline function noteGenerated( p : Int ) {
+		if( !generated.exists(p) ) generated.set(p, globalAt(p));
+	}
+
+	/** la celda p ha vuelto a lo que puso el generador (sin nivel de agua): ya no es un cambio. Nunca el agua del mar (generated) */
+	function prune( p : Int ) {
+		var g = generated.get(p);
+		if( g != null && editMap.get(p) == g && (seaBlock == null || g != seaBlock.index) ) editMap.remove(p);
 	}
 
 	/** cambios para guardar: pares [celda, bloque, celda, bloque, ...] */
@@ -1363,7 +1572,9 @@ class World {
 				}
 		}
 		if( level > 0 ) waterLvl.set(key, level) else waterLvl.remove(key);
+		noteGenerated(key);
 		editMap.set(key, b.index | (level << 16));
+		prune(key);
 	}
 
 	/**
@@ -1416,7 +1627,7 @@ class World {
 	}
 
 	/** caras de un liquido con la superficie inclinada; open dice que lados se ven */
-	function addLiquid( m : MeshBuf, b : Block, fam : Int, x : Int, y : Int, z : Int, open : Int -> Int -> Int -> Bool, su : Float, sd : Float, sx : Float, sy : Float, neg : Bool ) {
+	function addLiquid( m : ChunkBuf, b : Block, fam : Int, x : Int, y : Int, z : Int, open : Int -> Int -> Int -> Bool, su : Float, sd : Float, sx : Float, sy : Float, neg : Bool ) {
 		var fx = x, fy = y, fz = z;
 		var full = liquidFull(x, y, z, fam);
 		var h00 = fz + (full ? 1. : liquidCorner(x, y, z, fam)), h10 = fz + (full ? 1. : liquidCorner(x + 1, y, z, fam));
@@ -1452,8 +1663,10 @@ class World {
 		y = wrapC(y);
 		if( z < 1 || z >= HEIGHT - 1 ) return;
 		var key = ((x + y * size) << ZBITS) | z;
+		noteGenerated(key);
 		setCell(key, localId(b));
 		editMap.set(key, b == null ? 0 : b.index);
+		prune(key);
 		waterLvl.remove(key);
 		var n = size >> 4;
 		for( dy in -1...2 )
@@ -1685,7 +1898,7 @@ class World {
 	var redFace = -1;
 	var redB : Array<Float>;
 
-	function addQuad( m : MeshBuf, p : Array<Float>, tile : Int, shade : Float ) {
+	function addQuad( m : ChunkBuf, p : Array<Float>, tile : Int, shade : Float ) {
 		shv[0] = shv[1] = shv[2] = shv[3] = shade;
 		addQuad4(m, p, tile);
 	}
@@ -1695,7 +1908,7 @@ class World {
 	 * en el plano exterior de la cara, multiplicada por la sombra de la cara. Con BFNoShade (neg) no depende de la luz.
 	 * (cx,cy,cz) es la celda del bloque y (ox,oy,oz) la normal de la cara; uniform usa solo la celda exterior.
 	 */
-	function addQuadL( m : MeshBuf, p : Array<Float>, tile : Int, shade : Float, neg : Bool, ox : Int, oy : Int, oz : Int, cx : Int, cy : Int, cz : Int, uniform = false, ?lp : Array<Float> ) {
+	function addQuadL( m : ChunkBuf, p : Array<Float>, tile : Int, shade : Float, neg : Bool, ox : Int, oy : Int, oz : Int, cx : Int, cy : Int, cz : Int, uniform = false, ?lp : Array<Float> ) {
 		if( tile < 0 || tile >= 0xFFF ) return;
 		if( neg ) {
 			shv[0] = shv[1] = shv[2] = shv[3] = shade;
@@ -1742,16 +1955,12 @@ class World {
 		return Std.int(Math.max(Math.max(lightAt(x + 1, y, z), lightAt(x - 1, y, z)), Math.max(Math.max(lightAt(x, y + 1, z), lightAt(x, y - 1, z)), Math.max(lightAt(x, y, z + 1), lightAt(x, y, z - 1)))));
 	}
 
-	function addQuad4( m : MeshBuf, p : Array<Float>, tile : Int ) {
+	function addQuad4( m : ChunkBuf, p : Array<Float>, tile : Int ) {
 		if( tile < 0 || tile >= 0xFFF ) return;
 		var tx = tile & 63, ty = tile >> 6;
 		var u0 = tx / 64 + (1 - TE) / 128, v0 = ty / 64 + (1 - TE) / 128;
 		var u1 = u0 + TE / 64, v1 = v0 + TE / 64;
-		var b = m.pts.length;
-		m.pts.push(new h3d.col.Point(p[0], p[1], p[2]));
-		m.pts.push(new h3d.col.Point(p[3], p[4], p[5]));
-		m.pts.push(new h3d.col.Point(p[6], p[7], p[8]));
-		m.pts.push(new h3d.col.Point(p[9], p[10], p[11]));
+		var b = m.verts;
 		if( redFace >= 0 ) {
 			// bloque parcial (BTReduced): como Builder.addCustomQuad, la cara muestra un RECORTE de la casilla del tamano de la cara
 			// (en bloques), desde su esquina superior izquierda, en vez de la casilla entera estirada
@@ -1765,29 +1974,62 @@ class World {
 				case 4: u = redB[2] - px; v = redB[4] - pz;
 				default: u = px - redB[0]; v = redB[4] - pz;
 				}
-				m.uvs.push(new h3d.prim.UV((tx + u * TE) / 64, (ty + v * TE) / 64));
+				m.vertex(px, py, pz, (tx + u * TE) / 64, (ty + v * TE) / 64, shv[k]);
 			}
 			redFace = -1;
 		} else {
-		m.uvs.push(new h3d.prim.UV(u0, v1));
-		m.uvs.push(new h3d.prim.UV(u1, v1));
-		m.uvs.push(new h3d.prim.UV(u1, v0));
-		m.uvs.push(new h3d.prim.UV(u0, v0));
+			m.vertex(p[0], p[1], p[2], u0, v1, shv[0]);
+			m.vertex(p[3], p[4], p[5], u1, v1, shv[1]);
+			m.vertex(p[6], p[7], p[8], u1, v0, shv[2]);
+			m.vertex(p[9], p[10], p[11], u0, v0, shv[3]);
 		}
-		for( i in 0...4 ) m.cols.push(new h3d.col.Point(shv[i], shv[i], shv[i]));
 		// la diagonal se elige segun la luz para evitar costuras raras
 		if( shv[0] + shv[2] >= shv[1] + shv[3] ) {
-			m.idx.push(b); m.idx.push(b + 1); m.idx.push(b + 2);
-			m.idx.push(b); m.idx.push(b + 2); m.idx.push(b + 3);
+			m.tri(b, b + 1, b + 2);
+			m.tri(b, b + 2, b + 3);
 		} else {
-			m.idx.push(b + 1); m.idx.push(b + 2); m.idx.push(b + 3);
-			m.idx.push(b + 1); m.idx.push(b + 3); m.idx.push(b);
+			m.tri(b + 1, b + 2, b + 3);
+			m.tri(b + 1, b + 3, b);
 		}
 		faces++;
 	}
 
+	/** las 12 coordenadas de una cara en un tampon que se reutiliza (addQuadL las usa enseguida): sin un Array por cara */
+	var quadA = [for( i in 0...12 ) 0.];
+	var quadB = [for( i in 0...12 ) 0.];
+	inline function qp( a : Float, b : Float, c : Float, d : Float, e : Float, f : Float, g : Float, h : Float, i : Float, j : Float, k : Float, l : Float ) {
+		var q = quadA;
+		q[0] = a; q[1] = b; q[2] = c; q[3] = d; q[4] = e; q[5] = f; q[6] = g; q[7] = h; q[8] = i; q[9] = j; q[10] = k; q[11] = l;
+		return q;
+	}
+	inline function qp2( a : Float, b : Float, c : Float, d : Float, e : Float, f : Float, g : Float, h : Float, i : Float, j : Float, k : Float, l : Float ) {
+		var q = quadB;
+		q[0] = a; q[1] = b; q[2] = c; q[3] = d; q[4] = e; q[5] = f; q[6] = g; q[7] = h; q[8] = i; q[9] = j; q[10] = k; q[11] = l;
+		return q;
+	}
+
+	/** raices de las sombras de cada bloque del generador (shadeUp, shadeDown, shadeX, shadeY: 4 por numero local), una vez */
+	var shadeTab : Array<Float> = [];
+	inline function shadeIndex( id : Int ) : Int {
+		if( (id << 2) >= shadeTab.length ) fillShades();
+		return id << 2;
+	}
+	function fillShades() {
+		for( i in (shadeTab.length >> 2)...gen.blocks.length ) {
+			var b = gen.blocks[i];
+			if( b == null ) {
+				for( k in 0...4 ) shadeTab.push(1);
+				continue;
+			}
+			shadeTab.push(Math.sqrt(b.shadeUp));
+			shadeTab.push(Math.sqrt(b.shadeDown));
+			shadeTab.push(Math.sqrt(b.shadeX));
+			shadeTab.push(Math.sqrt(b.shadeY));
+		}
+	}
+
 	/** modelos de Builder.hx (plantas en cruz, planos, columnas, cajas): se copia la geometria del original */
-	function addModel( m : MeshBuf, b : Block, x : Int, y : Int, z : Int ) {
+	function addModel( m : ChunkBuf, b : Block, x : Int, y : Int, z : Int ) {
 		var md = Models.of(b);
 		var v = md.v;
 		var n = Std.int(v.length / 24);
@@ -1798,17 +2040,15 @@ class World {
 			var tile = !md.multi || sel == 0 ? b.tlr : (sel == 1 ? b.tu : b.td);
 			if( tile < 0 || tile >= 0xFFF ) continue;
 			var tx = tile & 63, ty = tile >> 6;
-			var base = m.pts.length;
+			var base = m.verts;
 			for( k in 0...4 ) {
 				var o = q * 24 + k * 6;
 				var u = v[o + 3];
 				var s = v[o + 5] * lt;
-				m.pts.push(new h3d.col.Point(x + v[o], y + v[o + 1], z + v[o + 2]));
-				m.uvs.push(new h3d.prim.UV(tx / 64 + (1 - TE) / 128 + (u - Std.int(u)), ty / 64 + (1 - TE) / 128 + v[o + 4]));
-				m.cols.push(new h3d.col.Point(s, s, s));
+				m.vertex(x + v[o], y + v[o + 1], z + v[o + 2], tx / 64 + (1 - TE) / 128 + (u - Std.int(u)), ty / 64 + (1 - TE) / 128 + v[o + 4], s);
 			}
-			m.idx.push(base); m.idx.push(base + 1); m.idx.push(base + 2);
-			m.idx.push(base + 2); m.idx.push(base + 1); m.idx.push(base + 3);
+			m.tri(base, base + 1, base + 2);
+			m.tri(base + 2, base + 1, base + 3);
 			faces++;
 		}
 	}
@@ -1838,17 +2078,16 @@ class World {
 		p.blend(Zero, One);
 	}
 
-	function emitMesh( m : MeshBuf, kind : Int, scroll = 0. ) {
-		if( m.pts.length == 0 ) return;
+	function emitMesh( m : ChunkBuf, kind : Int, scroll = 0. ) {
+		if( m.verts == 0 ) return;
 		var ts = null;
 		if( scroll != 0 ) {
 			ts = new TileScroll();
 			ts.speed = scroll;
 		}
-		var poly = new ChunkPrim(m.pts, m.idx);
-		poly.addNormals(); // DirectX exige la entrada 'normal' del shader aunque no se use (OpenGL la descarta)
-		poly.uvs = m.uvs;
-		poly.colors = m.cols;
+		// con normales: DirectX exige la entrada 'normal' del shader aunque no se use (OpenGL la descarta)
+		m.finish();
+		var poly = ChunkPrim.ofBuf(m);
 		// sus buffers se crean y se suben ya, con el trozo (en la carga, dentro del tiempo de cada paso): si no, se hacian en el
 		// primer dibujo, los de todo el planeta en la misma imagen (~280 buffers y 350-730 ms al aparecer el menu o el planeta)
 		poly.alloc(h3d.Engine.getCurrent());
@@ -2044,18 +2283,18 @@ class World {
 	}
 
 	function buildChunk( cx : Int, cy : Int ) {
-		var solidBuf = new MeshBuf();
-		var alphaBuf = new MeshBuf();
-		var waterBuf = new MeshBuf();
-		var blendBuf = new MeshBuf();
+		var solidBuf = new ChunkBuf();
+		var alphaBuf = new ChunkBuf();
+		var waterBuf = new ChunkBuf();
+		var blendBuf = new ChunkBuf();
 		// Kube invisible: caras que pintan el cielo, y caras de los cristales que lo revelan (emitInvisible)
-		var invisBuf = new MeshBuf();
-		var markBuf = new MeshBuf();
+		var invisBuf = new ChunkBuf();
+		var markBuf = new ChunkBuf();
 		// caras de los bloques con BFScroll: un material por tipo y velocidad (TileScroll)
-		var scrollBufs = new Array<{ kind : Int, speed : Float, buf : MeshBuf }>();
-		function scrollBuf( kind : Int, speed : Float ) : MeshBuf {
+		var scrollBufs = new Array<{ kind : Int, speed : Float, buf : ChunkBuf }>();
+		function scrollBuf( kind : Int, speed : Float ) : ChunkBuf {
 			for( s in scrollBufs ) if( s.kind == kind && s.speed == speed ) return s.buf;
-			var buf = new MeshBuf();
+			var buf = new ChunkBuf();
 			scrollBufs.push({ kind : kind, speed : speed, buf : buf });
 			return buf;
 		}
@@ -2090,8 +2329,8 @@ class World {
 					if( id == 0 ) continue;
 					var b = gen.blocks[id];
 					if( b == null ) continue;
-					var su = Math.sqrt(b.shadeUp), sd = Math.sqrt(b.shadeDown);
-					var sx = Math.sqrt(b.shadeX), sy = Math.sqrt(b.shadeY);
+					var si = shadeIndex(id);
+					var su = shadeTab[si], sd = shadeTab[si + 1], sx = shadeTab[si + 2], sy = shadeTab[si + 3];
 					var fx = x, fy = y, fz = z;
 					var neg = b.hasFlag(BFNoShade);
 					var role = invisRole[id];
@@ -2116,16 +2355,17 @@ class World {
 						var oE = al ? openAlphaNear(x + 1, y, z) : open(x + 1, y, z);
 						var oS = al ? openAlphaNear(x, y - 1, z) : open(x, y - 1, z);
 						var oN = al ? openAlphaNear(x, y + 1, z) : open(x, y + 1, z);
+						if( !(oU || oD || oW || oE || oS || oN) ) continue;
 						// la vitre teintee y la glace noire tambien marcan donde dejan ver los Kubes invisibles (emitInvisible)
 						var reps = role == INV_REVEAL ? 2 : 1;
 						for( r in 0...reps ) {
 							if( r == 1 ) m = markBuf;
-							if( oU ) addQuadL(m, [fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1], b.tu, su, neg, 0, 0, 1, x, y, z);
-							if( oD ) addQuadL(m, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz], b.td, sd, neg, 0, 0, -1, x, y, z);
-							if( oW ) addQuadL(m, [fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1], b.tlr, sx, neg, -1, 0, 0, x, y, z);
-							if( oE ) addQuadL(m, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1], b.tlr, sx, neg, 1, 0, 0, x, y, z);
-							if( oS ) addQuadL(m, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1], b.tlr, sy, neg, 0, -1, 0, x, y, z);
-							if( oN ) addQuadL(m, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1], b.tlr, sy, neg, 0, 1, 0, x, y, z);
+							if( oU ) addQuadL(m, qp(fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1), b.tu, su, neg, 0, 0, 1, x, y, z);
+							if( oD ) addQuadL(m, qp(fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz), b.td, sd, neg, 0, 0, -1, x, y, z);
+							if( oW ) addQuadL(m, qp(fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1), b.tlr, sx, neg, -1, 0, 0, x, y, z);
+							if( oE ) addQuadL(m, qp(fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1), b.tlr, sx, neg, 1, 0, 0, x, y, z);
+							if( oS ) addQuadL(m, qp(fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1), b.tlr, sy, neg, 0, -1, 0, x, y, z);
+							if( oN ) addQuadL(m, qp(fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1), b.tlr, sy, neg, 0, 1, 0, x, y, z);
 						}
 					case BTModel, BTModel2Side, BTSprite:
 						addModel(alphaBuf, b, fx, fy, fz);
@@ -2139,25 +2379,26 @@ class World {
 							var s = b.size;
 							var x1 = fx + s.x1, y1 = fy + s.y1, z1 = fz + s.z1, x2 = fx + s.x2, y2 = fy + s.y2, z2 = fz + s.z2;
 							redB = [x1, y1, x2, y2, z2];
-							if( s.z2 < 1 || open(x, y, z + 1) ) { redFace = 0; addQuadL(alphaBuf, [x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2], b.tu, su, neg, 0, 0, 1, x, y, z, lamp, [fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1]); }
-							if( s.z1 > 0 || open(x, y, z - 1) ) { redFace = 1; addQuadL(alphaBuf, [x1, y2, z1, x2, y2, z1, x2, y1, z1, x1, y1, z1], b.td, sd, neg, 0, 0, -1, x, y, z, lamp, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz]); }
-							if( s.x1 > 0 || open(x - 1, y, z) ) { redFace = 2; addQuadL(alphaBuf, [x1, y2, z1, x1, y1, z1, x1, y1, z2, x1, y2, z2], b.tlr, sx, neg, -1, 0, 0, x, y, z, lamp, [fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1]); }
-							if( s.x2 < 1 || open(x + 1, y, z) ) { redFace = 3; addQuadL(alphaBuf, [x2, y1, z1, x2, y2, z1, x2, y2, z2, x2, y1, z2], b.tlr, sx, neg, 1, 0, 0, x, y, z, lamp, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1]); }
-							if( s.y1 > 0 || open(x, y - 1, z) ) { redFace = 4; addQuadL(alphaBuf, [x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2], b.tlr, sy, neg, 0, -1, 0, x, y, z, lamp, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1]); }
-							if( s.y2 < 1 || open(x, y + 1, z) ) { redFace = 5; addQuadL(alphaBuf, [x2, y2, z1, x1, y2, z1, x1, y2, z2, x2, y2, z2], b.tlr, sy, neg, 0, 1, 0, x, y, z, lamp, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1]); }
+							if( s.z2 < 1 || open(x, y, z + 1) ) { redFace = 0; addQuadL(alphaBuf, qp(x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2), b.tu, su, neg, 0, 0, 1, x, y, z, lamp, qp2(fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1)); }
+							if( s.z1 > 0 || open(x, y, z - 1) ) { redFace = 1; addQuadL(alphaBuf, qp(x1, y2, z1, x2, y2, z1, x2, y1, z1, x1, y1, z1), b.td, sd, neg, 0, 0, -1, x, y, z, lamp, qp2(fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz)); }
+							if( s.x1 > 0 || open(x - 1, y, z) ) { redFace = 2; addQuadL(alphaBuf, qp(x1, y2, z1, x1, y1, z1, x1, y1, z2, x1, y2, z2), b.tlr, sx, neg, -1, 0, 0, x, y, z, lamp, qp2(fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1)); }
+							if( s.x2 < 1 || open(x + 1, y, z) ) { redFace = 3; addQuadL(alphaBuf, qp(x2, y1, z1, x2, y2, z1, x2, y2, z2, x2, y1, z2), b.tlr, sx, neg, 1, 0, 0, x, y, z, lamp, qp2(fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1)); }
+							if( s.y1 > 0 || open(x, y - 1, z) ) { redFace = 4; addQuadL(alphaBuf, qp(x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2), b.tlr, sy, neg, 0, -1, 0, x, y, z, lamp, qp2(fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1)); }
+							if( s.y2 < 1 || open(x, y + 1, z) ) { redFace = 5; addQuadL(alphaBuf, qp(x2, y2, z1, x1, y2, z1, x1, y2, z2, x2, y2, z2), b.tlr, sy, neg, 0, 1, 0, x, y, z, lamp, qp2(fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1)); }
 						}
 					case BTExtended:
 						// caras con texturas distintas empaquetadas de a 12 bits (BFTextures)
-						if( open(x, y, z + 1) ) addQuadL(alphaBuf, [fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1], b.tu & 0xFFF, su, neg, 0, 0, 1, x, y, z);
-						if( open(x, y, z - 1) ) addQuadL(alphaBuf, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz], b.td & 0xFFF, sd, neg, 0, 0, -1, x, y, z);
-						if( open(x - 1, y, z) ) addQuadL(alphaBuf, [fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1], b.tlr & 0xFFF, sx, neg, -1, 0, 0, x, y, z);
-						if( open(x + 1, y, z) ) addQuadL(alphaBuf, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1], b.tlr >> 12, sx, neg, 1, 0, 0, x, y, z);
-						if( open(x, y - 1, z) ) addQuadL(alphaBuf, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1], b.tu >> 12, sy, neg, 0, -1, 0, x, y, z);
-						if( open(x, y + 1, z) ) addQuadL(alphaBuf, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1], b.td >> 12, sy, neg, 0, 1, 0, x, y, z);
+						if( open(x, y, z + 1) ) addQuadL(alphaBuf, qp(fx, fy, fz + 1, fx + 1, fy, fz + 1, fx + 1, fy + 1, fz + 1, fx, fy + 1, fz + 1), b.tu & 0xFFF, su, neg, 0, 0, 1, x, y, z);
+						if( open(x, y, z - 1) ) addQuadL(alphaBuf, qp(fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz), b.td & 0xFFF, sd, neg, 0, 0, -1, x, y, z);
+						if( open(x - 1, y, z) ) addQuadL(alphaBuf, qp(fx, fy + 1, fz, fx, fy, fz, fx, fy, fz + 1, fx, fy + 1, fz + 1), b.tlr & 0xFFF, sx, neg, -1, 0, 0, x, y, z);
+						if( open(x + 1, y, z) ) addQuadL(alphaBuf, qp(fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, fz + 1, fx + 1, fy, fz + 1), b.tlr >> 12, sx, neg, 1, 0, 0, x, y, z);
+						if( open(x, y - 1, z) ) addQuadL(alphaBuf, qp(fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, fz + 1, fx, fy, fz + 1), b.tu >> 12, sy, neg, 0, -1, 0, x, y, z);
+						if( open(x, y + 1, z) ) addQuadL(alphaBuf, qp(fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, fz + 1, fx + 1, fy + 1, fz + 1), b.td >> 12, sy, neg, 0, 1, 0, x, y, z);
 					default:
 					}
 				}
 
+		var te = haxe.Timer.stamp();
 		emitMesh(solidBuf, 0);
 		emitMesh(alphaBuf, 1);
 		emitMesh(waterBuf, 2);
@@ -2165,5 +2406,6 @@ class World {
 		for( s in scrollBufs ) emitMesh(s.buf, s.kind, s.speed);
 		emitMesh(invisBuf, 4);
 		emitMesh(markBuf, 5);
+		load.meshEmit += haxe.Timer.stamp() - te;
 	}
 }

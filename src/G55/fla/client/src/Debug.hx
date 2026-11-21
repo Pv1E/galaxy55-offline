@@ -22,15 +22,6 @@ class Debug {
 			game.api.clearLocalChanges();
 		case "power":
 			game.hero.miningPower = game.hero.miningPower==1 ? 3 : 1;
-		case "nextDet":
-			var dall = gen.DetailsGenerator.DETAILS;
-			var d = dall[detailsIndex % dall.length];
-			if( d == null )
-				return;
-			detailsIndex++;
-			hero.x = d.x + 0.5;
-			hero.y = d.y + 0.5;
-			if( d.z > 0 ) hero.z = d.z;
 		case "start":
 			var pos = level.getStartPlace(game.infos.planet);
 			if( pos == null )
