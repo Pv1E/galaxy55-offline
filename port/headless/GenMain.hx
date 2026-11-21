@@ -628,7 +628,8 @@ class GenMain {
 
 	/**
 	 * --fuzz N [--limit S]: todos los biomas (con el hangar BIShed y las cometas) en todos los tamanos (1 a 3; las cometas, el
-	 * suyo) con N semillas al azar: cada planeta tiene que acabar en S segundos (60)
+	 * suyo) con N semillas al azar: cada planeta tiene que acabar en S segundos (60), y el hangar y las cometas sin nada puesto
+	 * (ni estructuras ni bonus: Structures.PLANET_BIOMES)
 	 */
 	static function fuzz( args : Array<String> ) {
 		var n = args.length > 1 ? Std.parseInt(args[1]) : 5, limit = 60.;
@@ -652,6 +653,10 @@ class GenMain {
 						out("LENTO  " + caseName(c) + ": no acaba en " + limit + " s");
 						continue;
 					}
+					if( !gen.Structures.isPlanet(biome) && g.poses.length > 0 ) {
+						bad++;
+						out("PUESTO " + caseName(c) + ": " + [for( p in g.poses ) p.id].join(",") + " (no es un planeta)");
+					}
 					if( dt > worst ) {
 						worst = dt;
 						worstCase = caseName(c);
@@ -672,6 +677,9 @@ class GenMain {
 		for( e in gen.Structures.ALL ) {
 			if( ids2.exists(e.id) ) missing.push("id repetido " + e.id);
 			ids2.set(e.id, true);
+			// biomes y notIn: solo planetas de verdad (el hangar, el bioma de prueba y las cometas no tienen estructuras)
+			for( b in (e.biomes == null ? [] : e.biomes).concat(e.notIn == null ? [] : e.notIn) )
+				if( !gen.Structures.isPlanet(b) ) missing.push(e.id + " en " + b + " (no es un planeta)");
 			if( e.group == null ) continue;
 			groups.set(e.group, true);
 			if( ids.indexOf(e.group) < 0 && missing.indexOf(e.group) < 0 ) missing.push(e.group);

@@ -863,9 +863,11 @@ class GalaxyApp extends hxd.App {
 				return;
 			}
 			var at = parent.focus;
-			SaveData.edit(info.id, name, drop.checked);
+			var ok = SaveData.edit(info.id, name, drop.checked);
 			m.remove();
 			reopenLoad(at);
+			// si no se pudo escribir se dice siempre, con el motivo (como saveGame)
+			if( !ok ) showToast(Lang.t("save.edit.error") + ": " + SaveData.lastError, 8);
 		};
 		field.onEnter = accept;
 		ok.onActivate = accept;

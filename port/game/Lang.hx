@@ -289,6 +289,7 @@ class Lang {
 		"save" => ["Guardar partida", "Save game", "Sauvegarder"],
 		"saved.ok" => ["Partida guardada", "Game saved", "Partie sauvegardée"],
 		"saved.error" => ["No se pudo guardar la partida", "The game could not be saved", "La partie n'a pas pu être sauvegardée"],
+		"save.edit.error" => ["No se pudo modificar la partida", "The save could not be changed", "La partie n'a pas pu être modifiée"],
 		// captura con F2 (anadido del port: el original abria el dialogo de Flash para guardarla y no decia nada mas)
 		"shot.saved" => ["Captura guardada en %dir%", "Screenshot saved to %dir%", "Capture d'écran enregistrée dans %dir%"],
 		"mainmenu" => ["Menú principal", "Main menu", "Menu principal"],

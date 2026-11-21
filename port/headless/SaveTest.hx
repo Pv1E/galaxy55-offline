@@ -253,6 +253,12 @@ class SaveTest {
 			check("EditorKubes.attach en " + (creative ? "creativo" : "aventura"), err == null, err);
 			check("el kube del editor sin cargar sigue con su nombre (" + (creative ? "creativo" : "aventura") + ")", name(p.inv.t[2].k) == "editor:savetest#2");
 		}
+		// modificar una partida que ya no se puede leer (cortada, sin copias): falla y dice por que (GalaxyApp lo avisa)
+		var b = sys.io.File.getBytes(path);
+		sys.io.File.saveBytes(path, b.sub(0, b.length >> 1));
+		for( e in [".tmp", ".bak"] ) if( exists(path + e) ) sys.FileSystem.deleteFile(path + e);
+		var edited = SaveData.edit(info.id, "No deberia", true);
+		check("modificar una cortada: falla con su motivo", !edited && SaveData.lastError != null && SaveData.lastError.length > 0, SaveData.lastError);
 		SaveData.delete(info.id);
 		check("borrada (.g55, .bak)", !exists(path) && !exists(path + ".bak"));
 	}

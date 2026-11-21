@@ -431,11 +431,25 @@ class Generator {
 	function saveCaveMask() {
 		var total = size * size * HEIGHT;
 		caveMask = haxe.io.Bytes.alloc((total >> 3) + 1);
+		gcFree(true);
 		var addr = findCell(0, total, CAVE);
 		while( addr < total ) {
 			caveMask.set(addr >> 3, caveMask.get(addr >> 3) | (1 << (addr & 7)));
 			addr = findCell(addr + 1, total, CAVE);
 		}
+		gcFree(false);
+	}
+
+	/**
+	 * Anadido del port (paso 5): alrededor de un bucle largo que solo lee y escribe bytes (ni reserva memoria ni guarda referencias).
+	 * El recolector de HashLink espera a que todos los hilos esten parados: un bucle asi, en el hilo de World, hacia esperar al
+	 * principal. Con hl.Gc.blocking(true) no lo espera; con false, si hay una recoleccion en curso, este hilo espera a que acabe.
+	 * Nada dentro puede reservar memoria (si no, el recolector no veria lo reservado); nada de esto cambia el mundo
+	 */
+	inline function gcFree( b : Bool ) {
+		#if hl
+		hl.Gc.blocking(b);
+		#end
 	}
 
 	/** un paso con nombre (Macro.generate pone "funcion#n"): su azar sale de el y del bioma (initStep) */
@@ -509,6 +523,7 @@ class Generator {
 		perlin.select();
 		var transp = btrans;
 		var addr = 0;
+		gcFree(true);
 		for( y in 0...size )
 			for( x in 0...size ) {
 				addr += HEIGHT - 1;
@@ -522,11 +537,13 @@ class Generator {
 				}
 				addr += HEIGHT;
 			}
+		gcFree(false);
 	}
 	
 	function addPropagate( bid : Int, bid2 : Int, fallId : Int ) {
 		perlin.select();
 		var addr = 0;
+		gcFree(true);
 		for( y in 0...size )
 			for( x in 0...size ) {
 				addr += HEIGHT;
@@ -551,6 +568,7 @@ class Generator {
 				}
 				addr += HEIGHT;
 			}
+		gcFree(false);
 	}
 	
 	#if genDebug
@@ -800,6 +818,7 @@ class Generator {
 		var hscale = 0.9 * (maxHeight - wh);
 		var p = -1;
 		var water = 0;
+		gcFree(true);
 		for( y in 0...size )
 			for( x in 0...size ) {
 				var h = hval(++p);
@@ -817,6 +836,7 @@ class Generator {
 						water++;
 					}
 			}
+		gcFree(false);
 		var w = water / (size * size);
 		if( w < minWater && size > 128 && attempt < MAX_ATTEMPTS - 1 ) {
 			// poca agua: otra vez desde el principio, con otro azar en todos los pasos (attempt entra en stream)
@@ -887,6 +907,7 @@ class Generator {
 	 * removeBlobRec con stepRetry, que llegaban a lo mismo salvo en el borde del mapa)
 	 */
 	function removeBlobs() {
+		gcFree(true);
 		for( y in 0...size )
 			for( x in 0...size ) {
 				var addr = (x + y * size) << HBITS;
@@ -908,6 +929,7 @@ class Generator {
 					break;
 				}
 			}
+		gcFree(false);
 		// lo marcado que toca algo apoyado (lleno y sin TMP), y desde ahi todo lo marcado que se toca
 		var queue = new Array<Int>();
 		var total = size * size * HEIGHT;
@@ -933,9 +955,11 @@ class Generator {
 			if( z > 0 ) visit(addr - 1);
 			if( z < HEIGHT - 1 ) visit(addr + 1);
 		}
+		gcFree(true);
 		for( addr in 0...total )
 			if( fget(addr) & TMP != 0 )
 				fset(addr, EMPTY);
+		gcFree(false);
 	}
 
 	/** una vecina llena y sin TMP (apoyada) */
@@ -1449,6 +1473,7 @@ class Generator {
 		var isLiquid = blocks[WATER].hasProp(PLiquid);
 		// version 1: solo el agua hasta el nivel del mar (la de las cascadas de las estructuras corre en el juego)
 		var top = waterLevel < HEIGHT - 1 ? waterLevel : HEIGHT - 2;
+		gcFree(true);
 		for( y in 0...size )
 			for( x in 0...size ) {
 				var col = (x + y * size) << HBITS;
@@ -1477,6 +1502,7 @@ class Generator {
 					addr++;
 				}
 			}
+		gcFree(false);
 	}
 	
 	function fillBedrock() {

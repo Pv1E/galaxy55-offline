@@ -15,8 +15,9 @@ enum StructureStage {
 /**
  * Una estructura del registro. id: su nombre (de el sale su azar: Generator.stream); group: su tipo de anomalia en kubindex.json
  * (Base de datos ESCorp; null en los relieves, que no lo son); p: ~1 region de 128x128 de cada p la tiene; biomes: nombres de
- * BiomeKind (null = todos los de planeta, nunca las cometas); since / until: primera version del generador que la tiene / que ya
- * no (Generator.VERSION; null = desde la 1 / sin fin); f: la pone en x, y, z (z: el suelo, la gruta o nada) y dice si ha podido.
+ * BiomeKind (null = todos los de planeta: PLANET_BIOMES; nunca el hangar, el bioma de prueba ni las cometas); since / until:
+ * primera version del generador que la tiene / que ya no (Generator.VERSION; null = desde la 1 / sin fin); f: la pone en x, y, z
+ * (z: el suelo, la gruta o nada) y dice si ha podido.
  */
 typedef StructureDef = {
 	var id : String;
@@ -41,6 +42,12 @@ typedef StructureDef = {
  */
 @:access(gen.DetailsGenerator)
 class Structures {
+
+	/**
+	 * los planetas de verdad: solo ellos tienen estructuras y bonus (DetailsGenerator.hasStructures). El hangar (BIShed) no es un
+	 * planeta (se construye con shipData), ni el bioma de prueba (BITest) ni las cometas (CometGenerator)
+	 */
+	public static var PLANET_BIOMES = ["BIAutumn", "BIMoon", "BIMars", "BIWinterPeaks", "BIAcidForest", "BIDeadCity"];
 
 	/** biomas con grutas (los que guardan las celdas CAVE: saveCaveMask) */
 	static var CAVE_BIOMES = ["BIAutumn", "BIWinterPeaks", "BIMars"];
@@ -71,8 +78,8 @@ class Structures {
 		def("pillars", "pillars", Surface, 200, (g, x, y, z) -> g.detStrangePilars(x, y, z)),
 		def("highbuilding", "ruins", Surface, 40, (g, x, y, z) -> g.detHighBuilding(x, y, z), null, null, null, ["BIAcidForest", "BIDeadCity"]),
 		def("groundbuilding", "ruins", Surface, 60, (g, x, y, z) -> g.detGroundBuilding(x, y, z)),
-		def("artifact", "artifact", Surface, 20, (g, x, y, z) -> g.detGroundArtifact(x, y, z), null, null, null, ["BIShed", "BIDeadCity"]),
-		def("fence", "fence", Surface, 15, (g, x, y, z) -> g.detFence(x, y, z), null, null, null, ["BIShed"]),
+		def("artifact", "artifact", Surface, 20, (g, x, y, z) -> g.detGroundArtifact(x, y, z), null, null, null, ["BIDeadCity"]),
+		def("fence", "fence", Surface, 15, (g, x, y, z) -> g.detFence(x, y, z)),
 		def("capsule", "capsule", Surface, 250, (g, x, y, z) -> g.detCapsule(x, y, z)),
 		def("bigmush", "bigmush", Surface, 50, (g, x, y, z) -> g.detBigChampi(x, y, z)),
 		def("volcano", "volcano", Surface, 15, (g, x, y, z) -> g.detVolcano(x, y, z)),
@@ -97,8 +104,8 @@ class Structures {
 		return { id : id, group : group, stage : stage, p : p, biomes : biomes, notIn : notIn, since : since, until : until, f : f };
 	}
 
-	/** un bioma de cometa (CometGenerator): sin estructuras */
-	public static inline function isComet( biome : String ) : Bool return StringTools.startsWith(biome, "BIComet");
+	/** un planeta de verdad (PLANET_BIOMES): con estructuras y bonus */
+	public static inline function isPlanet( biome : String ) : Bool return PLANET_BIOMES.indexOf(biome) >= 0;
 
 	/**
 	 * Las estructuras de una etapa en un bioma y una version, de la mas rara a la mas comun (p de mayor a menor) y luego por id:
@@ -109,7 +116,7 @@ class Structures {
 		for( e in ALL ) {
 			if( e.stage != stage || (only != null && e.id != only) ) continue;
 			if( (e.since != null && version < e.since) || (e.until != null && version >= e.until) ) continue;
-			if( e.biomes == null ? isComet(biome) : e.biomes.indexOf(biome) < 0 ) continue;
+			if( !isPlanet(biome) || (e.biomes != null && e.biomes.indexOf(biome) < 0) ) continue;
 			if( e.notIn != null && e.notIn.indexOf(biome) >= 0 ) continue;
 			out.push(e);
 		}

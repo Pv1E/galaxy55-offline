@@ -115,6 +115,8 @@ import Common;
  *   devsaves N              borra las partidas de la carpeta de datos de prueba y crea N de ejemplo (solo con GALAXY55_DATA)
  *   savecopy RUTA           copia la partida RUTA (.g55, o un .json de antes y su .png, que se migra al jugarla) a la carpeta de
  *                           datos de prueba, la primera de la lista (solo con GALAXY55_DATA)
+ *   breaksave               corta por la mitad el .g55 de la primera partida de la lista y borra sus copias (.tmp, .bak): ya no se
+ *                           puede leer ni modificar (solo con GALAXY55_DATA; la lista abierta no se entera hasta volver a abrirla)
  *   unknownsave NOMBRE      guarda aparte una copia de la partida en curso con bloques que esta version no conoce (UnknownBlocks:
  *                           BDesconocido1..3) en cada sitio que guarda bloques: inventario, cantina, terreno, nave, nave del hangar,
  *                           planeta visitado y precios del robot (como una partida de una version con mas bloques); la primera de la lista
@@ -452,6 +454,25 @@ class Dev {
 		var png = haxe.io.Path.withoutExtension(path) + ".png";
 		if( sys.FileSystem.exists(png) ) sys.io.File.copy(png, SaveData.thumbPath(id));
 		Sys.println("savecopy: " + id + " '" + o.name + "'");
+	}
+
+	/** breaksave: la primera partida de la lista deja de poder leerse (prueba de los errores al modificarla: Continuar > Modificar) */
+	static function breakSave() {
+		var data = Sys.getEnv("GALAXY55_DATA");
+		if( data == null || data == "" ) {
+			Sys.println("breaksave: solo con GALAXY55_DATA (devrun.ps1)");
+			return;
+		}
+		var l = SaveData.list();
+		if( l.length == 0 ) {
+			Sys.println("breaksave: no hay partidas");
+			return;
+		}
+		var p = SaveData.archivePath(l[0].id);
+		var b = sys.io.File.getBytes(p);
+		sys.io.File.saveBytes(p, b.sub(0, b.length >> 1));
+		for( e in [".tmp", ".bak"] ) if( sys.FileSystem.exists(p + e) ) sys.FileSystem.deleteFile(p + e);
+		Sys.println("breaksave: '" + l[0].name + "' cortada (" + (b.length >> 1) + " de " + b.length + " bytes)");
 	}
 
 	/**
@@ -1192,6 +1213,7 @@ class Dev {
 					inMenu = true;
 				case "devsaves": app.devSaves(Std.parseInt(a[1]));
 				case "savecopy": saveCopy(a[1]);
+				case "breaksave": breakSave();
 				case "unknownsave": unknownSave(g, l.substr(l.indexOf(" ") + 1));
 				case "migrate": remigrate(a);
 				case "trace": trace = true;

@@ -32,6 +32,9 @@ class DetailsGenerator extends BiomeGenerator {
 	public var poses : Array<Pose> = [];
 	/** sin estructuras ni bonus (las cometas: CometGenerator) */
 	var structuresOn = true;
+
+	/** estructuras y bonus: solo en los planetas de verdad (Structures.PLANET_BIOMES: nunca el hangar ni el bioma de prueba) */
+	inline function hasStructures() return structuresOn && Structures.isPlanet(biomeName);
 	/** GenMain --allstructures: en cada region solo esta estructura, siempre (sin tirar su p) */
 	public var forceStructure : String = null;
 	/** origen de la estructura que se acaba de poner, si no es donde se probo (la Invisible: su centro, sobre el suelo) */
@@ -53,18 +56,22 @@ class DetailsGenerator extends BiomeGenerator {
 	override function stageCave() {
 		if( caveMask == null ) return;
 		var total = size * size * HEIGHT;
+		gcFree(true);
 		for( addr in 0...total )
 			if( caveMask.get(addr >> 3) & (1 << (addr & 7)) != 0 && fget(addr) == EMPTY )
 				fset(addr, CAVE);
-		if( structuresOn ) {
+		gcFree(false);
+		if( hasStructures() ) {
 			placeStage(Cave);
 			caveBonus();
 		}
+		gcFree(true);
 		var addr = findCell(0, total, CAVE);
 		while( addr < total ) {
 			fset(addr, EMPTY);
 			addr = findCell(addr + 1, total, CAVE);
 		}
+		gcFree(false);
 		caveMask = null;
 	}
 
@@ -92,7 +99,7 @@ class DetailsGenerator extends BiomeGenerator {
 	 * azar de la region (stream(id + "/pick", rx, ry): 1 de p * 4), y se pone con el suyo (pose)
 	 */
 	function placeStage( stage : StructureStage ) {
-		if( !structuresOn ) return;
+		if( !hasStructures() ) return;
 		var list = Structures.active(biomeName, stage, version, forceStructure);
 		if( list.length == 0 ) return;
 		var rs = regionSize(), n = Std.int(size / rs);
@@ -198,7 +205,7 @@ class DetailsGenerator extends BiomeGenerator {
 	 * con su propio azar (placeBonus)
 	 */
 	override function addBonus() {
-		if( !structuresOn ) return;
+		if( !hasStructures() ) return;
 		var small = alloc(BBonusSmall);
 		var medium = alloc(BBonusMedium);
 		inline function free( x : Int, y : Int, z : Int ) return z > waterLevel && get(x, y, z) == EMPTY && isSolidAt(x, y, z - 1);

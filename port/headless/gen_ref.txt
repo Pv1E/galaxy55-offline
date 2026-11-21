@@ -5,7 +5,7 @@
 # construyo el jugador. Con una version nueva se anaden sus lineas (hl port\out\gen.hl SEMILLA BIOMA TAMANO VERSION da la linea ref=).
 # Version 1 (azar por nombre, estructuras por regiones: Generator, Structures): las lineas de la version 0 se han quitado, ese
 # generador ya no existe (un planeta de version 0 se genera con la 1: "Ancienne partie"). Todos los biomas en los tres tamanos,
-# la Cite muerta, el hangar (BIShed de tamano 3, que antes no acababa) y la cometa.
+# la Cite muerta, el hangar (BIShed de tamano 3, que antes no acababa; sin estructuras ni bonus: no es un planeta) y la cometa.
 1234 BIAutumn 2 1 7C40384B cavegarden,cavecascade
 5 BIAutumn 1 1 861CBEE4 -
 808 BIAutumn 3 1 7DA3DAAC cavegarden,cavecascade,cavecascade,cavegarden,cavecascade,largepit,crater,invisible,invisible
@@ -24,6 +24,6 @@
 1234 BIDeadCity 1 1 77D4A417 -
 77 BIDeadCity 2 1 97336BAF crater
 2048 BIDeadCity 3 1 DA780A6E meadow,meadow
-5 BIShed 3 1 353DCEBF heal,largepit,invisible
+5 BIShed 3 1 E1BE6430 -
 1 BICometCinder 1 1 82E465F3 -
 777 BICometCinder 1 1 81C8742F -
