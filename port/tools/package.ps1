@@ -1,19 +1,26 @@
-param([Parameter(Mandatory)][string]$Version, [Parameter(Mandatory)][string]$HashLink, [string]$Out = "port\out\release")
-# Arma los zips de una version (como los de la v0.2): Windows con HashLink incluido (OpenGL y DirectX) y Linux/macOS.
-# Uso (desde la raiz del repo, con port\out\galaxy55.hl y galaxy55_dx.hl ya compilados):
-#   powershell -File port\tools\package.ps1 -Version 0.3 -HashLink <carpeta de hashlink-1.16.0-win>
+param([Parameter(Mandatory)][string]$Version, [Parameter(Mandatory)][string]$HashLink, [string]$LinuxHashLink = "", [string]$Hlc = "port\out\hlc.zip", [string]$Out = "port\out\release")
+# Arma los zips de una version (como los de la v0.2): Windows con HashLink incluido (OpenGL y DirectX), Linux y macOS.
+# Uso (desde la raiz del repo, con port\out\galaxy55.hl, galaxy55_dx.hl y server.hl ya compilados):
+#   powershell -File port\tools\package.ps1 -Version 0.3 -HashLink <carpeta de hashlink-1.16.0-win> [-LinuxHashLink <carpeta>]
+# -LinuxHashLink: HashLink para Linux x86-64 hecho con port/tools/build-hl-linux.sh (hl, libhl.so, los hdll y SDL3); va en la
+# carpeta hashlink del zip de Linux, que asi funciona sin instalar nada. Sin el, el zip de Linux usa el hl del sistema.
+# -Hlc: el codigo C del juego y del servidor para macOS, hecho en Linux con port/tools/build-hlc-sources.sh (en Windows un
+# archivo pisaria a otro); sus entradas pasan tal cual al zip de macOS. Sin el, no se hace el zip de macOS.
+# Compilar con HAXE_STD_PATH relativo (..\tools-portable\haxe\std): si no, los .hl llevan la ruta absoluta de la libreria
+# estandar de Haxe en este PC (con el nombre de usuario).
 $ErrorActionPreference = "Stop"
 $root = (Get-Location).Path
 $out = Join-Path $root $Out
 if (Test-Path $out) { Remove-Item -Recurse -Force $out }
 $win = Join-Path $out "galaxy55-offline"
-$lin = Join-Path $out "galaxy55-offline-linux-mac"
-New-Item -ItemType Directory -Force "$win\res", "$lin\res" | Out-Null
+$lin = Join-Path $out "galaxy55-offline-linux"
+$mac = Join-Path $out "galaxy55-offline-mac"
+New-Item -ItemType Directory -Force "$win\res", "$lin\res", "$mac\res" | Out-Null
 
 # recursos: graficos del cliente, mapa de estrellas, nave nodriza, contratos de la ESCorp y sonidos
 $gfx = "src\G55\fla\client\gfx"
 $res = @("digger.png", "door.md", "hud.png", "hud_jetpack.png", "icons.png", "lazer.png", "lazer2.png", "lazer3.png", "lazer4.png", "ship_halo.png", "texture.png", "mothership.bin", "contracts.json", "kubindex.json", "cone.png")
-foreach ($d in $win, $lin) {
+foreach ($d in $win, $lin, $mac) {
 	foreach ($r in $res) { Copy-Item "$gfx\$r" "$d\res\$r" }
 	Copy-Item "src\G55\fla\explore\gfx\tiles.png" "$d\res\explore_tiles.png"
 	# iconos del multijugador en el mapa (candados y camara de Kube)
@@ -42,7 +49,6 @@ foreach ($v in @(@("jugar.bat", "galaxy55.hl", "version OpenGL. Si no abre, usa 
 # servidor dedicado: consola con el registro y las ordenes (help); sus datos en la carpeta "serveur" (o --data OTRA)
 if (Test-Path "$win\server.hl") {
 	Save "$win\galaxy55-serveur.bat" "@echo off`nrem Galaxy 55 (offline) v$Version - servidor multijugador dedicado (sin ventana). Ordenes: help, stop`ncd /d `"%~dp0`"`nhl server.hl --data serveur %*`npause`n" "`r`n"
-	Save "$lin\galaxy55-serveur.sh" "#!/bin/sh`n# servidor multijugador dedicado (sin ventana). Ordenes: help, stop`ncd `"`$(dirname `"`$0`")`"`nexec hl server.hl --data serveur `"`$@`"`n" "`n"
 }
 Save "$win\LEEME.txt" @"
 GALAXY 55 (offline) v$Version - port nativo para Windows
@@ -61,6 +67,7 @@ guardada). Tu identidad es el archivo identite.g55 de %APPDATA%\Galaxy55\ : copi
 lo des a nadie. Servidor dedicado sin ventana: galaxy55-serveur.bat (puerto 55055 TCP y UDP; sus datos en "serveur").
 Para jugar por Internet hay que abrir ese puerto en el router (la casilla UPnP lo intenta sola).
 Kubes del editor del servidor dedicado: los .kube de serveur\kubes (en una partida creada desde el juego, los del anfitrion).
+Se juega tambien con jugadores de Linux y macOS (sus zips -linux y -mac), si todos tienen ESTA misma version.
 
 Controles (teclado y raton): W/Z/flechas mover, raton mirar, Espacio saltar y jetpack, X caminar despacio, H casco,
 clic izquierdo/E/Mayus excavar, colocar o usar, 1-0 o rueda elegir casilla, Tab excavador, R tirar, Mayus+K volver a la nave,
@@ -76,43 +83,112 @@ Multiplayer: Multiplayer menu (join a saved or LAN server, or create a game from
 identite.g55 in %APPDATA%\Galaxy55\ (copy it to another PC to keep it; never share it). Dedicated server without a window:
 galaxy55-serveur.bat (port 55055 TCP and UDP, data in "serveur"); for Internet play, forward that port (UPnP tries it).
 Editor kubes of a dedicated server: the .kube files in serveur\kubes (in a game created from the game, the host's).
+Players on Linux and macOS (the -linux and -mac zips) can join too, as long as everyone has THIS same version.
 "@ "`r`n"
-# Linux / macOS: con HashLink del sistema
-Save "$lin\jugar.sh" "#!/bin/sh`n# Abre Galaxy 55. Necesita HashLink (hl) instalado: ver LEEME.txt`ncd `"`$(dirname `"`$0`")`"`nexec hl galaxy55.hl `"`$@`"`n" "`n"
+# Linux: HashLink del paquete (carpeta hashlink, con -LinuxHashLink) o el del sistema. Un zip hecho en Windows no guarda el
+# permiso de ejecucion: los .sh se abren con "sh" y le dan ese permiso a hl antes de usarlo
+if ($LinuxHashLink) {
+	New-Item -ItemType Directory -Force "$lin\hashlink" | Out-Null
+	Get-ChildItem $LinuxHashLink -File | Where-Object { $_.Name -match '^(hl|libhl\.so|.*\.hdll|lib.*\.so(\.[0-9]+)*)$' } | ForEach-Object { Copy-Item $_.FullName "$lin\hashlink\" }
+	foreach ($f in "hl", "libhl.so", "sdl.hdll", "libSDL3.so.0") { if (-not (Test-Path "$lin\hashlink\$f")) { throw "falta $f en $LinuxHashLink" } }
+}
+function UnixRun([string]$what, [string]$file, [string]$extra) {
+	"#!/bin/sh`n# Galaxy 55 (offline) v$Version - $what`ncd `"`$(dirname `"`$0`")`"`nif [ -f hashlink/hl ]; then`n`tchmod +x hashlink/hl 2>/dev/null`n`tLD_LIBRARY_PATH=`"`$PWD/hashlink`${LD_LIBRARY_PATH:+:`$LD_LIBRARY_PATH}`" exec hashlink/hl $file$extra `"`$@`"`nfi`nexec hl $file$extra `"`$@`"`n"
+}
+Save "$lin\jugar.sh" (UnixRun "abre el juego" "galaxy55.hl" "") "`n"
+if (Test-Path "$lin\server.hl") { Save "$lin\galaxy55-serveur.sh" (UnixRun "servidor multijugador dedicado (sin ventana). Ordenes: help, stop" "server.hl" " --data serveur") "`n" }
+$withHl = if ($LinuxHashLink) { "si" } else { "no" }
 # los $ del ejemplo de shell del final van con ` para que salgan tal cual y PowerShell no los evalue
 Save "$lin\LEEME.txt" @"
-Galaxy 55 (offline) v$Version - Linux y macOS
-=========================================
+Galaxy 55 (offline) v$Version - Linux
+=====================================
 Port NO oficial de Galaxy 55 (Motion Twin, 2012). Licencia CC BY-NC-SA 4.0 (ver LICENSE y NOTICE).
+Codigo y novedades: https://github.com/Pv1E/galaxy55-offline
 
-IMPORTANTE: nosotros no la probamos en Linux ni en macOS. Sekhmet, un jugador del original, la usa en Linux
-con HashLink. Si te funciona o te falla, cuentanoslo (issue en GitHub o Discord).
+JUGAR: descomprime la carpeta ENTERA y, en una terminal dentro de ella:  sh jugar.sh
+Con la carpeta "hashlink" (HashLink 1.16 y SDL3 incluidos: $withHl) no hace falta instalar HashLink: sirve en Linux
+x86-64 (PC de 64 bits) con glibc 2.35 o mas nuevo (Ubuntu 22.04, Debian 12, Fedora 36, Mint 21 o posteriores).
+Necesita los drivers OpenGL del sistema (Mesa o los del fabricante), OpenAL (libopenal1), libuv, libpng, libturbojpeg,
+libvorbis y SQLite, que casi todas las distribuciones traen; si falta alguno, el juego dice cual al abrirse.
+Sin la carpeta "hashlink": instala HashLink 1.16 (con SDL3) y que "hl" funcione en una terminal.
+Las partidas, los ajustes y tu identidad del multijugador (identite.g55, no se la des a nadie) van en ~/Galaxy55
+(con la variable GALAXY55_DATA eliges otra carpeta).
 
-Como jugar
-1. Instala HashLink 1.16 o mas nuevo para tu sistema:
-     macOS (Homebrew):  brew install hashlink
-     Linux:             compila o descarga HashLink desde https://github.com/HaxeFoundation/hashlink/releases
-                        y que el comando "hl" funcione en una terminal.
-2. Descomprime esta carpeta ENTERA. Debe verse la carpeta "res" junto a "galaxy55.hl".
-3. En una terminal, dentro de esta carpeta:
-     sh jugar.sh        (o:  hl galaxy55.hl)
-
-Las partidas se guardan en la carpeta de datos de tu usuario; con la variable GALAXY55_DATA puedes elegir otra.
-Controles y mas informacion: https://github.com/Pv1E/galaxy55-offline
+MULTIJUGADOR: con jugadores de Windows, Linux y macOS a la vez, si todos tienen ESTA version. Menu Multijugador para
+unirse o crear una partida. Servidor dedicado sin ventana: sh galaxy55-serveur.sh (puerto 55055 TCP y UDP, datos en
+"serveur"); con cortafuegos, abre ese puerto (por ejemplo: sudo ufw allow 55055).
 
 ---
-English: NOT tested by us on Linux/macOS (a player uses it on Linux). Install HashLink 1.16+ so that "hl" works
-(macOS: brew install hashlink), unzip everything keeping the "res" folder next to galaxy55.hl, then run
-"sh jugar.sh" or "hl galaxy55.hl" from this folder. Tell us if it works or not.
-If your HashLink is a pre-built folder and not installed: /your/path/to/hashlink/hl galaxy55.hl
-If the unzipped files have names with backslashes (res\...), the zip was made on Windows with old tools: this package no
-longer does that; with an old zip, rename them first (for example: for f in *\*; do mkdir -p "`$(dirname "`${f//\//}")"; mv "`$f" "`${f//\//}"; done).
-(Thanks to Sekhmet for these steps.)
+English: unofficial native port of Motion Twin's Galaxy 55 (2012). Unzip the whole folder and run "sh jugar.sh" in a
+terminal inside it. With the "hashlink" folder (HashLink 1.16 + SDL3 included: $withHl) nothing has to be installed on
+Linux x86-64 with glibc 2.35 or newer (Ubuntu 22.04, Debian 12, Fedora 36, Mint 21 or later); it uses the system OpenGL
+drivers, OpenAL, libuv, libpng, libturbojpeg, libvorbis and SQLite. Saves, settings and your multiplayer identity
+(identite.g55, never share it) go to ~/Galaxy55. Multiplayer works between Windows, Linux and macOS players on THIS same
+version. Dedicated server: sh galaxy55-serveur.sh (port 55055 TCP and UDP; open it in your firewall).
+
+Francais : portage non officiel de Galaxy 55 (Motion Twin, 2012). Decompresse tout le dossier, puis dans un terminal
+ouvert dedans : sh jugar.sh . Avec le dossier "hashlink" (HashLink 1.16 et SDL3 inclus : $withHl), rien a installer sur
+Linux x86-64 avec glibc 2.35 ou plus recent (Ubuntu 22.04, Debian 12, Fedora 36, Mint 21 ou suivants) ; il utilise les
+pilotes OpenGL, OpenAL, libuv, libpng, libturbojpeg, libvorbis et SQLite du systeme. Parties, reglages et identite du
+multijoueur (identite.g55, ne la donne a personne) dans ~/Galaxy55. Le multijoueur marche entre joueurs Windows, Linux et
+macOS sur CETTE meme version. Serveur dedie : sh galaxy55-serveur.sh (port 55055 TCP et UDP, a ouvrir dans le pare-feu).
 "@ "`n"
 
+# macOS: HashLink no tiene la maquina virtual hl en los Mac con procesador Apple (solo HashLink/C): el paquete lleva el
+# codigo C del juego y del servidor (-Hlc) y compilar.sh, que los compila en el Mac con el HashLink de Homebrew
 Add-Type -AssemblyName System.IO.Compression.FileSystem
+$withMac = $false
+if (Test-Path $Hlc) {
+	$hz = [IO.Compression.ZipFile]::OpenRead((Resolve-Path $Hlc).Path)
+	try { $names = @($hz.Entries | ForEach-Object { $_.FullName }) } finally { $hz.Dispose() }
+	if (-not ($names -ccontains "hlc/game/galaxy55.c" -and $names -ccontains "hlc/server/server.c")) { throw "$Hlc sin hlc/game/galaxy55.c o hlc/server/server.c" }
+	$withMac = $true
+}
+if ($withMac) {
+	Save "$mac\compilar.sh" ([IO.File]::ReadAllText("$PSScriptRoot\build-hlc.sh")) "`n"
+	function MacRun([string]$what, [string]$bin, [string]$file, [string]$extra) {
+		"#!/bin/sh`n# Galaxy 55 (offline) v$Version - $what`ncd `"`$(dirname `"`$0`")`"`nif [ -x ./$bin ]; then exec ./$bin$extra `"`$@`"; fi`nif command -v hl > /dev/null 2>&1; then exec hl $file$extra `"`$@`"; fi`necho `"Primero / First / D'abord : sh compilar.sh`"`nexit 1`n"
+	}
+	Save "$mac\jugar.sh" (MacRun "abre el juego (compilado antes con compilar.sh)" "galaxy55" "galaxy55.hl" "") "`n"
+	Save "$mac\galaxy55-serveur.sh" (MacRun "servidor multijugador dedicado (sin ventana). Ordenes: help, stop" "galaxy55-serveur" "server.hl" " --data serveur") "`n"
+	Save "$mac\LEEME.txt" @"
+Galaxy 55 (offline) v$Version - macOS
+=====================================
+Port NO oficial de Galaxy 55 (Motion Twin, 2012). Licencia CC BY-NC-SA 4.0 (ver LICENSE y NOTICE).
+Codigo y novedades: https://github.com/Pv1E/galaxy55-offline
+
+En los Mac con procesador Apple (M1 y siguientes) HashLink no tiene maquina virtual: el juego se compila una vez en tu Mac
+desde el codigo C de la carpeta "hlc" (unos minutos). Sirve igual en un Mac Intel.
+1. Instala Homebrew (https://brew.sh) y las herramientas de Xcode (en una terminal: xcode-select --install).
+2. Descomprime esta carpeta ENTERA y, en una terminal dentro de ella:  sh compilar.sh
+   (instala "hashlink" con Homebrew si falta y crea galaxy55 y galaxy55-serveur).
+3. Para jugar:  sh jugar.sh      Servidor dedicado sin ventana:  sh galaxy55-serveur.sh  (puerto 55055 TCP y UDP)
+NO PROBADO en un Mac por nosotros: si falla, cuentanoslo con lo que sale en la terminal.
+Las partidas, los ajustes y tu identidad del multijugador (identite.g55, no se la des a nadie) van en ~/Galaxy55.
+Multijugador con jugadores de Windows, Linux y macOS a la vez, si todos tienen ESTA version.
+
+---
+English: unofficial native port of Motion Twin's Galaxy 55 (2012). On Apple Silicon Macs HashLink has no virtual machine,
+so the game is compiled once on your Mac from the C code in "hlc" (a few minutes; also works on Intel Macs). Install
+Homebrew (https://brew.sh) and the Xcode tools (xcode-select --install), unzip the whole folder, then in a terminal inside
+it: "sh compilar.sh" (installs hashlink with Homebrew if needed), then "sh jugar.sh" to play, or "sh galaxy55-serveur.sh"
+for a dedicated server (port 55055 TCP and UDP). NOT tested on a Mac by us: please report what the terminal shows.
+Saves and your multiplayer identity (identite.g55, never share it) go to ~/Galaxy55. Multiplayer works between Windows,
+Linux and macOS players on THIS same version.
+
+Francais : portage non officiel de Galaxy 55 (Motion Twin, 2012). Sur les Mac a puce Apple, HashLink n'a pas de machine
+virtuelle : le jeu se compile une fois sur ton Mac a partir du code C du dossier "hlc" (quelques minutes ; marche aussi
+sur Mac Intel). Installe Homebrew (https://brew.sh) et les outils Xcode (xcode-select --install), decompresse tout le
+dossier, puis dans un terminal ouvert dedans : "sh compilar.sh" (installe hashlink avec Homebrew si besoin), ensuite
+"sh jugar.sh" pour jouer ou "sh galaxy55-serveur.sh" pour un serveur dedie (port 55055 TCP et UDP). PAS teste sur Mac
+par nous : signale ce qu'affiche le terminal en cas de souci. Parties et identite du multijoueur (identite.g55, ne la
+donne a personne) dans ~/Galaxy55. Le multijoueur marche entre joueurs Windows, Linux et macOS sur CETTE meme version.
+"@ "`n"
+} else { "aviso: sin $Hlc (port/tools/build-hlc-sources.sh) no se hace el zip de macOS" }
+
 $zw = Join-Path $out "galaxy55-offline-v$Version.zip"
-$zl = Join-Path $out "galaxy55-offline-v$Version-linux-mac.zip"
+$zl = Join-Path $out "galaxy55-offline-v$Version-linux.zip"
+$zm = Join-Path $out "galaxy55-offline-v$Version-mac.zip"
 # CreateFromDirectory de Windows PowerShell 5.1 guarda las rutas con \ y en Linux/macOS salen archivos con ese nombre: aqui se escriben con /
 function New-Zip($dir, $zip) {
     if (Test-Path $zip) { [IO.File]::Delete($zip) }
@@ -127,4 +203,19 @@ function New-Zip($dir, $zip) {
 }
 New-Zip $win $zw
 New-Zip $lin $zl
-Get-Item $zw, $zl | ForEach-Object { "{0}  {1:N0} bytes" -f $_.Name, $_.Length }
+$zips = @($zw, $zl)
+if ($withMac) {
+	New-Zip $mac $zm
+	# el codigo C, de zip a zip sin pasar por el disco (Windows no distingue _sP.h de _sp.h)
+	$hz = [IO.Compression.ZipFile]::OpenRead((Resolve-Path $Hlc).Path)
+	$mz = [IO.Compression.ZipFile]::Open($zm, "Update")
+	try {
+		foreach ($e in $hz.Entries) {
+			if ($e.FullName.EndsWith("/")) { continue }
+			$i = $e.Open(); $o = $mz.CreateEntry($e.FullName, "Optimal").Open()
+			try { $i.CopyTo($o) } finally { $o.Dispose(); $i.Dispose() }
+		}
+	} finally { $mz.Dispose(); $hz.Dispose() }
+	$zips += $zm
+}
+Get-Item $zips | ForEach-Object { "{0}  {1:N0} bytes" -f $_.Name, $_.Length }
