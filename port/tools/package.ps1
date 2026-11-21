@@ -11,7 +11,16 @@ param([Parameter(Mandatory)][string]$Version, [Parameter(Mandatory)][string]$Has
 $ErrorActionPreference = "Stop"
 $root = (Get-Location).Path
 $out = Join-Path $root $Out
-if (Test-Path $out) { Remove-Item -Recurse -Force $out }
+if (Test-Path $out) {
+	# la carpeta se vacia: no si alguien juega o tiene un servidor abierto desde ella (borraba res\ y los datos del servidor
+	# a medias, con monde.sqlite en uso), ni si guarda datos de un servidor (carpeta serveur)
+	$full = (Resolve-Path $out).Path.TrimEnd("\") + "\"
+	$busy = @(Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -and $_.ExecutablePath.StartsWith($full, [StringComparison]::OrdinalIgnoreCase) })
+	if ($busy.Count -gt 0) { throw "$out esta en uso ($(($busy | ForEach-Object { $_.ProcessId.ToString() + ' ' + $_.Name }) -join ', ')): cierralo o usa otra carpeta con -Out" }
+	$data = @(Get-ChildItem $out -Directory -Recurse -Filter "serveur" -ErrorAction SilentlyContinue)
+	if ($data.Count -gt 0) { throw "$out guarda datos de un servidor ($($data[0].FullName)): llevalos a otro sitio o usa otra carpeta con -Out" }
+	Remove-Item -Recurse -Force $out
+}
 $win = Join-Path $out "galaxy55-offline"
 $lin = Join-Path $out "galaxy55-offline-linux"
 $mac = Join-Path $out "galaxy55-offline-mac"
