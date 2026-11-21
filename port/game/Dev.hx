@@ -88,6 +88,8 @@ import Common;
  *                           el); print gen: la del mundo cargado, la actual, la de la partida y las de los planetas visitados
  *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
  *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
+ *   print prune             poda de los cambios (World.prune): pone una lampara en el suelo delante del jugador y lo vuelve a
+ *                           dejar (la celda sale de los cambios) y quita y vuelve a poner una celda de agua del mar (se queda)
  *   print paldup            paleta creativa abierta: bloques y paginas, los que salen mas de una vez y donde estan las aguas
  *   shot nombre             captura en port/out/nombre.png ("%b" en el nombre = bioma del planeta); con GALAXY55_SHOTS (runall.ps1)
  *                           las capturas (shot, loadshot, expship, cover) van a esa carpeta
@@ -111,12 +113,14 @@ import Common;
  *   print tuto              paso del tutorial, objetivos marcados, sus bloques en el planeta y el texto (tambien en el mapa)
  *   menu                    Menu principal (guarda la partida, como desde la pausa); el guion sigue en los menus de inicio
  *   devsaves N              borra las partidas de la carpeta de datos de prueba y crea N de ejemplo (solo con GALAXY55_DATA)
- *   savecopy RUTA           copia la partida RUTA (.json y su .png) a la carpeta de datos de prueba, la primera de la lista
- *                           (solo con GALAXY55_DATA)
- *   unknownsave NOMBRE      guarda aparte una copia de la partida en curso con bloques que esta version no conoce (UnknownBlocks) en
- *                           cada sitio que guarda numeros de bloque: inventario, cantina, terreno, nave, nave del hangar, planeta
- *                           visitado y precios del robot (como una partida de una version con mas bloques); la primera de la lista
- *   print unknown           bloques desconocidos de cada partida (UnknownBlocks), md5 de su .json y copias de saves/backups
+ *   savecopy RUTA           copia la partida RUTA (.g55, o un .json de antes y su .png, que se migra al jugarla) a la carpeta de
+ *                           datos de prueba, la primera de la lista (solo con GALAXY55_DATA)
+ *   unknownsave NOMBRE      guarda aparte una copia de la partida en curso con bloques que esta version no conoce (UnknownBlocks:
+ *                           BDesconocido1..3) en cada sitio que guarda bloques: inventario, cantina, terreno, nave, nave del hangar,
+ *                           planeta visitado y precios del robot (como una partida de una version con mas bloques); la primera de la lista
+ *   print unknown           bloques desconocidos de cada partida (UnknownBlocks), md5 de su .g55 y copias de saves/backups
+ *   migrate ID [upstream|fork] vuelve a migrar la partida .json de antes ID (copia en saves/backups) con la tabla de esa linea
+ *                           (SaveNames; sin linea, la otra que la de este juego)
  *   tap TECLA               pulsar y soltar una tecla: up down left right enter esc tab space pgup pgdown numpad+ numpad- o una letra
  *   type TEXTO              escribir el resto de la linea en el campo de texto en el que se esta escribiendo
  *   print palnames          bloques que deja la busqueda de la paleta creativa (Tab o clic en ella para escribir, y type)
@@ -136,7 +140,7 @@ import Common;
  *                           [ARCHIVO] copia un .kube a la carpeta kubes, make ARCHIVO FORMA opaque|cutout|blend AARRGGBB NOMBRE
  *                           crea uno de ese color con el borde oscuro, fill N crea N cubos lot-1..N, delete ARCHIVO, clear vacia
  *                           la carpeta, refresh la vuelve a leer como al empezar a jugar. En hand, give, set...: kube:ARCHIVO[/variante]
- *   print edkubes|edsave    kubes del editor cargados / los de la partida guardada en disco, y lo que veria una version sin ellos
+ *   print edkubes|edsave    kubes del editor cargados / los de la partida guardada en disco (celdas, casillas, de remplazo)
  *   quit
  */
 class Dev {
@@ -387,8 +391,8 @@ class Dev {
 	}
 
 	/**
-	 * print edsave: los kubes del editor de la partida guardada en disco (su campo aparte) y la misma partida como la leeria una
-	 * version sin ellos: lo que hay en los campos de siempre donde iban los kubes (aire y casillas vacias) y sus bloques desconocidos
+	 * print edsave: los kubes del editor de la partida guardada en disco (SaveArchive: sus nombres "editor:<archivo>#<variante>" en
+	 * la tabla de bloques), cuantas celdas y casillas los usan, y cuantos quedan en bloques de remplazo al leerla ahora
 	 */
 	static function editorSave( app : GalaxyApp ) {
 		var info = app.curInfo();
@@ -396,48 +400,32 @@ class Dev {
 			Sys.println("edsave: sin partida");
 			return;
 		}
-		var o : Dynamic = haxe.Json.parse(sys.io.File.getContent(SaveData.jsonPath(info.id)));
-		var raw = EditorKubes.readSave(o.editorKubes);
-		if( raw == null ) {
-			Sys.println("edsave: sin kubes del editor");
+		var disk = SaveData.read(info.id);
+		if( disk == null ) {
+			Sys.println("edsave: no se puede leer: " + SaveData.lastError);
 			return;
 		}
-		var edits : Array<Int> = o.edits == null ? [] : [for( v in (o.edits : Array<Dynamic>) ) Std.int(v)];
-		var at = new Map<Int, Int>();
-		var i = 0;
-		while( i + 1 < edits.length ) {
-			at.set(edits[i], edits[i + 1]);
-			i += 2;
-		}
-		var cells = [], slots = [];
-		if( raw.edits != null ) {
-			i = 0;
-			while( i + 1 < raw.edits.length ) {
-				var v = at.get(raw.edits[i]);
-				cells.push(raw.ids[raw.edits[i + 1] >> 2] + "/" + (raw.edits[i + 1] & 3) + "=" + (v == null ? "sin cambio" : v == 0 ? "aire" : "" + v));
-				i += 2;
-			}
-		}
-		var t : Array<Dynamic> = o.inv == null ? [] : o.inv.t;
-		if( raw.inv != null ) {
-			i = 0;
-			while( i + 2 < raw.inv.length ) {
-				var s = t[raw.inv[i]];
-				slots.push(raw.ids[raw.inv[i + 1] >> 2] + "x" + raw.inv[i + 2] + "@" + raw.inv[i] + "=" + (s == null ? "vacia" : "" + s.k));
-				i += 3;
-			}
-		}
-		// la partida tal cual (sin pasar los kubes a sus bloques): lo que cargaria una version sin ellos
-		var old = SaveData.read(info.id);
-		old.editorKubes = null;
-		var u = UnknownBlocks.count(old);
-		Sys.println("edsave: kubes " + raw.ids.join(",") + " | terreno " + cells.join(" ") + " | inventario " + slots.join(" ")
-			+ " | nave " + (raw.shipEdits == null ? 0 : raw.shipEdits.length >> 1) + " planetas " + (raw.planets == null ? 0 : raw.planets.length)
-			+ " cantinas " + (raw.chests == null ? 0 : raw.chests.length) + " stockage " + (raw.storage == null ? 0 : Std.int(raw.storage.length / 3))
-			+ " | sin ellos: desconocidos " + UnknownBlocks.total(u));
+		var ids = [], cells = 0, slots = 0, waiting = 0;
+		SaveNames.mapBlocks(disk, function(k, where) {
+			var b = Block.all[k];
+			var n = SaveNames.placeholderName(b);
+			var e = n != null ? SaveNames.parseEditor(n) : null;
+			var id = e != null ? e.id : EditorKubes.idOfBlock(b);
+			if( id == null ) return k;
+			if( ids.indexOf(id) < 0 ) ids.push(id);
+			if( where == "items" ) slots++ else cells++;
+			if( e != null ) waiting++;
+			return k;
+		});
+		ids.sort(Reflect.compare);
+		Sys.println("edsave: " + (ids.length == 0 ? "sin kubes del editor" : "kubes " + ids.join(",") + " | celdas " + cells + " | casillas " + slots
+			+ " | en bloques de remplazo " + waiting) + " | desconocidos " + UnknownBlocks.total(UnknownBlocks.count(disk)));
 	}
 
-	/** savecopy: copia una partida (.json y su .png) a la carpeta de datos de prueba, con la fecha de ahora (la primera de la lista) */
+	/**
+	 * savecopy: copia una partida (.g55, o un .json de antes y su .png) a la carpeta de datos de prueba, con la fecha de ahora (la
+	 * primera de la lista). Un .json se queda asi: se migra al jugarla
+	 */
 	static function saveCopy( path : String ) {
 		var data = Sys.getEnv("GALAXY55_DATA");
 		if( data == null || data == "" ) {
@@ -449,6 +437,13 @@ class Dev {
 			return;
 		}
 		var id = haxe.io.Path.withoutExtension(haxe.io.Path.withoutDirectory(path));
+		if( StringTools.endsWith(path, ".g55") ) {
+			var info = SaveArchive.decode(sys.io.File.getBytes(path), id);
+			info.saved = Date.now().getTime();
+			SaveArchive.writeFile(SaveData.archivePath(id), SaveArchive.encode(info, null, sys.io.File.getBytes(path)));
+			Sys.println("savecopy: " + id + " '" + info.name + "'");
+			return;
+		}
 		var o : Dynamic = haxe.Json.parse(sys.io.File.getContent(path));
 		o.id = id;
 		o.saved = Date.now().getTime();
@@ -458,67 +453,94 @@ class Dev {
 		Sys.println("savecopy: " + id + " '" + o.name + "'");
 	}
 
-	/** unknownsave: la partida en curso, guardada aparte con bloques que esta version no conoce en cada sitio (UnknownBlocks) */
+	/**
+	 * unknownsave: la partida en curso, guardada aparte con bloques que esta version no conoce (nombres BDesconocido1..3) en cada
+	 * sitio que guarda bloques (UnknownBlocks): inventario, cantina, terreno, nave, nave del hangar, planeta visitado y precios
+	 */
 	static function unknownSave( g : GameView, name : String ) {
 		if( g == null ) {
 			Sys.println("unknownsave: no hay partida en curso");
 			return;
 		}
 		var info : SaveData.SaveInfo = haxe.Json.parse(haxe.Json.stringify(g.toInfo()));
-		// el primer numero de bloque que esta version no conoce
-		var u = Block.all.length;
+		var u = [for( i in 1...4 ) SaveNames.resolve("BDesconocido" + i).index];
 		info.id = SaveData.newId();
 		info.name = name;
 		info.saved = Date.now().getTime();
 		while( info.inv.t.length < 2 ) info.inv.t.push(null);
-		info.inv.t[0] = { k : u, n : 64 };
-		info.inv.t[1] = { k : u + 1, n : 10 };
+		info.inv.t[0] = { k : u[0], n : 64 };
+		info.inv.t[1] = { k : u[1], n : 10 };
 		if( info.chests == null ) info.chests = [];
-		info.chests.push({ key : "p0:1,1,1", t : [{ k : u + 2, n : 5 }, null, null, null] });
+		info.chests.push({ key : "p0:1,1,1", t : [{ k : u[2], n : 5 }, null, null, null] });
 		// terreno: delante del jugador, una celda y la de encima con nivel de agua (bits altos: World.applySaved)
 		var s = g.world.size;
 		inline function cell( x : Int, y : Int, z : Int, size : Int ) return ((((x % size) + size) % size + (((y % size) + size) % size) * size) << World.ZBITS) | z;
 		var x = Std.int(g.px + Math.cos(g.yaw) * 3), y = Std.int(g.py + Math.sin(g.yaw) * 3), z = Std.int(g.pz) + 1;
-		info.edits = info.edits.concat([cell(x, y, z, s), u, cell(x, y, z + 1, s), (u + 1) | (3 << 16)]);
+		info.edits = info.edits.concat([cell(x, y, z, s), u[0], cell(x, y, z + 1, s), u[1] | (3 << 16)]);
 		// nave: un cambio a bordo y una celda de la nave del hangar (la primera que no hace falta para jugar)
-		info.shipEdits = (info.shipEdits != null ? info.shipEdits : []).concat([cell(10, 10, 5, Const.SIZE), u + 2]);
+		info.shipEdits = (info.shipEdits != null ? info.shipEdits : []).concat([cell(10, 10, 5, Const.SIZE), u[2]]);
 		var raw = haxe.zip.Uncompress.run(Hangar.currentShip(info));
 		var p = 3;
 		while( p + 1 < raw.length ) {
 			var id = raw.get(p) | (raw.get(p + 1) << 8);
-			if( id != 0 && id < u && !Block.all[id].k.match(BShipEntry | BShipComputer | BCrafter | BCrafterComputer) ) break;
+			if( id != 0 && !SaveNames.isPlaceholder(Block.all[id]) && !Block.all[id].k.match(BShipEntry | BShipComputer | BCrafter | BCrafterComputer) ) break;
 			p += 2;
 		}
-		raw.set(p, (u + 1) & 0xFF);
-		raw.set(p + 1, (u + 1) >> 8);
+		raw.set(p, u[1] & 0xFF);
+		raw.set(p + 1, u[1] >> 8);
 		info.shipData = haxe.crypto.Base64.encode(haxe.zip.Compress.run(raw, 9));
 		// un planeta ya visitado y los precios del robot (la partida de prueba, creativa, aun no tiene universo ni robot: se crean)
 		if( info.uni == null )
 			info.uni = { seed : info.seed, planetId : 0, pos : [2, 0], start : { seed : info.seed, biome : info.biome, size : info.sizeChunks }, planets : [],
 				licenses : [0], main : 0, mainChanges : 0, abandoned : [], gone : [] };
 		if( info.uni.planets.length == 0 ) info.uni.planets.push({ id : 1, edits : [] });
-		info.uni.planets[0].edits = info.uni.planets[0].edits.concat([cell(1, 1, 60, 128), u]);
+		info.uni.planets[0].edits = info.uni.planets[0].edits.concat([cell(1, 1, 60, 128), u[0]]);
 		if( info.market == null ) info.market = Market.create();
-		info.market.items.push({ key : "b" + u, bought : 1., sold : 0. });
+		info.market.items.push({ key : "b" + u[0], bought : 1., sold : 0. });
 		SaveData.write(info, null, false);
-		Sys.println("unknownsave: " + info.id + " '" + name + "' " + UnknownBlocks.where(UnknownBlocks.count(info)) + " numeros " + UnknownBlocks.count(info).ids.join(","));
+		var r = UnknownBlocks.count(info);
+		Sys.println("unknownsave: " + info.id + " '" + name + "' " + UnknownBlocks.where(r) + " nombres " + r.names.join(","));
 	}
 
-	/** print unknown: bloques desconocidos de cada partida, md5 de su .json y copias hechas antes de borrarlos */
+	/** print unknown: bloques desconocidos de cada partida (leida entera), md5 de su archivo y copias en backups */
 	static function unknownInfo() : String {
 		var out = [];
 		var md5 = function(p : String) return haxe.crypto.Md5.make(sys.io.File.getBytes(p)).toHex();
-		for( i in SaveData.list() ) {
+		for( l in SaveData.list() ) {
+			var i = SaveData.peek(l.id);
+			if( i == null ) {
+				out.push("'" + l.name + "' " + l.id + " ilegible: " + SaveData.lastError);
+				continue;
+			}
 			var r = UnknownBlocks.count(i);
-			var prices = i.market == null ? 0 : [for( it in i.market.items ) if( it.key.charAt(0) == "b" && Std.parseInt(it.key.substr(1)) >= Block.all.length ) it].length;
-			out.push("'" + i.name + "' " + i.id + " desconocidos=" + UnknownBlocks.total(r) + " (" + UnknownBlocks.where(r) + ") numeros=" + r.ids.join(",")
-				+ " precios=" + prices + " md5=" + md5(SaveData.jsonPath(i.id)));
+			var prices = i.market == null ? 0 : [for( it in i.market.items ) if( it.key.charAt(0) == "b" && SaveNames.isUnknown(Block.all[Std.parseInt(it.key.substr(1))]) ) it].length;
+			out.push("'" + i.name + "' " + i.id + " desconocidos=" + UnknownBlocks.total(r) + " (" + UnknownBlocks.where(r) + ") nombres=" + r.names.join(",")
+				+ " precios=" + prices + " md5=" + md5(l.legacy == true ? SaveData.jsonPath(i.id) : SaveData.archivePath(i.id)));
 		}
 		var dir = SaveData.dir() + "/" + UnknownBlocks.BACKUPS;
 		var copies = sys.FileSystem.exists(dir) ? sys.FileSystem.readDirectory(dir) : [];
 		copies.sort(Reflect.compare);
 		return out.length + " partidas:\n  " + out.join("\n  ") + "\ncopias en " + UnknownBlocks.BACKUPS + ": "
 			+ (copies.length == 0 ? "ninguna" : [for( c in copies ) c + (StringTools.endsWith(c, ".json") ? " md5=" + md5(dir + "/" + c) : "")].join(", "));
+	}
+
+	/**
+	 * migrate ID upstream|fork: vuelve a migrar la partida .json de antes ID (desde saves/backups) con la tabla de esa linea
+	 * (SaveNames.legacyTable), por si se migro con la que no era; sin linea, la otra que la de este juego
+	 */
+	static function remigrate( a : Array<String> ) {
+		var id = a[1];
+		if( id == null ) {
+			Sys.println("migrate: falta el id de la partida");
+			return;
+		}
+		var lineage = a.length > 2 ? a[2] : (SaveNames.lineage() == "fork" ? "upstream" : "fork");
+		try {
+			var info = SaveData.migrate(id, lineage);
+			Sys.println("migrate: " + id + " con la tabla " + lineage + " | desconocidos " + UnknownBlocks.total(UnknownBlocks.count(info)));
+		} catch( e : Dynamic ) {
+			Sys.println("migrate: " + id + " no se puede migrar: " + e);
+		}
 	}
 
 	/**
@@ -1170,6 +1192,7 @@ class Dev {
 				case "devsaves": app.devSaves(Std.parseInt(a[1]));
 				case "savecopy": saveCopy(a[1]);
 				case "unknownsave": unknownSave(g, l.substr(l.indexOf(" ") + 1));
+				case "migrate": remigrate(a);
 				case "trace": trace = true;
 				case "shop": app.openShop();
 				case "screen": @:privateAccess app.show(a[1]);
@@ -1828,6 +1851,39 @@ class Dev {
 				+ " trozos pendientes " + @:privateAccess w.seaChunks.length + (@:privateAccess w.seaJob != null ? " (luz a medias)" : ""));
 		case "lightcheck":
 			Sys.println("luz: " + w.debugLightCheck());
+		case "prune":
+			// poda de los cambios (World.prune): el suelo delante del jugador cambiado y vuelto a lo generado sale de editMap; el agua
+			// del mar quitada y vuelta a poner se queda (initSea y la bajada del mar quitan capas generadas)
+			inline function count() return [for( k in w.editMap.keys() ) if( k >= 0 ) k].length;
+			inline function key( x : Int, y : Int, z : Int ) return ((x + y * w.size) << World.ZBITS) | z;
+			var x = Math.floor(g.px) + 2, y = Math.floor(g.py);
+			var z = w.topCollide(x, y) - 1, orig = w.block(x, y, z);
+			var n0 = count();
+			w.setBlock(x, y, z, Block.get(BLamp));
+			var n1 = count();
+			w.setBlock(x, y, z, orig);
+			var out = "poda: suelo " + x + "," + y + "," + z + " (" + (orig == null ? "aire" : "" + orig.k) + ") cambios " + n0 + " -> " + n1 + " -> " + count()
+				+ (w.editMap.exists(key(x, y, z)) ? " GUARDADA" : " podada");
+			if( w.seaBlock == null ) out += " | sin mar";
+			else {
+				// la capa de arriba del mar (print sea: en z = nivel - 1)
+				var wl = w.waterLevel() - 1, sx = -1, sy = -1;
+				for( yy in 0...w.size ) {
+					for( xx in 0...w.size ) if( w.block(xx, yy, wl) == w.seaBlock ) {
+						sx = xx;
+						sy = yy;
+						break;
+					}
+					if( sx >= 0 ) break;
+				}
+				if( sx < 0 ) out += " | mar sin agua en z" + wl;
+				else {
+					w.setBlock(sx, sy, wl, Block.get(BRock));
+					w.setWater(sx, sy, wl, w.seaBlock, 0);
+					out += " | mar " + sx + "," + sy + "," + wl + (w.editMap.exists(key(sx, sy, wl)) ? " guardada" : " PODADA");
+				}
+			}
+			Sys.println(out);
 		case "hangar":
 			Sys.println("hangar: " + (g.hangar == null ? "no" : "valida=" + g.hangarValid + " error=" + g.hangar.error + " velocidad=" + g.hangar.speed) + " mensaje=" + g.message);
 		case "wares":

@@ -229,6 +229,10 @@ class GameView {
 			pz = info.pz;
 			yaw = info.yaw;
 			pitch = info.pitch;
+			// anadido del port: si el sitio guardado ha quedado dentro de algo solido (una partida migrada con la tabla que no era, un
+			// planeta que ahora se genera distinto), el jugador sube a la superficie
+			var ix = Math.floor(px), iy = Math.floor(py), iz = Math.floor(pz);
+			if( world.solid(ix, iy, iz) || world.solid(ix, iy, iz + 1) ) pz = world.topCollide(ix, iy) + 0.01;
 		}
 		// el equipo dejado aqui al morir o con Mayus+K, en el planeta o la cometa y en la nave
 		DeathDrops.spawnAll(this);

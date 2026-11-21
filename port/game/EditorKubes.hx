@@ -2,30 +2,6 @@ import Common;
 import SaveData.SaveInfo;
 import IconMesh.Icons;
 
-/**
- * Kubes del editor de una partida guardada (SaveInfo.editorKubes). Los campos de siempre (edits, inv, chests...) llevan aire o
- * una casilla vacia en su sitio: una version sin los kubes del editor los ignora sin mas (y los pierde si guarda la partida).
- * Cada kube va como un numero n = posicion en ids * 4 + variante (0 = el bloque; la puerta y el plano tienen mas, EditorKubes.PER).
- */
-typedef EditorKubesSave = {
-	/** archivo de cada kube (nombre del .kube sin la extension, en minusculas) */
-	var ids : Array<String>;
-	/** planeta actual: pares [celda, n] */
-	@:optional var edits : Array<Int>;
-	/** nave: pares [celda, n] */
-	@:optional var shipEdits : Array<Int>;
-	/** planetas visitados (uni.planets): sus pares [celda, n] */
-	@:optional var planets : Array<{ id : Int, edits : Array<Int> }>;
-	/** inventario: [casilla, n, cantidad, ...] */
-	@:optional var inv : Array<Int>;
-	/** equipo dejado al morir (id de SaveInfo.deathDrops): [casilla, n, cantidad, ...] */
-	@:optional var drops : Array<{ id : Int, t : Array<Int> }>;
-	/** cantinas (clave de SaveInfo.chests): [casilla, n, cantidad, ...] */
-	@:optional var chests : Array<{ key : String, t : Array<Int> }>;
-	/** stockage de la nave (SaveInfo.storage): [casilla, n, cantidad, ...] */
-	@:optional var storage : Array<Int>;
-}
-
 /** un kube del editor cargado en la sesion: sus bloques de Block.all no cambian de indice mientras dura */
 private class Slot {
 	public var id : String;
@@ -63,8 +39,9 @@ private class Slot {
  *   hacen falta y guardan su indice toda la sesion. El mundo los distingue por su indice (World.localId).
  * - Sus caras van a casillas libres del atlas (transparentes y sin bloque), desde el final; Atlas.updateTiles las sube.
  * - Como mucho MAX kubes: primero los que tiene la partida, luego los mas recientes de la carpeta.
- * - En la partida guardada van por el nombre de su archivo (EditorKubesSave), en un campo aparte. Un kube cambiado en el
- *   editor se ve con su dibujo nuevo al cargar; uno borrado (o que ya no se puede leer) desaparece: aire y casilla vacia.
+ * - En la partida guardada van por el nombre de su archivo: "editor:<archivo>#<variante>" (SaveNames). Un kube cambiado en el
+ *   editor se ve con su dibujo nuevo al cargar; uno borrado (o que ya no se puede leer), y todos en aventura, quedan en un bloque
+ *   de remplazo con su nombre: vuelven cuando su archivo esta y se juega en creativo.
  * - En supervivencia de una partida creativa son bloques como los demas; en aventura no se cargan (ni paleta, ni nada).
  */
 class EditorKubes {
@@ -124,18 +101,21 @@ class EditorKubes {
 	public static function attach( info : SaveInfo ) {
 		enabled = info.creative == true;
 		if( !enabled ) {
+			// en aventura no hay ninguno: los de la partida pasan a bloques de remplazo, con su nombre (vuelven al jugarla en creativo)
+			SaveNames.mapBlocks(info, function(k, _) return isEditor(Block.all[k]) ? SaveNames.placeholderFor(SaveNames.nameOfIndex(k)).index : k);
 			for( s in slots ) s.active = false;
 			skipped = 0;
 			return;
 		}
-		var raw = info.editorKubes;
-		var wanted = raw != null ? raw.ids.copy() : [];
-		for( id in usedIds(info) ) if( wanted.indexOf(id) < 0 ) wanted.push(id);
-		refresh(wanted);
-		if( raw != null ) {
-			merge(info, raw);
-			info.editorKubes = null;
-		}
+		refresh(usedIds(info));
+		// otra vez por su nombre, ahora que estan cargados los de la partida: los que esperaban en un bloque de remplazo pasan a su
+		// bloque si su archivo se ha podido cargar, y los de un archivo que ya no esta (leidos antes de refresh) a uno de remplazo
+		SaveNames.mapBlocks(info, function(k, _) {
+			var b = Block.all[k];
+			var n = SaveNames.placeholderName(b);
+			if( n == null && isEditor(b) ) n = SaveNames.nameOf(b);
+			return n != null && StringTools.startsWith(n, SaveNames.EDITOR) ? SaveNames.resolve(n).index : k;
+		});
 	}
 
 	/**
@@ -410,203 +390,39 @@ class EditorKubes {
 
 	// ---------------------------------------------------------------- partida guardada
 
-	/** kubes que la partida (ya con sus bloques) tiene en el terreno, la nave, el inventario o las cantinas */
+	/**
+	 * kubes que la partida tiene en el terreno, la nave, el inventario o las cantinas: los ya cargados y los que esperan en un
+	 * bloque de remplazo "editor:<archivo>#<variante>" (SaveNames)
+	 */
 	static function usedIds( info : SaveInfo ) : Array<String> {
 		var out = [];
-		function note( gi : Int ) {
-			var id = idOfBlock(Block.all[gi & 0xFFFF]);
-			if( id != null && out.indexOf(id) < 0 ) out.push(id);
-		}
-		function edits( e : Array<Int> ) {
-			if( e == null ) return;
-			var i = 0;
-			while( i + 1 < e.length ) {
-				if( e[i] >= 0 ) note(e[i + 1]);
-				i += 2;
+		SaveNames.mapBlocks(info, function(k, _) {
+			var b = Block.all[k];
+			var id = idOfBlock(b);
+			if( id == null ) {
+				var e = SaveNames.parseEditor(SaveNames.placeholderName(b));
+				if( e != null ) id = e.id;
 			}
-		}
-		function slotsOf( t : Protocol.BlockInventory ) if( t != null ) for( s in t ) if( s != null ) note(s.k);
-		edits(info.edits);
-		edits(info.shipEdits);
-		if( info.uni != null && info.uni.planets != null ) for( p in info.uni.planets ) edits(p.edits);
-		if( info.deathDrops != null ) for( d in info.deathDrops ) slotsOf(d.t);
-		if( info.inv != null ) slotsOf(info.inv.t);
-		if( info.chests != null ) for( c in info.chests ) slotsOf(c.t);
-		if( info.storage != null ) slotsOf(info.storage.t);
+			if( id != null && out.indexOf(id) < 0 ) out.push(id);
+			return k;
+		});
 		return out;
 	}
 
-	/** bloque de un numero de la partida guardada (null: el kube ya no esta o la variante no existe en su forma de ahora) */
-	static function decode( raw : EditorKubesSave, n : Int ) : Block {
-		var i = n >> 2, v = n & 3;
-		if( i < 0 || i >= raw.ids.length ) return null;
-		var s = byId.get(raw.ids[i]);
-		if( s == null || !s.active ) return null;
-		// la forma ha cambiado en el editor (una puerta abierta que ahora es un cubo): el bloque del kube
-		return s.blocks[v < s.variants() ? v : 0];
-	}
-
-	/** los kubes de la partida guardada pasan a los campos de siempre, donde los campos de siempre tienen aire o una casilla vacia */
-	static function merge( info : SaveInfo, raw : EditorKubesSave ) {
-		function edits( e : Array<Int>, add : Array<Int> ) : Array<Int> {
-			if( add == null ) return e;
-			if( e == null ) e = [];
-			var at = new Map<Int, Int>();
-			var i = 0;
-			while( i + 1 < e.length ) {
-				if( e[i] >= 0 ) at.set(e[i], i + 1);
-				i += 2;
-			}
-			i = 0;
-			while( i + 1 < add.length ) {
-				var cell = add[i], b = decode(raw, add[i + 1]);
-				i += 2;
-				if( cell < 0 || b == null ) continue;
-				var p = at.get(cell);
-				if( p == null ) {
-					e.push(cell);
-					e.push(b.index);
-				} else if( (e[p] & 0xFFFF) == 0 )
-					e[p] = b.index;
-			}
-			return e;
-		}
-		function slotsOf( t : Protocol.BlockInventory, add : Array<Int> ) {
-			if( t == null || add == null ) return;
-			var i = 0;
-			while( i + 2 < add.length ) {
-				var c = add[i], b = decode(raw, add[i + 1]), n = add[i + 2];
-				i += 3;
-				if( b != null && c >= 0 && c < t.length && t[c] == null && n > 0 ) t[c] = { k : b.index, n : n };
-			}
-		}
-		info.edits = edits(info.edits, raw.edits);
-		info.shipEdits = edits(info.shipEdits, raw.shipEdits);
-		if( raw.planets != null && info.uni != null && info.uni.planets != null )
-			for( rp in raw.planets )
-				for( p in info.uni.planets )
-					if( p.id == rp.id ) p.edits = edits(p.edits, rp.edits);
-		if( raw.drops != null && info.deathDrops != null )
-			for( rd in raw.drops )
-				for( d in info.deathDrops )
-					if( d.id == rd.id ) slotsOf(d.t, rd.t);
-		if( info.inv != null ) slotsOf(info.inv.t, raw.inv);
-		if( raw.chests != null && info.chests != null )
-			for( rc in raw.chests )
-				for( c in info.chests )
-					if( c.key == rc.key ) slotsOf(c.t, rc.t);
-		if( info.storage != null ) slotsOf(info.storage.t, raw.storage);
+	/** variante de un bloque de un kube (0 = el bloque; la puerta, el tableau y el plano tienen mas: PER) */
+	public static function variantOf( b : Block ) : Int {
+		var s = slotOf(b);
+		return s == null ? 0 : b.index - s.blocks[0].index;
 	}
 
 	/**
-	 * Lo que SaveData.write escribe: sin kubes del editor en los campos de siempre, la misma partida; si no, una copia con aire y
-	 * casillas vacias en su sitio y los kubes en editorKubes. La partida en juego no cambia.
+	 * el bloque de un kube cargado para un nombre guardado (SaveNames.resolve); si la forma ha cambiado en el editor y ya no tiene
+	 * esa variante (una puerta abierta que ahora es un cubo), el bloque del kube. null si no esta cargado
 	 */
-	public static function encode( info : SaveInfo ) : SaveInfo {
-		if( usedIds(info).length == 0 ) return info;
-		var out : SaveInfo = Reflect.copy(info);
-		var raw : EditorKubesSave = { ids : [] };
-		function num( b : Block ) : Int {
-			var s = slotOf(b);
-			if( s == null || !s.active ) return -1;
-			var i = raw.ids.indexOf(s.id);
-			if( i < 0 ) {
-				i = raw.ids.length;
-				raw.ids.push(s.id);
-			}
-			return (i << 2) | (b.index - s.blocks[0].index);
-		}
-		// pares de celdas: los kubes del editor pasan a aire y a la lista aparte
-		function edits( e : Array<Int>, put : Array<Int> -> Void ) : Array<Int> {
-			if( e == null ) return null;
-			var copy = e.copy(), mine = [];
-			var i = 0;
-			while( i + 1 < copy.length ) {
-				var b = copy[i] >= 0 ? Block.all[copy[i + 1] & 0xFFFF] : null;
-				if( isEditor(b) ) {
-					var n = num(b);
-					if( n >= 0 ) {
-						mine.push(copy[i]);
-						mine.push(n);
-					}
-					copy[i + 1] = 0;
-				}
-				i += 2;
-			}
-			if( mine.length > 0 ) put(mine);
-			return copy;
-		}
-		function slotsOf( t : Protocol.BlockInventory, put : Array<Int> -> Void ) : Protocol.BlockInventory {
-			if( t == null ) return null;
-			var copy = [for( s in t ) s == null ? null : { k : s.k, n : s.n }], mine = [];
-			for( i in 0...copy.length ) {
-				var s = copy[i];
-				if( s == null || !isEditor(Block.all[s.k]) ) continue;
-				var n = num(Block.all[s.k]);
-				if( n >= 0 ) {
-					mine.push(i);
-					mine.push(n);
-					mine.push(s.n);
-				}
-				copy[i] = null;
-			}
-			if( mine.length > 0 ) put(mine);
-			return copy;
-		}
-		out.edits = edits(info.edits, function(m) raw.edits = m);
-		out.shipEdits = edits(info.shipEdits, function(m) raw.shipEdits = m);
-		if( info.uni != null && info.uni.planets != null ) {
-			out.uni = Reflect.copy(info.uni);
-			out.uni.planets = [for( p in info.uni.planets ) {
-				var c : SaveData.UniPlanet = Reflect.copy(p);
-				c.edits = edits(p.edits, function(m) {
-					if( raw.planets == null ) raw.planets = [];
-					raw.planets.push({ id : p.id, edits : m });
-				});
-				c;
-			}];
-		}
-		if( info.deathDrops != null )
-			out.deathDrops = [for( d in info.deathDrops ) {
-				var c : DeathDrops.DeathDropInfo = Reflect.copy(d);
-				c.t = slotsOf(d.t, function(m) {
-					if( raw.drops == null ) raw.drops = [];
-					raw.drops.push({ id : d.id, t : m });
-				});
-				c;
-			}];
-		if( info.inv != null ) {
-			out.inv = Inv.copy(info.inv);
-			out.inv.t = slotsOf(info.inv.t, function(m) raw.inv = m);
-		}
-		if( info.chests != null )
-			out.chests = [for( c in info.chests ) { key : c.key, t : slotsOf(c.t, function(m) {
-				if( raw.chests == null ) raw.chests = [];
-				raw.chests.push({ key : c.key, t : m });
-			}) }];
-		if( info.storage != null )
-			out.storage = { t : slotsOf(info.storage.t, function(m) raw.storage = m), charges : [for( c in info.storage.charges ) { c : c.c, n : c.n }] };
-		out.editorKubes = raw.ids.length > 0 ? raw : null;
-		return out;
-	}
-
-	/** editorKubes de una partida leida de disco; null si no hay o esta mal formado */
-	public static function readSave( o : Dynamic ) : EditorKubesSave {
-		try {
-			if( o == null || o.ids == null ) return null;
-			inline function ints( a : Dynamic ) : Array<Int> return a == null ? null : [for( v in (a : Array<Dynamic>) ) Std.int(v)];
-			var r : EditorKubesSave = { ids : [for( v in (o.ids : Array<Dynamic>) ) Std.string(v).toLowerCase()] };
-			r.edits = ints(o.edits);
-			r.shipEdits = ints(o.shipEdits);
-			r.inv = ints(o.inv);
-			if( o.drops != null ) r.drops = [for( d in (o.drops : Array<Dynamic>) ) { id : Std.int(d.id), t : ints(d.t) }];
-			if( o.planets != null ) r.planets = [for( p in (o.planets : Array<Dynamic>) ) { id : Std.int(p.id), edits : ints(p.edits) }];
-			if( o.chests != null ) r.chests = [for( c in (o.chests : Array<Dynamic>) ) { key : Std.string(c.key), t : ints(c.t) }];
-			r.storage = ints(o.storage);
-			return r;
-		} catch( e : Dynamic ) {
-			return null;
-		}
+	public static function blockOrFirst( id : String, variant : Int ) : Block {
+		var s = byId.get(id.toLowerCase());
+		if( s == null || !s.active ) return null;
+		return s.blocks[variant < s.variants() ? variant : 0];
 	}
 
 	// ---------------------------------------------------------------- pruebas (Dev)

@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "name": "Bloques de otra version",
+  "seed": 4321,
+  "biome": "BIAutumn",
+  "sizeChunks": 1,
+  "created": 1767225600000,
+  "saved": 1767225600000,
+  "savedWith": "0.8.1",
+  "playSeconds": 600,
+  "creative": true,
+  "inv": {
+    "maxWeight": 64,
+    "t": [{ "k": 400, "n": 5 }, { "k": 401, "n": 2 }, { "k": 5, "n": 3 }, null, null, null, null, null, null, null],
+    "charges": [{ "c": 0, "n": 4 }]
+  }
+}

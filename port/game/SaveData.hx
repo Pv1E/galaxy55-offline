@@ -1,3 +1,5 @@
+import SaveArchive.SaveError;
+
 /** Un planeta ya visitado del universo: sus cambios de terreno (los de la nave y el inventario son de toda la partida). */
 typedef UniPlanet = {
 	var id : Int;
@@ -6,6 +8,13 @@ typedef UniPlanet = {
 	@:optional var shipAt : { x : Int, y : Int };
 	/** version del generador del planeta (anadido del port, SaveInfo.genVersion); null = 0 */
 	@:optional var genVersion : Null<Int>;
+	/**
+	 * semilla, bioma y tamano con los que se genero (anadido del port, en su cabecera de SaveArchive): al volver se generan con
+	 * ellos y no con los del mapa, asi sus celdas guardadas no se mezclan si el universo cambiara. null en los de antes
+	 */
+	@:optional var seed : Null<Int>;
+	@:optional var biome : String;
+	@:optional var size : Null<Int>;
 }
 
 /**
@@ -140,19 +149,48 @@ typedef SaveInfo = {
 	@:optional var comet : CometInfo;
 	/** lo que sabe la Base de datos ESCorp (Kubindex, añadido del port); null en las partidas antiguas */
 	@:optional var kub : Kubindex.KubInfo;
-	/**
-	 * kubes del editor de kubes puestos en la partida (EditorKubes, anadido del port), aparte de los campos de siempre. Solo en
-	 * disco: al empezar a jugar pasan a esos campos (EditorKubes.attach) y SaveData.write los vuelve a sacar (EditorKubes.encode)
-	 */
-	@:optional var editorKubes : EditorKubes.EditorKubesSave;
 	/** stockage de la nave (ShipStorage, anadido del port): bloques y cargas guardados; null = aun vacio (y en las partidas de antes) */
 	@:optional var storage : ShipStorage.StorageInfo;
+	/** cargas que esta version no conoce, quitadas al leer la partida (no se guarda: UnknownBlocks las cuenta) */
+	@:optional var unknownCharges : Int;
+	/**
+	 * Solo en la lista de partidas (SaveData.list, no se guarda): la partida no se ha leido entera (listOnly: lo de meta.json);
+	 * en el espacio (inSpace); generada en parte con un generador anterior (oldGeneration); no se puede leer (unreadable: por que);
+	 * todavia es un .json de antes (legacy)
+	 */
+	@:optional var listOnly : Bool;
+	@:optional var inSpace : Bool;
+	@:optional var oldGeneration : Bool;
+	@:optional var unreadable : String;
+	@:optional var legacy : Bool;
 }
 
-/** Guardado en disco: %APPDATA%\Galaxy55\saves\<id>.json (+ <id>.png con la miniatura). */
+/**
+ * Kubes del editor en una partida .json de antes (campo editorKubes): los campos de siempre llevan aire o una casilla vacia en
+ * su sitio y aqui va cada kube como n = posicion en ids * 4 + variante. Solo para migrarla (SaveData.migrate).
+ */
+typedef LegacyEditorKubes = {
+	var ids : Array<String>;
+	@:optional var edits : Array<Int>;
+	@:optional var shipEdits : Array<Int>;
+	@:optional var planets : Array<{ id : Int, edits : Array<Int> }>;
+	@:optional var inv : Array<Int>;
+	@:optional var drops : Array<{ id : Int, t : Array<Int> }>;
+	@:optional var chests : Array<{ key : String, t : Array<Int> }>;
+	@:optional var storage : Array<Int>;
+}
+
+/**
+ * Guardado en disco: %APPDATA%\Galaxy55\saves\<id>.g55 (SaveArchive: un zip con la partida, su miniatura y los cambios de cada
+ * planeta, los bloques por su nombre). Las partidas de antes (<id>.json y <id>.png, con numeros de bloque) se migran al leerlas
+ * (migrate): el .json y su .png pasan a saves/backups.
+ */
 class SaveData {
 
 	public static inline var VERSION = 1;
+
+	/** por que fallo la ultima escritura (write, edit), para el aviso */
+	public static var lastError(default, null) : String;
 
 	public static function dir() : String {
 		var d = Settings.dir() + "/saves";
@@ -181,248 +219,523 @@ class SaveData {
 		return v == null ? 0 : Std.int(v);
 	}
 
-	static function readUni( o : Dynamic ) : UniInfo {
+	public static function archivePath( id : String ) return dir() + "/" + id + ".g55";
+	/** las partidas de antes */
+	public static function jsonPath( id : String ) return dir() + "/" + id + ".json";
+	public static function thumbPath( id : String ) return dir() + "/" + id + ".png";
+	public static function backupDir() : String {
+		var d = dir() + "/" + UnknownBlocks.BACKUPS;
+		if( !sys.FileSystem.exists(d) ) sys.FileSystem.createDirectory(d);
+		return d;
+	}
+
+	// ---------------------------------------------------------------- lectura de los campos (los dos formatos)
+
+	/** lee un campo; si esta pero no se entiende, error con su nombre (antes se ponia uno por defecto sin decir nada) */
+	static function field<T>( name : String, f : Void -> T ) : T {
 		try {
-			if( o == null || o.seed == null ) return null;
-			return {
-				seed : Std.int(o.seed), planetId : Std.int(o.planetId), pos : [for( v in (o.pos : Array<Dynamic>) ) Std.int(v)],
-				start : { seed : Std.int(o.start.seed), biome : o.start.biome, size : Std.int(o.start.size) },
-				planets : [for( p in (o.planets : Array<Dynamic>) ) { id : Std.int(p.id), edits : [for( v in (p.edits : Array<Dynamic>) ) Std.int(v)], shipAt : readSpot(p.shipAt), genVersion : genVersion(p.genVersion) }],
-				robot : o.robot != null ? { x : (o.robot.x : Float), y : (o.robot.y : Float) } : null,
-				space : o.space == true ? true : null,
-				ship : o.ship != null ? { x : (o.ship.x : Float), y : (o.ship.y : Float) } : null,
-				traveled : o.traveled != null ? (o.traveled : Float) : 0,
-				licenses : ints(o.licenses),
-				main : o.main != null ? Std.int(o.main) : null,
-				mainTime : o.mainTime != null ? (o.mainTime : Float) : null,
-				mainChanges : o.mainChanges != null ? Std.int(o.mainChanges) : 0,
-				abandoned : ints(o.abandoned),
-				gone : ints(o.gone),
-				comets : ints(o.comets),
-			};
+			return f();
+		} catch( e : SaveError ) {
+			throw new SaveError(name + ": " + e.msg);
 		} catch( e : Dynamic ) {
-			return null;
+			throw new SaveError(name + " mal formado (" + Std.string(e) + ")");
 		}
+	}
+
+	static inline function int( v : Dynamic ) : Int {
+		if( !Std.isOfType(v, Int) && !Std.isOfType(v, Float) ) throw "numero esperado";
+		return Std.int(v);
+	}
+
+	static inline function num( v : Dynamic ) : Float {
+		if( !Std.isOfType(v, Int) && !Std.isOfType(v, Float) ) throw "numero esperado";
+		return (v : Float);
+	}
+
+	static inline function arr( v : Dynamic ) : Array<Dynamic> {
+		if( !Std.isOfType(v, Array) ) throw "lista esperada";
+		return v;
 	}
 
 	/** lista de enteros guardada; null si no la hay */
 	static function ints( o : Dynamic ) : Array<Int> {
-		return o == null ? null : [for( v in (o : Array<Dynamic>) ) Std.int(v)];
+		return o == null ? null : [for( v in arr(o) ) int(v)];
 	}
 
-	/** donde estaba el jugador al guardar dentro de la nave nodriza: null si no estaba dentro o no es valido */
+	static function readUni( o : Dynamic ) : UniInfo {
+		if( o == null ) return null;
+		if( o.seed == null || o.planetId == null || o.pos == null || o.start == null || o.planets == null ) throw "faltan seed, planetId, pos, start o planets";
+		return {
+			seed : int(o.seed), planetId : int(o.planetId), pos : ints(o.pos),
+			start : { seed : int(o.start.seed), biome : Std.string(o.start.biome), size : int(o.start.size) },
+			planets : [for( p in arr(o.planets) ) {
+				id : int(p.id), edits : ints(p.edits), shipAt : readSpot(p.shipAt), genVersion : genVersion(p.genVersion),
+				seed : p.seed != null ? int(p.seed) : null, biome : p.biome != null ? Std.string(p.biome) : null, size : p.size != null ? int(p.size) : null,
+			}],
+			robot : o.robot != null ? { x : num(o.robot.x), y : num(o.robot.y) } : null,
+			space : o.space == true ? true : null,
+			ship : o.ship != null ? { x : num(o.ship.x), y : num(o.ship.y) } : null,
+			traveled : o.traveled != null ? num(o.traveled) : 0,
+			licenses : ints(o.licenses),
+			main : o.main != null ? int(o.main) : null,
+			mainTime : o.mainTime != null ? num(o.mainTime) : null,
+			mainChanges : o.mainChanges != null ? int(o.mainChanges) : 0,
+			abandoned : ints(o.abandoned),
+			gone : ints(o.gone),
+			comets : ints(o.comets),
+		};
+	}
+
+	/** donde estaba el jugador al guardar dentro de la nave nodriza: null si no estaba dentro */
 	static function readMotherPos( o : Dynamic ) : MotherPos {
-		try {
-			if( o == null || o.x == null || o.y == null || o.z == null ) return null;
-			return { x : o.x, y : o.y, z : o.z, yaw : o.yaw != null ? o.yaw : 0, pitch : o.pitch != null ? o.pitch : 0 };
-		} catch( e : Dynamic ) {
-			return null;
-		}
+		if( o == null ) return null;
+		return { x : num(o.x), y : num(o.y), z : num(o.z), yaw : o.yaw != null ? num(o.yaw) : 0, pitch : o.pitch != null ? num(o.pitch) : 0 };
 	}
 
-	/** sitio de la nave pilotada (anadido del port): null si no hay o no es valido */
+	/** sitio de la nave pilotada (anadido del port): null si no hay */
 	static function readSpot( o : Dynamic ) : { x : Int, y : Int } {
-		try {
-			if( o == null || o.x == null || o.y == null ) return null;
-			return { x : Std.int(o.x), y : Std.int(o.y) };
-		} catch( e : Dynamic ) {
-			return null;
-		}
+		if( o == null ) return null;
+		return { x : int(o.x), y : int(o.y) };
 	}
 
 	static function readMarket( o : Dynamic ) : Market.MarketInfo {
-		try {
-			if( o == null || o.items == null ) return null;
-			return { time : o.time != null ? o.time : 0, items : [for( i in (o.items : Array<Dynamic>) ) { key : Std.string(i.key), bought : i.bought != null ? (i.bought : Float) : null, sold : i.sold != null ? (i.sold : Float) : null }] };
-		} catch( e : Dynamic ) {
-			return null;
-		}
+		if( o == null ) return null;
+		return { time : o.time != null ? num(o.time) : 0, items : [for( i in arr(o.items) ) { key : Std.string(i.key), bought : i.bought != null ? num(i.bought) : null, sold : i.sold != null ? num(i.sold) : null }] };
 	}
 
-	/** contratos de la ESCorp; las partidas antiguas no tienen ni abandonados ni contratos en curso, y un contrato en curso
-	    mal formado o de un bloque que ya no existe se salta */
+	/** contratos de la ESCorp; las partidas antiguas no tienen ni abandonados ni contratos en curso, y un contrato en curso de un
+	    bloque que ya no existe se salta (su bloque va por nombre) */
 	static function readContracts( o : Dynamic ) : Contracts.ContractsInfo {
-		try {
-			if( o == null || o.slot == null ) return null;
-			var active : Array<Contracts.ActiveContract> = [];
-			if( o.active != null )
-				for( a in (o.active : Array<Dynamic>) ) {
-					if( a == null || a.block == null || Contracts.kindOf(Std.string(a.block)) == null || a.n == null || a.reward == null ) continue;
-					active.push({ block : Std.string(a.block), n : Std.int(a.n), reward : Std.int(a.reward), given : a.given != null ? Std.int(a.given) : 0,
-						slot : a.slot != null ? Std.int(a.slot) : 0, index : a.index != null ? Std.int(a.index) : -1 });
-				}
-			return { slot : Std.int(o.slot), done : o.done != null ? ints(o.done) : [], abandoned : o.abandoned != null ? ints(o.abandoned) : [], active : active };
-		} catch( e : Dynamic ) {
-			return null;
-		}
+		if( o == null ) return null;
+		var active : Array<Contracts.ActiveContract> = [];
+		if( o.active != null )
+			for( a in arr(o.active) ) {
+				if( a.block == null || a.n == null || a.reward == null ) throw "contrato en curso sin block, n o reward";
+				if( Contracts.kindOf(Std.string(a.block)) == null ) continue;
+				active.push({ block : Std.string(a.block), n : int(a.n), reward : int(a.reward), given : a.given != null ? int(a.given) : 0,
+					slot : a.slot != null ? int(a.slot) : 0, index : a.index != null ? int(a.index) : -1 });
+			}
+		return { slot : int(o.slot), done : o.done != null ? ints(o.done) : [], abandoned : o.abandoned != null ? ints(o.abandoned) : [], active : active };
 	}
 
-	/** contrato especial; null si no hay o esta mal formado */
+	/** contrato especial; null si no hay */
 	static function readSpecial( o : Dynamic ) : Contracts.SpecialInfo {
-		try {
-			if( o == null ) return null;
-			return { given : o.given != null ? Std.int(o.given) : 0, done : o.done == true };
-		} catch( e : Dynamic ) {
-			return null;
-		}
+		if( o == null ) return null;
+		return { given : o.given != null ? int(o.given) : 0, done : o.done == true };
 	}
 
-	static function readUpgrades( o : Dynamic ) : Array<String> {
-		try {
-			if( o == null ) return null;
-			return [for( v in (o : Array<Dynamic>) ) Std.string(v)];
-		} catch( e : Dynamic ) {
-			return null;
-		}
+	static function strs( o : Dynamic ) : Array<String> {
+		return o == null ? null : [for( v in arr(o) ) Std.string(v)];
+	}
+
+	static function readSlots( o : Dynamic ) : Protocol.BlockInventory {
+		return [for( s in arr(o) ) s == null ? null : { k : int(s.k), n : int(s.n) }];
+	}
+
+	static function readCharges( o : Dynamic ) : Protocol.UserCharges {
+		return o == null ? [] : [for( c in arr(o) ) { c : int(c.c), n : int(c.n) }];
 	}
 
 	static function readChests( o : Dynamic ) : Array<{ key : String, t : Protocol.BlockInventory }> {
-		try {
-			if( o == null ) return [];
-			return [for( c in (o : Array<Dynamic>) ) { key : Std.string(c.key), t : [for( s in (c.t : Array<Dynamic>) ) s == null ? null : { k : Std.int(s.k), n : Std.int(s.n) }] }];
-		} catch( e : Dynamic ) {
-			return [];
-		}
+		if( o == null ) return [];
+		return [for( c in arr(o) ) { key : Std.string(c.key), t : readSlots(c.t) }];
 	}
 
 	static function readComet( o : Dynamic ) : CometInfo {
-		try {
-			if( o == null || o.sys == null || o.slot == null ) return null;
-			return { sys : Std.int(o.sys), slot : Std.int(o.slot), left : o.left != null ? (o.left : Float) : 0 };
-		} catch( e : Dynamic ) {
-			return null;
-		}
+		if( o == null ) return null;
+		return { sys : int(o.sys), slot : int(o.slot), left : o.left != null ? num(o.left) : 0 };
 	}
 
-	/** Base de datos ESCorp guardada; lo que falte o este mal formado se deja vacio */
+	/** Base de datos ESCorp guardada; lo que falte se deja vacio */
 	static function readKub( o : Dynamic ) : Kubindex.KubInfo {
 		var k = Kubindex.empty();
 		if( o == null ) return k;
-		inline function strs( a : Dynamic ) : Array<String> return a == null ? [] : [for( v in (a : Array<Dynamic>) ) Std.string(v)];
-		try {
-			k.seen = strs(o.seen);
-			k.got = strs(o.got);
-			k.fresh = strs(o.fresh);
-			if( o.stats != null )
-				k.stats = [for( s in (o.stats : Array<Dynamic>) ) {
-					var st : Kubindex.KubStat = { k : Std.string(s.k), p : Std.int(s.p), b : Std.int(s.b) };
-					if( s.r != null ) st.r = Std.int(s.r);
-					st;
-				}];
-			if( o.planets != null ) k.planets = [for( p in (o.planets : Array<Dynamic>) ) { id : Std.int(p.id), b : Std.string(p.b) }];
-			if( o.comets != null ) k.comets = [for( c in (o.comets : Array<Dynamic>) ) { sys : Std.int(c.sys), slot : Std.int(c.slot), b : Std.string(c.b) }];
-			if( o.crafts != null ) k.crafts = [for( c in (o.crafts : Array<Dynamic>) ) { id : Std.int(c.id), n : Std.int(c.n) }];
-			k.anomalies = strs(o.anomalies);
-		} catch( e : Dynamic ) {}
+		inline function list( a : Dynamic ) : Array<String> return a == null ? [] : strs(a);
+		k.seen = list(o.seen);
+		k.got = list(o.got);
+		k.fresh = list(o.fresh);
+		if( o.stats != null )
+			k.stats = [for( s in arr(o.stats) ) {
+				var st : Kubindex.KubStat = { k : Std.string(s.k), p : int(s.p), b : int(s.b) };
+				if( s.r != null ) st.r = int(s.r);
+				st;
+			}];
+		if( o.planets != null ) k.planets = [for( p in arr(o.planets) ) { id : int(p.id), b : Std.string(p.b) }];
+		if( o.comets != null ) k.comets = [for( c in arr(o.comets) ) { sys : int(c.sys), slot : int(c.slot), b : Std.string(c.b) }];
+		if( o.crafts != null ) k.crafts = [for( c in arr(o.crafts) ) { id : int(c.id), n : int(c.n) }];
+		k.anomalies = list(o.anomalies);
 		return k;
 	}
 
 	static function readTuto( o : Dynamic ) : TutoInfo {
-		try {
-			if( o == null || o.step == null ) return null;
-			return { step : Std.int(o.step), spots : o.spots != null ? [for( v in (o.spots : Array<Dynamic>) ) Std.int(v)] : null };
-		} catch( e : Dynamic ) {
-			return null;
-		}
+		if( o == null ) return null;
+		return { step : int(o.step), spots : ints(o.spots) };
 	}
 
-	/** inventario guardado; si falta o esta mal formado se usa el inicial */
+	/** inventario guardado; si falta (partidas de antes del inventario), el inicial */
 	static function readInv( o : Dynamic ) : Protocol.InventoryInfos {
-		try {
-			if( o == null || o.t == null ) return Inv.defaults();
-			var inv : Protocol.InventoryInfos = { maxWeight : o.maxWeight != null ? o.maxWeight : 64, t : [], charges : [] };
-			for( s in (o.t : Array<Dynamic>) )
-				inv.t.push(s == null ? null : { k : Std.int(s.k), n : Std.int(s.n) });
-			if( o.charges != null )
-				for( c in (o.charges : Array<Dynamic>) )
-					inv.charges.push({ c : Std.int(c.c), n : Std.int(c.n) });
-			return inv;
-		} catch( e : Dynamic ) {
-			return Inv.defaults();
-		}
+		if( o == null ) return Inv.defaults();
+		return { maxWeight : o.maxWeight != null ? int(o.maxWeight) : 64, t : readSlots(o.t), charges : readCharges(o.charges) };
 	}
 
-	public static function jsonPath( id : String ) return dir() + "/" + id + ".json";
-	public static function thumbPath( id : String ) return dir() + "/" + id + ".png";
+	static function readStorage( o : Dynamic ) : ShipStorage.StorageInfo {
+		if( o == null ) return null;
+		var s = ShipStorage.empty();
+		var t = readSlots(o.t);
+		for( i in 0...t.length ) {
+			var v = t[i];
+			if( v == null || v.n <= 0 ) continue;
+			if( i < s.t.length ) s.t[i] = v else s.t.push(v);
+		}
+		s.charges = [for( c in readCharges(o.charges) ) if( c.n > 0 ) c];
+		return s;
+	}
 
-	public static function list() : Array<SaveInfo> {
+	static function readDrops( o : Dynamic ) : Array<DeathDrops.DeathDropInfo> {
+		if( o == null ) return null;
 		var out = [];
-		for( f in sys.FileSystem.readDirectory(dir()) ) {
+		for( d in arr(o) ) {
+			if( d.key == null || d.t == null ) throw "equipo dejado sin key o t";
+			out.push({ id : d.id != null ? int(d.id) : out.length + 1, key : Std.string(d.key), x : num(d.x), y : num(d.y), z : num(d.z),
+				t : readSlots(d.t), charges : readCharges(d.charges) });
+		}
+		return out;
+	}
+
+	/**
+	 * Una partida de un objeto JSON: el game.json de un archivo o un .json de antes. Los numeros de bloque y de carga quedan como
+	 * estan (posiciones en las tablas o indices de antes): los cambia quien llama. Un campo que falta toma su valor de siempre
+	 * (partidas de antes); uno que esta y no se entiende es un error con su nombre
+	 */
+	public static function fromObject( o : Dynamic, id : String ) : SaveInfo {
+		if( o == null || o.version == null || o.seed == null || o.biome == null ) throw new SaveError("faltan version, seed o biome");
+		var uni = field("uni", function() return readUni(o.uni));
+		var tuto = field("tuto", function() return readTuto(o.tuto));
+		if( uni != null ) Licenses.migrate(uni, tuto != null);
+		return field("partida", function() : SaveInfo return {
+			version : int(o.version), id : id, name : o.name != null ? Std.string(o.name) : id, seed : int(o.seed), biome : Std.string(o.biome),
+			sizeChunks : o.sizeChunks != null ? int(o.sizeChunks) : 1,
+			created : o.created != null ? num(o.created) : 0, saved : o.saved != null ? num(o.saved) : 0,
+			createdWith : o.createdWith != null ? Std.string(o.createdWith) : null, savedWith : o.savedWith != null ? Std.string(o.savedWith) : null,
+			playSeconds : o.playSeconds != null ? num(o.playSeconds) : 0,
+			px : o.px != null ? num(o.px) : -1, py : o.py != null ? num(o.py) : -1, pz : o.pz != null ? num(o.pz) : -1,
+			yaw : o.yaw != null ? num(o.yaw) : 0, pitch : o.pitch != null ? num(o.pitch) : 0, fly : o.fly == true, life : o.life != null ? num(o.life) : 100,
+			creative : o.creative == true, tutorial : o.tutorial == null ? null : o.tutorial == true,
+			inv : field("inv", function() return readInv(o.inv)), uni : uni,
+			credits : o.credits != null ? int(o.credits) : Market.START_CREDITS,
+			market : field("market", function() return readMarket(o.market)),
+			contracts : field("contracts", function() return readContracts(o.contracts)),
+			special : field("special", function() return readSpecial(o.special)),
+			chests : field("chests", function() return readChests(o.chests)),
+			shipData : o.shipData != null ? Std.string(o.shipData) : null,
+			upgrades : field("upgrades", function() return strs(o.upgrades)),
+			shipEdits : field("shipEdits", function() return o.shipEdits != null ? ints(o.shipEdits) : []),
+			edits : field("edits", function() return o.edits != null ? ints(o.edits) : []),
+			genVersion : genVersion(o.genVersion),
+			deathDrops : field("deathDrops", function() return readDrops(o.deathDrops)), dropOnDeath : o.dropOnDeath != false,
+			survival : o.creative == true && o.survival == true ? true : null,
+			tuto : tuto, shipAt : field("shipAt", function() return readSpot(o.shipAt)), comet : field("comet", function() return readComet(o.comet)),
+			kub : field("kub", function() return readKub(o.kub)),
+			inMother : field("inMother", function() return readMotherPos(o.inMother)),
+			storage : field("storage", function() return readStorage(o.storage)),
+		});
+	}
+
+	// ---------------------------------------------------------------- lista
+
+	/** una fila de la lista desde meta.json (SaveArchive.meta) */
+	static function fromMeta( m : Dynamic, id : String ) : SaveInfo {
+		return {
+			version : VERSION, id : id, name : Std.string(m.name), seed : int(m.seed), biome : Std.string(m.biome), sizeChunks : int(m.sizeChunks),
+			created : num(m.created), saved : num(m.saved), createdWith : m.createdWith, savedWith : m.savedWith,
+			playSeconds : num(m.playSeconds), px : -1, py : -1, pz : -1, yaw : 0, pitch : 0, fly : false,
+			creative : m.creative == true, survival : m.survival == true ? true : null, dropOnDeath : m.dropOnDeath != false,
+			inSpace : m.space == true, oldGeneration : m.oldGeneration == true, listOnly : true,
+		};
+	}
+
+	/** una fila de una partida que no se puede leer: con su fecha de archivo para ordenarla */
+	static function unreadable( id : String, path : String, why : String ) : SaveInfo {
+		var t = try sys.FileSystem.stat(path).mtime.getTime() catch( e : Dynamic ) 0.;
+		return {
+			version : VERSION, id : id, name : id, seed : 0, biome : "BIAutumn", sizeChunks : 1, created : t, saved : t, playSeconds : 0,
+			px : -1, py : -1, pz : -1, yaw : 0, pitch : 0, fly : false, listOnly : true, unreadable : why,
+		};
+	}
+
+	/**
+	 * Las partidas de la carpeta, de la mas reciente a la mas antigua: de cada .g55 solo meta.json (SaveArchive.readParts); los
+	 * .json de antes, enteros (todavia no migrados). Si hay un .g55 y un .json con el mismo id, el .g55. Una que no se puede leer
+	 * sale igual, como ilegible (unreadable). Para jugarla, read(id)
+	 */
+	public static function list() : Array<SaveInfo> {
+		var out = [], ids = new Map<String, Bool>();
+		var files = try sys.FileSystem.readDirectory(dir()) catch( e : Dynamic ) [];
+		// tambien las que solo tienen .g55.tmp o .g55.bak: un guardado cortado entre los dos renombres (SaveArchive.writeFile)
+		var archives = [];
+		for( f in files )
+			for( ext in [".g55", ".g55.tmp", ".g55.bak"] )
+				if( StringTools.endsWith(f, ext) ) {
+					var id = f.substr(0, f.length - ext.length);
+					if( !ids.exists(id) ) archives.push(id);
+					ids.set(id, true);
+				}
+		for( id in archives ) {
+			var path = archivePath(id);
+			try {
+				// con un .tmp (guardado sin terminar) o sin .g55, la que se leera al jugarla (SaveArchive.recover): el archivo entero
+				var meta = null;
+				if( sys.FileSystem.exists(path) && !sys.FileSystem.exists(path + ".tmp") )
+					meta = try SaveArchive.readParts(path, ["meta.json"]).get("meta.json") catch( e : SaveError ) null;
+				if( meta == null ) {
+					var b = SaveArchive.recover(path, false);
+					if( b == null ) throw new SaveError("ni la partida ni sus copias (.tmp, .bak) se pueden leer");
+					meta = SaveArchive.data(b, SaveArchive.find(SaveArchive.items(b), "meta.json"));
+				}
+				var m : Dynamic = haxe.Json.parse(meta.toString());
+				out.push(fromMeta(m, id));
+			} catch( e : Dynamic ) {
+				out.push(unreadable(id, path, Std.string(e)));
+			}
+		}
+		for( f in files ) {
 			if( !StringTools.endsWith(f, ".json") ) continue;
-			var info = read(f.substr(0, f.length - 5));
-			if( info != null ) out.push(info);
+			var id = f.substr(0, f.length - 5);
+			if( ids.exists(id) ) continue;
+			try {
+				var info = readLegacy(jsonPath(id), id, SaveNames.lineage());
+				info.listOnly = true;
+				info.legacy = true;
+				info.inSpace = info.uni != null && info.uni.space == true;
+				out.push(info);
+			} catch( e : Dynamic ) {
+				out.push(unreadable(id, jsonPath(id), Std.string(e)));
+			}
 		}
 		out.sort(function(a, b) return a.saved < b.saved ? 1 : (a.saved > b.saved ? -1 : 0));
 		return out;
 	}
 
+	// ---------------------------------------------------------------- lectura y escritura
+
+	/**
+	 * La partida entera (para jugarla): del .g55, o del .tmp / .bak si el ultimo guardado no acabo (SaveArchive.recover); una de
+	 * antes (.json) se migra ahora. null si no se puede leer (lastError dice por que)
+	 */
 	public static function read( id : String ) : SaveInfo {
+		lastError = null;
 		try {
-			var o : Dynamic = haxe.Json.parse(sys.io.File.getContent(jsonPath(id)));
-			if( o.version == null || o.seed == null || o.biome == null ) return null;
-			var uni = readUni(o.uni);
-			if( uni != null ) Licenses.migrate(uni, readTuto(o.tuto) != null);
-			return {
-				version : o.version, id : id, name : o.name != null ? o.name : id, seed : o.seed, biome : o.biome,
-				sizeChunks : o.sizeChunks != null ? o.sizeChunks : 1,
-				created : o.created != null ? o.created : 0, saved : o.saved != null ? o.saved : 0,
-				createdWith : o.createdWith != null ? Std.string(o.createdWith) : null, savedWith : o.savedWith != null ? Std.string(o.savedWith) : null,
-				playSeconds : o.playSeconds != null ? o.playSeconds : 0,
-				px : o.px != null ? o.px : -1, py : o.py != null ? o.py : -1, pz : o.pz != null ? o.pz : -1,
-				yaw : o.yaw != null ? o.yaw : 0, pitch : o.pitch != null ? o.pitch : 0, fly : o.fly == true, life : o.life != null ? o.life : 100,
-					creative : o.creative == true, tutorial : o.tutorial == null ? null : o.tutorial == true, inv : readInv(o.inv), uni : uni, credits : o.credits != null ? Std.int(o.credits) : Market.START_CREDITS, market : readMarket(o.market), contracts : readContracts(o.contracts), special : readSpecial(o.special), chests : readChests(o.chests), shipData : o.shipData,
-					upgrades : readUpgrades(o.upgrades),
-					shipEdits : o.shipEdits != null ? [for( v in (o.shipEdits : Array<Dynamic>) ) Std.int(v)] : [], edits : o.edits != null ? [for( v in (o.edits : Array<Dynamic>) ) Std.int(v)] : [],
-					genVersion : genVersion(o.genVersion),
-					deathDrops : DeathDrops.read(o.deathDrops), dropOnDeath : o.dropOnDeath != false,
-					survival : o.creative == true && o.survival == true ? true : null,
-					tuto : readTuto(o.tuto), shipAt : readSpot(o.shipAt), comet : readComet(o.comet), kub : readKub(o.kub),
-					inMother : readMotherPos(o.inMother), editorKubes : EditorKubes.readSave(o.editorKubes),
-					storage : ShipStorage.read(o.storage),
-			};
+			var path = archivePath(id);
+			var exists = sys.FileSystem.exists(path) || sys.FileSystem.exists(path + ".tmp") || sys.FileSystem.exists(path + ".bak");
+			if( !exists ) return sys.FileSystem.exists(jsonPath(id)) ? migrate(id, SaveNames.lineage()) : null;
+			var b = sys.FileSystem.exists(path + ".tmp") ? null : (try sys.io.File.getBytes(path) catch( e : Dynamic ) null);
+			var info = b == null ? null : try SaveArchive.decode(b, id) catch( e : SaveError ) null;
+			if( info == null ) {
+				var r = SaveArchive.recover(path, true);
+				if( r == null ) throw new SaveError("ni la partida ni sus copias (.tmp, .bak) se pueden leer");
+				info = SaveArchive.decode(r, id);
+			}
+			return info;
 		} catch( e : Dynamic ) {
+			lastError = Std.string(e);
 			return null;
 		}
 	}
 
-	/** Escribe la partida; se guarda primero a un archivo temporal para no corromperla si falla a medias.
-	    touch = false deja la fecha y la version de guardado como estaban (renombrar no cambia el orden de la lista). */
+	/**
+	 * La partida entera sin migrarla (pruebas: print saves, print unknown): una de antes (.json) se lee con la tabla de este juego y
+	 * se queda como esta. null si no se puede leer (lastError)
+	 */
+	public static function peek( id : String ) : SaveInfo {
+		var a = archivePath(id);
+		if( sys.FileSystem.exists(a) || sys.FileSystem.exists(a + ".tmp") || sys.FileSystem.exists(a + ".bak") || !sys.FileSystem.exists(jsonPath(id)) )
+			return read(id);
+		lastError = null;
+		try {
+			return readLegacy(jsonPath(id), id, SaveNames.lineage());
+		} catch( e : Dynamic ) {
+			lastError = Std.string(e);
+			return null;
+		}
+	}
+
+	/**
+	 * Escribe la partida (SaveArchive.writeFile: sin perder la anterior si falla). thumbPng null deja la miniatura que tenia.
+	 * touch = false deja la fecha y la version de guardado como estaban (renombrar no cambia el orden de la lista). false si no se
+	 * pudo (lastError dice por que)
+	 */
 	public static function write( info : SaveInfo, thumbPng : haxe.io.Bytes, touch = true ) : Bool {
+		lastError = null;
 		try {
 			if( touch ) {
 				info.saved = Date.now().getTime();
 				info.savedWith = GalaxyApp.VERSION;
 			}
-			var path = jsonPath(info.id);
-			// los kubes del editor van aparte (EditorKubes.encode: una copia; la partida en juego no cambia)
-			sys.io.File.saveContent(path + ".tmp", haxe.Json.stringify(EditorKubes.encode(info), null, "  "));
-			if( sys.FileSystem.exists(path) ) sys.FileSystem.deleteFile(path);
-			sys.FileSystem.rename(path + ".tmp", path);
-			if( thumbPng != null ) sys.io.File.saveBytes(thumbPath(info.id), thumbPng);
+			var path = archivePath(info.id);
+			var keep = sys.FileSystem.exists(path) ? (try sys.io.File.getBytes(path) catch( e : Dynamic ) null) : null;
+			if( thumbPng == null && keep == null && sys.FileSystem.exists(thumbPath(info.id)) ) thumbPng = sys.io.File.getBytes(thumbPath(info.id));
+			SaveArchive.writeFile(path, SaveArchive.encode(info, thumbPng, keep));
 			return true;
 		} catch( e : Dynamic ) {
+			lastError = Std.string(e);
 			return false;
 		}
 	}
 
-	/** Continuar > Modificar: cambia el nombre y las opciones de la partida; la fecha de guardado y la miniatura no se tocan */
+	/**
+	 * Continuar > Modificar: cambia el nombre y las opciones de la partida; la fecha de guardado, la miniatura y los planetas no se
+	 * tocan (SaveArchive.rewrite: se copian tal cual)
+	 */
 	public static function edit( id : String, name : String, dropOnDeath : Bool ) : Bool {
-		var info = read(id);
-		if( info == null ) return false;
-		info.name = name;
-		info.dropOnDeath = dropOnDeath;
-		return write(info, null, false);
+		lastError = null;
+		try {
+			var path = archivePath(id);
+			if( !sys.FileSystem.exists(path) && read(id) == null ) throw new SaveError(lastError);
+			var b = SaveArchive.recover(path, true);
+			if( b == null ) throw new SaveError("la partida no se puede leer");
+			SaveArchive.writeFile(path, SaveArchive.rewrite(b, name, dropOnDeath));
+			return true;
+		} catch( e : Dynamic ) {
+			lastError = Std.string(e);
+			return false;
+		}
 	}
 
 	public static function delete( id : String ) {
-		try {
-			if( sys.FileSystem.exists(jsonPath(id)) ) sys.FileSystem.deleteFile(jsonPath(id));
-			if( sys.FileSystem.exists(thumbPath(id)) ) sys.FileSystem.deleteFile(thumbPath(id));
-		} catch( e : Dynamic ) {}
+		for( p in [archivePath(id), archivePath(id) + ".tmp", archivePath(id) + ".bak", jsonPath(id), thumbPath(id)] )
+			try if( sys.FileSystem.exists(p) ) sys.FileSystem.deleteFile(p) catch( e : Dynamic ) {}
 	}
 
+	/** la miniatura (sin leer la partida) */
 	public static function thumb( id : String ) : haxe.io.Bytes {
+		var path = archivePath(id);
+		if( sys.FileSystem.exists(path) )
+			return try SaveArchive.readParts(path, ["thumb.png"]).get("thumb.png") catch( e : Dynamic ) null;
 		var p = thumbPath(id);
 		return sys.FileSystem.exists(p) ? sys.io.File.getBytes(p) : null;
+	}
+
+	// ---------------------------------------------------------------- partidas de antes (.json)
+
+	/**
+	 * Una partida .json de antes, con sus numeros de bloque pasados a nombres con la tabla de su linea (SaveNames.legacyTable) y sus
+	 * kubes del editor (editorKubes) a "editor:<archivo>#<variante>" donde los campos de siempre tienen aire o una casilla vacia
+	 */
+	public static function readLegacy( path : String, id : String, lineage : String ) : SaveInfo {
+		var o : Dynamic = try haxe.Json.parse(sys.io.File.getContent(path)) catch( e : Dynamic ) throw new SaveError("no es JSON: " + e);
+		var info = fromObject(o, id);
+		var table = SaveNames.legacyTable(lineage);
+		var cache = new Map<Int, Int>();
+		SaveNames.mapBlocks(info, function(k, _) {
+			if( k == 0 ) return 0;
+			var b = cache.get(k);
+			if( b == null ) cache.set(k, b = SaveNames.resolve(k > 0 && k < table.length ? table[k] : "#" + k).index);
+			return b;
+		});
+		function charges( c : Protocol.UserCharges ) : Protocol.UserCharges {
+			if( c == null ) return null;
+			var out = [];
+			for( x in c ) {
+				var k = x.c >= 0 && x.c < SaveNames.LEGACY_CHARGES.length ? SaveNames.resolveCharge(SaveNames.LEGACY_CHARGES[x.c]) : -1;
+				if( k < 0 ) info.unknownCharges = (info.unknownCharges == null ? 0 : info.unknownCharges) + x.n else out.push({ c : k, n : x.n });
+			}
+			return out;
+		}
+		if( info.inv != null ) info.inv.charges = charges(info.inv.charges);
+		if( info.storage != null ) info.storage.charges = charges(info.storage.charges);
+		if( info.deathDrops != null ) for( d in info.deathDrops ) d.charges = charges(d.charges);
+		var raw = field("editorKubes", function() return readEditorKubes(o.editorKubes));
+		if( raw != null ) mergeEditorKubes(info, raw);
+		return info;
+	}
+
+	/**
+	 * Migra una partida .json de antes a .g55 con la tabla de una linea ("upstream" o "fork"): el .json y su .png pasan a
+	 * saves/backups (de alli se vuelve a migrar con la otra linea: orden de pruebas migrate)
+	 */
+	public static function migrate( id : String, lineage : String ) : SaveInfo {
+		var src = jsonPath(id), png = thumbPath(id);
+		var fromBackup = !sys.FileSystem.exists(src);
+		if( fromBackup ) {
+			src = backupDir() + "/" + id + ".json";
+			png = backupDir() + "/" + id + ".png";
+		}
+		var info = readLegacy(src, id, lineage);
+		var thumb = sys.FileSystem.exists(png) ? sys.io.File.getBytes(png) : null;
+		SaveArchive.writeFile(archivePath(id), SaveArchive.encode(info, thumb));
+		if( !fromBackup ) {
+			var dst = backupDir() + "/" + id + ".json";
+			if( sys.FileSystem.exists(dst) ) sys.FileSystem.deleteFile(dst);
+			sys.FileSystem.rename(src, dst);
+			if( sys.FileSystem.exists(png) ) {
+				var dpng = backupDir() + "/" + id + ".png";
+				if( sys.FileSystem.exists(dpng) ) sys.FileSystem.deleteFile(dpng);
+				sys.FileSystem.rename(png, dpng);
+			}
+		}
+		return SaveArchive.decode(sys.io.File.getBytes(archivePath(id)), id);
+	}
+
+	static function readEditorKubes( o : Dynamic ) : LegacyEditorKubes {
+		if( o == null ) return null;
+		var r : LegacyEditorKubes = { ids : [for( v in arr(o.ids) ) Std.string(v).toLowerCase()] };
+		r.edits = ints(o.edits);
+		r.shipEdits = ints(o.shipEdits);
+		r.inv = ints(o.inv);
+		if( o.drops != null ) r.drops = [for( d in arr(o.drops) ) { id : int(d.id), t : ints(d.t) }];
+		if( o.planets != null ) r.planets = [for( p in arr(o.planets) ) { id : int(p.id), edits : ints(p.edits) }];
+		if( o.chests != null ) r.chests = [for( c in arr(o.chests) ) { key : Std.string(c.key), t : ints(c.t) }];
+		r.storage = ints(o.storage);
+		return r;
+	}
+
+	/** los kubes del editor de un .json de antes pasan a los campos de siempre, donde estos tienen aire o una casilla vacia */
+	static function mergeEditorKubes( info : SaveInfo, raw : LegacyEditorKubes ) {
+		function decode( n : Int ) : Block {
+			var i = n >> 2, v = n & 3;
+			return i < 0 || i >= raw.ids.length ? null : SaveNames.resolve(SaveNames.EDITOR + raw.ids[i] + "#" + v);
+		}
+		function edits( e : Array<Int>, add : Array<Int> ) : Array<Int> {
+			if( add == null ) return e;
+			if( e == null ) e = [];
+			var at = new Map<Int, Int>();
+			var i = 0;
+			while( i + 1 < e.length ) {
+				if( e[i] >= 0 ) at.set(e[i], i + 1);
+				i += 2;
+			}
+			i = 0;
+			while( i + 1 < add.length ) {
+				var cell = add[i], b = decode(add[i + 1]);
+				i += 2;
+				if( cell < 0 || b == null ) continue;
+				var p = at.get(cell);
+				if( p == null ) {
+					e.push(cell);
+					e.push(b.index);
+				} else if( (e[p] & 0xFFFF) == 0 )
+					e[p] = b.index;
+			}
+			return e;
+		}
+		function slotsOf( t : Protocol.BlockInventory, add : Array<Int> ) {
+			if( t == null || add == null ) return;
+			var i = 0;
+			while( i + 2 < add.length ) {
+				var c = add[i], b = decode(add[i + 1]), n = add[i + 2];
+				i += 3;
+				if( b != null && c >= 0 && c < t.length && t[c] == null && n > 0 ) t[c] = { k : b.index, n : n };
+			}
+		}
+		info.edits = edits(info.edits, raw.edits);
+		info.shipEdits = edits(info.shipEdits, raw.shipEdits);
+		if( raw.planets != null && info.uni != null && info.uni.planets != null )
+			for( rp in raw.planets ) for( p in info.uni.planets ) if( p.id == rp.id ) p.edits = edits(p.edits, rp.edits);
+		if( raw.drops != null && info.deathDrops != null )
+			for( rd in raw.drops ) for( d in info.deathDrops ) if( d.id == rd.id ) slotsOf(d.t, rd.t);
+		if( info.inv != null ) slotsOf(info.inv.t, raw.inv);
+		if( raw.chests != null && info.chests != null )
+			for( rc in raw.chests ) for( c in info.chests ) if( c.key == rc.key ) slotsOf(c.t, rc.t);
+		if( info.storage != null ) slotsOf(info.storage.t, raw.storage);
 	}
 }

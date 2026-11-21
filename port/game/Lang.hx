@@ -177,6 +177,7 @@ class Lang {
 		"options.interface" => ["Interfaz", "Interface", "Interface"],
 		"pause.title" => ["PAUSA", "PAUSED", "PAUSE"],
 		"save.space" => ["En el espacio", "In space", "Dans l'espace"],
+		"save.unreadable" => ["Partida ilegible", "Unreadable save", "Partie illisible"],
 		"save.version" => ["Versión %v%", "Version %v%", "Version %v%"],
 		"save.versions" => ["Versiones %c% a %v%", "Versions %c% to %v%", "Versions %c% à %v%"],
 		"nosaves" => ["No hay partidas guardadas", "No saved games", "Aucune partie sauvegardée"],
@@ -188,13 +189,11 @@ class Lang {
 		// partida con bloques que esta version no conoce (UnknownBlocks, GalaxyApp.playSave): %n% = cuantos, %where% = donde
 		// (unknown.world, unknown.ship y unknown.items separados por comas), %path% = la copia
 		"unknown.ask" => ["Esta partida tiene %n% bloques que esta versión no conoce", "This save has %n% blocks this version doesn't know", "Cette partie contient %n% blocs que cette version ne connaît pas"],
-		"unknown.warn" => ["Seguramente la guardó una versión más reciente del juego. Esos bloques se borrarán; antes se hará una copia de la partida. ¿Cargarla de todos modos?", "It was probably saved by a newer version of the game. Those blocks will be deleted; a copy of the save is made first. Load it anyway?", "Elle a sans doute été enregistrée par une version plus récente du jeu. Ces blocs seront effacés ; une copie de la partie sera faite avant. La charger quand même ?"],
+		"unknown.warn" => ["Seguramente la guardó una versión más reciente del juego. Esos bloques se verán como kubes misteriosos y se guardarán tal cual, sin perderse. ¿Cargarla?", "It was probably saved by a newer version of the game. Those blocks will look like mystery kubes and are saved as they are, nothing is lost. Load it?", "Elle a sans doute été enregistrée par une version plus récente du jeu. Ces blocs apparaîtront comme des kubes mystère et seront gardés tels quels, rien n'est perdu. La charger ?"],
 		"unknown.world" => ["%n% en el terreno", "%n% in the terrain", "%n% dans le terrain"],
 		"unknown.ship" => ["%n% en la nave", "%n% in the ship", "%n% dans le vaisseau"],
 		"unknown.items" => ["%n% en el inventario y las cantinas", "%n% in the inventory and canteens", "%n% dans l'inventaire et les conteneurs"],
-		"unknown.done" => ["Bloques desconocidos borrados (%where%). Copia de la partida: %path%", "Unknown blocks deleted (%where%). Copy of the save: %path%", "Blocs inconnus effacés (%where%). Copie de la partie : %path%"],
-		"unknown.nocopy" => ["No se pudo copiar la partida: no se ha cambiado nada.", "The save could not be copied: nothing was changed.", "Impossible de copier la partie : rien n'a été modifié."],
-		"accept" => ["Aceptar", "OK", "Valider"],
+"accept" => ["Aceptar", "OK", "Valider"],
 		"cancel" => ["Cancelar", "Cancel", "Annuler"],
 		"yes" => ["Sí", "Yes", "Oui"],
 		"no" => ["No", "No", "Non"],
@@ -286,6 +285,7 @@ class Lang {
 		"resume" => ["Reanudar", "Resume", "Reprendre"],
 		"save" => ["Guardar partida", "Save game", "Sauvegarder"],
 		"saved.ok" => ["Partida guardada", "Game saved", "Partie sauvegardée"],
+		"saved.error" => ["No se pudo guardar la partida", "The game could not be saved", "La partie n'a pas pu être sauvegardée"],
 		// captura con F2 (anadido del port: el original abria el dialogo de Flash para guardarla y no decia nada mas)
 		"shot.saved" => ["Captura guardada en %dir%", "Screenshot saved to %dir%", "Capture d'écran enregistrée dans %dir%"],
 		"mainmenu" => ["Menú principal", "Main menu", "Menu principal"],

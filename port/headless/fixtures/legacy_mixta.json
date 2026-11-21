@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "name": "Partida de antes",
+  "seed": 777,
+  "biome": "BIAutumn",
+  "sizeChunks": 1,
+  "created": 1767225600000,
+  "saved": 1767225600000,
+  "savedWith": "0.8.1",
+  "playSeconds": 120,
+  "px": 64.5, "py": 64.5, "pz": 70, "yaw": 0.5, "pitch": 0, "fly": false,
+  "inv": {
+    "maxWeight": 64,
+    "t": [{ "k": 300, "n": 3 }, { "k": 301, "n": 2 }, { "k": 302, "n": 1 }, { "k": 5, "n": 10 }, null, null, null, null, null, null],
+    "charges": [{ "c": 0, "n": 5 }, { "c": 3, "n": 2 }]
+  },
+  "edits": [1000, 300, 2000, 301, 3000, 302, 4000, 196610, -1, 40, -2, 3],
+  "shipEdits": [500, 301],
+  "uni": {
+    "seed": 777, "planetId": 0, "pos": [2, 0], "start": { "seed": 777, "biome": "BIAutumn", "size": 1 },
+    "planets": [{ "id": 3, "edits": [10, 302], "genVersion": 0 }],
+    "licenses": [0], "main": 0, "mainChanges": 0, "abandoned": [], "gone": []
+  },
+  "chests": [{ "key": "p0:1,2,3", "t": [{ "k": 300, "n": 1 }, null, null, null] }],
+  "market": { "time": 0, "items": [{ "key": "b300", "bought": 2, "sold": 0 }, { "key": "c1", "bought": 1, "sold": 0 }] },
+  "tuto": { "step": 2, "spots": [5, 6, 7, 301] },
+  "editorKubes": { "ids": ["prueba"], "edits": [5000, 1], "inv": [4, 2, 7] }
+}

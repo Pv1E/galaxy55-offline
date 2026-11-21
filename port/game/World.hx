@@ -215,6 +215,12 @@ class World {
 	var useMask = false;
 	/** cambios del jugador sobre el terreno: celda -> indice global de bloque (0 = aire); se guardan con la partida */
 	public var editMap = new Map<Int, Int>();
+	/**
+	 * Anadido del port: lo que habia en cada celda de editMap antes de su primer cambio (lo generado; indice global). Una celda que
+	 * vuelve a eso sale de editMap (prune): la partida no guarda lo que el generador ya pone. El agua del mar no: initSea y la
+	 * bajada del mar quitan capas generadas, y una celda de mar vuelta a poner tiene que seguir guardada
+	 */
+	var generated = new Map<Int, Int>();
 	var savedEdits : Array<Int>;
 	/**
 	 * Nivel del agua que fluye (anadido del port, como Minecraft): celda -> 1..7 (cada vez mas baja) u 8 (cayendo).
@@ -1109,13 +1115,32 @@ class World {
 			if( key < 0 ) continue;
 			var lvl = gi >> 16;
 			var b = (gi & 0xFFFF) == 0 ? null : Block.all[gi & 0xFFFF];
+			noteGenerated(key);
 			setCell(key, localId(b));
 			editMap.set(key, gi);
+			prune(key);
 			if( lvl > 0 ) waterLvl.set(key, lvl);
 			load.editCells++;
 		}
 		savedEdits = null;
 		load.edits += haxe.Timer.stamp() - t1;
+	}
+
+	/** indice global (Block.all) del bloque de la celda p */
+	inline function globalAt( p : Int ) : Int {
+		var b = gen.blocks[cell(p)];
+		return b == null ? 0 : b.index;
+	}
+
+	/** antes de cambiar la celda p: si es la primera vez, lo que tenia (generated) */
+	inline function noteGenerated( p : Int ) {
+		if( !generated.exists(p) ) generated.set(p, globalAt(p));
+	}
+
+	/** la celda p ha vuelto a lo que puso el generador (sin nivel de agua): ya no es un cambio. Nunca el agua del mar (generated) */
+	function prune( p : Int ) {
+		var g = generated.get(p);
+		if( g != null && editMap.get(p) == g && (seaBlock == null || g != seaBlock.index) ) editMap.remove(p);
 	}
 
 	/** cambios para guardar: pares [celda, bloque, celda, bloque, ...] */
@@ -1407,7 +1432,9 @@ class World {
 				}
 		}
 		if( level > 0 ) waterLvl.set(key, level) else waterLvl.remove(key);
+		noteGenerated(key);
 		editMap.set(key, b.index | (level << 16));
+		prune(key);
 	}
 
 	/**
@@ -1496,8 +1523,10 @@ class World {
 		y = wrapC(y);
 		if( z < 1 || z >= HEIGHT - 1 ) return;
 		var key = ((x + y * size) << ZBITS) | z;
+		noteGenerated(key);
 		setCell(key, localId(b));
 		editMap.set(key, b == null ? 0 : b.index);
+		prune(key);
 		waterLvl.remove(key);
 		var n = size >> 4;
 		for( dy in -1...2 )

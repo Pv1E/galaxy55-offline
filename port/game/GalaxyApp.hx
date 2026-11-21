@@ -46,9 +46,16 @@ class SaveRow extends Widget {
 			var ph = new h2d.Graphics(this);
 			Theme.rect(ph, 8, 7, 160, 90, 0xFFFFFF, 0.07);
 		}
+		if( info.unreadable != null ) {
+			// anadido del port: una partida que no se puede leer (SaveData.list) sale igual, para poder borrarla
+			Theme.text(this, Lang.t("save.unreadable"), 2.4, Theme.DANGER, 190, 10);
+			Theme.text(this, info.id + ": " + (info.unreadable.length > 70 ? info.unreadable.substr(0, 67) + "..." : info.unreadable), 1.5, Theme.DIM, 190, 48);
+			acts = new h2d.Object(this);
+			return;
+		}
 		Theme.text(this, info.name, 2.4, Theme.TEXT, 190, 10);
 		var size = Comets.isComet(info.biome) ? Comets.SIZE : 128 * info.sizeChunks;
-		var where = info.uni != null && info.uni.space == true ? Lang.t("save.space") : Lang.t("biome." + info.biome) + "  ·  " + size + "x" + size;
+		var where = info.inSpace == true || (info.uni != null && info.uni.space == true) ? Lang.t("save.space") : Lang.t("biome." + info.biome) + "  ·  " + size + "x" + size;
 		Theme.text(this, where + "  ·  " + Lang.t("seed") + " " + info.seed + (info.creative == true ? "  ·  " + Lang.t(info.survival == true ? "mode.creative.survival" : "mode.creative") : ""), 1.7, Theme.CYAN, 190, 48);
 		Theme.text(this, Lang.t("played") + " " + Lang.duration(info.playSeconds) + "   " + Lang.t("saved") + " " + Lang.date(info.saved), 1.5, Theme.DIM, 190, 74);
 		var ver = versions(info);
@@ -357,7 +364,7 @@ class GalaxyApp extends hxd.App {
 		applyVsync();
 		win.onClose = function() {
 			// en el mapa se guarda la partida en el espacio; durante el despegue el planeta aun esta cargado
-			if( state == Playing || state == Paused || state == Exploring || (state == Loading && pendingExplorer > 0) ) saveGame(false);
+			if( state == Playing || state == Paused || state == Exploring || (state == Loading && pendingExplorer > 0) ) saveGame(false, true);
 			return true;
 		};
 		if( Settings.fullscreen && shotPath == null ) win.displayMode = Borderless;
@@ -781,29 +788,28 @@ class GalaxyApp extends hxd.App {
 	}
 
 	/**
-	 * Jugar una partida de la lista (anadido del port). Si tiene bloques que esta version no conoce (UnknownBlocks: la guardo una
-	 * version mas reciente; cargarla tal cual fallaba), antes se pregunta. No: la partida se queda como estaba. Si: se copia
-	 * (saves/backups), se borran esos bloques, se guarda asi y se carga, con un aviso de lo borrado y de donde esta la copia.
+	 * Jugar una partida de la lista (anadido del port): se lee entera (la lista solo tiene meta.json). Si tiene bloques que esta
+	 * version no conoce (UnknownBlocks: la guardo una version mas reciente), antes se avisa: se veran como bloques de remplazo y se
+	 * guardan tal cual. Una de antes (.json) solo se migra si se juega (con No se queda como estaba). Una que no se puede leer no
+	 * se abre.
 	 */
-	function playSave( parent : Screen, info : SaveInfo ) {
-		var r = UnknownBlocks.count(info);
-		if( UnknownBlocks.total(r) == 0 ) {
-			startGame(info);
+	function playSave( parent : Screen, listed : SaveInfo ) {
+		var info = listed.unreadable != null ? null : SaveData.peek(listed.id);
+		function unreadable( why : String ) showToast(Lang.t("save.unreadable") + ": " + why, 6);
+		if( info == null ) {
+			unreadable(listed.unreadable != null ? listed.unreadable : SaveData.lastError);
 			return;
 		}
-		askConfirm(parent, Lang.t("unknown.ask").split("%n%").join("" + UnknownBlocks.total(r)), Lang.t("unknown.warn"), Theme.DANGER, function() {
-			var copy = UnknownBlocks.backup(info.id);
-			if( copy == null ) {
-				showToast(Lang.t("unknown.nocopy"), 5);
-				return;
-			}
-			var done = UnknownBlocks.clear(info);
-			SaveData.write(info, null, false);
-			var sep = Sys.systemName() == "Windows" ? "\\" : "/";
-			var shown = [haxe.io.Path.withoutDirectory(Settings.dir()), "saves", UnknownBlocks.BACKUPS, haxe.io.Path.withoutDirectory(copy)].join(sep);
-			loadToast = Lang.t("unknown.done").split("%where%").join(UnknownBlocks.where(done)).split("%path%").join(shown);
-			startGame(info);
-		});
+		function play() {
+			var full = listed.legacy == true ? SaveData.read(listed.id) : info;
+			if( full == null ) unreadable(SaveData.lastError) else startGame(full);
+		}
+		var r = UnknownBlocks.count(info);
+		if( UnknownBlocks.total(r) == 0 ) {
+			play();
+			return;
+		}
+		askConfirm(parent, Lang.t("unknown.ask").split("%n%").join("" + UnknownBlocks.total(r)), Lang.t("unknown.warn"), Theme.DANGER, play);
 	}
 	/** aviso que se muestra al terminar de cargar la partida (playSave) */
 	var loadToast : String;
@@ -1840,7 +1846,8 @@ class GalaxyApp extends hxd.App {
 		uni.ship = null;
 		// los cambios del planeta del que despegaste se guardan con su id (si aun tiene licencia: abandonado, se pierden)
 		uni.planets = uni.planets.filter(function(q) return q.id != uni.planetId);
-		if( Licenses.has(uni, uni.planetId) ) uni.planets.push({ id : uni.planetId, edits : old.edits, shipAt : old.shipAt, genVersion : old.genVersion });
+		if( Licenses.has(uni, uni.planetId) ) uni.planets.push({ id : uni.planetId, edits : old.edits, shipAt : old.shipAt, genVersion : old.genVersion,
+			seed : old.seed, biome : old.biome, size : old.sizeChunks });
 		var target : SaveData.UniPlanet = null;
 		for( q in uni.planets ) if( q.id == p.id ) target = q;
 		uni.planets = uni.planets.filter(function(q) return q.id != p.id);
@@ -1856,9 +1863,10 @@ class GalaxyApp extends hxd.App {
 		ui.removeChildren();
 		screens = new Map();
 		// misma partida: el inventario, la nave y el universo son de toda la partida; el terreno es el del planeta elegido
-		old.seed = p.seed;
-		old.biome = p.biome;
-		old.sizeChunks = p.size;
+		// un planeta ya visitado se genera como entonces (su cabecera en la partida), aunque el mapa dijera otra cosa (anadido del port)
+		old.seed = target != null && target.seed != null ? target.seed : p.seed;
+		old.biome = target != null && target.biome != null ? target.biome : p.biome;
+		old.sizeChunks = target != null && target.size != null ? target.size : p.size;
 		old.edits = target != null ? target.edits : [];
 		old.shipAt = target != null ? target.shipAt : null; // donde se dejo la nave en ese planeta (anadido del port)
 		// el generador con el que se visito por primera vez; un planeta sin cambios guardados sale con el de ahora (anadido del port)
@@ -2060,11 +2068,11 @@ class GalaxyApp extends hxd.App {
 			skip.onActivate = function() askSkip(s);
 		}
 		res.onActivate = function() resume();
-		sv.onActivate = function() saveGame(true);
+		sv.onActivate = function() saveGame(true, true);
 		op.onActivate = function() show("options");
 		mm.onActivate = function() toMainMenu();
 		q.onActivate = function() {
-			saveGame(false);
+			saveGame(false, true);
 			quit();
 		};
 		s.onBack = function() resume();
@@ -2306,7 +2314,7 @@ class GalaxyApp extends hxd.App {
 	}
 
 	function toMainMenu() {
-		saveGame(false);
+		saveGame(false, true);
 		if( explorer != null ) {
 			explorer.dispose();
 			explorer = null;
@@ -2637,13 +2645,17 @@ class GalaxyApp extends hxd.App {
 		}
 	}
 
-	function saveGame( notify : Bool ) {
+	/**
+	 * Guarda la partida. thumb: con miniatura nueva (al guardar a mano, al salir o al volver al menu; las automaticas dejan la que
+	 * habia). Si no se puede escribir se avisa siempre, con el motivo (SaveData.lastError)
+	 */
+	function saveGame( notify : Bool, thumb = false ) {
 		if( game == null ) {
 			// en el espacio: la partida con la nave y el robot donde estan en el mapa
 			if( spaceInfo == null || explorer == null ) return;
 			storeMapPos();
-			var ok = SaveData.write(spaceInfo, captureThumb());
-			if( notify ) showToast(ok ? Lang.t("saved.ok") : "ERROR");
+			var ok = SaveData.write(spaceInfo, thumb ? captureThumb() : null);
+			if( notify || !ok ) showToast(ok ? Lang.t("saved.ok") : Lang.t("saved.error") + ": " + SaveData.lastError, ok ? 2 : 8);
 			return;
 		}
 		// en el hangar se guarda la partida tal como estaba al entrar (con el tiempo jugado); en la nodriza, con lo comprado y vendido
@@ -2652,12 +2664,12 @@ class GalaxyApp extends hxd.App {
 		// dentro de la nodriza (llegando del mapa): se apunta, para que al cargar se aparezca dentro y no en el mapa
 		var inMother = game.info.mothership == true && !GameView.editMother && info != null && info.uni != null && info.uni.space == true;
 		if( inMother ) info.inMother = { x : game.px, y : game.py, z : game.pz, yaw : game.yaw, pitch : game.pitch };
-		var ok = SaveData.write(info, captureThumb());
+		var ok = SaveData.write(info, thumb ? captureThumb() : null);
 		if( inMother ) info.inMother = null;
 		// modo de edicion: guardar (Esc, guardar y salir) tambien escribe la nave nodriza
 		if( GameView.editMother && game.info.mothership == true )
 			ok = (try Mothership.save(game.world) catch( e : Dynamic ) false) && ok;
-		if( notify ) showToast(ok ? Lang.t("saved.ok") : "ERROR");
+		if( notify || !ok ) showToast(ok ? Lang.t("saved.ok") : Lang.t("saved.error") + ": " + SaveData.lastError, ok ? 2 : 8);
 	}
 
 	/** Captura de pantalla (F2): Interface.takeScreen y Render.takeScreenShot del original. Solo la escena, al tamano de la ventana:
@@ -2896,8 +2908,12 @@ class GalaxyApp extends hxd.App {
 		}
 		var d = SaveData.dir();
 		for( f in sys.FileSystem.readDirectory(d) )
-			if( StringTools.endsWith(f, ".json") || StringTools.endsWith(f, ".png") ) sys.FileSystem.deleteFile(d + "/" + f);
-		// y las copias de las partidas con bloques desconocidos (UnknownBlocks.backup)
+			for( ext in [".g55", ".g55.tmp", ".g55.bak", ".json", ".png"] )
+				if( StringTools.endsWith(f, ext) ) {
+					sys.FileSystem.deleteFile(d + "/" + f);
+					break;
+				}
+		// y las copias de las partidas de antes ya migradas (SaveData.migrate)
 		var b = d + "/" + UnknownBlocks.BACKUPS;
 		if( sys.FileSystem.exists(b) ) for( f in sys.FileSystem.readDirectory(b) ) sys.FileSystem.deleteFile(b + "/" + f);
 		makeDemoSaves(n);
@@ -2907,7 +2923,12 @@ class GalaxyApp extends hxd.App {
 	/** pruebas (print saves): las partidas en el orden de la lista, con su modo, tutorial, inventario y miniatura */
 	public function devSavesInfo() : String {
 		var out = [];
-		for( i in SaveData.list() ) {
+		for( l in SaveData.list() ) {
+			var i = SaveData.peek(l.id);
+			if( i == null ) {
+				out.push("'" + l.name + "' ilegible: " + (l.unreadable != null ? l.unreadable : SaveData.lastError));
+				continue;
+			}
 			var blocks = 0, charges = 0;
 			for( s in i.inv.t ) if( s != null ) blocks += s.n;
 			for( c in i.inv.charges ) charges += c.n;
@@ -3114,7 +3135,7 @@ class GalaxyApp extends hxd.App {
 				if( chest != null && chest.far(game) ) closeChest();
 				game.updateCamera();
 				// guardar (F5), coordenadas (F), casco (H) y la ayuda: teclas de Keys
-				if( Keys.pressed("save") ) saveGame(true);
+				if( Keys.pressed("save") ) saveGame(true, true);
 				autosaveTimer += dt;
 				if( autosaveTimer > 120 ) {
 					autosaveTimer = 0;
@@ -3553,7 +3574,7 @@ class GalaxyApp extends hxd.App {
 					shotCont = true;
 					shotScreen = "mine";
 				}
-				var info = shotLoad != null ? SaveData.list().filter(function(i) return i.id == shotLoad)[0] : shotCont ? SaveData.list()[0] : SaveData.create("Prueba", shotSeed, shotBiome != null ? shotBiome : "BIAutumn", 1);
+				var info = shotLoad != null ? SaveData.read(shotLoad) : shotCont ? (SaveData.list().length > 0 ? SaveData.read(SaveData.list()[0].id) : null) : SaveData.create("Prueba", shotSeed, shotBiome != null ? shotBiome : "BIAutumn", 1);
 				if( info == null ) {
 					Sys.println("no se encontro la partida; hay: " + [for( i in SaveData.list() ) i.id].join(", ") + "  carpeta=" + SaveData.dir());
 					Sys.exit(1);
@@ -3710,7 +3731,9 @@ class GalaxyApp extends hxd.App {
 		// en pruebas (--shot/--script) el error va a stderr y se cierra, sin ventana encima del escritorio
 		if( Lambda.exists(Sys.args(), a -> StringTools.startsWith(a, "--shot=") || StringTools.startsWith(a, "--script=")) )
 			hxd.System.reportError = function(e:Dynamic) {
-				Sys.stderr().writeString(Std.string(e) + "\n" + haxe.CallStack.toString(haxe.CallStack.exceptionStack()) + "\n");
+				// un haxe.Exception lleva su pila (exceptionStack ya esta vacia aqui)
+				var stack = Std.isOfType(e, haxe.Exception) ? (e : haxe.Exception).stack : haxe.CallStack.exceptionStack();
+				Sys.stderr().writeString(Std.string(e) + "\n" + haxe.CallStack.toString(stack) + "\n");
 				Sys.exit(1);
 			};
 		// cambio del port: Heaps abre la ventana en 800x600 y sin titulo antes de init, que despues la pasaba a W x H: al arrancar

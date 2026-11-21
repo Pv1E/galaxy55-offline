@@ -100,6 +100,10 @@ class DeathDrops {
 			x += w.shipDX;
 			y += w.shipDY;
 		} else if( d.key != planetKey(g.info) || g.ship == null || g.info.mothership == true ) return;
+		else if( w.solid(Math.floor(x), Math.floor(y), Math.floor(d.z)) ) {
+			// anadido del port: dentro de algo solido (ver GameView), sube a la superficie y se guarda alli
+			d.z = w.topCollide(Math.floor(x), Math.floor(y)) + 0.01;
+		}
 		var drop = g.drops.add(wrap(x, w.size), wrap(y, w.size), d.z, block());
 		// cae recto, sin la deriva al azar de lo que se suelta (Dummy): en el sitio exacto y en el mismo en cada carga
 		drop.vx = drop.vy = 0;
@@ -178,27 +182,6 @@ class DeathDrops {
 	/** su planeta se pierde (abandonado, cometa dejada): sus contenedores tambien */
 	public static function forget( info : SaveInfo, key : String ) {
 		if( info.deathDrops != null ) info.deathDrops = info.deathDrops.filter(d -> d.key != key);
-	}
-
-	/** SaveInfo.deathDrops de una partida leida de disco */
-	public static function read( o : Dynamic ) : Array<DeathDropInfo> {
-		try {
-			if( o == null ) return null;
-			var out = [];
-			for( d in (o : Array<Dynamic>) ) {
-				if( d == null || d.key == null || d.t == null ) continue;
-				out.push({
-					id : d.id != null ? Std.int(d.id) : out.length + 1,
-					key : Std.string(d.key),
-					x : (d.x : Float), y : (d.y : Float), z : (d.z : Float),
-					t : [for( s in (d.t : Array<Dynamic>) ) s == null ? null : { k : Std.int(s.k), n : Std.int(s.n) }],
-					charges : d.charges == null ? [] : [for( c in (d.charges : Array<Dynamic>) ) { c : Std.int(c.c), n : Std.int(c.n) }],
-				});
-			}
-			return out;
-		} catch( e : Dynamic ) {
-			return null;
-		}
 	}
 
 	/** orden `print deathdrops` (Dev): inventario, cargas, contenedores guardados y los que hay en el mundo */

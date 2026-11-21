@@ -118,29 +118,6 @@ class ShipStorage extends h2d.Object {
 		return info.storage;
 	}
 
-	/** stockage guardado; null si no hay o esta mal formado (lo que no se entiende se salta) */
-	public static function read( o : Dynamic ) : StorageInfo {
-		try {
-			if( o == null ) return null;
-			var s = empty();
-			if( o.t != null ) {
-				var a : Array<Dynamic> = o.t;
-				for( i in 0...a.length ) {
-					var v = a[i];
-					if( v == null || v.k == null || v.n == null || Std.int(v.n) <= 0 ) continue;
-					if( i < s.t.length ) s.t[i] = { k : Std.int(v.k), n : Std.int(v.n) } else s.t.push({ k : Std.int(v.k), n : Std.int(v.n) });
-				}
-			}
-			if( o.charges != null )
-				for( c in (o.charges : Array<Dynamic>) )
-					if( c != null && c.c != null && c.n != null && Std.int(c.c) >= 0 && Std.int(c.c) < SlotZone.CHARGE_KINDS && Std.int(c.n) > 0 )
-						s.charges.push({ c : Std.int(c.c), n : Std.int(c.n) });
-			return s;
-		} catch( e : Dynamic ) {
-			return null;
-		}
-	}
-
 	/** banco de pruebas (print storage): bloques y cargas guardados */
 	public static function devInfo( s : StorageInfo ) : String {
 		if( s == null ) return "sin stockage";
