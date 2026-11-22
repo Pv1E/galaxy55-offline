@@ -42,6 +42,8 @@ class DetailsGenerator extends BiomeGenerator {
 	public var forceStructure : String = null;
 	/** origen de la estructura que se acaba de poner, si no es donde se probo (la Invisible: su centro, sobre el suelo) */
 	var poseOrigin : Array<Int>;
+	/** la estructura que se acaba de poner ha salido con lava en vez de agua (las cascadas): su tipo es su lavaGroup */
+	var poseLava : Bool;
 
 	/** lado de una region (128; una cometa de 96 es una sola region) */
 	inline function regionSize() return size < 128 ? size : 128;
@@ -140,11 +142,12 @@ class DetailsGenerator extends BiomeGenerator {
 			case Relief, Air:
 			}
 			poseOrigin = null;
+			poseLava = false;
 			beginTrack(x, y);
 			var ok = e.f(this, x, y, z);
 			endTrack();
 			if( !ok || trackChanged == 0 ) continue;
-			addPose(e.id, e.group, Std.string(e.stage), x, y, z);
+			addPose(e.id, poseLava && e.lavaGroup != null ? e.lavaGroup : e.group, Std.string(e.stage), x, y, z);
 			break;
 		}
 		rnd = keep;
@@ -1137,6 +1140,7 @@ class DetailsGenerator extends BiomeGenerator {
 		for(i in 0...5)
 			set(x+i*dx, y+i*dy,z, EMPTY);
 		var b = randomBlock([BCascadeSource, BLava]);
+		poseLava = blocks[b].k == BLava;
 		set(x,y,z, b);
 		set(x-dx*4,y-dy*4, height(x-dx*4,y-dy*4), b);
 		return true;
@@ -1225,6 +1229,7 @@ class DetailsGenerator extends BiomeGenerator {
 			[BLavaRock, BLava],
 			[BPlantRock, BCascadeSource],
 		]);
+		poseLava = this.blocks[blocks[1]].k == BLava;
 		
 		var coords = [];
 		var n = rnd.random(3)+1;
@@ -1272,6 +1277,7 @@ class DetailsGenerator extends BiomeGenerator {
 			[BLavaRock, BLava],
 			[BPlantRock, BCascadeSource],
 		]);
+		poseLava = this.blocks[blocks[1]].k == BLava;
 		
 		boxCentered( 3,3,1, function(dx,dy,dz) set(x+dx, y+dy, z+dz, blocks[0]) );
 		set(x,y,z, blocks[1]);

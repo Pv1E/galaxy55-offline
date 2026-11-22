@@ -681,8 +681,10 @@ class GenMain {
 			for( b in (e.biomes == null ? [] : e.biomes).concat(e.notIn == null ? [] : e.notIn) )
 				if( !gen.Structures.isPlanet(b) ) missing.push(e.id + " en " + b + " (no es un planeta)");
 			if( e.group == null ) continue;
-			groups.set(e.group, true);
-			if( ids.indexOf(e.group) < 0 && missing.indexOf(e.group) < 0 ) missing.push(e.group);
+			for( g in (e.lavaGroup == null ? [e.group] : [e.group, e.lavaGroup]) ) {
+				groups.set(g, true);
+				if( ids.indexOf(g) < 0 && missing.indexOf(g) < 0 ) missing.push(g);
+			}
 		}
 		var unused = [for( i in ids ) if( !groups.exists(i) && i != "bonus" && i != "cavebonus" ) i];
 		out("estructuras: " + gen.Structures.ALL.length + ", tipos: " + [for( g in groups.keys() ) g].length + ", anomalias en kubindex.json: " + ids.length);

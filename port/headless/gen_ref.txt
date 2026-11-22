@@ -3,22 +3,23 @@
 # Comprobar: haxe port\headless.hxml  y  hl port\out\gen.hl --check port\headless\gen_ref.txt
 # Las lineas de una version que ya ha salido no cambian nunca: si alguna cambia, un planeta ya visitado ha cambiado bajo lo que
 # construyo el jugador. Con una version nueva se anaden sus lineas (hl port\out\gen.hl SEMILLA BIOMA TAMANO VERSION da la linea ref=).
+# Lo que no cambia es la suma (el mundo); los nombres de las anomalias si pueden cambiar (las cascadas con lava: cavelava, lavafall).
 # Version 1 (azar por nombre, estructuras por regiones: Generator, Structures): las lineas de la version 0 se han quitado, ese
 # generador ya no existe (un planeta de version 0 se genera con la 1: "Ancienne partie"). Todos los biomas en los tres tamanos,
 # la Cite muerta, el hangar (BIShed de tamano 3, que antes no acababa; sin estructuras ni cristales de hexalita: no es un
 # planeta) y la cometa.
-1234 BIAutumn 2 1 7C40384B cavegarden,cavecascade
+1234 BIAutumn 2 1 7C40384B cavegarden,cavelava
 5 BIAutumn 1 1 861CBEE4 -
 808 BIAutumn 3 1 7DA3DAAC cavegarden,cavecascade,cavecascade,cavegarden,cavecascade,largepit,crater,invisible,invisible
 7 BIMoon 2 1 8A7EBC0B fence
 321 BIMoon 1 1 C9709F42 burned
 9001 BIMoon 3 1 E77C4620 artifact,invisible
-99 BIMars 2 1 8FBEBB97 cavecascade,cavecascade,ice
+99 BIMars 2 1 8FBEBB97 cavelava,cavecascade,ice
 4040 BIMars 1 1 8D273E8C capsule
 2077 BIMars 3 1 546351D5 caveveins,cavegarden,burned,largepit
-4242 BIWinterPeaks 2 1 FED823F5 cavecascade,cavecascade,crater
+4242 BIWinterPeaks 2 1 FED823F5 cavecascade,cavelava,crater
 15 BIWinterPeaks 1 1 053C543A meadow
-2026 BIWinterPeaks 3 1 6E7F0839 cavecascade,cavecascade,cavegarden,cavecascade,cavecascade,cavegarden,artifact,tree,meadow
+2026 BIWinterPeaks 3 1 6E7F0839 cavelava,cavecascade,cavegarden,cavelava,cavelava,cavegarden,artifact,tree,meadow
 31 BIAcidForest 2 1 220F13D1 -
 600 BIAcidForest 1 1 EC1F694C -
 123 BIAcidForest 3 1 6AA49A23 ruins,invisible

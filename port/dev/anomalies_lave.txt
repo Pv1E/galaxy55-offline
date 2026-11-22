@@ -1,0 +1,32 @@
+# Base de datos ESCorp: las cascadas que salen con lava son su propia anomalia (cavelava "Source de lave", lavafall "Cascade de
+# lave"); con agua siguen siendo cavecascade y cascade, y cada una avisa por separado. -Extra "--lang=fr --seed=76 --size=2"
+# (semilla 76, tamano 2, generador version 1: cavegarden, cavecascade, cavelava, lavafall, invisible)
+wait 60
+kub forget
+print kub
+kub goanomaly 1
+wait 40
+print kub
+shot lave_source_eau
+kub goanomaly 2
+wait 40
+print kub
+shot lave_source_lave
+kub goanomaly 3
+wait 40
+print kub
+shot lave_cascade_lave
+kub
+wait 3
+kub tab 1
+wait 3
+kub page 1
+kub page 1
+kub nav 0 17
+wait 3
+shot lave_espace_cascade
+kub nav 0 13
+wait 3
+shot lave_espace_source
+kub close
+quit
