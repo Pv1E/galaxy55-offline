@@ -1,0 +1,6 @@
+# Ayuda de controles en pantalla desactivada por defecto (Settings.showHelp, guardada como helpText). Tres pasadas con la misma
+# carpeta de datos nueva (-Data), ver ayuda_por_defecto.ps1:
+#   1) sin settings.json: helptext=0 y el HUD sin lineas; luego settings.json como el de antes (showHelp true, sin helpText)
+#   2) ese settings.json antiguo: helptext=0 (showHelp se ignora); se activa y se guarda (helpText true): hud con lineas
+#   3) helptext=1: quien la activa la conserva
+# PASADA: 1, 2 o 3 en la primera linea que no es comentario (la pone el .ps1)
