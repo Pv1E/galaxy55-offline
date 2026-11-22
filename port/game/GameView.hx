@@ -264,7 +264,10 @@ class GameView {
 		hangarMsg = hangarValid ? Lang.t("hangar.ship_valid").split("%speed%").join("" + hangar.speed) : Lang.t("hangar." + hangar.error);
 	}
 	var hangarMsg = "";
-	/** aviso (ya traducido) de un bloque que no se puede poner (Hangar.forbidden, hangarRule) y cuanto le queda en pantalla */
+	/**
+	 * aviso (ya traducido) de un bloque que no se puede poner (Hangar.forbidden, hangarRule; en la nave, Tutorial.synthRule) y
+	 * cuanto le queda en pantalla
+	 */
 	var hangarRefused : String;
 	/** reglas del hangar durante el tutorial (Tutorial.hangarRule): (poner, x, y, z, bloque) -> aviso, o null si se puede */
 	public var hangarRule : Bool -> Int -> Int -> Int -> Block -> String;
@@ -476,6 +479,12 @@ class GameView {
 			ship.update(this, tmod);
 			if( piloting ) enteringShip = -1; // sin teletransporte mientras se pilota (ship.update lo pondria a 0 lejos del rayo viejo)
 			message = ship.message(this);
+			// lo que no se puede poner en la zona del sintetizador (tutorial, place): en rojo un momento, como en el hangar
+			if( hangarRefusedTime > 0 ) {
+				hangarRefusedTime -= tmod;
+				message = hangarRefused;
+				messageRed = true;
+			}
 			// cometa (añadido del port): sobre el teletransportador, por que ya no baja
 			if( message == null && cometOver() && cometBeamWait <= 0 && pz >= World.SHIP_Z && standingBlock != null && standingBlock.k == BShipEntry ) {
 				message = Lang.t("comet.beamoff");
@@ -1932,6 +1941,8 @@ class GameView {
 		// hangar: ni liquidos ni la bomba exotica a bordo (cambio del port); no se pone y se dice por que
 		var refused = hangar != null ? Hangar.forbidden(hand) : null;
 		var why = refused != null ? Lang.t("hangar." + refused) : (hangar != null && hangarRule != null ? hangarRule(true, s.tx, s.ty, s.tz, hand) : null);
+		// tutorial: en la zona del sintetizador, solo la bauxita y el aluminio (Tutorial.synthRule)
+		if( why == null && hangar == null && s.tz >= World.SHIP_Z && ship.inCraft(s.tx, s.ty, s.tz) ) why = Tutorial.synthRule(info, hand);
 		if( why != null ) {
 			if( !placedHold ) {
 				hangarRefused = why;

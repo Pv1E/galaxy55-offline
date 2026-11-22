@@ -62,6 +62,10 @@ class TutoText {
 			"durante el tutorial, el sintetizador solo fabrica %alu% y %hull%",
 			"during the tutorial, the synthesizer only makes %alu% and %hull%",
 			"pendant le tutoriel, le synthétiseur ne fabrique que de l'%alu% et du %hull%"],
+		"synthonly" => [
+			"Durante el tutorial, en la zona del sintetizador solo se pone %bauxite% o %alu%.",
+			"During the tutorial, only %bauxite% or %alu% can be put on the synthesis area.",
+			"Pendant le tutoriel, seule la %bauxite% ou l'%alu% se pose sur la zone de synthèse."],
 		"database" => [
 			"Activa el ordenador de a bordo (en verde) y abre la \"Base de datos ESCorp\": allí quedan los kubes que has identificado con el láser y los que has recuperado, los planetas explorados y las recetas descubiertas.",
 			"Activate the on-board computer (in green) and open the \"ESCorp database\": it keeps the kubes you have identified with your laser and the ones you have collected, the planets you have explored and the recipes you have discovered.",
