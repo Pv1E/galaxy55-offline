@@ -119,6 +119,22 @@ class Tutorial {
 	}
 
 	/**
+	 * Mientras dura, en la zona del sintetizador solo se ponen los ingredientes de lo que fabrica (craftAllowed): la bauxita (ALU)
+	 * y el aluminio (PLATES). Con otro bloque no se fabricaba nada y el jugador no sabia que hacer. Devuelve el aviso (GameView.place
+	 * lo pone en rojo), o null si se puede.
+	 */
+	public static function synthRule( info : SaveInfo, b : Block ) : String {
+		if( !active(info) ) return null;
+		for( r in Data.CRAFT )
+			if( craftAllowed(info, r) )
+				for( s in r.schema )
+					switch( s ) {
+					case CSSingle(k), CSBase(k, _), CSLine(k, _): if( k == b.k ) return null;
+					}
+		return TutoText.get("synthonly");
+	}
+
+	/**
 	 * La Base de datos ESCorp se abre desde su paso (DATABASE, tras fabricar el blindaje) hasta el final: COMPUTER y los numeros
 	 * de despues (HANGAR, LEAVE, DONE y DATABASE) son todos posteriores a PLATES. Antes, el boton sale desactivado.
 	 */

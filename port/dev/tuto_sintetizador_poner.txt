@@ -1,0 +1,79 @@
+# tutorial: en la zona del sintetizador solo se pone lo que fabrica el tutorial (Tutorial.synthRule): bauxita (aluminio) y
+# aluminio (blindaje). Otro bloque (tablas) no se pone, no se gasta y la zona lo dice en rojo; la bauxita y el aluminio si se
+# ponen. Sin tutorial, las tablas se ponen otra vez. -Timeout 300 -Extra "--lang=fr"
+# Esperado: tablas -> blockl 59 62 3 vacio + aviso rojo "seule la Bauxite ou l'Aluminium"; bauxita -> BMinAluminium en 59,62,3;
+# aluminio -> BAluminium en 60,63,3; tras skip, tablas en 60,63,3.
+wait 3
+tuto new 4242
+waitfor map
+expplanet 0
+waitfor window
+expbutton
+waitfor planet
+wait 30
+ship
+wait 10
+tuto step 7
+give BWoodPlank 4
+give BMinAluminium 2
+give BAluminium 2
+tpl 62.5 63.5 3.0 3.14 -0.2
+wait 5
+# tablas: no
+hand BWoodPlank
+lookl 59.5 62.5 3.0
+wait 3
+key place
+wait 3
+unkey
+wait 5
+print blockl 59 62 3
+print msg
+print inv
+shot tuto_sintetizador_poner_refus
+# bauxita: si
+hand BMinAluminium
+wait 20
+key place
+wait 3
+unkey
+wait 10
+print blockl 59 62 3
+print msg
+# aluminio: si (en la otra celda de la zona)
+hand BAluminium
+lookl 60.5 63.5 3.0
+# despues de poner, 15 de pausa (actionPause) antes del siguiente clic
+wait 30
+key place
+wait 3
+unkey
+wait 10
+print blockl 60 63 3
+print msg
+print inv
+setl 59 62 3 none
+setl 60 63 3 none
+# fin del tutorial: las tablas se ponen
+tuto skip
+waitfor map
+expplanet 0
+waitfor window
+expbutton
+waitfor planet
+wait 30
+ship
+wait 10
+give BWoodPlank 4
+tpl 62.5 63.5 3.0 3.14 -0.2
+wait 5
+hand BWoodPlank
+lookl 60.5 63.5 3.0
+wait 3
+key place
+wait 3
+unkey
+wait 10
+print blockl 60 63 3
+print msg
+quit
