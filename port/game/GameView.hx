@@ -1388,6 +1388,8 @@ class GameView {
 	/** texto de recetas del sintetizador cercano (se muestra en pantalla) */
 	public var message : String;
 	public var messageRed = false;
+	/** se ha minado un bloque que pide esta carga y no se tiene (mine); GalaxyApp lo lee, lo avisa y lo vuelve a poner a null */
+	public var lackCharge : Null<ChargeKind>;
 
 	/** ShipLogic.activateBlock, Process.onActivate y Process.toggle: ordenador de a bordo, cantinas, bomba antigua y bloques
 	    que se abren o cierran (puertas) */
@@ -1823,7 +1825,8 @@ class GameView {
 					break;
 				}
 		if( creative ) laserCharge = null;
-		if( req > 0 && (!matter.hasProp(PRequireCharge) || laserCharge != null || creative || inCraft) ) {
+		var noCharge = req > 0 && matter.hasProp(PRequireCharge) && laserCharge == null && !creative && !inCraft;
+		if( req > 0 && !noCharge ) {
 			canBreak = true;
 			if( actionPause > 0 ) {
 				if( s.power == 0 ) s.power = 1e-8;
@@ -1833,6 +1836,8 @@ class GameView {
 		} else
 			canBreak = false;
 		if( debugDeny || (info.mothership == true && !editMother) ) canBreak = false;
+		// sin la carga que pide (cambio del port: el original no decia nada): GalaxyApp lo avisa (KubNotify.missingCharge)
+		else if( noCharge && matter.quickBreaks != null ) lackCharge = matter.quickBreaks[0].c;
 		// en tu nave, ordenador y puertas solo se usan, no se rompen (ShipLogic.checkSelect: allowBreak = false)
 		if( s.z >= World.SHIP_Z && !inCraft && (b.activable != null || b.toggle != null) ) canBreak = false; // la nave nodriza no se rompe
 		// tutorial: en el hangar no se rompe nada; lo que se activa (puertas, ordenador) se sigue usando, sin aviso

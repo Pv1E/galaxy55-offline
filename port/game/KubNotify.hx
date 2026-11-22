@@ -1,3 +1,4 @@
+import Common;
 import Ui;
 import Kubindex.KubState;
 
@@ -12,12 +13,20 @@ typedef KubNews = {
 	@:optional var text : String;
 	/** segundos en pantalla (TIME si no se dice) */
 	@:optional var time : Float;
+	/**
+	 * aviso que se repite (la carga que falta: en cada actualizacion mientras se mina): si ya esta en pantalla no se rehace, se
+	 * queda entero hasta que dejen de pedirlo y luego dura su tiempo
+	 */
+	@:optional var key : String;
+	/** color de la franja de la izquierda (Theme.ACCENT si no se dice; la carga que falta, en rojo) */
+	@:optional var bar : Int;
 }
 
 /**
  * Avisos ligeros de la Base de datos ESCorp, arriba a la derecha de la ventana (anadido del port): un kube localizado o
  * recuperado por primera vez, un tipo de planeta o de cometa nuevo. Entran por la derecha, duran unos segundos y se apilan
  * (los mas nuevos arriba, MAX como mucho). Tambien el del contrato especial (Contracts.specialNews), con su explicacion.
+ * Es el aviso de informacion por defecto del juego: tambien la carga que le falta al laser (missingCharge).
  */
 class KubNotify extends h2d.Object {
 
@@ -30,7 +39,7 @@ class KubNotify extends h2d.Object {
 	static inline var MAX = 4;
 
 	var atlas : h3d.mat.Texture;
-	var list : Array<{ o : h2d.Object, t : Float, block : Block, time : Float, h : Float }> = [];
+	var list : Array<{ o : h2d.Object, t : Float, block : Block, time : Float, h : Float, key : String }> = [];
 	/** avisos que esperan a que se vean (later) */
 	var waiting : Array<KubNews> = [];
 
@@ -44,7 +53,25 @@ class KubNotify extends h2d.Object {
 		waiting.push(n);
 	}
 
+	/**
+	 * se mina un bloque que pide la carga c y no se tiene (GameView.lackCharge, cada actualizacion): "Laser · Charge manquante" y
+	 * la carga, con su nombre y su icono (el de la Base de datos ESCorp)
+	 */
+	public static function missingCharge( c : ChargeKind ) : KubNews {
+		var b : Block = null;
+		for( k in Block.all ) if( k.charge == c ) { b = k; break; }
+		var name = Type.enumConstructor(c);
+		return { title : Lang.t("charge.missing"), name : Lang.t("charge.name." + name), block : b, key : "charge." + name, time : 2.5, bar : Theme.DANGER };
+	}
+
 	public function push( n : KubNews ) {
+		if( n.key != null )
+			for( old in list )
+				if( old.key == n.key ) {
+					// ya esta: sigue entero, como al acabar de entrar
+					old.t = Math.min(old.t, SLIDE);
+					return;
+				}
 		// recuperado justo despues de localizado (romper hielo, recoger): el aviso nuevo sustituye al anterior del mismo kube
 		for( old in list.copy() )
 			if( n.block != null && old.block == n.block ) {
@@ -70,8 +97,8 @@ class KubNotify extends h2d.Object {
 		}
 		// el fondo (g es el primer hijo: queda debajo del icono y los textos), ya con el alto de la explicacion
 		Theme.rect(g, 0, 0, W, h, Theme.PANEL, 0.9);
-		Theme.rect(g, 0, 0, 3, h, Theme.ACCENT);
-		list.unshift({ o : o, t : 0., block : n.block, time : n.time == null ? TIME : n.time, h : h });
+		Theme.rect(g, 0, 0, 3, h, n.bar == null ? Theme.ACCENT : n.bar);
+		list.unshift({ o : o, t : 0., block : n.block, time : n.time == null ? TIME : n.time, h : h, key : n.key });
 		while( list.length > MAX ) list.pop().o.remove();
 		update(0);
 	}
