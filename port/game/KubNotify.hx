@@ -18,6 +18,8 @@ typedef KubNews = {
 	 * queda entero hasta que dejen de pedirlo y luego dura su tiempo
 	 */
 	@:optional var key : String;
+	/** color de la franja de la izquierda (Theme.ACCENT si no se dice; la carga que falta, en rojo) */
+	@:optional var bar : Int;
 }
 
 /**
@@ -59,7 +61,7 @@ class KubNotify extends h2d.Object {
 		var b : Block = null;
 		for( k in Block.all ) if( k.charge == c ) { b = k; break; }
 		var name = Type.enumConstructor(c);
-		return { title : Lang.t("charge.missing"), name : Lang.t("charge.name." + name), block : b, key : "charge." + name, time : 2.5 };
+		return { title : Lang.t("charge.missing"), name : Lang.t("charge.name." + name), block : b, key : "charge." + name, time : 2.5, bar : Theme.DANGER };
 	}
 
 	public function push( n : KubNews ) {
@@ -95,7 +97,7 @@ class KubNotify extends h2d.Object {
 		}
 		// el fondo (g es el primer hijo: queda debajo del icono y los textos), ya con el alto de la explicacion
 		Theme.rect(g, 0, 0, W, h, Theme.PANEL, 0.9);
-		Theme.rect(g, 0, 0, 3, h, Theme.ACCENT);
+		Theme.rect(g, 0, 0, 3, h, n.bar == null ? Theme.ACCENT : n.bar);
 		list.unshift({ o : o, t : 0., block : n.block, time : n.time == null ? TIME : n.time, h : h, key : n.key });
 		while( list.length > MAX ) list.pop().o.remove();
 		update(0);
