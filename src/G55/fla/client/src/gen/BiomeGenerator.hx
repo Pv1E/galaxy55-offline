@@ -41,9 +41,9 @@ class BiomeGenerator extends Generator {
 				fillSoil(0.5);
 				addHolesLater(4.5, [{ h : waterLevel, v : -0.8 },{ h : maxHeight, v : 0.5 }]);
 				addCaves(1, 1, BBrokenRock);
-				addCaveDetails();
+				saveCaveMask();
 				removeBlobs();
-				smooth3DLater(function(changed) if( changed > 0 ) stepRetry());
+				smooth3DLater(smoothAgain);
 				
 				addHighForest();
 				addBunker(BRock, 0.5);
@@ -98,7 +98,7 @@ class BiomeGenerator extends Generator {
 				smoothHeight();
 				smoothHeight();
 				fillSoil(0);
-				smooth3DLater(function(changed) if( changed > 0 ) stepRetry());
+				smooth3DLater(smoothAgain);
 				addAcidTrees();
 				
 				addHerbs(BAcidHerb1, BAcidHerb2, 0.2, 2);
@@ -137,14 +137,14 @@ class BiomeGenerator extends Generator {
 				spread(10, function(_) addHolesLater(2 + rnd.rand() * 2, [ { h : 34, v : -0.9 }, { h : 35, v : -0.7 } ], CAVE));
 				addHolesLater(2, [ { h : 22, v : -0.8 }, { h : 24, v : -0.5 }, { h : 31, v : -0.6 }, { h : 33, v : -0.9 }, { h : 37, v : -1 } ], CAVE);
 				
-				smooth3DLater(function(changed) if( changed > 0 ) stepRetry());
+				smooth3DLater(smoothAgain);
 
 				addCaves(2, 0.75, BWinterBrokenRock);
 				addCaveCrystals(3.0, BBlueCrystalLight, BBlueCrystalDense, BWinterBrokenRock, CAVE);
 				addCaveMinerals(4.0, 30,100);
 				
 				addCaveAccesses(30);
-				addCaveDetails();
+				saveCaveMask();
 				
 				removeBlobs();
 				
@@ -179,7 +179,8 @@ class BiomeGenerator extends Generator {
 				for( i in 0...100 )
 					addHoles(3 + rnd.rand() * 3, [ { h : 16, v : -0.7 }, { h : 75, v : -0.8 }, { h : 75, v : -2. } ], EMPTY);
 					
-				while( smooth3D(0,32) > 0 ) {}
+				// version 1: como mucho SMOOTH_PASSES * 2 pasadas (antes hasta que no cambiara nada)
+				for( i in 0...Generator.SMOOTH_PASSES * 2 ) if( smooth3D(0, 32) == 0 ) break;
 				
 				addBunker(BMarsQuickSand, 0.5);
 				
@@ -196,7 +197,7 @@ class BiomeGenerator extends Generator {
 						for(z in 0...60)
 							if( get(x,y,z)==EMPTY )
 								set(x,y,z, CAVE);
-				addCaveDetails();
+				saveCaveMask();
 				
 				removeBlobs();
 			});
@@ -230,7 +231,7 @@ class BiomeGenerator extends Generator {
 				smoothHeight();
 				smoothHeight();
 				fillSoil(0);
-				if( smooth3D() > 0 ) stepRetry();
+				if( smooth3D() > 0 && stepTries[curPosition - 1] < Generator.SMOOTH_PASSES ) stepRetry();
 			});
 		}
 	}
@@ -390,7 +391,9 @@ class BiomeGenerator extends Generator {
 	function addMineralsRocks( ratio:Float, ?bempty = EMPTY ) {
 		var hard = alloc(BHardRock);
 		for( i in 0...Math.round(ratio*size*size/4300) ) {
-			while( true ) {
+			// version 1: 1000 sitios como mucho (antes sin fin)
+			var ntry = 1000;
+			while( ntry-- > 0 ) {
 				var x = rnd.random(size);
 				var y = rnd.random(size);
 				var zmax = height(x, y);
@@ -489,8 +492,9 @@ class BiomeGenerator extends Generator {
 							var y = real(y + dy);
 							if( hash(x + y * size) % 100 < 60 ) return;
 							var h = height(x,y);
+							// version 1: la variante se tira al ponerla (antes la paridad del mismo hash que decide si se pone)
 							if( h - z <= 2 && h - z >= -2 && get(x,y,h-1) == SOIL )
-								oset(x, y, h, hash(x+y*size)&1 == 0 ? block : block2);
+								oset(x, y, h, rnd.random(2) == 0 ? block : block2);
 						});
 					}
 					break;
@@ -596,8 +600,8 @@ class BiomeGenerator extends Generator {
 			}
 		}
 		
-		// crystaux
-		var count = Std.int((size*size / 1000));
+		// crystaux (version 1: sin bolas de follaje no hay donde ponerlos; antes balls[0] era null)
+		var count = balls.length == 0 ? 0 : Std.int((size*size / 1000));
 		for(i in 0...count) {
 			var ntry = 100;
 			while( ntry-->0 ) {
@@ -613,7 +617,7 @@ class BiomeGenerator extends Generator {
 		}
 		
 		// crystaux morts
-		var count = Std.int((size*size / 300));
+		var count = balls.length == 0 ? 0 : Std.int((size*size / 300));
 		for(i in 0...count) {
 			var ntry = 100;
 			while( ntry-->0 ) {
@@ -977,11 +981,13 @@ class BiomeGenerator extends Generator {
 				for( i in 0...10 ) {
 					var cx = x + rnd.random(w) - (w >> 1);
 					var cy = y + rnd.random(h) - (h >> 1);
-					var cw, ch;
+					var cw, ch, ntry = 100;
 					do {
 						cw = min(rnd.random(w), rnd.random(w));
 						ch = min(rnd.random(h), rnd.random(h));
-					} while( cw < 3 || ch < 3 );
+					} while( (cw < 3 || ch < 3) && --ntry > 0 );
+					if( cw < 3 ) cw = 3;
+					if( ch < 3 ) ch = 3;
 					circle(cw,ch, function(dx, dy) {
 						var dx = cx + dx - x;
 						var dy = cy + dy - y;
@@ -1026,11 +1032,15 @@ class BiomeGenerator extends Generator {
 			// replace CAVE by tree content
 			var sap = alloc(BAcidTreeSap);
 			spread(size, function(y) {
-				for( i in y * size * HEIGHT...(y + 1) * size * HEIGHT ) {
+				// anadido del port: de una celda de madera o de CAVE a la siguiente (findCell2), en el mismo orden
+				var end = (y + 1) * size * HEIGHT;
+				var i = findCell2(y * size * HEIGHT, end, wood, CAVE);
+				while( i < end ) {
 					if( fget(i) == wood && rnd.random(10)==0 )
 						fset(i, rnd.random(100)<30 ? woodBubble : woodHole );
 					if( fget(i) == CAVE )
 						fset(i, rnd.random(5) == 0 ? sap : EMPTY);
+					i = findCell2(i + 1, end, wood, CAVE);
 				}
 			}, function() {
 				
@@ -1169,10 +1179,12 @@ class BiomeGenerator extends Generator {
 			var dx = rnd.random(2) == 0 ? -1 : 1;
 			var dy = rnd.random(2) == 0 ? -1 : 1;
 			if( rnd.random(2) == 0 ) dx = 0 else dy = 0;
+			// version 1: como mucho una vuelta al planeta (antes sin fin si la fila no tenia hueco)
+			var steps = 0;
 			while( true ) {
 				var b = get(x, y, z);
 				if( b == EMPTY ) break;
-				if( b == source || b == fall ) return false;
+				if( b == source || b == fall || ++steps > size ) return false;
 				x += dx;
 				y += dy;
 			}
@@ -1526,7 +1538,8 @@ class BiomeGenerator extends Generator {
 					var x = x, y = y;
 					x += 2 + rnd.random(w - 4);
 					y += 2 + rnd.random(h - 4);
-					while( get(x, y, z) == EMPTY ) {
+					var steps = 0;
+					while( get(x, y, z) == EMPTY && steps++ < size ) {
 						x += dx;
 						y += dy;
 					}

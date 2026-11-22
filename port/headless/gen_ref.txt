@@ -3,20 +3,27 @@
 # Comprobar: haxe port\headless.hxml  y  hl port\out\gen.hl --check port\headless\gen_ref.txt
 # Las lineas de una version que ya ha salido no cambian nunca: si alguna cambia, un planeta ya visitado ha cambiado bajo lo que
 # construyo el jugador. Con una version nueva se anaden sus lineas (hl port\out\gen.hl SEMILLA BIOMA TAMANO VERSION da la linea ref=).
-1234 BIAutumn 2 0 913A64AB cavecascade,cavecharges
-5 BIAutumn 1 0 05A4C4FB caveruins
-808 BIAutumn 3 0 DE23E897 cavecascade,cavefrozen,cavecascade,cavegarden,caveveins,cavegarden,crater,pit,tree
-7 BIMoon 2 0 E56E42E8 -
-321 BIMoon 1 0 38983992 burned
-9001 BIMoon 3 0 B366733B fence,ruins
-99 BIMars 2 0 3280B385 caveveins,cavegarden,caveveins,cavegarden,crater,burned
-4040 BIMars 1 0 47DFA582 invisible
-2077 BIMars 3 0 E0FB4721 cavecascade,cavegarden,cavecharges,cavegarden,cavegarden,cavecharges,cavecascade,fence
-4242 BIWinterPeaks 2 0 E3198563 caveveins,cavegarden,caveveins
-15 BIWinterPeaks 1 0 D1556CC8 cavegarden
-2026 BIWinterPeaks 3 0 09E5A12D caveruins,cavecascade,cavecascade,cavecascade,cavegarden,cavegarden,cavegarden,cavecascade,burned
-31 BIAcidForest 2 0 94D2788A cascade,grove
-600 BIAcidForest 1 0 50F385BB -
-123 BIAcidForest 3 0 C98B1AB6 grove,heal,meadow,invisible
-1234 BIDeadCity 1 0 F91D2B9B -
-77 BIDeadCity 2 0 2D164887 heal
+# Version 1 (azar por nombre, estructuras por regiones: Generator, Structures): las lineas de la version 0 se han quitado, ese
+# generador ya no existe (un planeta de version 0 se genera con la 1: "Ancienne partie"). Todos los biomas en los tres tamanos,
+# la Cite muerta, el hangar (BIShed de tamano 3, que antes no acababa; sin estructuras ni bonus: no es un planeta) y la cometa.
+1234 BIAutumn 2 1 7C40384B cavegarden,cavecascade
+5 BIAutumn 1 1 861CBEE4 -
+808 BIAutumn 3 1 7DA3DAAC cavegarden,cavecascade,cavecascade,cavegarden,cavecascade,largepit,crater,invisible,invisible
+7 BIMoon 2 1 8A7EBC0B fence
+321 BIMoon 1 1 C9709F42 burned
+9001 BIMoon 3 1 E77C4620 artifact,invisible
+99 BIMars 2 1 8FBEBB97 cavecascade,cavecascade,ice
+4040 BIMars 1 1 8D273E8C capsule
+2077 BIMars 3 1 546351D5 caveveins,cavegarden,burned,largepit
+4242 BIWinterPeaks 2 1 FED823F5 cavecascade,cavecascade,crater
+15 BIWinterPeaks 1 1 053C543A meadow
+2026 BIWinterPeaks 3 1 6E7F0839 cavecascade,cavecascade,cavegarden,cavecascade,cavecascade,cavegarden,artifact,tree,meadow
+31 BIAcidForest 2 1 220F13D1 -
+600 BIAcidForest 1 1 EC1F694C -
+123 BIAcidForest 3 1 6AA49A23 ruins,invisible
+1234 BIDeadCity 1 1 77D4A417 -
+77 BIDeadCity 2 1 97336BAF crater
+2048 BIDeadCity 3 1 DA780A6E meadow,meadow
+5 BIShed 3 1 E1BE6430 -
+1 BICometCinder 1 1 82E465F3 -
+777 BICometCinder 1 1 81C8742F -

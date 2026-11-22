@@ -1,12 +1,16 @@
 """
 Convierte una construccion de un mundo de Minecraft (Anvil 1.16+) en un mundo de bloques de Galaxy 55 para la nave nodriza.
 Uso: python -I port/tools/mc2g55.py <carpeta del mundo> <salida .bin>
+     python -I port/tools/mc2g55.py --convert <mothership.bin G55M/G55N/G55O> <salida .bin>   (pasa un archivo de antes a G55P)
 
-Salida: 'G55M', ancho, largo, alto (uint16 LE), aparicion x, y, z (uint16 LE) y despues los indices de bloque (uint8, BlockKind
-de src/G55/com/Common.hx) en orden z, y, x, todo comprimido con zlib. Los ejes: x de Minecraft -> x, z de Minecraft -> y (invertido
-para no reflejar la nave), altura -> z.
+Salida 'G55P': ancho, largo, alto, aparicion x, y, z (uint16 LE); las bahias del hangar (numero y centro del suelo x, y, z); los
+robots (numero y x, y, z, tipo: 0..3 = comerciante mirando a +x, +y, -x, -y; 4 = dron); la tabla de nombres de bloque (numero y
+cada nombre: uint8 largo y ASCII, de BlockKind de src/G55/com/Common.hx; la primera BEmpty) y despues, comprimido con zlib, la
+posicion en esa tabla de cada celda (uint16 LE) en orden z, y, x. Los ejes: x de Minecraft -> x, z de Minecraft -> y (invertido
+para no reflejar la nave), altura -> z. Los formatos de antes (G55M sin bahias ni robots, G55N sin robots, G55O) guardaban el
+numero de BlockKind en un byte por celda: un bloque con numero > 255 no cabia.
 """
-import sys, os, re, zlib, struct, collections
+import sys, os, re, zlib, struct, collections, array
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import mcread
 
@@ -17,6 +21,46 @@ def kinds():
     m = re.search(r'enum BlockKind \{(.*?)\n\}', s, re.S).group(1)
     names = [l.strip().rstrip(';') for l in m.split('\n') if l.strip() and not l.strip().startswith('//')]
     return {n: i for i, n in enumerate(names)}
+
+def write_g55p(out, W, L, H, spawn, bays, robots, grid, names):
+    """escribe la nave en G55P (ver arriba); grid: numero de BlockKind de cada celda, names: nombre de cada numero"""
+    table, at = ['BEmpty'], {0: 0}
+    cells = array.array('H', [0]) * len(grid)
+    for i, k in enumerate(grid):
+        p = at.get(k)
+        if p is None:
+            p = at[k] = len(table)
+            table.append(names[k])
+        cells[i] = p
+    if sys.byteorder == 'big': cells.byteswap()
+    head = b'G55P' + struct.pack('<6H', W, L, H, *spawn) + struct.pack('<H', len(bays))
+    for b in bays: head += struct.pack('<3H', *b)
+    head += struct.pack('<H', len(robots))
+    for r in robots: head += struct.pack('<4H', *r)
+    head += struct.pack('<H', len(table))
+    for n in table: head += bytes([len(n)]) + n.encode('ascii')
+    open(out, 'wb').write(head + zlib.compress(cells.tobytes(), 9))
+    return table
+
+def convert(src, out):
+    """un mothership.bin de antes (G55M, G55N o G55O: un byte por celda) a G55P, con los nombres de BlockKind de ahora"""
+    b = open(src, 'rb').read()
+    magic = b[:4]
+    if magic not in (b'G55M', b'G55N', b'G55O'): sys.exit('no es un mothership.bin de antes: ' + repr(magic))
+    W, L, H, sx, sy, sz = struct.unpack_from('<6H', b, 4)
+    pos, bays, robots = 16, [], []
+    if magic != b'G55M':
+        n, = struct.unpack_from('<H', b, pos); pos += 2
+        for i in range(n): bays.append(struct.unpack_from('<3H', b, pos)); pos += 6
+    if magic == b'G55O':
+        n, = struct.unpack_from('<H', b, pos); pos += 2
+        for i in range(n): robots.append(struct.unpack_from('<4H', b, pos)); pos += 8
+    grid = zlib.decompress(b[pos:])
+    assert len(grid) == W * L * H, 'tamano de la rejilla'
+    K = kinds()
+    names = sorted(K, key=K.get)
+    table = write_g55p(out, W, L, H, (sx, sy, sz), bays, robots, grid, names)
+    print(magic.decode(), '->', 'G55P', 'medidas', W, L, H, 'bahias', len(bays), 'robots', len(robots), 'bloques distintos', len(table))
 
 # tabla: (fragmento del nombre de Minecraft, bloque de Galaxy 55); la primera que coincide gana. None = se ignora (detalles).
 RULES = [
@@ -341,7 +385,7 @@ def main(world, out):
     xs = [b[0] for b in blocks]; zs = [b[2] for b in blocks]; ys = [b[1] for b in blocks]
     x0, x1, z0, z1, y0, y1 = min(xs), max(xs), min(zs), max(zs), min(ys), max(ys)
     W, L, H = x1 - x0 + 1, z1 - z0 + 1, y1 - y0 + 1
-    grid = bytearray(W * L * H)
+    grid = array.array('H', [0]) * (W * L * H)
     miss = collections.Counter()
     cache = {}
     rails = []
@@ -389,15 +433,10 @@ def main(world, out):
         print('llegada', home, 'robots', robots)
     for i in rails:
         if not grid[i]: grid[i] = K['BShipTubes']
-    # 'G55O': como 'G55M' mas las bahias (numero y centro del suelo x, y, z) y los robots (numero y x, y, z, tipo:
-    # 0..3 = comerciante mirando a +x, +y, -x, -y; 4 = dron), antes de los datos comprimidos
-    head = b'G55O' + struct.pack('<6H', W, L, H, sx, sy, sz) + struct.pack('<H', len(bays))
-    for b in bays: head += struct.pack('<3H', *b)
-    head += struct.pack('<H', len(robots))
-    for r in robots: head += struct.pack('<4H', *r)
-    open(out, 'wb').write(head + zlib.compress(bytes(grid), 9))
+    write_g55p(out, W, L, H, (sx, sy, sz), bays, robots, grid, sorted(K, key=K.get))
     print('medidas', W, L, H, 'aparicion', sx, sy, sz, 'bloques', sum(1 for v in grid if v))
     print('sin traducir:', miss.most_common(30))
 
 if __name__ == '__main__':
-    main(sys.argv[1], sys.argv[2])
+    if sys.argv[1] == '--convert': convert(sys.argv[2], sys.argv[3])
+    else: main(sys.argv[1], sys.argv[2])

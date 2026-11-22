@@ -112,21 +112,26 @@ class Mothership {
 	/** robots de la nave importada (G55O): celda y tipo (0..3 comerciante mirando a +x, +y, -x, -y; 4 dron) */
 	public static var robots : Array<{ x : Int, y : Int, z : Int, k : Int }> = [];
 
-	/** nave importada (port/tools/mc2g55.py): mothership.bin en GALAXY55_MOTHERSHIP o en res/ */
+	/**
+	 * nave importada (port/tools/mc2g55.py): mothership.bin en GALAXY55_MOTHERSHIP o en res/. Formatos: G55M (medidas y aparicion),
+	 * G55N (mas las bahias del hangar), G55O (mas los robots), con un byte por celda (el numero de BlockKind); G55P (anadido del
+	 * port) como G55O, mas una tabla de nombres de bloque (SaveNames) y en cada celda su posicion en ella, en 2 bytes: con un byte,
+	 * un bloque con numero > 255 no cabia
+	 */
 	static function fromFile() : ShipData.ShipDataInfo {
 		var p = Sys.getEnv("GALAXY55_MOTHERSHIP");
 		if( p == null || p == "" ) p = Res.path("mothership.bin");
 		if( !sys.FileSystem.exists(p) ) return null;
 		var b = sys.io.File.getBytes(p);
 		var magic = b.getString(0, 4);
-		if( magic != "G55M" && magic != "G55N" && magic != "G55O" ) return null;
+		if( magic != "G55M" && magic != "G55N" && magic != "G55O" && magic != "G55P" ) return null;
 		var w = b.getUInt16(4), l = b.getUInt16(6), h = b.getUInt16(8);
 		var sx = b.getUInt16(10), sy = b.getUInt16(12), sz = b.getUInt16(14);
 		// G55N: bahias del hangar (centro del suelo de cada una) antes de los datos
 		var pos = 16;
 		var raw = [];
 		var rawRobots = [];
-		if( magic == "G55N" || magic == "G55O" ) {
+		if( magic != "G55M" ) {
 			var n = b.getUInt16(pos);
 			pos += 2;
 			for( i in 0...n ) {
@@ -135,7 +140,7 @@ class Mothership {
 			}
 		}
 		// G55O: robots (x, y, z, tipo: 0..3 comerciante mirando a +x, +y, -x, -y; 4 dron)
-		if( magic == "G55O" ) {
+		if( magic == "G55O" || magic == "G55P" ) {
 			var n = b.getUInt16(pos);
 			pos += 2;
 			for( i in 0...n ) {
@@ -143,8 +148,22 @@ class Mothership {
 				pos += 8;
 			}
 		}
-		var g = haxe.zip.Uncompress.run(b.sub(pos, b.length - pos));
-		file = { path : p, header : b.sub(0, pos), w : w, l : l, h : h, base : g };
+		// G55P: tabla de nombres (cuantos y cada uno con su largo) y 2 bytes por celda
+		var table : Array<Int> = null;
+		if( magic == "G55P" ) {
+			var n = b.getUInt16(pos);
+			pos += 2;
+			table = [];
+			for( i in 0...n ) {
+				var len = b.get(pos);
+				table.push(SaveNames.resolve(b.getString(pos + 1, len)).index);
+				pos += 1 + len;
+			}
+		}
+		var cells = haxe.zip.Uncompress.run(b.sub(pos, b.length - pos));
+		var g = new haxe.ds.Vector<Int>(w * l * h);
+		for( i in 0...g.length ) g[i] = table == null ? cells.get(i) : table[cells.getUInt16(i << 1)];
+		file = { path : p, w : w, l : l, h : h, spawn : [sx, sy, sz], bays : raw, robots : rawRobots, base : g };
 		sizeChunks = Std.int(Math.max(1, Math.ceil((Math.max(w, l) + 32) / Const.SIZE)));
 		var size = sizeChunks * Const.SIZE;
 		var ox = (size - w) >> 1, oy = (size - l) >> 1, oz = 24;
@@ -156,7 +175,7 @@ class Mothership {
 		for( z in 0...h )
 			for( y in 0...l )
 				for( x in 0...w ) {
-					var k = g.get(i++);
+					var k = g[i++];
 					if( k != 0 ) out.push({ x : ox + x, y : oy + y, z : oz + z, id : k });
 				}
 		spawnAt = { x : ox + sx, y : oy + sy, z : oz + sz };
@@ -203,21 +222,23 @@ class Mothership {
 			}
 	}
 
-	/** archivo cargado (para guardar lo editado con --editnodriza): ruta, cabecera tal cual, tamano, rejilla original y origen */
-	static var file : { path : String, header : haxe.io.Bytes, w : Int, l : Int, h : Int, base : haxe.io.Bytes, ?ox : Int, ?oy : Int, ?oz : Int };
+	/** la nave nodriza leida de mothership.bin: medidas, aparicion, bahias y robots como en el archivo y el bloque de cada celda */
+	static var file : { path : String, w : Int, l : Int, h : Int, spawn : Array<Int>, bays : Array<{ x : Int, y : Int, z : Int }>,
+		robots : Array<{ x : Int, y : Int, z : Int, k : Int }>, base : haxe.ds.Vector<Int>, ?ox : Int, ?oy : Int, ?oz : Int };
 	/** celdas ocupadas por la nave del jugador aparcada: no se guardan en la nave nodriza */
 	static var shipCells : Map<Int, Bool>;
 	static inline function cellKey( x : Int, y : Int, z : Int ) return (x << 18) | (y << 8) | z;
 
 	/**
-	 * Modo de edicion (--editnodriza): escribe el mundo editado en mothership.bin (misma cabecera: aparicion, bahias y
-	 * robots). Donde esta tu nave aparcada se deja lo que habia. La primera vez guarda una copia en mothership.bin.orig.
+	 * Modo de edicion (--editnodriza): escribe el mundo editado en mothership.bin, siempre en G55P (la misma aparicion, bahias y
+	 * robots; bloques por nombre). Donde esta tu nave aparcada se deja lo que habia. La primera vez guarda una copia en
+	 * mothership.bin.orig.
 	 * Ojo: si se vuelve a generar con mc2g55.py, se pierden estas ediciones.
 	 */
 	public static function save( world : World ) : Bool {
 		if( file == null ) return false;
 		var f = file;
-		var g = haxe.io.Bytes.alloc(f.w * f.l * f.h);
+		var g = new haxe.ds.Vector<Int>(f.w * f.l * f.h);
 		var i = 0;
 		for( z in 0...f.h )
 			for( y in 0...f.l )
@@ -225,17 +246,38 @@ class Mothership {
 					var wx = f.ox + x, wy = f.oy + y, wz = f.oz + z;
 					var k = 0;
 					var key = cellKey(wx, wy, wz);
-					if( (shipCells != null && shipCells.exists(key)) || (shopCells != null && shopCells.exists(key)) ) k = f.base.get(i);
+					if( (shipCells != null && shipCells.exists(key)) || (shopCells != null && shopCells.exists(key)) ) k = f.base[i];
 					else {
 						var b = world.block(wx, wy, wz);
-						if( b != null ) k = b.index < 256 ? b.index : Type.enumIndex(b.k);
+						if( b != null ) k = b.index;
 					}
-					g.set(i++, k);
+					g[i++] = k;
 				}
-		var z = haxe.zip.Compress.run(g, 9);
-		var out = new haxe.io.BytesBuffer();
-		out.add(f.header);
-		out.add(z);
+		// la tabla de los bloques que se usan y la posicion de cada celda en ella
+		var names = ["BEmpty"], at = [0 => 0];
+		var cells = haxe.io.Bytes.alloc(g.length << 1);
+		for( i in 0...g.length ) {
+			var p = at.get(g[i]);
+			if( p == null ) {
+				p = names.length;
+				names.push(SaveNames.nameOfIndex(g[i]));
+				at.set(g[i], p);
+			}
+			cells.setUInt16(i << 1, p);
+		}
+		var out = new haxe.io.BytesOutput();
+		out.writeString("G55P");
+		for( v in [f.w, f.l, f.h, f.spawn[0], f.spawn[1], f.spawn[2]] ) out.writeUInt16(v);
+		out.writeUInt16(f.bays.length);
+		for( b in f.bays ) for( v in [b.x, b.y, b.z] ) out.writeUInt16(v);
+		out.writeUInt16(f.robots.length);
+		for( r in f.robots ) for( v in [r.x, r.y, r.z, r.k] ) out.writeUInt16(v);
+		out.writeUInt16(names.length);
+		for( n in names ) {
+			out.writeByte(n.length);
+			out.writeString(n);
+		}
+		out.write(haxe.zip.Compress.run(cells, 9));
 		if( !sys.FileSystem.exists(f.path + ".orig") ) sys.io.File.copy(f.path, f.path + ".orig");
 		sys.io.File.saveBytes(f.path, out.getBytes());
 		f.base = g;

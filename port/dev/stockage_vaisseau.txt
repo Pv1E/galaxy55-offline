@@ -147,7 +147,7 @@ wait 3
 print storage
 storage close
 wait 3
-# 15) kubes del editor en el stockage de una partida creativa: se guardan aparte (editorKubes.storage) y vuelven al cargarla
+# 15) kubes del editor en el stockage de una partida creativa: se guardan por su nombre y vuelven al cargarla
 edkube clear
 edkube make test-pierre cube opaque FFB0B0B0 Pierre grise test
 reload

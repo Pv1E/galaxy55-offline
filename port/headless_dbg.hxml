@@ -1,5 +1,6 @@
 --macro allowPackage('flash')
 -cp port/headless
+-cp port/game
 -cp libs/libs-haxe3
 -cp libs/libs-haxe2
 -cp src/G55/com

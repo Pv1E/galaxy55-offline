@@ -1,18 +1,24 @@
 # cantina (cofre) con arrastrar y soltar (SlotGrid), como la pantalla de inventario: casilla = zona:N, zona 0 = la cantina
 # (4 casillas), zona 1 = el inventario (10). "print slots" muestra lo que se ve (la pila del cursor sigue en su casilla hasta
 # dejarla) y "print chest" / "print inv" lo que hay de verdad. Entre dos clics en la misma casilla se espera (si no, doble clic).
+# La cantina va a 8,3 de donde aterriza la nave (find ship) y find BChest da su celda.
 wait 3
 planet
 wait 30
-tp 130.5 24.5 top 0 -0.25
-wait 20
-setp 132 24 top BChest
+find ship
+# una plataforma de roca en el aire junto a la nave (z 79, se anda en 80): no depende del terreno del sitio de aterrizaje
+filla fx+3 fy-1 fx+13 fy+14 79 79 BRock
+filla fx+3 fy-1 fx+13 fy+14 80 86 none
+tp fx+6.5 fy+3.5 80 0 -0.25
+wait 19
+setp fx+8 fy+3 80 BChest
+find BChest 4
 contracts empty
 give BWood 40
 give BGlass 10
 print inv
-activate 132 24 36
-wait 5
+activate fx fy fz
+wait 4
 print slots
 # arrastrar del inventario a una casilla vacia de la cantina: la madera (1:0) pasa entera a 0:0
 slots drag 1:0 0:0
@@ -95,7 +101,7 @@ wait 2
 print chest
 print menu
 # lo que hay en la cantina se guarda en la partida
-activate 132 24 36
+activate fx fy fz
 wait 5
 shot cantine_glisser
 reload

@@ -1,8 +1,8 @@
 # Kubes del editor de kubes puestos en el mundo (EditorKubes, anadido del port). Solo en las partidas creativas: los .kube de la
 # carpeta kubes (creados en el editor o dejados alli) salen al final de la paleta, con una esquina cian, y se ponen y se rompen
-# como los demas bloques. La partida los guarda por el nombre de su archivo en un campo aparte (editorKubes): en los campos de
-# siempre quedan aire y casillas vacias, lo que ve una version sin ellos. Al cargar, un kube retocado sale con su dibujo nuevo
-# y uno borrado pasa a aire. En supervivencia de una partida creativa son bloques como los demas; en aventura no estan.
+# como los demas bloques. La partida los guarda por su nombre ("editor:<archivo>#<variante>", SaveNames). Al cargar, un kube
+# retocado sale con su dibujo nuevo y uno cuyo archivo ya no esta pasa a un kube misterioso que conserva su nombre (vuelve si se
+# vuelve a poner el archivo). En supervivencia de una partida creativa son bloques como los demas; en aventura no estan.
 # Uso: powershell -File port/dev/devrun.ps1 -Script port/dev/kubes_editeur_monde.txt -Timeout 900 -Extra "--lang=fr"
 # Capturas port/out/edkubes_*.png
 wait 3
@@ -90,7 +90,7 @@ mine 64 62 57
 wait 30
 print block 64 62 57
 print drops
-# 5) se guardan aparte: aire en los campos de siempre y ningun bloque desconocido sin ellos
+# 5) se guardan por su nombre (edsave: celdas y casillas que los usan, ninguno en un bloque de remplazo ni desconocido)
 savegame
 print edsave
 print inv
@@ -109,7 +109,7 @@ lookat 65.5 62.5 57.5
 wait 20
 shot edkubes_recarga
 # 7) retocado en el editor (otro color y otro nombre, el mismo archivo) y otro borrado: al cargar, la piedra sale naranja y el
-# cristal desaparece del terreno y del inventario
+# cristal pasa a kube misterioso en el terreno y en el inventario
 edkube make test-pierre cube opaque FFFF8020 Pierre orange test
 edkube delete test-verre
 reload

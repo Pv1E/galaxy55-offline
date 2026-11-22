@@ -1,20 +1,20 @@
-# Partidas con bloques que esta version no conoce (UnknownBlocks: las guardo una version con mas bloques y cargarlas fallaba en
-# InvBar). Al jugarla desde la lista se pregunta: No la deja como estaba; Si la copia en saves/backups, borra esos bloques (las
-# celdas pasan a aire, las casillas se vacian), la guarda y la carga con un aviso de lo borrado y de donde esta la copia.
-# Necesita port/out/testdata/desconocidos/<id>.json (y su .png): una copia de una partida asi, por ejemplo una de la rama de
-# Grey Haven (bloques 296 y 297). La otra la hace unknownsave con bloques desconocidos en cada sitio. Mira los desconocidos_*.png
+# Partidas con bloques que esta version no conoce (UnknownBlocks: las guardo una version con mas bloques). Al leerlas pasan a
+# bloques de remplazo (SaveNames: con el aspecto de BKubeMystery) que se vuelven a escribir con su nombre: no se pierden aunque se
+# juegue y se guarde. Al jugarla desde la lista se avisa: No vuelve a la lista sin tocar nada; Si la carga.
+# Dos partidas: una de antes (.json) con los bloques 400 y 401 en el inventario (port/headless/fixtures/legacy_desconocidos.json,
+# se migra al jugarla) y la que hace unknownsave con BDesconocido1..3 en cada sitio que guarda bloques. Mira los desconocidos_*.png
 wait 3
 devsaves 0
 # fabricada desde la partida de prueba (antes de ir al menu, que la necesita en curso)
 unknownsave Todos los sitios
 menu
 waitfor menu
-savecopy port/out/testdata/desconocidos/20261107_214850_764.json
+savecopy port/headless/fixtures/legacy_desconocidos.json
 screen load
 wait 3
 print unknown
 print menu
-# Intro en la primera fila (la copia): la ventana, con el foco en No; en ingles y en espanol, Esc = No
+# Intro en la primera fila (la de antes): la ventana, con el foco en No; en ingles y en espanol, Esc = No
 setlang en
 screen load
 wait 3
@@ -32,7 +32,7 @@ wait 3
 shot desconocidos_ventana_es
 tap esc
 wait 2
-# en frances, Intro en No: vuelve a la lista y nada cambia (mismo md5, ninguna copia)
+# en frances, Intro en No: vuelve a la lista y nada cambia (sigue siendo un .json, mismo md5, sin copia en backups)
 setlang fr
 screen load
 wait 3
@@ -44,7 +44,7 @@ tap enter
 wait 3
 print menu
 print unknown
-# otra vez y Si (abajo, como en Borrar): la copia existe (con el md5 de antes), la partida se carga sin esos bloques y sale el aviso
+# otra vez y Si (abajo, como en Borrar): se migra (el .json a saves/backups) y se carga con kubes misteriosos en el inventario
 tap enter
 wait 3
 tap down
@@ -54,13 +54,12 @@ tap enter
 waitfor planet
 wait 20
 print inv
-print unknown
-shot desconocidos_aviso
-wait 120
-shot desconocidos_aviso_tarde
-# la fabricada (tercera fila: la copia se guardo al ir al menu, despues la de prueba): Si y se carga
+shot desconocidos_cargada
+# guardada al volver al menu: siguen con su nombre
 menu
 waitfor menu
+print unknown
+# la fabricada (tercera fila: la de prueba se guardo al ir al menu, despues de ella): Si y se carga con kubes misteriosos en cada sitio
 screen load
 wait 3
 tap down
@@ -79,12 +78,17 @@ wait 20
 print inv
 print ship
 print unknown
-shot desconocidos_todos_aviso
-# la partida limpia ya no pregunta
+shot desconocidos_todos_cargada
+# guardada y vuelta a leer: los mismos nombres en los mismos sitios
 menu
 waitfor menu
+print unknown
+# la de prueba (tercera fila: las otras dos se acaban de guardar) no tiene ninguno: no pregunta
 screen load
 wait 3
+tap down
+tap down
+wait 2
 tap enter
 waitfor planet
 wait 5
