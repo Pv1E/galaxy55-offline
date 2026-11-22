@@ -1,0 +1,4 @@
+-cp port/net
+-cp port/headless
+-main CryptoTest
+-hl port/out/crypto_test.hl

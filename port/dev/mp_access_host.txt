@@ -1,0 +1,38 @@
+# multijugador (anadido del port), con port/dev/mp_chat_guest.txt: Licencias > Abrir a otros exploradores del anfitrion, con
+# el invitado en la lista de invitados. multirun.ps1 -ScriptList "a,b"
+setlang fr
+waitfor planet
+mp host 55198
+waitfor map 6000
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+mp access 0 1
+waitfor mpplayers2 9000
+wait 60
+mp invite 0 2 0
+waitfor mpremotes1 9000
+wait 120
+licenses open
+wait 10
+print menu
+shot mp_licencias
+button 0
+wait 60
+print menu
+shot mp_accesos
+# con el raton encima, la fila del invitado muestra sus botones (Pasar a visitante, Quitar); Invitar abre la ventana con el
+# papel y lo que puede hacer
+mouse 640 425
+wait 10
+shot mp_accesos_fila
+mouse 280 645 click
+wait 10
+shot mp_accesos_invitar
+tap esc
+wait 10
+wait 200
+mp leave
+waitfor mpend 600

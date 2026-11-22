@@ -1,4 +1,7 @@
 import Ui;
+import MultiServers;
+import ChatBox;
+import Msg;
 import SaveData.SaveInfo;
 
 enum State {
@@ -56,7 +59,9 @@ class SaveRow extends Widget {
 		Theme.text(this, info.name, 2.4, Theme.TEXT, 190, 10);
 		var size = Comets.isComet(info.biome) ? Comets.SIZE : 128 * info.sizeChunks;
 		var where = info.inSpace == true || (info.uni != null && info.uni.space == true) ? Lang.t("save.space") : Lang.t("biome." + info.biome) + "  ·  " + size + "x" + size;
-		Theme.text(this, where + "  ·  " + Lang.t("seed") + " " + info.seed + (info.creative == true ? "  ·  " + Lang.t(info.survival == true ? "mode.creative.survival" : "mode.creative") : ""), 1.7, Theme.CYAN, 190, 48);
+		Theme.text(this, where + "  ·  " + Lang.t("seed") + " " + info.seed + (info.creative == true ? "  ·  " + Lang.t(info.survival == true ? "mode.creative.survival" : "mode.creative") : "")
+			// multijugador: la partida tiene servidor (se juega con el)
+			+ (sys.FileSystem.exists(SaveData.dir() + "/" + info.id + ".serveur") ? "  ·  " + Lang.t("mp.title") : ""), 1.7, Theme.CYAN, 190, 48);
 		Theme.text(this, Lang.t("played") + " " + Lang.duration(info.playSeconds) + "   " + Lang.t("saved") + " " + Lang.date(info.saved), 1.5, Theme.DIM, 190, 74);
 		var ver = versions(info);
 		if( ver != null ) {
@@ -209,10 +214,14 @@ class GalaxyApp extends hxd.App {
 	static inline var W = Theme.W;
 	static inline var H = Theme.H;
 	static inline var TITLE = "Galaxy 55 (offline)";
-	/** version del juego: la del menu principal y la que se apunta en las partidas guardadas (SaveData); se cambia en cada release */
-	public static inline var VERSION = "0.9";
+	/**
+	 * version del juego: la del menu principal y la que se apunta en las partidas guardadas (SaveData). Se cambia en cada release,
+	 * en GameVersion (port/core: el servidor multijugador solo deja entrar a la misma version)
+	 */
+	public static inline var VERSION = GameVersion.VERSION;
 	/** el juego corre en pruebas (--script o --shot): no se mueve el cursor del sistema (centerMouse) */
 	static var TEST_RUN = Lambda.exists(Sys.args(), a -> StringTools.startsWith(a, "--shot=") || StringTools.startsWith(a, "--script="));
+	static var FIXED_DT = { var v = 0.; for( a in Sys.args() ) if( StringTools.startsWith(a, "--fixeddt=") ) v = Std.parseFloat(a.substr(10)); v; };
 	/** color de fx.Load */
 	static inline var LOAD_COLOR = 0xC93814;
 	static var BIOMES = ["BIAutumn", "BIMoon", "BIMars", "BIWinterPeaks", "BIAcidForest"];
@@ -238,6 +247,10 @@ class GalaxyApp extends hxd.App {
 	var loadWorld : World;
 	var loadInfo : SaveInfo;
 	var game : GameView;
+	/** partida multijugador en curso (anadido del port): su servidor si hospeda y su cliente; null en solo */
+	public var mp : MultiSession;
+	/** multijugador: partida que espera los datos del planeta pedido al servidor (landOnPlanet) */
+	var pendingLand : SaveInfo;
 	var pad : hxd.Pad;
 
 	var ui : h2d.Object;
@@ -340,6 +353,7 @@ class GalaxyApp extends hxd.App {
 
 	override function init() {
 		var tInit = haxe.Timer.stamp();
+		GameRng.applyArgs();
 		PortRules.apply();
 		for( a in Sys.args() ) {
 			if( StringTools.startsWith(a, "--shot=") ) shotPath = a.substr(7);
@@ -361,6 +375,10 @@ class GalaxyApp extends hxd.App {
 			else if( StringTools.startsWith(a, "--lang=") ) Lang.setCode(a.substr(7));
 		}
 		Theme.init();
+		// lo del juego que usan los datos (port/core) sin depender de la interfaz
+		Settings.keysLoad = function( o ) Keys.load(o);
+		Settings.keysSave = function() return Keys.save();
+		SaveData.serverEncode = EditorKubes.encodeForServer;
 		Settings.load();
 		// tarjeta grafica y driver (anadido del port), para los reportes de fallos de dibujo: gpu.txt junto a las partidas
 		try sys.io.File.saveContent(Settings.dir() + "/gpu.txt", engine.driver.getDriverName(true) + "\n") catch( e : Dynamic ) {}
@@ -553,6 +571,9 @@ class GalaxyApp extends hxd.App {
 				case "escorp": buildEscorp();
 				case "upgrades": buildUpgrades();
 				case "kubes": buildKubes();
+				case "multi": buildMulti();
+				case "mpoptions": buildMpOptions();
+				case "mpaccess": buildMpAccess();
 				default: null;
 			}
 			screens.set(name, s);
@@ -581,7 +602,7 @@ class GalaxyApp extends hxd.App {
 		gradientPanel(s, 900);
 		titleBlock(s, 110, 80, 7.5);
 		var saves = SaveData.list();
-		var y = 300.;
+		var y = 280.;
 		// Continuar abre la lista de partidas, con la mas reciente elegida
 		var cont = new Button(s, Lang.t("continue"));
 		cont.enabled = saves.length > 0;
@@ -590,19 +611,23 @@ class GalaxyApp extends hxd.App {
 		var nw = new Button(s, Lang.t("new"));
 		nw.onActivate = function() show("new");
 		s.add(nw, 110, y + 64);
+		// anadido del port: partidas multijugador (servidores guardados, red local, crear una)
+		var mu = new Button(s, Lang.t("mp.title"));
+		mu.onActivate = function() show("multi");
+		s.add(mu, 110, y + 128);
 		// anadido del port: dibujar kubes nuevos para enviarlos (KubeEditor)
 		var kb = new Button(s, Lang.t("kubes"));
 		kb.onActivate = function() show("kubes");
-		s.add(kb, 110, y + 128);
+		s.add(kb, 110, y + 192);
 		var op = new Button(s, Lang.t("options"));
 		op.onActivate = function() show("options");
-		s.add(op, 110, y + 192);
+		s.add(op, 110, y + 256);
 		var q = new Button(s, Lang.t("quit"));
 		q.onActivate = function() quit();
-		s.add(q, 110, y + 256);
+		s.add(q, 110, y + 320);
 		if( saves.length > 0 ) {
 			var l = saves[0];
-			Theme.text(s, Lang.t("lastgame") + ": " + l.name + "  ·  " + Lang.duration(l.playSeconds), 1.5, Theme.DIM, 112, y + 330);
+			Theme.text(s, Lang.t("lastgame") + ": " + l.name + "  ·  " + Lang.duration(l.playSeconds), 1.5, Theme.DIM, 112, y + 390);
 		}
 		versionText = Theme.text(s, "v" + VERSION + " · port nativo", 1.4, Theme.DISABLED, W - 190, 690);
 		anchorToWindow();
@@ -610,6 +635,833 @@ class GalaxyApp extends hxd.App {
 		return s;
 	}
 
+
+	// ---------------------------------------------------------------- multijugador: pantallas (anadido del port)
+
+	var probe : ServerProbe;
+	var probeAcc = 0.;
+	/** servidor al que se esta entrando (su huella se guarda al entrar; con contrasena se vuelve a intentar) */
+	var joining : SavedServer;
+	var tutoAsked = false;
+	var waitScreen : Screen;
+	/** mensajes del chat de la sesion ya mostrados */
+	var chatShown = 0;
+
+	/** Multijugador: servidores guardados y partidas de la red local, con su estado; anadir, crear, pseudo */
+	function buildMulti() : Screen {
+		var s = new ServerListScreen(ui);
+		var bg = new h2d.Graphics(s);
+		Theme.fullRect(bg, 0x000000, 0.4);
+		Theme.rect(bg, 110, 40, 1060, 640, Theme.PANEL, 0.94);
+		Theme.rect(bg, 110, 40, 1060, 4, Theme.ACCENT);
+		var t = Theme.text(s, Lang.t("mp.title"), 3.2, Theme.TEXT, 0, 56);
+		t.x = (W - t.textWidth * t.scaleX) * 0.5;
+		if( probe == null ) probe = new ServerProbe();
+		var saved = MultiServers.load();
+		var savedKeys = [for( e in saved ) MultiServers.key(e.host, e.port) => true];
+		var lanKeys = [for( k in probe.lan.keys() ) if( !savedKeys.exists(k) && probe.fresh(k) != null ) k];
+		lanKeys.sort(Reflect.compare);
+		var shown = new Array<{ row : ServerRow, key : String }>();
+		for( k in lanKeys ) {
+			var st = probe.results.get(k);
+			var row = new ServerRow(s, st.name, k, ["join", "add"], true);
+			s.rows.push(row);
+			s.add(row, s.listX, s.listY);
+			shown.push({ row : row, key : k });
+			var st0 = st;
+			row.onAction = function( a ) switch( a ) {
+				case "add": askServer(s, null, { name : st0.name, host : st0.host, port : st0.port });
+				default: joinServer({ name : st0.name, host : st0.host, port : st0.port });
+			};
+		}
+		for( e in saved ) {
+			var k = MultiServers.key(e.host, e.port);
+			var row = new ServerRow(s, e.name, k, ["join", "edit", "delete"], false);
+			s.rows.push(row);
+			s.add(row, s.listX, s.listY);
+			shown.push({ row : row, key : k });
+			var e0 = e;
+			row.onAction = function( a ) switch( a ) {
+				case "edit": askServer(s, e0, null);
+				case "delete":
+					askConfirm(s, Lang.t("mp.delete.ask").split("%name%").join(e0.name), "", Theme.DANGER, function() {
+						var l = MultiServers.load().filter(function(x) return !(x.host == e0.host && x.port == e0.port));
+						MultiServers.save(l);
+						reopenMulti();
+					});
+				default: joinServer(e0);
+			};
+		}
+		s.layout();
+		if( s.rows.length == 0 ) {
+			var n = Theme.text(s, Lang.t("mp.none"), 2.0, Theme.DIM, 0, 260);
+			n.x = (W - n.textWidth * n.scaleX) * 0.5;
+		}
+		var add = new Button(s, Lang.t("mp.add"), 300, 48);
+		s.add(add, 130, 556);
+		add.onActivate = function() askServer(s, null, null);
+		var create = new Button(s, Lang.t("mp.create"), 300, 48);
+		s.add(create, 450, 556);
+		create.onActivate = function() askCreate(s);
+		var pseudo = new TextField(s, Lang.t("mp.pseudo"), Settings.myPseudo(), 380, 48, 210);
+		pseudo.maxLen = Msg.NAME_MAX;
+		s.add(pseudo, 770, 556);
+		pseudo.onEnter = function() {
+			var p = StringTools.trim(pseudo.text);
+			if( p != "" ) {
+				Settings.pseudo = p;
+				Settings.save();
+			}
+			pseudo.text = Settings.myPseudo();
+		};
+		var back = new Button(s, Lang.t("back"), 300, 48);
+		s.add(back, (W - 300) * 0.5, 618);
+		back.onActivate = function() show("main");
+		s.onBack = function() show("main");
+		var hint = Theme.text(s, Lang.t("mp.identity"), 1.3, Theme.DIM, 130, 534);
+		hint.maxWidth = 1020 / hint.scaleX;
+		// sondas: al abrir y cada 3 s; una partida nueva de la red local rehace la lista
+		probe.broadcast();
+		for( e in saved ) probe.probe(e.host, e.port);
+		var opened = haxe.Timer.stamp();
+		probeAcc = 0;
+		s.onTick = function( dt ) {
+			probe.pump();
+			for( r in shown ) r.row.setStatus(probe.results.get(r.key), haxe.Timer.stamp() - opened > 2);
+			for( k in probe.lan.keys() )
+				if( !savedKeys.exists(k) && lanKeys.indexOf(k) < 0 && probe.fresh(k) != null && current == s && s.active ) {
+					reopenMulti();
+					return;
+				}
+			probeAcc += dt;
+			if( probeAcc > 3 ) {
+				probeAcc = 0;
+				probe.broadcast();
+				for( e in saved ) probe.probe(e.host, e.port);
+			}
+		};
+		return s;
+	}
+
+	function reopenMulti() {
+		var old = screens.get("multi");
+		var at = old != null ? old.focus : 0;
+		screens.remove("multi");
+		if( old != null ) old.remove();
+		show("multi");
+		var s = cast(current, ServerListScreen);
+		if( at < s.rows.length ) s.setFocus(at);
+	}
+
+	/** anadir (e = null, con from si viene de la red local) o modificar un servidor guardado: nombre y direccion */
+	function askServer( parent : Screen, e : SavedServer, from : SavedServer ) {
+		if( modal != null && modal.parent != null ) return;
+		parent.active = false;
+		var m = new Screen(ui);
+		var bg = new h2d.Graphics(m);
+		Theme.fullRect(bg, 0x000000, 0.55);
+		Theme.rect(bg, 290, 190, 700, 340, Theme.PANEL, 1);
+		Theme.rect(bg, 290, 190, 700, 4, Theme.ACCENT);
+		var t = Theme.text(m, Lang.t(e == null ? "mp.server.add" : "mp.server.edit"), 2.4, Theme.TEXT, 0, 218);
+		t.x = (W - t.textWidth * t.scaleX) * 0.5;
+		var src = e != null ? e : from;
+		var name = new TextField(m, Lang.t("mp.server.name"), src != null ? src.name : "", 620, 54, 380);
+		name.maxLen = 32;
+		var addr = new TextField(m, Lang.t("mp.server.address"), src != null ? (src.port == MultiServers.PORT ? src.host : src.host + ":" + src.port) : "", 620, 54, 380);
+		addr.maxLen = 64;
+		var err = Theme.text(m, "", 1.5, Theme.DANGER, 330, 400);
+		var cancel = new Button(m, Lang.t("cancel"), 250, 52);
+		var ok = new Button(m, Lang.t("accept"), 250, 52);
+		m.add(name, 330, 268);
+		m.add(addr, 330, 334);
+		m.add(cancel, 380, 440);
+		m.add(ok, 650, 440);
+		var close = function() {
+			m.remove();
+			parent.active = true;
+		};
+		var accept = function() {
+			var a = MultiServers.parseAddress(addr.text);
+			if( a == null ) {
+				err.text = Lang.t("mp.server.bad");
+				return;
+			}
+			var n = StringTools.trim(name.text);
+			if( n == "" ) n = a.host;
+			var l = MultiServers.load();
+			if( e != null ) l = l.filter(function(x) return !(x.host == e.host && x.port == e.port));
+			var fp = e != null && e.host == a.host && e.port == a.port ? e.fp : null;
+			l.push({ name : n, host : a.host, port : a.port, fp : fp });
+			MultiServers.save(l);
+			m.remove();
+			reopenMulti();
+		};
+		name.onEnter = function() addr.startTyping();
+		addr.onEnter = accept;
+		ok.onActivate = accept;
+		cancel.onActivate = close;
+		m.onBack = close;
+		m.setFocus(0);
+		name.startTyping();
+		modal = m;
+	}
+
+	/** ventana de espera (conectando...) con Cancelar */
+	function showWaiting( text : String ) {
+		closeWaiting();
+		if( current != null ) current.active = false;
+		var m = new Screen(ui);
+		var bg = new h2d.Graphics(m);
+		Theme.fullRect(bg, 0x000000, 0.55);
+		Theme.rect(bg, 340, 260, 600, 200, Theme.PANEL, 1);
+		Theme.rect(bg, 340, 260, 600, 4, Theme.ACCENT);
+		var t = Theme.text(m, text, 2.2, Theme.TEXT, 0, 300);
+		t.x = (W - t.textWidth * t.scaleX) * 0.5;
+		var cancel = new Button(m, Lang.t("cancel"), 250, 52);
+		m.add(cancel, (W - 250) * 0.5, 380);
+		var stop = function() {
+			if( mp != null ) mp.close();
+			closeWaiting();
+		};
+		cancel.onActivate = stop;
+		m.onBack = stop;
+		m.setFocus(0);
+		waitScreen = m;
+		modal = m;
+	}
+
+	function closeWaiting() {
+		if( waitScreen == null ) return;
+		waitScreen.remove();
+		if( modal == waitScreen ) modal = null;
+		waitScreen = null;
+		if( current != null ) current.active = true;
+	}
+
+	/** unirse a un servidor guardado o de la red local */
+	function joinServer( e : SavedServer, password = "" ) {
+		if( mp != null ) return;
+		joining = e;
+		tutoAsked = false;
+		var m = MultiSession.join(e.host, e.port, password, e.fp);
+		startMulti(m);
+		showWaiting(Lang.t("mp.connecting"));
+	}
+
+	/** cada imagen con una partida multijugador: el fin de la conexion, la primera vez (tutorial), la huella del servidor */
+	function mpWatch() {
+		if( mp == null ) return;
+		if( mp.ended != null ) {
+			endMulti();
+			return;
+		}
+		if( !mp.isPlaying() ) return;
+		// avisos del servidor (invitaciones, cesiones...) y las entradas y salidas de los demas: arriba, como los demas avisos
+		while( mp.notices.length > 0 ) {
+			var n = mp.notices.shift();
+			showToast(Lang.t(n.key).split("%n%").join(n.args.length > 0 ? n.args[0] : ""), 5);
+		}
+		while( chatShown < mp.chat.length ) {
+			var c = mp.chat[chatShown];
+			// un mensaje de alguien espera a que haya chat (al empezar a jugar)
+			if( c.chan != CServer && chatBox == null ) break;
+			chatShown++;
+			if( c.chan == CServer ) {
+				if( (c.msg == "join" || c.msg == "leave") && c.name != mp.myName ) showToast(Lang.t("mp." + c.msg).split("%n%").join(c.name), 4);
+			} else if( chatBox != null ) {
+				var tag = c.chan == CPlanet ? "[" + Lang.t("mp.chat.planet") + "] " : c.chan == CPrivate ? "[" + Lang.t("mp.chat.private") + "] " : "";
+				chatBox.add(tag + c.name + " : " + c.msg, c.chan == CPrivate ? Theme.ACCENT : c.chan == CPlanet ? Theme.CYAN : Theme.TEXT);
+			}
+		}
+		if( joining != null && mp.fingerprint != null && joining.fp != mp.fingerprint ) {
+			joining.fp = mp.fingerprint;
+			var l = MultiServers.load();
+			for( x in l ) if( x.host == joining.host && x.port == joining.port ) x.fp = mp.fingerprint;
+			MultiServers.save(l);
+		}
+		if( mp.firstTime && mp.autoNewGame == null && !tutoAsked && game == null && state == Menu ) {
+			tutoAsked = true;
+			closeWaiting();
+			askConfirm(current, Lang.t("mp.tuto.ask"), Lang.t("mp.tuto.warn"), Theme.ACCENT, function() {
+				mp.client.send(CNewGame(true));
+				showWaiting(Lang.t("mp.connecting"));
+			}, function() {
+				if( mp != null && mp.isPlaying() && waitScreen == null && game == null && spaceInfo == null ) {
+					mp.client.send(CNewGame(false));
+					showWaiting(Lang.t("mp.connecting"));
+				}
+			});
+		}
+	}
+
+
+	/** chat y lista de jugadores de la partida multijugador (ChatBox, PlayerList) */
+	var chatBox : ChatBox;
+	var playerList : PlayerList;
+	var tabHeld = 0.;
+	var chatWasTyping = false;
+	var listStamp = -1.;
+
+	/** cada imagen: el chat (T para escribir, jugando) y la lista de jugadores (Tab mantenido), jugando y en el mapa */
+	function mpOverlay( dt : Float ) {
+		var on = mp != null && mp.isPlaying() && (state == Playing || state == Exploring || state == Paused);
+		if( !on ) {
+			if( chatBox != null ) {
+				chatBox.remove();
+				chatBox = null;
+			}
+			if( playerList != null ) {
+				playerList.remove();
+				playerList = null;
+			}
+			return;
+		}
+		if( chatBox == null ) {
+			chatBox = new ChatBox(s2d);
+			chatBox.onSend = function( chan, to, text ) {
+				if( mp == null || !mp.isPlaying() ) return;
+				if( chan == CPrivate ) {
+					var id = -1;
+					for( p in mp.players ) if( p.name.toLowerCase() == to.toLowerCase() ) id = p.id;
+					if( id < 0 ) {
+						showToast(Lang.t("mp.chat.nobody"), 3);
+						return;
+					}
+					mp.say(text, CPrivate, id);
+				} else mp.say(text, chan);
+			};
+			playerList = new PlayerList(s2d);
+		}
+		chatBox.visible = state != Paused;
+		chatBox.update(dt);
+		if( !chatBox.typing && state == Playing && game != null && !paletteOpen && chest == null && (modal == null || modal.parent == null)
+			&& hxd.Key.isPressed(hxd.Key.T) && chatBox.stoppedFrame != hxd.Timer.frameCount ) {
+			chatBox.open();
+			captureMouse(false);
+		}
+		if( chatWasTyping && !chatBox.typing && state == Playing && game != null && !paletteOpen && chest == null ) captureMouse(true);
+		chatWasTyping = chatBox.typing;
+		// Tab mantenido (un toque sigue siendo el excavador): la lista de jugadores
+		tabHeld = !chatBox.typing && state != Paused && hxd.Key.isDown(hxd.Key.TAB) ? tabHeld + dt : 0;
+		var show = tabHeld > 0.25;
+		if( show && (!playerList.visible || haxe.Timer.stamp() - listStamp > 1) ) {
+			playerList.refresh(mp.players, mp.myId);
+			listStamp = haxe.Timer.stamp();
+		}
+		playerList.visible = show;
+		if( show ) s2d.addChild(playerList);
+	}
+
+	/**
+	 * Pausa > Opciones multijugador (anadido del port): los jugadores conectados (papel y sitio) para todos; para los
+	 * gestionnaires, en cada uno nombrar o destituir, expulsar y prohibir (nunca al propietario), bascular su propio modo, y las
+	 * opciones del servidor (nombre, contrasena, red local, equipo al suelo). Todo pasa por el servidor (CAdmin, CSetMode).
+	 */
+	function buildMpOptions() : Screen {
+		var s = new ServerListScreen(ui);
+		hud.visible = false;
+		msgText.visible = false;
+		s.listY = 110;
+		s.VISIBLE = 3;
+		var bg = new h2d.Graphics(s);
+		Theme.fullRect(bg, 0x000000, 0.4);
+		Theme.rect(bg, 110, 30, 1060, 660, Theme.PANEL, 0.96);
+		Theme.rect(bg, 110, 30, 1060, 4, Theme.ACCENT);
+		var t = Theme.text(s, Lang.t("mp.options"), 3.0, Theme.TEXT, 0, 44);
+		t.x = (W - t.textWidth * t.scaleX) * 0.5;
+		if( mp == null || !mp.isPlaying() ) return s;
+		var manager = mp.isManager();
+		var l = [for( p in mp.players ) p];
+		l.sort(function(a, b) return a.role != b.role ? b.role - a.role : Reflect.compare(a.name.toLowerCase(), b.name.toLowerCase()));
+		for( p in l ) {
+			var me = p.id == mp.myId;
+			var acts = !manager || me || p.role == (Owner : Int) ? [] : [p.role == (Manager : Int) ? "demote" : "promote", "kick", "ban"];
+			var role = p.role == (Owner : Int) ? Lang.t("mp.role.owner") : p.role == (Manager : Int) ? Lang.t("mp.role.manager") : Lang.t("mp.role.player");
+			var row = new ServerRow(s, p.name + (me ? "  " + Lang.t("mp.you") : ""), role, acts, false);
+			row.setInfo(PlayerList.placeName(p.place), Theme.DIM);
+			s.rows.push(row);
+			s.add(row, s.listX, s.listY);
+			var id = p.id, name = p.name;
+			row.onAction = function( a ) {
+				if( mp == null || !mp.isPlaying() ) return;
+				switch( a ) {
+				case "promote", "demote":
+					mp.client.send(CAdmin(a == "promote" ? APromote : ADemote, id, ""));
+					haxe.Timer.delay(reopenMpOptions, 400);
+				case "kick", "ban":
+					askConfirm(s, Lang.t("mp.admin." + a + ".ask").split("%n%").join(name), "", Theme.DANGER, function() {
+						if( mp != null ) mp.client.send(CAdmin(a == "kick" ? AKick : ABan, id, ""));
+						haxe.Timer.delay(reopenMpOptions, 400);
+					});
+				default:
+				}
+			};
+		}
+		s.layout();
+		var y = 430.;
+		if( manager ) {
+			var info = mp.serverInfo;
+			var mode = new Button(s, Lang.t(game != null && game.creative ? "mp.mode.tosurvival" : "mp.mode.tocreative"), 340, 48);
+			s.add(mode, 130, y);
+			mode.onActivate = function() {
+				switchMode();
+				haxe.Timer.delay(reopenMpOptions, 400);
+			};
+			var name = new TextField(s, Lang.t("mp.create.name"), info != null ? info.name : mp.serverName, 680, 48, 320);
+			name.maxLen = Msg.SERVER_NAME_MAX;
+			s.add(name, 490, y);
+			name.onEnter = function() if( mp != null ) mp.client.send(CAdmin(AServerName, 0, StringTools.trim(name.text)));
+			// el anfitrion (su servidor esta en este juego) cambia tambien el puerto: Intro y se escucha en el nuevo
+			var host = mp.server;
+			var pw = new TextField(s, Lang.t(info != null && info.password ? "mp.password.change" : "mp.password.set"), "", host != null ? 680 : 1040, 48, 300);
+			pw.maxLen = 64;
+			s.add(pw, 130, y + 56);
+			pw.onEnter = function() if( mp != null ) mp.client.send(CAdmin(APassword, 0, pw.text));
+			if( host != null ) {
+				var port = new TextField(s, Lang.t("mp.create.port"), host.listening ? "" + host.port : "", 340, 48, 120);
+				port.maxLen = 5;
+				s.add(port, 830, y + 56);
+				port.onEnter = function() changeHostPort(port.text);
+			}
+			var lan = new CheckBox(s, Lang.t("mp.create.lan"), info == null || info.lan, 510, 48);
+			s.add(lan, 130, y + 112);
+			lan.onChange = function( v ) if( mp != null ) mp.client.send(CAdmin(ALanVisible, 0, v ? "1" : "0"));
+			var drop = new CheckBox(s, Lang.t("deathdrop.option"), info == null || info.deathDrop, 510, 48);
+			s.add(drop, 660, y + 112);
+			drop.onChange = function( v ) if( mp != null ) mp.client.send(CAdmin(ADeathDrop, 0, v ? "1" : "0"));
+		}
+		var back = new Button(s, Lang.t("back"), 300, 48);
+		s.add(back, (W - 300) * 0.5, 622);
+		back.onActivate = function() show("pause");
+		s.onBack = function() show("pause");
+		return s;
+	}
+
+	/** Pausa > Opciones del multijugador, campo Puerto del anfitrion: su servidor escucha en el nuevo (GameServer.setPort) */
+	function changeHostPort( text : String ) {
+		if( mp == null || mp.server == null ) return;
+		var p = Std.parseInt(StringTools.trim(text));
+		if( p == null || p <= 0 || p > 65535 ) {
+			showToast(Lang.t("mp.server.bad"));
+			return;
+		}
+		var err = mp.server.setPort(p);
+		if( err != null ) {
+			showToast(Lang.t("mp.port.fail").split("%n%").join("" + p).split("%e%").join(err), 6);
+			return;
+		}
+		Settings.hostPort = p;
+		Settings.save();
+		showToast(Lang.t("mp.port.changed").split("%n%").join("" + p), 4);
+	}
+
+	function reopenMpOptions() {
+		if( currentName != "mpoptions" ) return;
+		var old = screens.get("mpoptions");
+		screens.remove("mpoptions");
+		if( old != null ) old.remove();
+		show("mpoptions");
+	}
+
+	/** derechos en el planeta en el que se juega (SPlanetData, SRights): con ROwner, la pantalla de accesos en las licencias */
+	var mpRights = 0;
+	/** accesos del planeta propio que se esta mirando (SAccess) */
+	var accessState : { pid : Int, open : Bool, allVisitors : Bool, serverVisit : Bool, vr : Int, guests : Array<NetGuest> };
+	var accessPid = -1;
+	var accessName = "";
+
+	/** Licencias > Abrir a otros exploradores (anadido del port): pide los accesos del planeta pid al servidor y los ensena */
+	function openAccess( pid : Int, name : String ) {
+		if( mp == null || !mp.isPlaying() ) return;
+		accessPid = pid;
+		accessName = name;
+		accessState = null;
+		mp.client.send(CGetAccess(pid));
+		reopenAccess(true);
+	}
+
+	function reopenAccess( force = false ) {
+		if( !force && currentName != "mpaccess" ) return;
+		var old = screens.get("mpaccess");
+		screens.remove("mpaccess");
+		if( old != null ) old.remove();
+		show("mpaccess");
+	}
+
+	/**
+	 * Accesos de un planeta propio: abierto o cerrado a los exploradores (cerrar quita el acceso a todos pero guarda lo demas),
+	 * todos los invitados como visitantes, visita de todo el servidor (solo gestionnaires), lo que pueden hacer los visitantes
+	 * (cantinas, bloques que se activan, recoger: desmarcado de entrada), los invitados con su papel (Explorador o Visitante) y
+	 * quitarlos, invitar a un jugador conectado y ceder el titulo de explotacion. Abandonar esta en el mapa.
+	 */
+	function buildMpAccess() : Screen {
+		var s = new ServerListScreen(ui);
+		// el juego sigue detras (multijugador), sin su ayuda encima
+		hud.visible = false;
+		msgText.visible = false;
+		s.listY = 380;
+		s.VISIBLE = 2;
+		var bg = new h2d.Graphics(s);
+		Theme.fullRect(bg, 0x000000, 0.4);
+		Theme.rect(bg, 110, 30, 1060, 660, Theme.PANEL, 0.96);
+		Theme.rect(bg, 110, 30, 1060, 4, Theme.ACCENT);
+		var t = Theme.text(s, Lang.t("mp.access.title").split("%name%").join(accessName), 2.8, Theme.TEXT, 0, 44);
+		t.x = (W - t.textWidth * t.scaleX) * 0.5;
+		var back = new Button(s, Lang.t("back"), 300, 48);
+		var leave = function() show("licenses");
+		back.onActivate = leave;
+		s.onBack = leave;
+		var a = accessState;
+		if( a == null || a.pid != accessPid || mp == null ) {
+			var w = Theme.text(s, Lang.t("mp.status.wait"), 2.0, Theme.DIM, 0, 300);
+			w.x = (W - w.textWidth * w.scaleX) * 0.5;
+			s.add(back, (W - 300) * 0.5, 620);
+			return s;
+		}
+		var pid = a.pid;
+		function send( open : Bool, allV : Bool, serverV : Bool, vr : Int ) if( mp != null ) mp.client.send(CAccess(pid, open, allV, serverV, vr));
+		// lo que es cada papel, arriba: sin esto no se entendia que el visitante solo mira y el explorador construye
+		Theme.text(s, Lang.t("mp.access.help.explorer"), 1.4, Theme.DIM, 132, 92);
+		Theme.text(s, Lang.t("mp.access.help.visitor"), 1.4, Theme.DIM, 132, 116);
+		var open = new CheckBox(s, Lang.t("mp.access.open"), a.open, 510, 48);
+		var allV = new CheckBox(s, Lang.t("mp.access.allvisitors"), a.allVisitors, 510, 48);
+		s.add(open, 130, 148);
+		s.add(allV, 660, 148);
+		var serverV : CheckBox = null;
+		if( mp.isManager() ) {
+			// la casilla con un texto corto y lo demas al lado, en pequeno (el texto entero no cabia en la casilla)
+			serverV = new CheckBox(s, Lang.t("mp.access.servervisit"), a.serverVisit, 510, 48);
+			s.add(serverV, 130, 202);
+			var note = Theme.text(s, Lang.t("mp.access.servervisit.note"), 1.3, Theme.DIM, 662, 204);
+			note.maxWidth = 490 / note.scaleX;
+		}
+		Theme.text(s, Lang.t("mp.access.visitors"), 1.6, Theme.CYAN, 132, 260);
+		var rc = new CheckBox(s, Lang.t("mp.access.chests"), a.vr & (RChests : Int) != 0, 340, 46);
+		var ra = new CheckBox(s, Lang.t("mp.access.activate"), a.vr & (RActivate : Int) != 0, 340, 46);
+		var rp = new CheckBox(s, Lang.t("mp.access.pickup"), a.vr & (RPickup : Int) != 0, 340, 46);
+		s.add(rc, 130, 286);
+		s.add(ra, 480, 286);
+		s.add(rp, 830, 286);
+		function vr() return (rc.checked ? (RChests : Int) : 0) | (ra.checked ? (RActivate : Int) : 0) | (rp.checked ? (RPickup : Int) : 0);
+		function apply( _ ) send(open.checked, allV.checked, serverV != null ? serverV.checked : a.serverVisit, vr());
+		for( c in [open, allV, rc, ra, rp] ) c.onChange = apply;
+		if( serverV != null ) serverV.onChange = apply;
+		Theme.text(s, Lang.t("mp.access.guests").split("%n%").join("" + a.guests.length), 1.8, Theme.TEXT, 132, 344);
+		for( g in a.guests ) {
+			// su papel con lo que puede hacer; el boton dice a que papel pasa (Pasar a visitante), no el que tiene
+			var role = Lang.t(g.role == 1 ? "mp.access.role.visitor" : "mp.access.role.explorer");
+			var row = new ServerRow(s, g.name, role, [g.role == 1 ? "explorer" : "visitor", "remove"], false, 250);
+			row.setInfo(a.allVisitors && g.role != 1 ? Lang.t("mp.access.asvisitor") : "", Theme.DIM);
+			s.rows.push(row);
+			s.add(row, s.listX, s.listY);
+			var pub = g.pub, gname = g.name;
+			row.onAction = function( act ) {
+				if( mp == null ) return;
+				switch( act ) {
+				case "remove":
+					askConfirm(s, Lang.t("mp.access.remove.ask").split("%n%").join(gname), "", Theme.DANGER, function() if( mp != null ) mp.client.send(CGuest(pid, pub, -1)));
+				default:
+					mp.client.send(CGuest(pid, pub, act == "visitor" ? 1 : 0));
+				}
+			};
+		}
+		s.layout();
+		var inv = new Button(s, Lang.t("mp.access.invite"), 300, 48);
+		var give = new Button(s, Lang.t("mp.access.transfer"), 300, 48);
+		s.add(inv, 130, 620);
+		s.add(give, 450, 620);
+		s.add(back, 770, 620);
+		inv.onActivate = function() askPickPlayer(s, Lang.t("mp.access.invite"), true, function( id, role ) if( mp != null ) mp.client.send(CInvite(pid, id, role)));
+		give.onActivate = function() askPickPlayer(s, Lang.t("mp.access.transfer"), false, function( id, _ ) {
+			var name = "";
+			if( mp != null ) for( p in mp.players ) if( p.id == id ) name = p.name;
+			askConfirm(s, Lang.t("mp.access.transfer.ask").split("%n%").join(name), Lang.t("mp.access.transfer.warn"), Theme.DANGER, function() {
+				if( mp != null ) mp.client.send(CTransfer(pid, id));
+				show("licenses");
+			});
+		});
+		return s;
+	}
+
+	/** elegir un jugador conectado (no uno mismo) y, para invitar, su papel; onPick(id, papel: 0 explorador, 1 visitante) */
+	function askPickPlayer( parent : Screen, title : String, withRole : Bool, onPick : Int -> Int -> Void ) {
+		if( modal != null && modal.parent != null || mp == null ) return;
+		var others = [for( p in mp.players ) if( p.id != mp.myId ) p];
+		if( others.length == 0 ) {
+			showToast(Lang.t("mp.access.nobody"), 3);
+			return;
+		}
+		parent.active = false;
+		var m = new Screen(ui);
+		var bg = new h2d.Graphics(m);
+		Theme.fullRect(bg, 0x000000, 0.55);
+		Theme.rect(bg, 290, 210, 700, withRole ? 340 : 300, Theme.PANEL, 1);
+		Theme.rect(bg, 290, 210, 700, 4, Theme.ACCENT);
+		var t = Theme.text(m, title, 2.4, Theme.TEXT, 0, 236);
+		t.x = (W - t.textWidth * t.scaleX) * 0.5;
+		var who = new Selector(m, Lang.t("mp.access.player"), [for( p in others ) p.name], 620, 54);
+		var role = new Selector(m, Lang.t("mp.access.role"), [Lang.t("mp.access.explorer"), Lang.t("mp.access.visitor")], 620, 54);
+		var cancel = new Button(m, Lang.t("cancel"), 250, 52);
+		var ok = new Button(m, Lang.t("accept"), 250, 52);
+		m.add(who, 330, 290);
+		var by = 430;
+		if( withRole ) {
+			m.add(role, 330, 350);
+			// lo que podra hacer con el papel elegido
+			var help = Theme.text(m, "", 1.3, Theme.DIM, 334, 412);
+			help.maxWidth = 620 / help.scaleX;
+			function showHelp( i : Int ) help.text = Lang.t(i == 1 ? "mp.access.help.visitor" : "mp.access.help.explorer");
+			showHelp(role.index);
+			role.onChange = showHelp;
+			by = 470;
+		} else role.visible = false;
+		m.add(cancel, 380, by);
+		m.add(ok, 650, by);
+		var close = function() {
+			m.remove();
+			parent.active = true;
+		};
+		ok.onActivate = function() {
+			var id = others[who.index].id;
+			close();
+			onPick(id, role.index);
+		};
+		cancel.onActivate = close;
+		m.onBack = close;
+		m.setFocus(0);
+		modal = m;
+	}
+	/** la conexion se ha acabado (cerrada, rechazada, expulsado): al menu Multijugador con el motivo; con contrasena se pide */
+	function endMulti() {
+		var key = mp.ended, reason = mp.endReason;
+		var m = mp;
+		mp = null;
+		m.close();
+		mpHeld = [];
+		EditorKubes.useLocal();
+		closeWaiting();
+		if( game != null || explorer != null || state != Menu ) {
+			if( explorer != null ) {
+				explorer.dispose();
+				explorer = null;
+				dim.visible = true;
+			}
+			spaceInfo = null;
+			space = null;
+			pendingLand = null;
+			// un mapa pedido (startExplorer) que aun no se ha empezado a hacer: ya no hay partida
+			pendingExplorer = 0;
+			takeoffSave = 0;
+			if( game != null ) leaveGame();
+			ui.removeChildren();
+			screens = new Map();
+			bgStart();
+			hud.visible = false;
+			msgText.visible = false;
+			state = Menu;
+		}
+		// la sesion puede acabar en plena partida (expulsado, servidor parado, la misma identidad en otro sitio): el raton seguia
+		// capturado (y los close* de leaveGame lo vuelven a capturar mientras state es Playing), sin cursor en los menus
+		if( chatBox != null && chatBox.typing ) chatBox.close();
+		captureMouse(false);
+		// pruebas: el guion sigue en los menus (como tras su orden menu)
+		if( dev != null ) @:privateAccess dev.inMenu = true;
+		show("multi");
+		if( reason == RPassword && joining != null ) {
+			askPassword(joining);
+			return;
+		}
+		if( key != "mp.closed" || reason != null ) showToast(Lang.t(key), 6);
+	}
+
+	function askPassword( e : SavedServer ) {
+		var parent = current;
+		if( modal != null && modal.parent != null ) return;
+		parent.active = false;
+		var m = new Screen(ui);
+		var bg = new h2d.Graphics(m);
+		Theme.fullRect(bg, 0x000000, 0.55);
+		Theme.rect(bg, 290, 220, 700, 260, Theme.PANEL, 1);
+		Theme.rect(bg, 290, 220, 700, 4, Theme.ACCENT);
+		var t = Theme.text(m, Lang.t("mp.password.title").split("%name%").join(e.name), 2.2, Theme.TEXT, 0, 246);
+		t.x = (W - t.textWidth * t.scaleX) * 0.5;
+		var pw = new TextField(m, Lang.t("mp.password"), "", 620, 54, 380);
+		pw.maxLen = 64;
+		var cancel = new Button(m, Lang.t("cancel"), 250, 52);
+		var ok = new Button(m, Lang.t("accept"), 250, 52);
+		m.add(pw, 330, 300);
+		m.add(cancel, 380, 390);
+		m.add(ok, 650, 390);
+		var close = function() {
+			m.remove();
+			parent.active = true;
+		};
+		var accept = function() {
+			var p = pw.text;
+			m.remove();
+			parent.active = true;
+			joinServer(e, p);
+		};
+		pw.onEnter = accept;
+		ok.onActivate = accept;
+		cancel.onActivate = close;
+		m.onBack = close;
+		m.setFocus(0);
+		pw.startTyping();
+		modal = m;
+	}
+
+	/** Crear una partida: desde una partida guardada (o una nueva) y las opciones del servidor; se juega en cuanto esta */
+	function askCreate( parent : Screen ) {
+		if( modal != null && modal.parent != null ) return;
+		parent.active = false;
+		var saves = SaveData.list();
+		var m = new Screen(ui);
+		var bg = new h2d.Graphics(m);
+		Theme.fullRect(bg, 0x000000, 0.55);
+		Theme.rect(bg, 250, 70, 780, 580, Theme.PANEL, 1);
+		Theme.rect(bg, 250, 70, 780, 4, Theme.ACCENT);
+		var t = Theme.text(m, Lang.t("mp.create.title"), 2.4, Theme.TEXT, 0, 92);
+		t.x = (W - t.textWidth * t.scaleX) * 0.5;
+		var from = new Selector(m, Lang.t("mp.create.from"), [Lang.t("mp.create.newgame")].concat([for( i in saves ) i.name]), 700, 50);
+		if( saves.length > 0 ) from.index = 1;
+		var name = new TextField(m, Lang.t("mp.create.name"), Lang.t("mp.create.default").split("%n%").join(Settings.myPseudo()), 700, 50, 330);
+		name.maxLen = Msg.SERVER_NAME_MAX;
+		var port = new TextField(m, Lang.t("mp.create.port"), "" + hostPortFor(saves.length > 0 ? saves[0] : null), 700, 50, 200);
+		port.maxLen = 5;
+		// el puerto de la partida elegida (el de su servidor si ya se hospedo), si no el ultimo con el que se hospedo
+		from.onChange = function( i ) port.text = "" + hostPortFor(i == 0 ? null : saves[i - 1]);
+		var pw = new TextField(m, Lang.t("mp.create.password"), "", 700, 50, 250);
+		pw.maxLen = 64;
+		var lan = new CheckBox(m, Lang.t("mp.create.lan"), true, 700, 50);
+		var upnp = new CheckBox(m, Lang.t("mp.create.upnp"), false, 700, 50);
+		var drop = new CheckBox(m, Lang.t("deathdrop.option"), true, 700, 50);
+		var err = Theme.text(m, "", 1.5, Theme.DANGER, 290, 548);
+		var cancel = new Button(m, Lang.t("cancel"), 250, 52);
+		var ok = new Button(m, Lang.t("mp.create.go"), 250, 52);
+		var y = 140;
+		for( w in ([from, name, port, pw, lan, upnp, drop] : Array<Widget>) ) {
+			m.add(w, 290, y);
+			y += 56;
+		}
+		m.add(cancel, 380, 580);
+		m.add(ok, 650, 580);
+		var close = function() {
+			m.remove();
+			parent.active = true;
+		};
+		ok.onActivate = function() {
+			var p = Std.parseInt(StringTools.trim(port.text));
+			if( p == null || p <= 0 || p > 65535 ) {
+				err.text = Lang.t("mp.server.bad");
+				return;
+			}
+			var start = function( info : SaveInfo ) hostSave(info, StringTools.trim(name.text), p, pw.text, lan.checked, upnp.checked, drop.checked);
+			var listed = from.index == 0 ? null : saves[from.index - 1];
+			if( listed == null ) {
+				// partida nueva de aventura, guardada ya para que la partida multijugador sea suya
+				var info = TutoSetup.newGame(defaultGameName(), randomSeed(), false);
+				info.dropOnDeath = drop.checked;
+				SaveData.write(info, null);
+				close();
+				start(info);
+				return;
+			}
+			// ya tiene servidor: se sigue con la partida del servidor
+			if( sys.FileSystem.exists(serverDir(listed)) ) {
+				close();
+				start(listed);
+				return;
+			}
+			// la lista solo tiene meta.json (SaveData.list): la partida entera, la que pasa al servidor
+			var info = listed.unreadable != null ? null : SaveData.read(listed.id);
+			if( info == null ) {
+				err.text = Lang.t("save.unreadable") + ": " + (listed.unreadable != null ? listed.unreadable : SaveData.lastError);
+				return;
+			}
+			// bloques que esta version no conoce (UnknownBlocks): en solo se guardan por su nombre, el servidor no tendria donde
+			var unknown = UnknownBlocks.total(UnknownBlocks.count(info));
+			if( unknown > 0 ) {
+				err.text = Lang.t("mp.create.unknown").split("%n%").join("" + unknown);
+				return;
+			}
+			close();
+			// de un generador anterior: el mismo aviso que al abrirla en solo (playSave)
+			if( SaveData.isOldGeneration(info) )
+				askConfirm(parent, Lang.t("old.ask"), Lang.t("old.warn"), Theme.ACCENT, function() start(info), null, null, Lang.t("continue"), Lang.t("back"));
+			else
+				start(info);
+		};
+		cancel.onActivate = close;
+		m.onBack = close;
+		m.setFocus(0);
+		modal = m;
+	}
+
+	/** una partida guardada que ya tiene servidor (se creo una partida multijugador con ella): su servidor, sin red */
+	function playServerSave( info : SaveInfo ) {
+		if( mp != null ) return;
+		var m = try MultiSession.host(serverDir(info), 0, "127.0.0.1") catch( e : Dynamic ) {
+			showToast(Lang.t("mp.create.fail").split("%e%").join(Std.string(e)), 6);
+			return;
+		};
+		joining = null;
+		tutoAsked = true;
+		m.autoNewGame = false;
+		startMulti(m);
+		showWaiting(Lang.t("mp.connecting"));
+	}
+
+	/** multijugador con otros (o que puede haberlos): el mundo no se para en la pausa ni en los menus; sin red, como en solo */
+	function mpLive() return mp != null && (mp.server == null || mp.server.listening);
+
+	/** el servidor de una partida guardada esta a su lado: saves/<id>.serveur */
+	static function serverDir( info : SaveInfo ) return SaveData.dir() + "/" + info.id + ".serveur";
+
+	/** puerto para hospedar info: el de su servidor (serveur.json) si ya se hospedo, si no el ultimo usado (Settings.hostPort) */
+	static function hostPortFor( info : SaveInfo ) : Int {
+		if( info != null ) {
+			var o : Dynamic = try haxe.Json.parse(sys.io.File.getContent(serverDir(info) + "/serveur.json")) catch( e : Dynamic ) null;
+			if( o != null && Std.isOfType(o.port, Int) && o.port > 0 && o.port < 65536 ) return o.port;
+		}
+		return Settings.hostPort;
+	}
+
+	/**
+	 * hospedar la partida guardada info (la primera vez su partida pasa al servidor, leida entera; despues sigue la del servidor).
+	 * Sus kubes del editor van por su archivo (EditorKubes.encodeForServer), antes de que el servidor cargue los suyos en los mismos
+	 * bloques (ServerKubes)
+	 */
+	function hostSave( info : SaveInfo, name : String, port : Int, password : String, lan : Bool, upnp : Bool, drop : Bool ) {
+		if( mp != null ) return;
+		var dir = serverDir(info);
+		var fresh = !sys.FileSystem.exists(dir);
+		var record = fresh ? EditorKubes.encodeForServer(info) : null;
+		sys.FileSystem.createDirectory(dir);
+		// las opciones antes de escuchar (la red local se abre o no al empezar)
+		var m = try {
+			var files = new ServerFiles(dir);
+			var o = files.options;
+			o.name = name != "" ? name : info.name;
+			o.port = port;
+			o.lanVisible = lan;
+			o.upnp = upnp;
+			o.deathDrop = drop;
+			files.saveOptions();
+			files.setPassword(password);
+			Settings.hostPort = port;
+			Settings.save();
+			MultiSession.host(dir, port, "0.0.0.0", record);
+		} catch( e : Dynamic ) {
+			showToast(Lang.t("mp.create.fail").split("%e%").join(Std.string(e)), 6);
+			return;
+		};
+		joining = null;
+		tutoAsked = true;
+		m.autoNewGame = false;
+		startMulti(m);
+		showWaiting(Lang.t("mp.connecting"));
+	}
 	/** Editor de kubes (anadido del port): Esc o Volver regresan al menu principal; al entrar otra vez sigue el mismo kube */
 	function buildKubes() : Screen {
 		var k = new KubeEditor(ui, atlas);
@@ -804,6 +1656,11 @@ class GalaxyApp extends hxd.App {
 	 * queda como estaba). Una que no se puede leer no se abre.
 	 */
 	function playSave( parent : Screen, listed : SaveInfo ) {
+		// multijugador: una partida que ya tiene servidor se juega con el, sin red (como en solo, el mundo se para en la pausa)
+		if( sys.FileSystem.exists(serverDir(listed)) ) {
+			playServerSave(listed);
+			return;
+		}
 		var info = listed.unreadable != null ? null : SaveData.peek(listed.id);
 		function unreadable( why : String ) showToast(Lang.t("save.unreadable") + ": " + why, 6);
 		if( info == null ) {
@@ -950,6 +1807,12 @@ class GalaxyApp extends hxd.App {
 	public function skipTutorial() {
 		var info = game != null ? game.toInfo() : spaceInfo;
 		if( !Tutorial.active(info) ) return;
+		// multijugador: lo hace el servidor (ServerWorlds.skipTutorial), que manda la partida nueva (SRecord)
+		if( mp != null && mp.isPlaying() ) {
+			mapToast = TutoText.get("skipped");
+			mp.client.send(CEcon(0, ESkipTutorial, "", 0));
+			return;
+		}
 		TutoSetup.skip(info);
 		if( explorer != null ) {
 			explorer.dispose();
@@ -1263,6 +2126,12 @@ class GalaxyApp extends hxd.App {
 	}
 
 	/**
+	 * multijugador: los gestionnaires (y el propietario) escanean sin limite de licencias, tambien en una partida de aventura;
+	 * el servidor tampoco se lo pone (ServerWorlds.planetRow, cesion de planeta). Se mira cada vez: op/deop llegan en directo.
+	 */
+	function managerLicenses() : Bool return mp != null && mp.isPlaying() && mp.isManager();
+
+	/**
 	 * Licencias de exploracion (Licenses, anadido del port): cuantas hay en uso, el planeta principal y, si el planeta en el que
 	 * estas no lo es, el boton para hacerlo principal con su precio (con confirmacion); durante la espera, desactivado.
 	 */
@@ -1285,7 +2154,9 @@ class GalaxyApp extends hxd.App {
 			y += t.textHeight * scale + 10;
 			return t;
 		}
-		var count = Licenses.unlimited(info) ? Lang.t("licenses.unlimited") : Lang.t("licenses.count").split("%max%").join("" + Licenses.MAX);
+		var count = Licenses.unlimited(info) ? Lang.t("licenses.unlimited")
+			: managerLicenses() ? Lang.t("licenses.unlimited.manager")
+			: Lang.t("licenses.count").split("%max%").join("" + Licenses.MAX);
 		line(count.split("%n%").join("" + uni.licenses.length), 1.8, Theme.TEXT);
 		line(Lang.t("shop.credits") + " " + (info.credits == null ? Market.START_CREDITS : info.credits), 1.8, Theme.ACCENT);
 		if( Licenses.isMain(uni, here) )
@@ -1304,6 +2175,14 @@ class GalaxyApp extends hxd.App {
 				s.add(b, px, y);
 				y += 62;
 			}
+		}
+		// multijugador: el planeta propio en el que estas se abre a otros exploradores (pantalla de accesos)
+		if( mp != null && mp.isPlaying() && mpRights & (ROwner : Int) != 0 && Licenses.has(uni, here) ) {
+			y += 6;
+			var ab = new Button(s, Lang.t("mp.access.button"), PW - 80, 54);
+			ab.onActivate = function() openAccess(here, planets.exists(here) ? planets.get(here).name : "?");
+			s.add(ab, px, y);
+			y += 62;
 		}
 		var back = new Button(s, Lang.t("back"));
 		s.add(back, (W - 460) * 0.5, y + 14);
@@ -1498,6 +2377,7 @@ class GalaxyApp extends hxd.App {
 				showToast(err, 4);
 				return;
 			}
+			if( game.net != null ) game.net.sentEcon(EMainPlanet, "", id);
 			openLicenses();
 		});
 	}
@@ -1518,6 +2398,8 @@ class GalaxyApp extends hxd.App {
 	/** abandona el planeta (Licenses.abandon), lo muestra en el mapa y guarda enseguida: no se puede deshacer recargando */
 	function abandonPlanet( p : ExpData.ExpPlanet, s : ExpData.ExpSystem ) {
 		var uni = universe();
+		// multijugador: el servidor borra el planeta y quita la licencia de la partida de verdad (SPatch "licenses")
+		if( mp != null && mp.isPlaying() ) mp.client.send(CAbandon(p.id));
 		if( Licenses.abandon(spaceInfo, p, s) ) {
 			explorer.abandoned(p, s.id, ExpData.ExpOffline.replaceSystem(explorer.infos, s.id, Licenses.newSystem(uni)));
 			showToast(Lang.t("abandon.gone"), 7);
@@ -1651,6 +2533,8 @@ class GalaxyApp extends hxd.App {
 			return;
 		}
 		if( game.hangarValid ) {
+			// multijugador: el servidor mira la nave y el inventario (ServerShip.saveShip); si no cuadran, se queda con los suyos
+			if( mp != null && mp.isPlaying() ) mp.client.send(CSaveShip(0, game.hangarShip(), ServerItems.netInv(game.inv.inv)));
 			hangarReturn.shipData = b64;
 			hangarReturn.inv = Inv.copy(game.inv.inv);
 			hangarReturn.shipEdits = [];
@@ -1714,7 +2598,7 @@ class GalaxyApp extends hxd.App {
 		hangarReturn.inv = Inv.copy(game.inv.inv);
 		hangarReturn.credits = m.credits;
 		hangarReturn.market = Market.copy(m.market);
-		// el stockage abierto aqui por primera vez (ShipStorage.ensure) se crea en la copia: pasa a la partida
+		// el stockage abierto aqui por primera vez (StorageData.ensure) se crea en la copia: pasa a la partida
 		if( m.storage != null ) hangarReturn.storage = m.storage;
 	}
 
@@ -1764,6 +2648,8 @@ class GalaxyApp extends hxd.App {
 		Explorer.shipBytes = Hangar.currentShip(spaceInfo);
 		// activos: los planetas con licencia de la ESCorp (Licenses)
 		var infos = ExpData.ExpOffline.make(uni.seed, uni.start, uni.licenses, uni.pos, uni.abandoned, uni.gone);
+		// multijugador: los sistemas de otros jugadores donde este tiene planetas abiertos (ForeignMap)
+		if( mp != null ) ForeignMap.inject(infos, mp.foreign);
 		Explorer.robotStart = uni.robot;
 		explorer = new Explorer(s2d, infos, shipFrames, takeoff ? Ship.finishFrame : null);
 		hxd.System.allowTimeout = true;
@@ -1783,6 +2669,7 @@ class GalaxyApp extends hxd.App {
 		var uni = universe();
 		space = new Space(spaceInfo);
 		space.tutorial = Tutorial.active(spaceInfo);
+		space.unlimited = managerLicenses;
 		// los avisos largos (licencias) se quedan mas tiempo
 		space.onRefuse = function(msg) showToast(msg, Math.max(2.2, msg.length * 0.06));
 		explorer.onTravel = space.travel;
@@ -1794,7 +2681,7 @@ class GalaxyApp extends hxd.App {
 		// cometas (Comets, añadido del port): no en el tutorial; su ventana dice el tiempo de amarre con la nave de ahora
 		var tuto = Tutorial.active(spaceInfo);
 		var dock = Comets.dockTime(Hangar.speedOf(Hangar.currentShip(spaceInfo)));
-		explorer.cometOf = function(s) return tuto ? null : Comets.of(uni, s);
+		explorer.cometOf = function(s) return tuto || ForeignMap.isForeign(s.id) ? null : Comets.of(uni, s);
 		explorer.cometInfo = function(p) return Lang.t("exp.comet.info").split("%t%").join(Comets.clock(dock));
 		explorer.addComet();
 		explorer.onAbandon = askAbandon;
@@ -1812,6 +2699,10 @@ class GalaxyApp extends hxd.App {
 		captureMouse(false);
 		if( takeoff ) {
 			space.takeoff();
+			// multijugador: el jugador deja el planeta (los demas dejan de verlo)
+			if( mp != null ) mp.client.send(CTakeoff);
+			mpHeld = [];
+			mpRights = 0;
 			tutorial.takeoff();
 			// se guarda en cuanto el mapa se ha dibujado (para la miniatura); si antes se cierra la ventana, se guarda igual
 			takeoffSave = 1.0;
@@ -1832,6 +2723,19 @@ class GalaxyApp extends hxd.App {
 	public function curInfo() : SaveInfo return game != null ? game.info : spaceInfo;
 
 	/** pruebas: aterrizar en el planeta del que despegaste */
+	/** pruebas (multijugador): aterrizar en el primer planeta abierto de otro jugador del mapa */
+	public function devLandForeign() {
+		if( explorer == null ) return;
+		for( s in explorer.infos.systems )
+			if( ForeignMap.isForeign(s.id) )
+				for( p in s.planets )
+					if( p.status == PInvited || p.status == PVisit ) {
+						landOnPlanet(p, s);
+						return;
+					}
+		Sys.println("landforeign: ningun planeta abierto de otro");
+	}
+
 	public function devLandHome() {
 		if( explorer == null ) return;
 		var id = universe().planetId;
@@ -1869,6 +2773,31 @@ class GalaxyApp extends hxd.App {
 
 	/** aterrizar en un planeta del mapa: se guardan los cambios del planeta actual y se carga el elegido (o se crea si es nuevo) */
 	function landOnPlanet( p : ExpData.ExpPlanet, s : ExpData.ExpSystem ) {
+		// multijugador: planeta de otro jugador (ForeignMap): sin licencia ni cambios en la galaxia propia; el servidor da el terreno
+		var foreign = mp != null ? ForeignMap.target(p.id) : null;
+		if( foreign != null ) {
+			var old = spaceInfo;
+			storeMapPos();
+			space.land(p);
+			space = null;
+			takeoffSave = 0;
+			old.uni.space = null;
+			old.uni.planetId = p.id;
+			old.comet = null;
+			explorer.dispose();
+			explorer = null;
+			spaceInfo = null;
+			dim.visible = true;
+			ui.removeChildren();
+			screens = new Map();
+			old.px = old.py = old.pz = -1;
+			old.yaw = old.pitch = 0;
+			pendingLand = old;
+			state = Loading;
+			showPlanetLoading();
+			mp.client.send(CLand(foreign.pub, foreign.pid));
+			return;
+		}
 		var old = spaceInfo;
 		storeMapPos();
 		space.land(p);
@@ -1907,6 +2836,14 @@ class GalaxyApp extends hxd.App {
 		old.genVersion = target != null ? SaveData.genVersion(target.genVersion) : gen.Generator.VERSION;
 		old.px = old.py = old.pz = -1;
 		old.yaw = old.pitch = 0;
+		// multijugador: el terreno es del servidor; se pide y la partida empieza cuando llega (onMpMessage, SPlanetData)
+		if( mp != null ) {
+			pendingLand = old;
+			state = Loading;
+			showPlanetLoading();
+			mp.client.send(CLand("", p.id));
+			return;
+		}
 		startGame(old);
 	}
 
@@ -2082,7 +3019,7 @@ class GalaxyApp extends hxd.App {
 	}
 
 	function buildPause() : Screen {
-		var s = panelFor(560, 520, Lang.t("pause.title"));
+		var s = panelFor(560, mp != null && mp.isPlaying() ? 600 : 520, Lang.t("pause.title"));
 		var x = (W - 460) * 0.5;
 		var y = 215.;
 		var res = new Button(s, Lang.t("resume"));
@@ -2100,6 +3037,17 @@ class GalaxyApp extends hxd.App {
 			var skip = new Button(s, TutoText.get("skip"));
 			s.add(skip, x, y + 310);
 			skip.onActivate = function() askSkip(s);
+		}
+		// multijugador: sus opciones (jugadores; para los gestionnaires, la administracion), debajo de lo demas
+		if( mp != null && mp.isPlaying() ) {
+			var mo = new Button(s, Lang.t("mp.options"));
+			s.add(mo, x, y + (game != null && game.hangar == null && game.info.mothership != true && Tutorial.active(game.info) ? 372 : 310));
+			mo.onActivate = function() {
+				var old = screens.get("mpoptions");
+				screens.remove("mpoptions");
+				if( old != null ) old.remove();
+				show("mpoptions");
+			};
 		}
 		res.onActivate = function() resume();
 		sv.onActivate = function() saveGame(true, true);
@@ -2206,7 +3154,7 @@ class GalaxyApp extends hxd.App {
 		loadWorld = info.mothership == true
 			? new World(info.seed, "BIMoon", (Mothership.data() != null ? Mothership.sizeChunks : 1), s3d, atlas, false, null, Mothership.withShip(Hangar.currentShip(info)))
 			: info.hangar == true
-			? new World(info.seed, "BIShed", 1, s3d, atlas, false, null, TutoSetup.holed(info, Hangar.shedData(Hangar.currentShip(info))))
+			? new World(info.seed, "BIShed", 1, s3d, atlas, false, null, TutoSeed.holed(info, Hangar.shedData(Hangar.currentShip(info))))
 			: new World(info.seed, info.biome, info.sizeChunks, s3d, atlas, false, info.edits, null, null, SaveData.genVersion(info.genVersion));
 		if( info.mothership == true ) {
 			loadWorld.sky.fog.curve = 0.00001;
@@ -2241,6 +3189,28 @@ class GalaxyApp extends hxd.App {
 		}
 		var tView = haxe.Timer.stamp();
 		game = new GameView(s3d, loadWorld, loadInfo, atlas, loadShip);
+		// multijugador (anadido del port): lo que hace el jugador va al servidor y lo de los demas llega a este mundo
+		if( mp != null && mp.isPlaying() && loadInfo.mothership != true && loadInfo.hangar != true ) {
+			var net = game.net = new NetGame(mp, game, s3d, s2d);
+			game.netSwitch = mp.isManager();
+			game.netSetMode(mp.creative);
+			game.netOwner = mpRights & (ROwner : Int) != 0;
+			net.onToast = function(s) showToast(s);
+			net.onCloseChest = closeChest;
+			net.onOpenChest = function( box ) {
+				openChest(box);
+				if( chest != null ) chest.grid.onChange = function() {
+					if( game != null ) game.inv.display();
+					net.sentChestMove();
+				};
+			};
+			// lo del planeta que llego mientras se cargaba (sueltos que ya habia, cambios de los demas...)
+			var held = mpHeld;
+			mpHeld = [];
+			for( m in held ) net.onMessage(m);
+		}
+		// en la nodriza de una partida multijugador no se tira nada: no hay servidor que lo lleve (se perderia)
+		if( mp != null && mp.isPlaying() && loadInfo.mothership == true ) game.noThrow = true;
 		if( World.LOAD_TIME ) {
 			var t = haxe.Timer.stamp();
 			Sys.println("carga total: " + Std.int((t - loadStarted) * 1000) + " ms en " + loadFrames + " imagenes hasta jugar (GameView "
@@ -2425,6 +3395,11 @@ class GalaxyApp extends hxd.App {
 	 * de inventario. Cierra lo que estuviera abierto y vuelve al juego.
 	 */
 	public function switchMode() {
+		// multijugador: lo decide el servidor (SMode)
+		if( game != null && game.net != null ) {
+			if( game.canSwitchMode() ) mp.client.send(CSetMode(!game.creative));
+			return;
+		}
 		if( game == null || !game.setSurvival(game.creative) ) return;
 		// en el hangar o la nodriza se juega una copia: el modo pasa tambien a la partida a la que se vuelve
 		if( hangarReturn != null ) hangarReturn.survival = game.info.survival;
@@ -2442,7 +3417,17 @@ class GalaxyApp extends hxd.App {
 		if( paletteOpen || game == null || chest != null || game.piloting ) return;
 		invScreen = new InvScreen(s2d, atlas, game.inv);
 		invScreen.onClose = closeInventory;
-		invScreen.onThrow = function(b, n) if( game != null ) game.throwStack(b, n);
+		invScreen.onThrow = function(b, n, slot) {
+			if( game == null ) return;
+			if( game.noThrow ) {
+				// en la nodriza multijugador no se tira: vuelve al inventario
+				if( b.charge != null ) game.inv.addCharge(b.charge, n) else game.inv.addBlocks(b, n);
+				return;
+			}
+			// multijugador: lo tira el servidor (en el planeta o en la nave)
+			if( game.net != null ) game.net.sentThrow(slot + 1, n) else game.throwStack(b, n);
+		};
+		if( game.net != null ) invScreen.onLayout = game.net.sentLayout;
 		if( game.canSwitchMode() ) invScreen.addCornerButton(ModeSwitch.button(null, game.creative, switchMode));
 		paletteOpen = true;
 		captureMouse(false);
@@ -2481,6 +3466,7 @@ class GalaxyApp extends hxd.App {
 
 	function closeChest() {
 		if( chest == null ) return;
+		if( game != null && game.net != null ) game.net.sentChestClose();
 		chest.remove();
 		chest = null;
 		chestDrag = false;
@@ -2512,6 +3498,10 @@ class GalaxyApp extends hxd.App {
 		var m = game.market;
 		shop = new Shop(s2d, atlas, m, game.inv, game.info.credits);
 		shop.onCredits = function(c) game.info.credits = c;
+		// multijugador: el servidor repite la compra o la venta (ServerEcon)
+		if( game.net != null ) shop.onTrade = function( buy, w, n ) if( game != null && game.net != null ) game.net.sentEcon(buy ? EBuy : ESell, w.key, n);
+		// en la nodriza (sin NetGame) tambien
+		else if( mp != null && mp.isPlaying() ) shop.onTrade = function( buy, w, n ) if( mp != null && mp.isPlaying() ) mp.client.send(CEcon(0, buy ? EBuy : ESell, w.key, n));
 		shop.onClose = closeShop;
 		paletteOpen = true;
 		captureMouse(false);
@@ -2537,6 +3527,7 @@ class GalaxyApp extends hxd.App {
 		contracts = new ContractPanel(s2d, atlas, game.info, game.inv);
 		contracts.onClose = closeContracts;
 		contracts.onAbandon = askAbandonContract;
+		if( game.net != null ) contracts.onEcon = function( op, n ) if( game != null && game.net != null ) game.net.sentEcon(op, "", n);
 		Tutorial.contractsOpened(game.info);
 		paletteOpen = true;
 		captureMouse(false);
@@ -2596,8 +3587,25 @@ class GalaxyApp extends hxd.App {
 		// en el hangar no (su ordenador no se activa: WInShip): solo a bordo y en la nave nodriza
 		if( game == null || storage != null || game.hangar != null || Tutorial.active(game.info) ) return;
 		if( current != null ) resume();
-		storage = new ShipStorage(s2d, atlas, game.inv, ShipStorage.ensure(game.info));
+		storage = new ShipStorage(s2d, atlas, game.inv, StorageData.ensure(game.info));
 		storage.onClose = closeStorage;
+		// multijugador: el stockage es del servidor (ServerShip.storage); cada cambio se le manda con el inventario
+		if( game.net != null ) {
+			var st = storage;
+			st.grid.onChange = function() {
+				if( game == null || game.net == null ) return;
+				game.inv.display();
+				game.net.sentStorage(st.store);
+			};
+		} else if( mp != null && mp.isPlaying() ) {
+			// en la nodriza (sin NetGame)
+			var st = storage;
+			st.grid.onChange = function() {
+				if( game == null || mp == null || !mp.isPlaying() ) return;
+				game.inv.display();
+				mp.client.send(CStorage(0, ServerItems.netInv({ maxWeight : 0, t : st.store.t, charges : st.store.charges }), ServerItems.netInv(game.inv.inv)));
+			};
+		}
 		paletteOpen = true;
 		captureMouse(false);
 		// el panel tiene su ayuda: la de las teclas del juego (hud) no se ve detras
@@ -2685,6 +3693,200 @@ class GalaxyApp extends hxd.App {
 		}
 	}
 
+	/** empieza una partida multijugador (hospedada o unida): lo que manda el servidor llega a onMpMessage */
+	public function startMulti( m : MultiSession ) {
+		mp = m;
+		chatShown = 0;
+		mp.onMessage = onMpMessage;
+	}
+
+	/** mensajes del servidor que tocan a la partida: la partida del jugador, el planeta pedido y lo del mundo */
+	function onMpMessage( m : ServerMsg ) {
+		switch( m ) {
+		case SRecord(data):
+			closeWaiting();
+			var info = try SaveData.parse(haxe.Json.parse(NetZip.unpackString(data, 64 << 20)), "multijoueur") catch( e : Dynamic ) null;
+			if( info == null ) {
+				showToast(Lang.t("mp.badrecord"));
+				return;
+			}
+			// los contenedores del equipo de los planetas los lleva el servidor (ServerItems): no salen de la partida
+			info.deathDrops = null;
+			if( explorer != null ) {
+				explorer.dispose();
+				explorer = null;
+			}
+			spaceInfo = null;
+			space = null;
+			if( game != null ) leaveGame();
+			saveOnMap = false;
+			startGame(info);
+		case SPlanetData(_, seed, biome, size, gv, shipAt, edits, _, rights):
+			mpRights = rights;
+			var old = pendingLand;
+			if( old == null ) return;
+			pendingLand = null;
+			old.seed = seed;
+			old.biome = biome;
+			old.sizeChunks = size;
+			old.genVersion = gv;
+			old.edits = try NetZip.unpackInts(edits, Msg.EDITS_MAX >> 2) catch( e : Dynamic ) [];
+			old.shipAt = null;
+			if( shipAt != "" ) try {
+				var o : Dynamic = haxe.Json.parse(shipAt);
+				old.shipAt = { x : Std.int(o.x), y : Std.int(o.y) };
+			} catch( e : Dynamic ) {}
+			startGame(old);
+		case SPlanetLost(reason):
+			mpHeld = [];
+			// el planeta se ha cerrado, abandonado o ya no se puede entrar: de vuelta al espacio (con el aviso)
+			showToast(Lang.t(reason));
+			// startExplorer: el mapa se prepara con la pantalla de carga (Explorer.prepare) y se abre al acabar (openExplorer)
+			if( pendingLand != null ) {
+				var old = pendingLand;
+				pendingLand = null;
+				old.uni.space = true;
+				spaceInfo = old;
+				startExplorer();
+			} else if( game != null && game.hangar == null && game.info.mothership != true ) {
+				game.info.uni.space = true;
+				startExplorer();
+			}
+		case SForeign(_):
+			// el mapa abierto se rehace con los sistemas nuevos de otros jugadores
+			if( explorer != null && game == null && spaceInfo != null ) {
+				storeMapPos();
+				explorer.dispose();
+				explorer = null;
+				startExplorer();
+			}
+		case SKubesEnd(n):
+			// los kubes del editor del servidor (solo en memoria) en vez de los de la carpeta
+			EditorKubes.useServer(mp.kubes, n);
+		case SRights(r):
+			mpRights = r;
+			if( game != null && game.net != null ) game.netOwner = r & (ROwner : Int) != 0;
+		case SAccess(pid, open, allV, serverV, vr, guests):
+			accessState = { pid : pid, open : open, allVisitors : allV, serverVisit : serverV, vr : vr, guests : guests };
+			reopenAccess();
+		case SPatch(key, json):
+			// un campo de la partida como lo tiene el servidor, tras una compra, un contrato...
+			var info = game != null ? game.info : spaceInfo != null ? spaceInfo : pendingLand != null ? pendingLand : loadInfo;
+			if( info != null ) applyPatch(info, key, json);
+			if( shop != null && key == "credits" && game != null ) shop.setCredits(game.info.credits);
+			if( contracts != null ) contracts.serverChanged();
+		case SMode(c):
+			if( game != null && game.net != null && game.creative != c ) {
+				game.netSetMode(c);
+				closePalette();
+				closeInventory();
+				showToast(Lang.t(c ? "mode.now.creative" : "mode.now.survival"));
+			}
+		case SUserJoin(p) if( game != null && game.net != null && p.id == mp.myId ):
+			game.netSwitch = mp.isManager();
+		case SInventory(_, inv) if( game == null || game.net == null ):
+			// en el mapa (o cargando) y en la nodriza: el inventario de la partida queda como dice el servidor. En el hangar no: se
+			// juega aparte y el servidor mira el resultado al salir (CSaveShip)
+			if( game != null && game.hangar != null ) return;
+			var info = game != null ? game.info : spaceInfo != null ? spaceInfo : pendingLand != null ? pendingLand : loadInfo;
+			if( info != null && info.inv != null ) {
+				var t = info.inv.t;
+				for( k in 0...t.length ) t[k] = k < inv.t.length && inv.t[k] != null ? { k : inv.t[k].k, n : inv.t[k].n } : null;
+				info.inv.charges.splice(0, info.inv.charges.length);
+				for( c in inv.charges ) info.inv.charges.push({ c : c.c, n : c.n });
+				if( game != null && game.info == info ) game.inv.display();
+			}
+		default:
+			if( game != null && game.net != null ) game.net.onMessage(m);
+			// aterrizando o cargando: lo del planeta (sueltos que ya hay, cambios de los demas...) se guarda para NetGame
+			else if( planetMsg(m) && mpHeld.length < 200000 ) mpHeld.push(m);
+		}
+	}
+
+	/** mensajes del planeta que llegan antes de que el juego este listo (al aterrizar, al cargar): se pasan a NetGame al crearlo */
+	var mpHeld : Array<ServerMsg> = [];
+
+	static function planetMsg( m : ServerMsg ) : Bool {
+		return switch( m ) {
+		// no las posiciones de los demas ni las explosiones: viejas no sirven (en el hangar se seguirian juntando)
+		case SChanges(_), SSetResult(_, _, _), SReduceWater, SAddLoot(_), SDeleteLoot(_), SLootCount(_, _), SLootRest(_, _, _, _),
+			SChest(_, _, _, _, _, _), SShipCells(_): true;
+		default: false;
+		}
+	}
+
+	/** multijugador: un campo de la partida como lo tiene el servidor (SPatch); lo que no se entiende se deja */
+	function applyPatch( info : SaveInfo, key : String, json : String ) {
+		var v : Dynamic = try haxe.Json.parse(json) catch( e : Dynamic ) return;
+		switch( key ) {
+		case "credits":
+			if( Std.isOfType(v, Int) ) info.credits = v;
+		case "market":
+			if( game != null && game.info == info ) game.market.load(v) else info.market = v;
+		case "contracts":
+			info.contracts = v;
+		case "special":
+			info.special = v;
+		case "upgrades":
+			info.upgrades = v;
+		case "ship":
+			// la nave del hangar no cuadra (ServerShip.saveShip): se queda la de antes (se vera al volver a cargar la nave)
+			if( Std.isOfType(v, String) || v == null ) {
+				info.shipData = v;
+				info.shipEdits = [];
+				showToast(Lang.t("mp.ship.refused"), 5);
+			}
+		case "tuto":
+			// donde puso el servidor los bloques del tutorial (ServerWorlds.seedTutorial); el paso lo lleva el juego
+			if( info.tuto != null && v != null && v.spots != null ) info.tuto.spots = v.spots;
+		case "storage":
+			// en su sitio: la pantalla del stockage abierta sigue con las mismas listas
+			var st = StorageData.ensure(info);
+			if( v != null && v.t != null && v.charges != null ) {
+				var t : Array<Dynamic> = v.t, ch : Array<Dynamic> = v.charges;
+				for( i in 0...st.t.length ) st.t[i] = i < t.length && t[i] != null ? { k : Std.int(t[i].k), n : Std.int(t[i].n) } : null;
+				st.charges.splice(0, st.charges.length);
+				for( c in ch ) st.charges.push({ c : Std.int(c.c), n : Std.int(c.n) });
+			}
+		case "main":
+			if( info.uni != null && v != null ) {
+				info.uni.main = v.main;
+				info.uni.mainTime = v.mainTime;
+				info.uni.mainChanges = v.mainChanges;
+			}
+		case "licenses":
+			if( info.uni != null && v != null ) {
+				if( v.licenses != null ) info.uni.licenses = v.licenses;
+				info.uni.main = v.main;
+				if( v.abandoned != null ) info.uni.abandoned = v.abandoned;
+				if( v.gone != null ) info.uni.gone = v.gone;
+			}
+		default:
+		}
+	}
+
+	/**
+	 * guarda la partida: en solo, su archivo (thumb: con miniatura nueva); en multijugador la manda al servidor (provisional: el
+	 * servidor aun no lleva inventario ni economia)
+	 */
+	function writeSave( info : SaveInfo, thumb : Bool ) : Bool {
+		if( mp != null ) {
+			if( !mp.isPlaying() ) return false;
+			mp.client.send(CSaveRecord(NetZip.packString(haxe.Json.stringify(SaveData.serverEncode(info)))));
+			return true;
+		}
+		return SaveData.write(info, thumb ? captureThumb() : null);
+	}
+
+	/**
+	 * aviso de saveGame: si se pide, y siempre si no se ha podido escribir, con el motivo (SaveData.lastError). En multijugador no
+	 * hay archivo: solo si se pide (sin conexion no se manda nada)
+	 */
+	function savedToast( notify : Bool, ok : Bool ) {
+		if( notify || (!ok && mp == null) )
+			showToast(ok ? Lang.t("saved.ok") : Lang.t("saved.error") + (mp == null ? ": " + SaveData.lastError : ""), ok ? 2 : 8);
+	}
+
 	/**
 	 * Guarda la partida. thumb: con miniatura nueva (al guardar a mano, al salir o al volver al menu; las automaticas dejan la que
 	 * habia). Si no se puede escribir se avisa siempre, con el motivo (SaveData.lastError)
@@ -2694,8 +3896,8 @@ class GalaxyApp extends hxd.App {
 			// en el espacio: la partida con la nave y el robot donde estan en el mapa
 			if( spaceInfo == null || explorer == null ) return;
 			storeMapPos();
-			var ok = SaveData.write(spaceInfo, thumb ? captureThumb() : null);
-			if( notify || !ok ) showToast(ok ? Lang.t("saved.ok") : Lang.t("saved.error") + ": " + SaveData.lastError, ok ? 2 : 8);
+			var ok = writeSave(spaceInfo, thumb);
+			savedToast(notify, ok);
 			return;
 		}
 		// en el hangar se guarda la partida tal como estaba al entrar (con el tiempo jugado); en la nodriza, con lo comprado y vendido
@@ -2704,12 +3906,12 @@ class GalaxyApp extends hxd.App {
 		// dentro de la nodriza (llegando del mapa): se apunta, para que al cargar se aparezca dentro y no en el mapa
 		var inMother = game.info.mothership == true && !GameView.editMother && info != null && info.uni != null && info.uni.space == true;
 		if( inMother ) info.inMother = { x : game.px, y : game.py, z : game.pz, yaw : game.yaw, pitch : game.pitch };
-		var ok = SaveData.write(info, thumb ? captureThumb() : null);
+		var ok = writeSave(info, thumb);
 		if( inMother ) info.inMother = null;
 		// modo de edicion: guardar (Esc, guardar y salir) tambien escribe la nave nodriza
 		if( GameView.editMother && game.info.mothership == true )
 			ok = (try Mothership.save(game.world) catch( e : Dynamic ) false) && ok;
-		if( notify || !ok ) showToast(ok ? Lang.t("saved.ok") : Lang.t("saved.error") + ": " + SaveData.lastError, ok ? 2 : 8);
+		savedToast(notify, ok);
 	}
 
 	/** Captura de pantalla (F2): Interface.takeScreen y Render.takeScreenShot del original. Solo la escena, al tamano de la ventana:
@@ -2916,10 +4118,12 @@ class GalaxyApp extends hxd.App {
 		toast.textAlign = Center;
 		toast.text = msg;
 		toast.x = 60;
-		toast.y = (state == Exploring ? 548 : 640) - (toast.textHeight - toast.font.lineHeight) * toast.scaleY;
+		toast.y = (state == Exploring ? 548 : state == Menu ? 470 : 640) - (toast.textHeight - toast.font.lineHeight) * toast.scaleY;
 		toast.visible = true;
 		toast.alpha = 1;
 		toastTime = time;
+		// en los menus, delante de la pantalla abierta (si no, el panel de Multijugador lo tapa)
+		if( state == Menu && toast.parent != null ) toast.parent.addChild(toast);
 	}
 
 	/** partidas de ejemplo para las capturas (--demo-saves: las 3 primeras) y para probar la lista (devsaves N); de la cuarta en
@@ -3031,6 +4235,22 @@ class GalaxyApp extends hxd.App {
 		return 0;
 	}
 	var lastStamp = 0.;
+	/** --mpprof con --frametime: de que parte era el fotograma lento (update entero, red, avisos, chat; render) */
+	var profUpdateStart = 0.;
+	var profUpdate = 0.;
+	var profMp = 0.;
+	var profWatch = 0.;
+	var profOverlay = 0.;
+	var profRender = 0.;
+	var profRenderEnd = 0.;
+
+	override function render( e : h3d.Engine ) {
+		var t = haxe.Timer.stamp();
+		profUpdate = (t - profUpdateStart) * 1000;
+		super.render(e);
+		profRender = (haxe.Timer.stamp() - t) * 1000;
+		profRenderEnd = haxe.Timer.stamp();
+	}
 
 	/** VSync de Opciones (--novsync lo quita siempre, para diagnosticar) */
 	function applyVsync() {
@@ -3054,15 +4274,30 @@ class GalaxyApp extends hxd.App {
 	}
 
 	override function update( dt : Float ) {
+		var tFrame = haxe.Timer.stamp();
 		limitFps();
 		frames++;
 		// diagnostico (--frametime): fotogramas lentos y en que estado estaba el juego
 		if( frameTime ) {
 			var now = haxe.Timer.stamp();
-			if( lastStamp > 0 && now - lastStamp > frameMax ) Sys.println("parada " + Std.int((now - lastStamp) * 1000) + " ms en el fotograma " + frames + ", estado " + state + (bgBuilding != null ? ", construyendo fondo" : ""));
+			if( lastStamp > 0 && now - lastStamp > frameMax ) Sys.println("parada " + Std.int((now - lastStamp) * 1000) + " ms en el fotograma " + frames + ", estado " + state + (bgBuilding != null ? ", construyendo fondo" : "")
+				+ (MultiSession.PROF ? " (update " + Std.int(profUpdate) + " ms: red " + Std.int(profMp) + ", avisos " + Std.int(profWatch) + ", chat " + Std.int(profOverlay) + "; render " + Std.int(profRender) + " ms; entre fotogramas " + Std.int((tFrame - profRenderEnd) * 1000) + " ms, limite de FPS " + Std.int((now - tFrame) * 1000) + " ms)" : ""));
 			lastStamp = now;
 		}
 		if( dt > 0.1 ) dt = 0.1;
+		// pruebas (--fixeddt=S): cada fotograma avanza lo mismo; asi un guion da lo mismo en un PC lento o cargado (port/dev/baseline.ps1)
+		if( FIXED_DT > 0 ) dt = FIXED_DT;
+		// multijugador: el servidor del anfitrion y el cliente no se paran nunca (menus, carga, pausa)
+		var tp0 = haxe.Timer.stamp();
+		profUpdateStart = tp0;
+		if( mp != null ) mp.pump(state == Paused && !mpLive() ? 0 : dt);
+		var tp1 = haxe.Timer.stamp();
+		mpWatch();
+		var tp2 = haxe.Timer.stamp();
+		mpOverlay(dt);
+		profMp = (tp1 - tp0) * 1000;
+		profWatch = (tp2 - tp1) * 1000;
+		profOverlay = (haxe.Timer.stamp() - tp2) * 1000;
 		// iconos grandes de la Base de datos ESCorp y de la paleta: unos pocos por fotograma (mas con una de ellas abierta); los de
 		// reserva, solo en la pantalla de carga del planeta, mas deprisa con el mundo ya hecho. Antes seguian jugando, pasados 2 s
 		// de la llegada, dibujando fuera de pantalla en cada imagen: sospechosos del parpadeo que se ve con algunas tarjetas en
@@ -3126,7 +4361,12 @@ class GalaxyApp extends hxd.App {
 
 		if( state == Playing && game != null ) {
 			var K = hxd.Key;
-			if( paletteOpen ) {
+			if( chatBox != null && (chatBox.typing || chatBox.stoppedFrame == hxd.Timer.frameCount) ) {
+				// escribiendo en el chat (o el Intro/Esc que lo cierra): el juego sigue sin controles
+				game.update(dt, false, pad);
+				if( game == null || state != Playing ) return;
+				game.updateCamera();
+			} else if( paletteOpen ) {
 				game.stopSounds();
 				if( shop != null ) {
 					shop.update(dt, pad);
@@ -3147,7 +4387,8 @@ class GalaxyApp extends hxd.App {
 				} else if( K.isPressed(K.ESCAPE) || Keys.pressed("palette") ) closePalette();
 				// la tienda y los contratos salen del ordenador de a bordo: tampoco paran el juego (ver abajo, state == Paused); la
 				// barra de vida se ve bajo el panel
-				if( shop != null || contracts != null || database != null || invScreen != null || storage != null ) {
+				// en multijugador nada para el mundo: tampoco la paleta (anadido del port)
+				if( shop != null || contracts != null || database != null || invScreen != null || storage != null || mpLive() ) {
 					game.update(dt, false, pad);
 					if( game == null || state != Playing ) return;
 					updateJetHud(game);
@@ -3219,7 +4460,8 @@ class GalaxyApp extends hxd.App {
 			// nave y el mundo no se para. Cambio del port: sin ningun control (ni andar ni mirar), el teclado y el raton son del menu
 			// la pantalla de licencias sale del ordenador de a bordo y tampoco para el juego (aviso del PR 77)
 			// la conversacion con el robot tampoco: el se mueve y habla mientras la camara lo encuadra
-			if( current != null && (currentName == "computer" || currentName == "licenses" || currentName == "robot") ) {
+			// en multijugador la pausa no para el mundo (anadido del port): los demas siguen y lo que pasa llega igual
+			if( (current != null && (currentName == "computer" || currentName == "licenses" || currentName == "robot")) || mpLive() ) {
 				if( currentName == "robot" ) updateRobotDialog(dt);
 				game.update(dt, false, pad);
 				if( game == null || state != Paused ) return;

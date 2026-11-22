@@ -1,0 +1,69 @@
+# multijugador (anadido del port): un gestionnaire (aqui el anfitrion, propietario y en creativo de sesion, con su partida de
+# aventura) escanea mas de 4 planetas: ni el juego (Space.unlimited) ni el servidor (ServerWorlds.planetRow) se lo impiden, y
+# Licencias dice "illimitées pour les gestionnaires". Semilla 4242 como port/dev/licencias.txt (sistema 0: planetas 0 y 1;
+# sistema 1: 10, 11 y 12). devrun.ps1 -Extra "--mpseed=4242" -Timeout 900
+setlang fr
+waitfor planet
+mp host 55197
+waitfor map 6000
+waitfor system
+print mp
+print licenses
+expgo 0 0
+waitfor sector
+expsys 1
+waitfor system
+expplanet 10
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+explore
+waitfor map 6000
+waitfor system
+expplanet 11
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+explore
+waitfor map 6000
+waitfor system
+expplanet 12
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+explore
+waitfor map 6000
+waitfor system
+expgo 0 0
+waitfor sector
+expsys 0
+waitfor system
+expplanet 1
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+print licenses
+# la quinta (el 0): en aventura saldria "Pas de licence"; un gestionnaire aterriza
+explore
+waitfor map 6000
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+print toast
+print licenses
+licenses open
+wait 10
+print menu
+shot mp_licencias_gestor
+close
+wait 3
+mp leave
+waitfor mpend 600
+quit

@@ -1,0 +1,17 @@
+# multijugador (anadido del port), con port/dev/mp_icons_guest.txt: los pictos del mapa del invitado, invitado como
+# explorador (candado abierto en su planeta, candados rojos en los demas del sistema). mp_icons_host_v.txt: como visitante (camara).
+waitfor planet
+mp host 55186
+waitfor map 6000
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+mp access 0 1
+waitfor mpplayers2 9000
+wait 60
+mp invite 0 2 0
+wait 12000
+mp leave
+waitfor mpend 600

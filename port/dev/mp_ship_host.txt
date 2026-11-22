@@ -1,0 +1,29 @@
+# multijugador (anadido del port), con port/dev/mp_ship_guest.txt: el punto de aterrizaje comun. El anfitrion (propietario) lleva
+# su nave a otro sitio pilotando; la del invitado va alli tambien, y el invitado no puede pilotar en un planeta ajeno.
+waitfor planet
+mp host 55187
+waitfor map 6000
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+mp access 0 1
+waitfor mpplayers2 9000
+wait 60
+mp invite 0 2 0
+waitfor mpremotes1 9000
+wait 200
+ship
+wait 20
+print ship
+pilot
+wait 10
+pilotgo 20 6
+wait 10
+pilotstop
+wait 120
+print ship
+wait 600
+mp leave
+waitfor mpend 600

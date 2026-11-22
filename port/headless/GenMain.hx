@@ -694,6 +694,55 @@ class GenMain {
 	}
 	#end
 
+	#if sys
+	static function refOf( g : gen.DetailsGenerator, seed : Int, biomeName : String, sizeChunks : Int, version : Int ) : String {
+		var bytes = g.getBytes().b;
+		var a = 1, b = 0;
+		for( pos in 0...bytes.length ) {
+			a = (a + bytes.get(pos)) % 65521;
+			b = (b + a) % 65521;
+		}
+		return refLine(seed, biomeName, sizeChunks, version, StringTools.hex(a, 4) + StringTools.hex(b, 4), [for( p in g.placed ) p.n]);
+	}
+
+	/**
+	 * Multijugador (anadido del port): genera los casos del fichero de dos en dos, alternando pasos de 1 ms entre los dos
+	 * generadores en el mismo hilo (como el servidor dentro del juego junto al planeta del anfitrion), y los compara con sus lineas.
+	 * Cada generador tiene su propio tampon (antes flash.Memory era uno solo para todos): uno no debe cambiar lo que sale del otro.
+	 */
+	static function interleave( file : String ) {
+		var cases = [for( l in sys.io.File.getContent(file).split("\n") ) { var s = StringTools.trim(l); if( s != "" && s.charAt(0) != "#" ) s; }];
+		cases = [for( c in cases ) if( c != null ) c];
+		var fails = 0, swaps = 0;
+		var i = 0;
+		while( i < cases.length ) {
+			var pair = [cases[i]];
+			if( i + 1 < cases.length ) pair.push(cases[i + 1]);
+			i += 2;
+			var gens = [for( want in pair ) { var f = want.split(" "); { want : want, f : f, g : makeGen(Std.parseInt(f[0]), f[1], Std.parseInt(f[2]), Std.parseInt(f[3])), busy : true }; }];
+			var any = true;
+			while( any ) {
+				any = false;
+				for( x in gens ) if( x.busy ) {
+					x.busy = x.g.process(1);
+					swaps++;
+					if( x.busy ) any = true;
+				}
+			}
+			for( x in gens ) {
+				var got = refOf(x.g, Std.parseInt(x.f[0]), x.f[1], Std.parseInt(x.f[2]), Std.parseInt(x.f[3]));
+				if( got == x.want ) out("OK     " + got) else {
+					fails++;
+					out("CAMBIA " + got);
+					out("  ref  " + x.want);
+				}
+			}
+		}
+		out(fails == 0 ? 'INTERCALADO OK (${cases.length} casos, $swaps pasos)' : 'INTERCALADO CAMBIA ($fails de ${cases.length})');
+		Sys.exit(fails == 0 ? 0 : 1);
+	}
+	#end
+
 	static function main() {
 		#if flash
 		#if genOnly
@@ -706,6 +755,7 @@ class GenMain {
 		try {
 			switch( args[0] ) {
 			case "--check" if( args.length >= 2 ): check(args[1]);
+			case "--interleave" if( args.length >= 2 ): interleave(args[1]);
 			case "--profile": profile(args);
 			case "--steps": stepSums(args);
 			case "--compare" if( args.length >= 3 ): compare(args[1], args[2]);

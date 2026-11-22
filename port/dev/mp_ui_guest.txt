@@ -1,0 +1,23 @@
+# multijugador (anadido del port): el invitado de port/dev/mp_ui_host.txt, solo por los menus
+waitfor planet
+menu
+waitfor menu
+wait 500
+button 2
+wait 200
+print menu
+shot mp_ui_liste
+button 0
+wait 200
+print menu
+shot mp_ui_tuto
+button 0
+waitfor mp 6000
+waitfor ready 6000
+wait 300
+print mp
+shot mp_ui_dentro
+waitfor mpend 9000
+wait 60
+print menu
+shot mp_ui_fin

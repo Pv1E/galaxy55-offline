@@ -19,6 +19,9 @@ class Drop {
 	public var loot : DeathDrops.DeathDropInfo;
 	public var delay = 0.;
 	public var light = 0.;
+	/** multijugador (anadido del port): id del suelto en el servidor (-1 = solo de este juego) y recogida pedida sin respuesta */
+	public var netId = -1;
+	public var pending = false;
 	public var obj : h3d.scene.Object;
 	public var mat : h3d.mat.Material;
 
@@ -223,7 +226,13 @@ class Drops {
 				dz = 0;
 			var dd = Math.sqrt(dx * dx + dy * dy + dz * dz);
 			var picked = false, got = false;
-			if( dd < 1.5 && d.active && (d.loot != null ? DeathDrops.canGet(g.inv, d.loot) : g.inv.canAddBlock(d.block)) ) {
+			// multijugador: el suelto es del servidor; al llegar al jugador se pide (NetGame.sentPick) y se esconde hasta la respuesta
+			var net = g.net != null && d.netId >= 0;
+			if( net && d.pending ) {
+				i++;
+				continue;
+			}
+			if( dd < 1.5 && d.active && (net && d.block == DeathDrops.block() ? true : d.loot != null ? DeathDrops.canGet(g.inv, d.loot) : g.inv.canAddBlock(d.block)) ) {
 				var s = 0.2 * dt / (dd * dd + 1e-6);
 				// el contenedor del equipo no pasa de largo al jugador (con un tmod alto salia despedido): si se queda con algo que
 				// no cabe, se queda a sus pies
@@ -231,7 +240,11 @@ class Drops {
 				d.x += dx * s;
 				d.y += dy * s;
 				d.z += dz * s;
-				if( dd < 0.4 ) {
+				if( dd < 0.4 && net ) {
+					d.pending = true;
+					if( d.obj != null ) d.obj.visible = false;
+					g.net.sentPick(d.netId);
+				} else if( dd < 0.4 ) {
 					if( d.loot != null ) {
 						// SAddLoot: lo que cabe; si queda algo, el contenedor sigue ahi
 						got = DeathDrops.take(g.inv, d.loot);
@@ -249,7 +262,7 @@ class Drops {
 					}
 				}
 			}
-			if( d.loot != null && !picked ) DeathDrops.follow(g, d);
+			if( d.loot != null && !picked ) DeathDropsPlay.follow(g, d);
 			if( picked || got ) Snd.play("pickupBlock", 0.3);
 			if( picked || d.time <= 0 ) {
 				if( d.obj != null ) {

@@ -71,7 +71,7 @@ class Tutorial {
 			return;
 		}
 		if( t.spots == null && g.ship != null ) {
-			TutoSetup.seedPlanet(g);
+			TutoSeed.seedPlanet(g);
 			if( t.step == SPACE ) t.step = EXIT;
 		}
 		switch( t.step ) {
@@ -91,6 +91,8 @@ class Tutorial {
 	}
 
 	function finish( g : GameView ) {
+		// multijugador: el envio lo da el servidor (ServerEcon, EEndTutorial); aqui se hace igual en la copia para verlo ya
+		if( g.net != null ) g.net.sentEcon(EEndTutorial, "", 0);
 		g.inv.addCharge(CBlue, TutoSetup.GIFT);
 		g.inv.addCharge(CYellow, TutoSetup.GIFT);
 		g.info.credits = (g.info.credits == null ? 0 : g.info.credits) + Market.START_CREDITS;
@@ -112,11 +114,7 @@ class Tutorial {
 	 * PLATES). Si no, el aluminio se podia gastar en otra receta (tubos, malla, dalle blindados...) y el tutorial se quedaba sin
 	 * salida: no hay mas bauxita que la que pone.
 	 */
-	public static function craftAllowed( info : SaveInfo, r : CraftRule ) : Bool {
-		if( !active(info) ) return true;
-		var out = Block.get(r.out).k;
-		return out == BAluminium || out == BShipHull;
-	}
+	public static function craftAllowed( info : SaveInfo, r : CraftRule ) : Bool return TutoSetup.craftAllowed(info, r);
 
 	/**
 	 * Mientras dura, en la zona del sintetizador solo se ponen los ingredientes de lo que fabrica (craftAllowed): la bauxita (ALU)
@@ -167,7 +165,7 @@ class Tutorial {
 	/** reglas del hangar durante el tutorial (GameView.hangarRule): no se rompe nada y solo se pone blindaje en los agujeros */
 	public static function hangarRule( info : SaveInfo ) : Bool -> Int -> Int -> Int -> Block -> String {
 		if( !active(info) ) return null;
-		var cells = TutoSetup.hangarCells();
+		var cells = TutoSeed.hangarCells();
 		return function( place : Bool, x : Int, y : Int, z : Int, b : Block ) : String {
 			if( !place ) return TutoText.get("nobreak");
 			for( c in cells )
@@ -204,7 +202,7 @@ class Tutorial {
 
 	// ---------------------------------------------------------------- recuentos
 
-	function filled( g : GameView ) return [for( c in TutoSetup.hangarCells() ) if( TutoTargets.isHull(g.world.block(c.x, c.y, c.z)) ) c].length;
+	function filled( g : GameView ) return [for( c in TutoSeed.hangarCells() ) if( TutoTargets.isHull(g.world.block(c.x, c.y, c.z)) ) c].length;
 
 	function holesFilled( g : GameView ) return filled(g) >= holes();
 

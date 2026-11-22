@@ -1,0 +1,22 @@
+# multijugador (anadido del port): el boton Multijugador del menu, su pantalla (vacia la primera vez) y Crear una partida
+# nueva desde ella: se juega enseguida, en el espacio. port/dev/devrun.ps1 -Script port/dev/mp_menu.txt
+waitfor planet
+menu
+waitfor menu
+wait 30
+shot mp_menu
+print menu
+button 2
+wait 30
+shot mp_liste
+print menu
+button 1
+wait 20
+shot mp_crear
+print menu
+button 8
+waitfor map 6000
+wait 60
+print mp
+shot mp_creada
+quit

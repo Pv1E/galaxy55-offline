@@ -1,0 +1,134 @@
+# App de macOS del multijugador (anadido del port): el codigo C (HashLink/C) se genera en Linux, que distingue mayusculas
+# (port/tools/build-hlc-sources.sh), y un Mac con procesador Apple lo compila en "Galaxy 55.app" autonoma
+# (port/tools/mac-app.sh), comprueba las planetas de referencia (port/headless/gen_ref.txt) y publica la app en la
+# pre-version "multijoueur-mac". Las dependencias son las de tools-portable (HashLink 1.16, heaps y format fijados).
+name: macOS
+
+on:
+  push:
+    branches: [feat/multijoueur]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  HEAPS_COMMIT: 7646b57589ca621c539c5f61b92fb41586e09f1f
+
+jobs:
+  hlc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: repo
+      - name: Dependencias (HashLink 1.16, heaps, format 3.8.0)
+        run: |
+          git clone --quiet --depth 1 --branch 1.16 https://github.com/HaxeFoundation/hashlink.git tp/src/hashlink
+          git init --quiet tp/src/heaps
+          git -C tp/src/heaps fetch --quiet --depth 1 https://github.com/HeapsIO/heaps.git "$HEAPS_COMMIT"
+          git -C tp/src/heaps checkout --quiet FETCH_HEAD
+          # el zip de lib.haxe.org trae la libreria dentro de una carpeta (release/): se toma la que tiene haxelib.json
+          curl -fsSL -o format.zip https://lib.haxe.org/p/format/3.8.0/download/
+          unzip -q format.zip -d fmt
+          mkdir -p tp/haxelib/format/3,8,0
+          cp -R "$(dirname "$(find fmt -name haxelib.json | head -1)")"/. tp/haxelib/format/3,8,0/
+          ls tp/haxelib/format/3,8,0
+      - name: Codigo C (juego, servidor y comprobador de planetas)
+        run: |
+          mkdir -p out
+          docker run --rm -e GEN=1 -v "$PWD/repo:/repo:ro" -v "$PWD/tp:/tp:ro" -v "$PWD/out:/out" haxe:4.3.7 \
+            sh /repo/port/tools/build-hlc-sources.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hlc
+          path: out/*.zip
+
+  mac:
+    needs: hlc
+    # el Mac con procesador Apple que GitHub tenga ahora (macos-14 ya no existe)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: hlc
+          path: hlc
+      - name: Homebrew (hashlink, dylibbundler)
+        run: |
+          brew install hashlink dylibbundler
+          # lo que se ensena tambien va a las anotaciones: la API de GitHub las da sin cuenta (el registro no)
+          cat > note.sh << 'SH'
+          note() { echo "::$1 title=$2::$(printf '%s\n' "$3" | tail -40 | sed -e 's/%/%25/g' | awk '{ printf "%s%%0A", $0 }')"; }
+          SH
+          . ./note.sh
+          HL="$(brew --prefix hashlink)"
+          note notice "hashlink" "$(uname -m) $(sw_vers -productVersion); include: $(ls "$HL/include" | tr '\n' ' '); lib: $(ls "$HL/lib" | tr '\n' ' ')"
+          # el hashlink ya compilado de Homebrew puede no cargar (fmt.hdll pide adler32 a libturbojpeg): desde el codigo
+          cat > check.c << 'C'
+          #include <dlfcn.h>
+          #include <stdio.h>
+          int main( int c, char **v ) {
+            int ok = 1;
+            for( int i = 1; i < c; i++ ) if( !dlopen(v[i], RTLD_NOW) ) { printf("%s\n", dlerror()); ok = 0; }
+            return ok ? 0 : 1;
+          }
+          C
+          clang check.c -o check
+          if ! out=$(./check "$HL"/lib/*.hdll 2>&1); then
+            note warning "hashlink de Homebrew roto, se compila desde el codigo" "$out"
+            brew reinstall --build-from-source hashlink
+            if ! out=$(./check "$HL"/lib/*.hdll 2>&1); then note error "hashlink sigue sin cargar" "$out"; exit 1; fi
+          fi
+      - name: Planetas de referencia en Apple Silicon
+        continue-on-error: true
+        run: |
+          . ./note.sh
+          HL="$(brew --prefix hashlink)"
+          mkdir -p gen && unzip -q hlc/hlc-gen.zip -d gen
+          for mode in off on; do
+            if ! out=$(clang -O2 -std=c11 -ffp-contract=$mode -w -I gen/hlc/gen -I "$HL/include" gen/hlc/gen/gen.c -o gen/gen_$mode \
+              -L "$HL/lib" -lhl "$HL/lib/fmt.hdll" -Wl,-rpath,"$HL/lib" 2>&1); then
+              note error "clang gen -ffp-contract=$mode" "$out"
+              continue
+            fi
+            note notice "planetas -ffp-contract=$mode" "$(gen/gen_$mode --check port/headless/gen_ref.txt 2>&1 | grep -v '^OK ')"
+          done
+          gen/gen_off --check port/headless/gen_ref.txt | tail -1 | grep -q "GENREF OK"
+      - name: Galaxy 55.app
+        run: |
+          . ./note.sh
+          if ! sh port/tools/mac-app.sh "0.8.1-multijoueur" hlc/hlc.zip dist > app.log 2>&1; then
+            note error "mac-app.sh" "$(cat app.log)"
+            exit 1
+          fi
+          tail -5 app.log
+      - name: Comprobaciones de la app
+        run: |
+          . ./note.sh
+          set +e
+          APP="$(cat dist/app-path.txt)"
+          cd "$APP/Contents/Resources"
+          note notice "bibliotecas de la app" "$(ls ../libs | tr '\n' ' '); $(otool -L ./galaxy55-serveur ./galaxy55 ../libs/*.hdll ../libs/libhl*.dylib 2>&1 | grep -v '/usr/lib/\|/System/' )"
+          srv="$(./galaxy55-serveur --newplayer 4242 2>&1; echo "salida $?"; ./galaxy55-serveur --gen 776733 BIWinterPeaks 2 2>&1; ./galaxy55-serveur --gen 31782 BIMoon 2 2>&1)"
+          note notice "servidor C (esperado 0EEEDFA1 y E491F395)" "$srv"
+          echo "$srv" | grep -q "0EEEDFA1" || { note error "servidor C" "no arranca o el terreno no coincide"; FAIL=1; }
+          printf 'waitfor planet\nwait 30\nprint mp\nquit\n' > /tmp/s.txt
+          GALAXY55_DATA=/tmp/g55data "$APP/Contents/MacOS/Galaxy55" --script=/tmp/s.txt > /tmp/game.txt 2>&1 &
+          P=$!
+          for i in $(seq 1 120); do kill -0 $P 2> /dev/null || break; sleep 1; done
+          kill $P 2> /dev/null && echo "(juego parado tras 120 s)" >> /tmp/game.txt || true
+          note notice "juego (la app)" "$(grep -v '^[0-9]*:B' /tmp/game.txt)"
+          [ -z "$FAIL" ]
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Galaxy55-macOS
+          path: dist/*.zip
+      - name: Pre-version multijoueur-mac
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete multijoueur-mac --yes --cleanup-tag 2> /dev/null || true
+          gh release create multijoueur-mac dist/*.zip --prerelease --target "$GITHUB_SHA" \
+            --title "Galaxy 55 multijoueur - macOS (test)" \
+            --notes "App macOS (Apple Silicon) de la branche feat/multijoueur, commit $GITHUB_SHA. Non signee : premiere ouverture via Reglages Systeme > Confidentialite et securite > Ouvrir quand meme."

@@ -1,4 +1,5 @@
 import Common;
+import Msg;
 
 /**
  * Banco de pruebas (solo para desarrollo): ejecuta un guion de ordenes sobre una partida nueva, sin ventana a la vista ni teclado.
@@ -643,7 +644,7 @@ class Dev {
 		case "close": app.closeStorage();
 		case "forget": if( info != null ) info.storage = null;
 		case "put":
-			var st = ShipStorage.ensure(info);
+			var st = StorageData.ensure(info);
 			var n = a.length > 3 ? Std.parseInt(a[3]) : 1;
 			var got = new Inventory({ maxWeight : 64, t : st.t, charges : st.charges }).addBlocks(bk(a[2]), n);
 			if( got < n ) Sys.println("storage put: solo caben " + got);
@@ -654,7 +655,7 @@ class Dev {
 				return;
 			}
 			var g = @:privateAccess app.game;
-			if( a[1] == "charge" ) setCharge(ShipStorage.ensure(info).charges, k, Std.parseInt(a[3]));
+			if( a[1] == "charge" ) setCharge(StorageData.ensure(info).charges, k, Std.parseInt(a[3]));
 			else if( g != null ) {
 				setCharge(g.inv.inv.charges, k, Std.parseInt(a[3]));
 				g.inv.display();
@@ -775,6 +776,13 @@ class Dev {
 			case "ready": playing || (g == null && app.explorer != null);
 			case "ground": g != null && g.onGround();
 			case "menu": Type.enumConstructor(@:privateAccess app.state) == "Menu" && @:privateAccess app.bgWorlds.length > 0;
+			// multijugador (anadido del port): dentro de la partida, el fin de la conexion, y N jugadores conectados (mpplayers3)
+			case "mp": app.mp != null && app.mp.isPlaying();
+			case "mpend": app.mp == null || app.mp.ended != null; // al acabar, GalaxyApp.endMulti la quita enseguida
+			case "mpforeign": app.mp != null && app.mp.foreign.length > 0;
+			case w if( StringTools.startsWith(w, "mpremotes") ): g != null && g.net != null && g.net.remotes.count() >= Std.parseInt(w.substr(9));
+			case w if( StringTools.startsWith(w, "mpplayers") ): app.mp != null && Lambda.count(app.mp.players) >= Std.parseInt(w.substr(9));
+			case w if( StringTools.startsWith(w, "mpchat") ): app.mp != null && app.mp.chat.length >= Std.parseInt(w.substr(6));
 			default: true;
 		}
 	}
@@ -833,6 +841,8 @@ class Dev {
 				case "waitfor":
 					waitCond = a[1];
 					waitMax = a.length > 2 ? Std.parseInt(a[2]) : 2000;
+				case "mp":
+					mpCommand(a, app);
 				case "until":
 					untilWhat = a[1];
 					untilValue = f(a[2]);
@@ -953,7 +963,8 @@ class Dev {
 					} else {
 						var nb = a[4] == "none" ? null : bk(a[4]);
 						if( nb != null && nb.type == BTWater ) w.setWater(x, y, z, nb, WorldProcess.PLACED) else w.setBlock(x, y, z, nb);
-						g.process.onSet(x, y, z, old, nb);
+						// multijugador: como al poner jugando, lo pone el servidor (casilla 1 si no es creativo)
+						if( g.net != null && nb != null ) g.net.sentPlace(x, y, z, nb, 0, 1) else g.process.onSet(x, y, z, old, nb);
 					}
 					Sys.println(a[0] + " " + x + "," + y + "," + z + " antes=" + (old == null ? "aire" : "" + old.k));
 				case "shore":
@@ -1673,6 +1684,52 @@ class Dev {
 		Sys.println("fadelog: destellos a los " + [for( t in L.rises ) r3(t - L.t0)].join(" ") + " s");
 	}
 
+	/**
+	 * Multijugador (anadido del port): mp host PUERTO (hospeda en 127.0.0.1 con sus archivos en la carpeta de datos, mp_serveur),
+	 * mp join PUERTO [contrasena], mp say TEXTO, mp pm ID TEXTO, mp admin OP ID [ARG], mp mode 0|1, mp leave
+	 */
+	function mpCommand( a : Array<String>, app : GalaxyApp ) {
+		var rest = a.slice(2).join(" ");
+		switch( a[1] ) {
+		case "host":
+			var m = MultiSession.host(Settings.dir() + "/mp_serveur", Std.parseInt(a[2]), "127.0.0.1");
+			m.autoNewGame = false;
+			app.startMulti(m);
+		case "join":
+			var m = MultiSession.join("127.0.0.1", Std.parseInt(a[2]), a.length > 3 ? a[3] : "", null, 0);
+			m.autoNewGame = false;
+			app.startMulti(m);
+		case "joinat":
+			// mp joinat HOST PUERTO: un servidor de otro equipo o sistema (pruebas entre Windows, Linux y macOS)
+			var m = MultiSession.join(a[2], Std.parseInt(a[3]), "", null, 0);
+			m.autoNewGame = false;
+			app.startMulti(m);
+		case "say":
+			app.mp.say(rest);
+		case "pm":
+			app.mp.say(a.slice(3).join(" "), CPrivate, Std.parseInt(a[2]));
+		case "admin":
+			app.mp.client.send(CAdmin(Std.parseInt(a[2]), Std.parseInt(a[3]), a.length > 4 ? a[4] : ""));
+		case "access":
+			app.mp.client.send(CAccess(Std.parseInt(a[2]), a[3] == "1", a.length > 4 && a[4] == "1", a.length > 5 && a[5] == "1", a.length > 6 ? Std.parseInt(a[6]) : 0));
+		case "invite":
+			app.mp.client.send(CInvite(Std.parseInt(a[2]), Std.parseInt(a[3]), a.length > 4 ? Std.parseInt(a[4]) : 0));
+		case "give":
+			// mp give ID Bloque [n]: solo el anfitrion, directo a su servidor (el inventario es del servidor)
+			var s = app.mp.server == null ? null : app.mp.server.sessionById(Std.parseInt(a[2]));
+			if( s == null ) Sys.println("mp give: no hospeda o no hay jugador " + a[2]);
+			else app.mp.server.worlds.items.devGive(s, bk(a[3]), a.length > 4 ? Std.parseInt(a[4]) : 50);
+		case "landforeign":
+			app.devLandForeign();
+		case "mode":
+			app.mp.client.send(CSetMode(a[2] == "1"));
+		case "leave":
+			app.mp.close();
+		default:
+			Sys.println("mp desconocido: " + a[1]);
+		}
+	}
+
 	/** lo desplazada que esta cada zona (KubScroll) de una pestana de la Base de datos ESCorp, en el orden del arbol */
 	static function kubScrolls( o : h2d.Object ) : Array<Int> {
 		var out = [];
@@ -1684,6 +1741,36 @@ class Dev {
 	}
 
 	function print( a : Array<String>, g : GameView, app : GalaxyApp ) {
+		if( a[1] == "mploots" ) {
+			// el anfitrion: los sueltos de su servidor (id bloque x n en x,y,z; espera; contenedor)
+			if( app.mp == null || app.mp.server == null ) Sys.println("mploots: no hospeda");
+			else for( inst in @:privateAccess app.mp.server.worlds.instances ) {
+				var l = [for( d in inst.items.drops ) d.id + " " + d.b.k + "x" + d.n + " @" + r3(d.x) + "," + r3(d.y) + "," + r3(d.z) + (d.delay > 0 ? " espera " + r3(d.delay) : "") + (d.loot != null ? " contenedor" : "")];
+				l.sort(Reflect.compare);
+				Sys.println("mploots " + inst.key + ": " + l.length + (l.length > 0 ? " " + l.join(" | ") : ""));
+			}
+			return;
+		}
+		if( a[1] == "mpworld" ) {
+			// el anfitrion: los planetas cargados en su servidor y su suma (la misma que print cellhash si el terreno coincide)
+			if( app.mp == null || app.mp.server == null ) Sys.println("mpworld: no hospeda");
+			else for( inst in @:privateAccess app.mp.server.worlds.instances ) Sys.println("mpworld " + inst.key + " " + (inst.ready() ? inst.world.cellHash() : "generando") + " jugadores " + inst.players.length);
+			return;
+		}
+		if( a[1] == "remotes" ) {
+			Sys.println(g == null || g.net == null ? "remotos: sin partida multijugador" : g.net.devInfo());
+			return;
+		}
+		if( a[1] == "mp" ) {
+			// y si el juego tiene el raton (sin cursor): al acabar la sesion en plena partida tiene que soltarlo
+			Sys.println((app.mp == null ? "mp ninguno" : app.mp.devInfo()) + " raton=" + (@:privateAccess app.captured ? "capturado" : "libre"));
+			return;
+		}
+		if( a[1] == "cellhash" && g != null ) {
+			// multijugador: la misma suma que da el servidor (server.hl --gen SEMILLA BIOMA TAMANO) para el terreno generado
+			Sys.println("cellhash " + g.world.seed + " " + g.world.biomeName + " " + (g.world.size >> 7) + ": " + g.world.cellHash());
+			return;
+		}
 		if( a[1] == "screen" ) {
 			Sys.println("pantalla " + @:privateAccess app.currentName);
 			return;
@@ -2030,7 +2117,7 @@ class Dev {
 			inline function items( t : Protocol.BlockInventory ) return [for( s in t ) s == null ? "-" : EditorKubes.label(Block.all[s.k]) + "x" + s.n].join(" ");
 			var c = app.chest;
 			Sys.println("cantina: " + (c == null ? "cerrada" : "abierta [" + items(c.box) + "]") + "  guardadas: " + (g.info.chests == null ? "" : [for( e in g.info.chests ) e.key + " [" + items(e.t) + "]"].join(", ")));
-		case "deathdrops": Sys.println("dejado: " + DeathDrops.devInfo(g));
+		case "deathdrops": Sys.println("dejado: " + DeathDropsPlay.devInfo(g));
 		case "shake":
 			// temblor, subida de la camara y del HUD (en pixeles de la ventana) de este fotograma, y segundos de juego
 			inline function r( v : Float ) return Math.round(v * 1000) / 1000;

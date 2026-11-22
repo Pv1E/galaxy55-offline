@@ -1,14 +1,6 @@
 import Common;
 
 /** forma de un kube: tipo de bloque del juego, modelo (BFModel) y caras que usa (indices de KubeData.FACES) */
-typedef KubeShape = {
-	var id : String;
-	var type : BlockType;
-	var model : Null<BlockModel>;
-	var faces : Array<Int>;
-	/** caja parcial (BFSize) que se puede cambiar */
-	var box : Bool;
-}
 
 /**
  * Un kube del editor de kubes (anadido del port): un bloque con el mismo formato que los del juego (DataGen: tipo, BFSize o
@@ -28,34 +20,18 @@ class KubeData {
 	public static inline var RIGHT = 6;
 	public static inline var OPEN = 7;
 	/** nombre del png de cada cara dentro del .kube (y su indice en la tira de la vista previa) */
-	public static var FACES = ["side", "up", "down", "front", "back", "left", "right", "open"];
+	public static var FACES = KubeCore.FACES;
 	static inline var FORMAT = 1;
 	/** prefijo de los kubes en BlockKind: los 77 de Kube y los que se anaden desde el editor (kindName) */
 	static inline var KIND_PREFIX = "BKube";
 
 	/** el bloque es un kube (de Kube o del editor), no un bloque de Galaxy 55 */
-	public static function isKube( k : BlockKind ) : Bool return StringTools.startsWith(Std.string(k), KIND_PREFIX);
+	public static function isKube( k : BlockKind ) : Bool return BlockNames.isKube(k);
 
-	/** las formas del juego: las de los bloques de DataGen y los modelos de Models.hx que el original tenia sin usar */
-	public static var SHAPES : Array<KubeShape> = [
-		{ id : "cube", type : BTFull, model : null, faces : [SIDE, UP, DOWN], box : false },
-		{ id : "cube6", type : BTExtended, model : null, faces : [FRONT, BACK, LEFT, RIGHT, UP, DOWN], box : false },
-		{ id : "box", type : BTReduced, model : null, faces : [SIDE, UP, DOWN], box : true },
-		{ id : "door", type : BTReduced, model : null, faces : [SIDE, UP, DOWN, OPEN], box : true },
-		{ id : "cross", type : BTModel2Side, model : MCross, faces : [SIDE], box : false },
-		{ id : "crosssquare", type : BTModel2Side, model : MCrossSquare, faces : [SIDE], box : false },
-		{ id : "plane", type : BTModel2Side, model : MPlanX, faces : [SIDE], box : false },
-		{ id : "pyramid", type : BTModel2Side, model : MCrossPyramid, faces : [SIDE], box : false },
-		{ id : "column", type : BTModel, model : MColumn, faces : [SIDE, UP, DOWN], box : false },
-		{ id : "bigcolumn", type : BTModel, model : MBigColumn, faces : [SIDE, UP, DOWN], box : false },
-		{ id : "hanging", type : BTModel, model : MMiniTop, faces : [SIDE, UP, DOWN], box : false },
-		{ id : "pipe", type : BTModel, model : MPipeX, faces : [SIDE, UP, DOWN], box : false },
-		{ id : "cage", type : BTModel, model : MCrossBox, faces : [SIDE, UP], box : false },
-		// anadido del port: tableau colgado de una pared (Painting, BFOnWall); su caja va en pixeles de la imagen vista de frente
-		{ id : "painting", type : BTModel, model : null, faces : [SIDE], box : true },
-	];
+	/** las formas del juego (KubeCore.SHAPES: las de los bloques de DataGen y los modelos de Models.hx sin usar del original) */
+	public static var SHAPES : Array<KubeCore.KubeShape> = KubeCore.SHAPES;
 	/** rendu del cubo: opaco (BTFull), calado como las hojas (BTTransp) o translucido como el cristal (BTAlpha) */
-	public static var RENDERS = [BTFull, BTTransp, BTAlpha];
+	public static var RENDERS = KubeCore.RENDERS;
 	/**
 	 * Potencias de BFLight que se eligen en el editor (las de los bloques del juego): la luz de la celda del bloque, en la escala
 	 * de World (10 = pleno dia, 15 como mucho). Cada kube de distancia le quita la caida: se apaga a potencia / caida kubes.
@@ -75,7 +51,7 @@ class KubeData {
 	public static var PAINTING_BOXES = ["pcenter", "pfull", "phalf"];
 
 	public var name : String;
-	public var shape : KubeShape;
+	public var shape : KubeCore.KubeShape;
 	/** indice en RENDERS (solo para el cubo) */
 	public var render = 0;
 	/** caja en pixeles de la celda (0..32): x1 y1 z1 x2 y2 z2 */
@@ -96,13 +72,26 @@ class KubeData {
 		faces = [for( _ in FACES ) new haxe.ds.Vector<Int>(SIZE * SIZE)];
 	}
 
+	/** un kube que manda el servidor (KubeCore.NetKube, ya comprobado): queda solo en memoria, no se escribe nunca */
+	public static function fromNet( n : KubeCore.NetKube ) : KubeData {
+		var k = new KubeData(n.name);
+		k.shape = SHAPES[n.shape];
+		k.render = n.render;
+		k.box = n.box.copy();
+		k.light = n.light > 0 ? [n.light, n.reach] : null;
+		k.noCollide = n.noCollide;
+		for( f in 0...FACES.length )
+			for( i in 0...SIZE * SIZE ) k.faces[f][i] = n.faces.getInt32(f * KubeCore.FACE_BYTES + i * 4);
+		return k;
+	}
+
 	public static function dir() : String {
 		var d = Settings.dir() + "/kubes";
 		if( !sys.FileSystem.exists(d) ) sys.FileSystem.createDirectory(d);
 		return d;
 	}
 
-	public static function shapeById( id : String ) : KubeShape {
+	public static function shapeById( id : String ) : KubeCore.KubeShape {
 		for( s in SHAPES ) if( s.id == id ) return s;
 		return SHAPES[0];
 	}
@@ -211,7 +200,7 @@ class KubeData {
 	}
 
 	/** forma del editor que corresponde a un bloque del juego */
-	public static function shapeOf( b : Block ) : KubeShape {
+	public static function shapeOf( b : Block ) : KubeCore.KubeShape {
 		if( b.wall >= 0 ) return shapeById("painting");
 		return shapeById(switch( b.type ) {
 			case BTExtended: "cube6";

@@ -174,7 +174,7 @@ class SaveTest {
 				{ id : 5, edits : [], genVersion : gen.Generator.VERSION, seed : 123, biome : "BIMoon", size : 3 },
 			], licenses : [0, 2], main : 0, mainChanges : 1, abandoned : [], gone : [4], traveled : 12.5 };
 		info.chests = [{ key : "p7:1,2,3", t : [{ k : big, n : 2 }, null, { k : idx(BWood), n : 9 }, null] }, { key : "s:4,5,6", t : [null, null, null, null] }];
-		info.storage = ShipStorage.empty();
+		info.storage = StorageData.empty();
 		info.storage.t[0] = { k : ed, n : 1 };
 		info.storage.charges = [{ c : 0, n : 4 }];
 		info.deathDrops = [{ id : 1, key : "p7", x : 10.5, y : 11.5, z : 70, t : [{ k : last, n : 2 }], charges : [{ c : 2, n : 1 }] }];

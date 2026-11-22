@@ -324,45 +324,35 @@ class Shop extends h2d.Object {
 
 	/** compra hasta `n`, limitado por los creditos, las existencias y el sitio del inventario */
 	public function doBuy( w : Ware, n : Int ) {
-		var room = 0;
-		if( w.charge != null ) {
-			var have = 0;
-			for( c in inv.inv.charges ) if( c.c == Type.enumIndex(w.charge) ) have = c.n;
-			room = Std.int(Math.max(0, Data.getCharge(w.charge).max - have));
-		} else {
-			// sitio que queda para ese bloque (pilas a medias y casillas libres)
-			var max = w.block.getMax(inv.inv.maxWeight);
-			for( s in inv.inv.t ) {
-				if( s == null ) room += max;
-				else if( s.k == w.block.index ) room += Std.int(Math.max(0, max - s.n));
-			}
-		}
-		var r = market.buy(w, Std.int(Math.min(n, room)), credits);
+		// sitio que queda (pilas a medias y casillas libres, o el contador de cargas): ShopRules, igual que el servidor
+		var r = market.buy(w, Std.int(Math.min(n, ShopRules.room(inv, w))), credits);
 		if( r.n <= 0 ) return;
 		credits -= r.cost;
 		if( w.charge != null ) inv.addCharge(w.charge, r.n) else inv.addBlocks(w.block, r.n);
 		if( onCredits != null ) onCredits(credits);
+		if( onTrade != null ) onTrade(true, w, r.n);
 		refresh();
 	}
 
 	public function doSell( w : Ware, n : Int ) {
-		var have = 0;
-		if( w.charge != null ) {
-			for( c in inv.inv.charges ) if( c.c == Type.enumIndex(w.charge) ) have = c.n;
-		} else
-			for( s in inv.inv.t ) if( s != null && s.k == w.block.index ) have += s.n;
-		n = Std.int(Math.min(n, have));
+		n = Std.int(Math.min(n, ShopRules.have(inv, w)));
 		if( n <= 0 ) return;
 		var r = market.sell(w, n);
 		n = r.n;
 		if( n <= 0 ) return;
-		if( w.charge != null ) {
-			for( c in inv.inv.charges ) if( c.c == Type.enumIndex(w.charge) ) c.n -= n;
-			inv.display();
-		} else
-			inv.useBlocks(w.block, n);
+		ShopRules.take(inv, w, n);
 		credits += r.gain;
 		if( onCredits != null ) onCredits(credits);
+		if( onTrade != null ) onTrade(false, w, n);
+		refresh();
+	}
+
+	/** multijugador: el servidor repite la compra (true) o la venta de n (ServerEcon); los creditos llegan con SPatch */
+	public var onTrade : Bool -> Ware -> Int -> Void;
+
+	/** multijugador: los creditos que dice el servidor */
+	public function setCredits( c : Int ) {
+		credits = c;
 		refresh();
 	}
 }

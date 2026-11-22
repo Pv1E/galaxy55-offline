@@ -16,6 +16,8 @@ class Space {
 	public var uni(default, null) : UniInfo;
 	/** tutorial en curso: la nave esta averiada, solo se aterriza en el planeta del tutorial y no se sale del sistema */
 	public var tutorial = false;
+	/** licencias sin limite aunque la partida sea de aventura (GalaxyApp.managerLicenses: gestionnaires del multijugador) */
+	public var unlimited : Void -> Bool = function() return false;
 	/** aviso de lo que no se puede hacer (GalaxyApp.showToast) */
 	public var onRefuse : String -> Void = function(_) {};
 
@@ -46,6 +48,8 @@ class Space {
 	/** antes de aterrizar en un planeta (al pulsar Aterrizar o Escanear): false = no se puede */
 	public function canLand( p : ExpPlanet ) : Bool {
 		if( Licenses.isAbandoned(uni, p.id) ) return false;
+		// multijugador: en un sistema de otro jugador, solo lo abierto para este (ForeignMap)
+		if( p.status == PForbidden ) return false;
 		if( !tutorial || p.id == TutoSetup.PLANET ) return true;
 		onRefuse(TutoText.get("badplanet"));
 		return false;
@@ -54,7 +58,7 @@ class Space {
 	/** antes de escanear un planeta sin explorar: hace falta una licencia libre (Licenses, anadido del port) */
 	public function canScan( p : ExpPlanet ) : Bool {
 		// una cometa no gasta licencia (Comets, añadido del port)
-		if( tutorial || p.comet != null || Licenses.canClaim(info) ) return true;
+		if( tutorial || p.comet != null || unlimited() || Licenses.canClaim(info) ) return true;
 		onRefuse(Lang.t("license.full"));
 		return false;
 	}

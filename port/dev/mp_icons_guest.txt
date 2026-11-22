@@ -1,0 +1,19 @@
+# multijugador (anadido del port): el invitado de port/dev/mp_icons_host.txt, en el mapa
+waitfor planet
+wait 300
+mp join 55186
+waitfor map 9000
+waitfor mpforeign 9000
+wait 60
+waitfor map 3000
+wait 60
+# fuera de su sistema, al sector; despues al sistema del anfitrion (ForeignMap.BASE)
+expgo 2400 1000
+waitfor sector 3000
+wait 30
+shot mp_pictos_sector
+expsys 1000
+waitfor system 12000
+wait 120
+shot mp_pictos_sistema
+waitfor mpend 6000

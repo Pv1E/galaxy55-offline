@@ -16,3 +16,7 @@ src/G55/fla/client/gfx/texture.png, port/kubes/tableau-*.kube and portrait-*.kub
 (c) Motion Twin, CC BY-NC-SA 4.0, https://github.com/motion-twin/WebGamesArchives (Muxxu/Hotel/flash/gfx/sceneries:
 paintXl_01.png to paintXl_06.png and paint_01.png to paint_10.png), each centred on a transparent 32x32 tile; the six
 paintXl frames (29x35) lose three frame rows to fit (29x32), the pictures are untouched.
+
+Multiplayer map icons (src/G55/fla/explore/gfx/mp_icons.png): open padlock, closed padlock and camera of Kube,
+(c) Motion Twin, CC BY-NC-SA 4.0, https://github.com/motion-twin/WebGamesArchives (Muxxu/Kube/www/img/icons: unlocked.gif,
+locked.gif and photo.gif, the reward icons also shown on Twinpedia), unmodified, side by side in one 51x17 image.

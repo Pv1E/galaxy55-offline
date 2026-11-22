@@ -84,6 +84,8 @@ class GameView {
 	var hand : Hand;
 	/** Process.hx del original: agua y lava que fluyen, hierba, anclas... */
 	public var process : WorldProcess;
+	/** partida multijugador (anadido del port): manda lo que hace el jugador y aplica lo que llega; null en solo */
+	public var net : NetGame;
 	/** la nave: el jugador empieza dentro y baja al planeta por el teletransportador (Game.placeShip) */
 	public var ship(default, null) : Ship;
 	/** progreso del teletransporte (Hero.enteringShip): -1 = recien llegado, 0..1.5 = entrando; a 1.5 se transporta */
@@ -235,7 +237,7 @@ class GameView {
 			if( world.solid(ix, iy, iz) || world.solid(ix, iy, iz + 1) ) pz = world.topCollide(ix, iy) + 0.01;
 		}
 		// el equipo dejado aqui al morir o con Mayus+K, en el planeta o la cometa y en la nave
-		DeathDrops.spawnAll(this);
+		DeathDropsPlay.spawnAll(this);
 	}
 
 	/** mercado del robot comerciante (se crea al abrir la tienda por primera vez) */
@@ -532,7 +534,9 @@ class GameView {
 			var c = bombQueue.shift();
 			explodeBomb(c.x, c.y, c.z);
 		}
-		process.update(realDt, px, py, pz + viewZ * 0.5);
+		// en multijugador el proceso del mundo corre en el servidor: aqui llegan sus cambios (NetGame)
+		if( net == null ) process.update(realDt, px, py, pz + viewZ * 0.5);
+		else net.update(realDt);
 		world.flush();
 		if( !piloting ) drops.update(this, tmod); // pilotando, los sueltos de la nave van con ella (pilotMove)
 		fx.update(this, realDt, tmod);
@@ -583,6 +587,7 @@ class GameView {
 
 	public function dispose() {
 		stopSounds();
+		if( net != null ) net.dispose();
 		if( ship != null ) ship.dispose();
 		fx.dispose();
 		parts.dispose();
@@ -665,7 +670,22 @@ class GameView {
 	// ---------------------------------------------------------------- modo creativo / supervivencia (anadido del port)
 
 	/** solo una partida creada en creativo pasa a supervivencia y vuelve; una de aventura nunca */
-	public function canSwitchMode() : Bool return info.creative == true;
+	/** multijugador: puede bascular su modo (gestionnaire; el modo lo decide el servidor, SMode) */
+	public var netSwitch = false;
+
+	public function canSwitchMode() : Bool return net != null ? netSwitch : info.creative == true;
+
+	/** multijugador: el modo que dice el servidor (SWelcome, SMode), como setSurvival pero sin tocar la partida */
+	public function netSetMode( c : Bool ) {
+		if( creative == c ) return;
+		creative = c;
+		if( !c ) {
+			life = 100;
+			oxygen = 100;
+			jetpack = 1;
+		}
+		laserCharge = null;
+	}
 
 	/**
 	 * Partida creativa: pasa a supervivencia (on) o vuelve a creativo. Sigue al modo lo que mira `creative`: dano, oxigeno,
@@ -709,14 +729,17 @@ class GameView {
 	    para la vuelta de emergencia de la cometa */
 	public function returnToShip( manual : Bool, lose = true ) {
 		if( fadeFX != null && fadeFX.lock ) return; // hero.lock: ya se esta volviendo
-		var left = lose ? DeathDrops.leave(this, manual) : null;
+		// multijugador: en el planeta el contenedor lo deja el servidor (NetGame.sentDeath)
+		var netDeath = lose && net != null && pz < World.SHIP_Z;
+		if( netDeath && !creative && info.tuto == null ) net.sentDeath(manual);
+		var left = lose && !netDeath ? DeathDropsPlay.leave(this, manual) : null;
 		if( left != null ) onEquipmentLeft();
 		fadeFX = { t : 0., col : manual ? 0xFFFFFF : 0xFF0000, speed : 2., alpha : null, lock : true, dz : manual ? -0.5 : 0.8, done : function() {
 			life = 100;
 			oxygen = 100;
 			gravity = 0;
 			gotoShip(true);
-			if( left != null ) DeathDrops.spawn(this, left);
+			if( left != null ) DeathDropsPlay.spawn(this, left);
 		} };
 	}
 
@@ -1174,7 +1197,7 @@ class GameView {
 	/** solo en los planetas jugables: no en la nave nodriza, el hangar ni el tutorial, y no durante un fundido */
 	public function canPilot() : Bool {
 		return ship != null && hangar == null && info.mothership != true && !Tutorial.active(info) && (fadeFX == null || !fadeFX.lock)
-			&& life > 0 && pz >= World.SHIP_Z;
+			&& life > 0 && pz >= World.SHIP_Z && (net == null || netOwner);
 	}
 
 	/** licencias (Licenses, anadido del port): en aventura solo se pilota sobre el planeta principal; en creativo, sobre todos
@@ -1220,6 +1243,24 @@ class GameView {
 		// de pie sobre el teletransportador: como al aparecer en la nave (gotoShip), no transporta hasta que te apartas y vuelves
 		enteringShip = -1;
 		releaseAction();
+		// multijugador: el punto de aterrizaje del planeta (los invitados llevan alli su nave)
+		if( net != null ) net.sentShipMove(ship.x, ship.y);
+	}
+
+	/** multijugador: solo el propietario del planeta pilota (mueve el punto de aterrizaje de todos) */
+	public var netOwner = true;
+
+	/** multijugador: el propietario ha llevado su nave a (x, y) (SShipMove): la nuestra va alli, y con ella quien vaya dentro */
+	public function netShipMoved( x : Int, y : Int ) {
+		if( ship == null || piloting ) return;
+		var s = world.size;
+		inline function wrapD( v : Int ) { v = ((v % s) + s) % s; return v > s >> 1 ? v - s : v; }
+		var dx = wrapD(x - ship.x), dy = wrapD(y - ship.y);
+		if( dx == 0 && dy == 0 ) return;
+		var aboard = pz >= World.SHIP_Z;
+		ship.slide(dx, dy);
+		var d = ship.land();
+		if( aboard ) moveRiders(dx + d.dx, dy + d.dy);
 	}
 
 	/** lo que va dentro de la nave se mueve con ella: el jugador y los bloques sueltos (las vistas previas de los sintetizadores) */
@@ -1403,12 +1444,18 @@ class GameView {
 			if( !ok ) return;
 			switch( b.k ) {
 			case BShipComputer: lastComputer = { x : x, y : y, z : z }; onComputer();
-			case BCrafterComputer: if( ship != null ) ship.activateCraft(x, y, z, this);
+			// multijugador: fabrica el servidor (ServerShip.craft); el resultado llega como sueltos de la nave
+			case BCrafterComputer: if( ship != null ) { if( net != null ) net.sentShipCraft(x, y, z) else ship.activateCraft(x, y, z, this); }
 			// cambio del port: en el hangar (EditShip) y en la nave nodriza no explota, para no romper la nave
-			case BArtiBomb: if( hangar == null && info.mothership != true ) explodeBomb(x, y, z);
+			case BArtiBomb: if( net != null && z < World.SHIP_Z ) net.sentActivate(x, y, z) else if( hangar == null && info.mothership != true ) explodeBomb(x, y, z);
 			default:
-				if( b.hasProp(PContainer) && onChest != null ) onChest(chestBox(x, y, z, b));
+				// multijugador: las cantinas son del servidor (las del planeta, una persona a la vez; las de la nave, ServerShip)
+				if( b.hasProp(PContainer) && net != null ) net.sentChestOpen(x, y, z);
+				else if( b.hasProp(PContainer) && onChest != null ) onChest(chestBox(x, y, z, b));
 			}
+		} else if( b.toggle != null && net != null && z < World.SHIP_Z ) {
+			// multijugador: la puerta del planeta la cambia el servidor (todos la ven)
+			net.sentActivate(x, y, z);
 		} else if( b.toggle != null ) {
 			// Process.toggle: se cambia toda la columna del mismo bloque (una puerta mide varios bloques de alto)
 			while( world.block(x, y, z - 1) == b ) z--;
@@ -1471,6 +1518,22 @@ class GameView {
 	 * borde) a rojo (en el centro; ver bombFlash), y vacia una esfera de radio 8 sin soltar nada. Al activarla se explota; si
 	 * se excava hasta el final se recoge, como cualquier bloque (Game.checkToggle / checkAction).
 	 */
+	/** multijugador: el servidor ha hecho explotar una bomba aqui (los bloques llegan aparte): temblor y particulas */
+	public function netBomb( x : Float, y : Float, z : Float ) {
+		shake = 1;
+		Snd.play("destroyBlock", 0.6);
+	}
+
+	/** multijugador: dano de una bomba calculado por el servidor, con su fundido como en explodeBomb */
+	public function netHit( dmg : Float ) {
+		if( dmg <= 0 ) return;
+		var prev = fadeFX != null && fadeFX == bombFade ? fadeFX : null;
+		var dying = fadeFX != null && fadeFX.lock;
+		hit(dmg);
+		var pow = Math.max(0, Math.min(1, (dmg - 20) / 130));
+		if( !dying ) bombFlash(pow, prev);
+	}
+
 	function explodeBomb( x : Int, y : Int, z : Int ) {
 		var ray = 8;
 		var hx = wrapDist(px - x), hy = wrapDist(py - y), hz = pz - z;
@@ -1853,7 +1916,10 @@ class GameView {
 		}
 		actionPause = 1;
 		if( s.power < 1 || !canBreak ) return;
-		if( laserCharge != null ) inv.useCharge(laserCharge);
+		if( laserCharge != null ) {
+			inv.useCharge(laserCharge);
+			if( net != null ) net.sentCharge(laserCharge);
+		}
 		activatePending = null;
 		breakBlock(s.x, s.y, s.z, b);
 		Kubindex.broke(info, b);
@@ -1976,8 +2042,14 @@ class GameView {
 		// el agua puesta por el jugador se extiende como la cascada (si no, inundaria como el mar)
 		if( put.type == BTWater && !inShip && hangar == null ) world.setWater(x, y, z, put, WorldProcess.PLACED);
 		else world.setBlock(x, y, z, put);
-		if( !inShip ) process.onSet(x, y, z, here, put);
-		if( inShip ) ship.craft(x, y, z, put, this);
+		if( !inShip ) {
+			if( net != null ) net.sentPlace(x, y, z, put, put.type == BTWater && hangar == null ? WorldProcess.PLACED : 0, @:privateAccess inv.blockIndex);
+			else process.onSet(x, y, z, here, put);
+		}
+		if( inShip ) {
+			ship.craft(x, y, z, put, this);
+			if( net != null ) net.sentShipSet(x, y, z, null, put, @:privateAccess inv.blockIndex);
+		}
 		Kubindex.placed(info, put);
 		select = null;
 	}
@@ -2030,9 +2102,10 @@ class GameView {
 
 	public function breakBlock( x : Int, y : Int, z : Int, b : Block, isProcess = false ) {
 		shake += 0.05 * Math.random(); // temblor (Game.blockBreak)
-		if( b.hasProp(PContainer) ) breakChest(x, y, z);
+		if( b.hasProp(PContainer) && net == null ) breakChest(x, y, z);
 		var get = b.getDrop();
-		if( get != null && !creative ) {
+		// multijugador: lo que se suelta lo crea el servidor (en el planeta, ServerItems; en la nave, ServerShip)
+		if( get != null && !creative && net == null ) {
 			// cambio del port: lo que suelta con probabilidad (BFDropChance: BCoal, BBlackIce, hierbas...) se recupera
 			// siempre en una zona de sintetizador y en el hangar; si no, puesto alli para fabricar o rehacer la nave, se perdia al quitarlo
 			var chance = inCraftZone(x, y, z) ? 100 : b.getMain().getDropChance();
@@ -2045,7 +2118,10 @@ class GameView {
 		}
 		world.setBlock(x, y, z, null);
 		parts.doBreak(x, y, z, b);
-		if( z >= World.SHIP_Z ) ship.craft(x, y, z, null, this);
+		if( z >= World.SHIP_Z ) {
+			ship.craft(x, y, z, null, this);
+			if( net != null ) net.sentShipSet(x, y, z, b, null, 0);
+		} else if( net != null ) { if( !isProcess ) net.sentBreak(x, y, z, b); }
 		else process.onSet(x, y, z, b, null);
 	}
 
@@ -2056,10 +2132,17 @@ class GameView {
 	}
 
 	/** Game.dropCurrent: tira la pila de la casilla elegida delante del jugador. */
+	/** multijugador, en la nodriza: no se tira nada (no hay servidor que lleve lo tirado: se perderia) */
+	public var noThrow = false;
+
 	function dropCurrent() {
+		if( noThrow ) return;
 		var index = inv.blockIndex - 1;
 		var s = inv.drop(index);
-		if( s != null ) throwStack(Block.all[s.k], s.n);
+		// multijugador: en el planeta lo tira el servidor (el suelto es suyo)
+		// multijugador: lo tira el servidor (en el planeta o en la nave)
+		if( s != null && net != null ) net.sentThrow(index + 1, s.n);
+		else if( s != null ) throwStack(Block.all[s.k], s.n);
 	}
 
 	/** tira n bloques b delante del jugador, como R (dropCurrent; tambien la pantalla de inventario): un solo suelto con todos,
@@ -2094,6 +2177,8 @@ class GameView {
 			inv.blockIndex = idx + 1;
 		}
 		inv.inv.t[idx] = { k : b.index, n : inv.maxBlock(b) };
+		// multijugador: la paleta la aplica el servidor (que mira que este en creativo)
+		if( net != null ) net.sentCreative(idx + 1, b, inv.maxBlock(b));
 		inv.display();
 	}
 

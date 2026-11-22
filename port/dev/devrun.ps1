@@ -1,7 +1,8 @@
-param([string]$Script, [int]$Timeout = 120, [string]$Extra = "", [string]$Data = "", [string]$OutFile = "", [string]$Shots = "")
+param([string]$Script, [int]$Timeout = 120, [string]$Extra = "", [string]$Data = "", [string]$OutFile = "", [string]$Shots = "", [string]$HlFile = "port/out/galaxy55.hl")
 # Uso: powershell -File port/dev/devrun.ps1 -Script port/dev/synth.txt   (ver Dev.hx para las ordenes). Necesita haber compilado port/game.hxml.
 # -Data: carpeta de datos (port/out/testdata); -OutFile: salida del juego (port/out/dev_out.txt; los errores van al mismo nombre
 # con .err.txt); -Shots: carpeta de las capturas del guion (port/out). runall.ps1 los usa para lanzar varios guiones a la vez.
+# -HlFile: el .hl que se lanza (baseline.ps1 compara asi otra compilacion con la de siempre).
 $repo = (Resolve-Path "$PSScriptRoot\..\..").Path
 Set-Location $repo
 # con Haxe/HashLink portables junto al repositorio (si existen); si no, hl debe estar en el PATH
@@ -72,7 +73,7 @@ public static class DevRun {
 	}
 }
 "@
-if (-not [DevRun]::Run("`"$run`" port/out/galaxy55.hl --script=$Script $Extra", $repo, $out, $err, $Timeout * 1000)) { "TIMEOUT" }
+if (-not [DevRun]::Run("`"$run`" $HlFile --script=$Script $Extra", $repo, $out, $err, $Timeout * 1000)) { "TIMEOUT" }
 Get-Content $out | Where-Object { $_ -notmatch '^(fondo|ruta|mundo)' }
 $e = Get-Content $err -ErrorAction SilentlyContinue | Select-Object -First 8
 if ($e) { "ERR: $e" }

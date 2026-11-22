@@ -1,0 +1,29 @@
+# multijugador (anadido del port), con port/dev/mp_chat_guest.txt: el chat (mundo y privado, abajo a la izquierda) y la lista
+# de jugadores con Tab mantenido (el invitado en el planeta del anfitrion). multirun.ps1 -ScriptList "a,b"
+waitfor planet
+mp host 55198
+waitfor map 6000
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+mp access 0 1
+waitfor mpplayers2 9000
+wait 60
+mp invite 0 2 0
+waitfor mpremotes1 9000
+wait 60
+mp say Hola a todos
+wait 30
+mp pm 2 Esto es privado
+wait 200
+press tab
+wait 30
+shot mp_chat_lista
+release tab
+wait 10
+shot mp_chat_lineas
+wait 300
+mp leave
+waitfor mpend 600

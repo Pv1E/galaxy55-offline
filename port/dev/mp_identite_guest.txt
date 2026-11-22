@@ -1,0 +1,16 @@
+# multijugador (anadido del port): el invitado de port/dev/mp_identite_host.txt, en su planeta cuando el anfitrion se va
+waitfor planet
+wait 300
+mp join 55199
+waitfor map 9000
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 9000
+wait 60
+print mp
+waitfor mpend 9000
+wait 30
+print mp
+print menu

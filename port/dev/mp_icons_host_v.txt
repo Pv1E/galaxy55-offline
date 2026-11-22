@@ -1,0 +1,16 @@
+# multijugador (anadido del port): como port/dev/mp_icons_host.txt, pero invitado como visitante (camara en su planeta)
+waitfor planet
+mp host 55186
+waitfor map 6000
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+mp access 0 1
+waitfor mpplayers2 9000
+wait 60
+mp invite 0 2 1
+wait 12000
+mp leave
+waitfor mpend 600

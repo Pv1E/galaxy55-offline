@@ -340,6 +340,7 @@ class Sky {
 
 	/** pinta un poco mas del cielo de espacio durante unos budgetMs; true si ya esta entero */
 	public function stepSpace( budgetMs : Float ) : Bool {
+		if( World.unbounded ) budgetMs = 1e9;
 		if( spaceTask == null ) return true;
 		var t0 = haxe.Timer.stamp();
 		do {

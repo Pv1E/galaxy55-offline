@@ -1,0 +1,28 @@
+# multijugador (anadido del port), con port/dev/mp_guest2.txt: el anfitrion aterriza en su planeta, lo abre e invita al otro
+# (su sesion es la 2); los dos se ven (conos) y lo que rompe el invitado se ve en el juego del anfitrion.
+# port/dev/multirun.ps1 -ScriptList port/dev/mp_host2.txt,port/dev/mp_guest2.txt -Extra "--rngseed=1 --creative" -Timeout 500
+waitfor planet
+mp host 55192
+waitfor map 6000
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+mp access 0 1
+tp 64 64 top 0.8 -0.9
+waitfor mpplayers2 9000
+wait 60
+mp invite 0 2 0
+waitfor mpremotes1 9000
+wait 120
+print remotes
+wait 300
+print remotes
+print cellhash
+print mpworld
+shot mp_anfitrion
+wait 60
+mp leave
+waitfor mpend 600

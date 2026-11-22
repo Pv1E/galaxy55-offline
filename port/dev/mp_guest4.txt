@@ -1,0 +1,23 @@
+# multijugador (anadido del port): el invitado de port/dev/mp_host4.txt, que recoge las rocas tiradas y el contenedor del anfitrion
+waitfor planet
+wait 300
+mp join 55194
+waitfor map 9000
+waitfor mpforeign 9000
+wait 60
+mp landforeign
+waitfor planet 9000
+waitfor mpremotes1 6000
+wait 400
+print remotes
+print inv
+print loose
+tploose BRock
+wait 150
+print inv
+tploose BChest
+wait 200
+print loose
+print remotes
+print inv
+waitfor mpend 6000

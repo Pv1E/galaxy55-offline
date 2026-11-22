@@ -1,0 +1,32 @@
+# multijugador (anadido del port), con port/dev/mp_guest3.txt: objetos del servidor. El anfitrion (en supervivencia) excava un
+# bloque; el suelto lo crea el servidor y lo ven los dos; el invitado va encima y lo recoge: va a su inventario, no al del anfitrion.
+# port/dev/multirun.ps1 -ScriptList port/dev/mp_host3.txt,port/dev/mp_guest3.txt -Timeout 600
+waitfor planet
+mp host 55193
+waitfor map 6000
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+mp mode 0
+mp access 0 1
+tp 64 64 top 0.8 -1.5
+waitfor mpplayers2 9000
+wait 60
+mp invite 0 2 0
+waitfor mpremotes1 9000
+wait 60
+slot 0
+key dig
+wait 150
+unkey
+wait 30
+print remotes
+print inv
+wait 500
+print remotes
+print inv
+mp leave
+waitfor mpend 600

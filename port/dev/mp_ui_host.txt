@@ -1,0 +1,20 @@
+# multijugador (anadido del port), con port/dev/mp_ui_guest.txt: todo por los menus. El anfitrion crea la partida desde
+# Multijugador > Crear (su partida de prueba, visible en la red local); el invitado la ve en la lista, se une y elige no hacer
+# el tutorial. Al irse el anfitrion, el invitado vuelve a Multijugador con el aviso. multirun.ps1 -ScriptList "a,b"
+waitfor planet
+menu
+waitfor menu
+button 2
+wait 20
+button 1
+wait 20
+button 8
+waitfor mp 6000
+print mp
+waitfor mpplayers2 9000
+wait 1500
+print mp
+mp leave
+waitfor mpend 600
+wait 30
+print menu

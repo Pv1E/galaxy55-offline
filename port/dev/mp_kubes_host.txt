@@ -1,0 +1,29 @@
+# multijugador (anadido del port), con port/dev/mp_kubes_guest.txt: los kubes del editor del servidor. El anfitrion tiene dos
+# .kube en su carpeta; los dos juegos los tienen (print edkubes: srv:...), el anfitrion pone uno con la paleta y el invitado ve
+# el mismo terreno (cellhash igual) con el kube puesto.
+waitfor planet
+edkube import port/kubes/acier.kube
+edkube import port/kubes/beton.kube
+mp host 55185
+waitfor map 6000
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+mp access 0 1
+tp 64 64 top 0.8 -1.0
+waitfor mpplayers2 9000
+wait 60
+mp invite 0 2 0
+waitfor mpremotes1 9000
+wait 120
+print edkubes
+print cellhash
+setp 66 64 top kube:srv:beton
+setp 66 65 top kube:srv:acier
+wait 120
+print cellhash
+wait 600
+mp leave
+waitfor mpend 600

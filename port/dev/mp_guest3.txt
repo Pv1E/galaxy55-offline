@@ -1,0 +1,18 @@
+# multijugador (anadido del port): el invitado de port/dev/mp_host3.txt, que recoge lo que ha soltado el anfitrion
+waitfor planet
+wait 300
+mp join 55193
+waitfor map 9000
+waitfor mpforeign 9000
+wait 60
+mp landforeign
+waitfor planet 9000
+waitfor mpremotes1 6000
+wait 300
+print remotes
+print inv
+tp 64.5 64.5 top 0 0
+wait 200
+print remotes
+print inv
+waitfor mpend 6000

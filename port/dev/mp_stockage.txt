@@ -1,0 +1,56 @@
+# multijugador (anadido del port): el stockage de la nave (ShipStorage) en una partida hospedada. El anfitrion lleva bloques y
+# cargas (las de una partida nueva y bloques dados por el servidor) y los deja en el stockage, en creativo y despues en supervivencia: el
+# servidor tiene que aceptarlo (print storage / print inv iguales antes y despues de su respuesta).
+# Uso: powershell -File port/dev/devrun.ps1 -Script port/dev/mp_stockage.txt -Timeout 300
+waitfor planet
+mp host 55198
+waitfor map 6000
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+mp give 1 BWood 40
+mp give 1 BGlass 10
+wait 20
+ship
+wait 10
+print inv
+print storage
+# creativo (el anfitrion llega en creativo): un bloque y unas cargas
+storage open
+wait 5
+print slots
+slots drag 2:0 0:0
+wait 30
+print storage
+print inv
+slots drag 3:0 1:0
+wait 30
+print storage
+print inv
+tap esc
+wait 10
+print storage
+print mp
+# supervivencia
+mp mode 0
+wait 30
+print inv
+storage open
+wait 5
+print slots
+slots drag 2:1 0:1
+wait 30
+print storage
+print inv
+slots drag 3:1 1:1
+wait 30
+print storage
+print inv
+tap esc
+wait 10
+print storage
+print inv
+print mp
