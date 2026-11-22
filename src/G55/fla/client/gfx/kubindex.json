@@ -169,6 +169,15 @@
    "biomes": null
   },
   {
+   "id": "lavafall",
+   "names": [
+    "Cascada de lava",
+    "Lava fall",
+    "Cascade de lave"
+   ],
+   "biomes": null
+  },
+  {
    "id": "tree",
    "names": [
     "Árbol solitario",
@@ -298,6 +307,19 @@
     "Manantial subterráneo",
     "Underground spring",
     "Source souterraine"
+   ],
+   "biomes": [
+    "BIAutumn",
+    "BIWinterPeaks",
+    "BIMars"
+   ]
+  },
+  {
+   "id": "cavelava",
+   "names": [
+    "Manantial de lava",
+    "Lava spring",
+    "Source de lave"
    ],
    "biomes": [
     "BIAutumn",
@@ -827,14 +849,14 @@
    "BICometCinder",
    "a:volcano",
    "a:crater",
-   "a:cavecascade"
+   "a:cavelava"
   ],
   "BLava": [
    "BICometCinder",
    "a:largepit",
    "a:volcano",
-   "a:cascade",
-   "a:cavecascade"
+   "a:lavafall",
+   "a:cavelava"
   ],
   "BShipHull": [
    "a:capsule",

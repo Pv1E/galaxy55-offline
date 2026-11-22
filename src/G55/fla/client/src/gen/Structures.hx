@@ -30,6 +30,11 @@ typedef StructureDef = {
 	var since : Null<Int>;
 	var until : Null<Int>;
 	var f : DetailsGenerator -> Int -> Int -> Int -> Bool;
+	/**
+	 * su tipo de anomalia cuando sale con lava en vez de agua (las cascadas tiran una u otra: DetailsGenerator.poseLava). Solo
+	 * cambia el nombre, no el mundo: se puede anadir a una estructura de una version que ya ha salido
+	 */
+	var ?lavaGroup : String;
 }
 
 /**
@@ -64,8 +69,8 @@ class Structures {
 		def("caveceilplant", "cavegarden", Cave, 3, (g, x, y, z) -> g.detCaveCeilPlant(x, y, z), CAVE_BIOMES),
 		def("cavesphere", "cavesphere", Cave, 15, (g, x, y, z) -> g.detCaveSphere(x, y, z), CAVE_BIOMES),
 		def("cavebuilding", "caveruins", Cave, 15, (g, x, y, z) -> g.detCaveBuilding(x, y, z), CAVE_BIOMES),
-		def("cavecascade", "cavecascade", Cave, 1, (g, x, y, z) -> g.detCaveCascade(x, y, z), CAVE_BIOMES),
-		def("caveceilcascade", "cavecascade", Cave, 1, (g, x, y, z) -> g.detCaveCeilCascade(x, y, z), CAVE_BIOMES),
+		def("cavecascade", "cavecascade", Cave, 1, (g, x, y, z) -> g.detCaveCascade(x, y, z), CAVE_BIOMES, null, null, null, "cavelava"),
+		def("caveceilcascade", "cavecascade", Cave, 1, (g, x, y, z) -> g.detCaveCeilCascade(x, y, z), CAVE_BIOMES, null, null, null, "cavelava"),
 		def("cavematerial", "caveveins", Cave, 3, (g, x, y, z) -> g.detCaveMaterial(x, y, z), CAVE_BIOMES),
 		def("cavefrozen", "cavefrozen", Cave, 6, (g, x, y, z) -> g.detCaveFrozen(x, y, z), CAVE_BIOMES),
 		def("cavetoxic", "cavegarden", Cave, 4, (g, x, y, z) -> g.detCaveToxicPlants(x, y, z), CAVE_BIOMES),
@@ -93,15 +98,16 @@ class Structures {
 		def("largepit", "largepit", Surface, 50, (g, x, y, z) -> g.detLargePit(x, y, z)),
 		def("pit", "pit", Surface, 20, (g, x, y, z) -> g.detSmallPit(x, y, z)),
 		def("ruin", "ruins", Surface, 50, (g, x, y, z) -> g.detRuin(x, y, z)),
-		def("cascade", "cascade", Surface, 7, (g, x, y, z) -> g.detCascade(x, y, z), null, null, null, ["BIDeadCity"]),
+		def("cascade", "cascade", Surface, 7, (g, x, y, z) -> g.detCascade(x, y, z), null, null, null, ["BIDeadCity"], "lavafall"),
 		def("heal", "heal", Surface, 5, (g, x, y, z) -> g.detHeal(x, y, z)),
 		// aire (la anomalia Invisible: ~1 planeta normal de cada 8, flotando sobre lo mas alto de debajo)
 		def("invisible", "invisible", Air, 8, (g, x, y, z) -> g.detInvisible(x, y) >= 0),
 	];
 
 	static function def( id : String, group : String, stage : StructureStage, p : Int, f : DetailsGenerator -> Int -> Int -> Int -> Bool,
-		?biomes : Array<String>, ?since : Int, ?until : Int, ?notIn : Array<String> ) : StructureDef {
-		return { id : id, group : group, stage : stage, p : p, biomes : biomes, notIn : notIn, since : since, until : until, f : f };
+		?biomes : Array<String>, ?since : Int, ?until : Int, ?notIn : Array<String>, ?lavaGroup : String ) : StructureDef {
+		return { id : id, group : group, stage : stage, p : p, biomes : biomes, notIn : notIn, since : since, until : until, f : f,
+			lavaGroup : lavaGroup };
 	}
 
 	/** un planeta de verdad (PLANET_BIOMES): con estructuras y bonus */

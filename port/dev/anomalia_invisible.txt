@@ -75,7 +75,7 @@ wait 2
 shot invisible_kub_cat
 kub tab 1
 wait 2
-kub nav 0 27
+kub nav 0 28
 wait 2
 shot invisible_kub_espacio
 kub close
