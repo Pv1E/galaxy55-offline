@@ -355,7 +355,8 @@ class KubeEditor extends Screen {
 		area.y = LY;
 		area.cursor = Default;
 		area.propagateEvents = true;
-		area.onWheel = function(e : hxd.Event) scrollList(e.wheelDelta > 0 ? CELL : -CELL);
+		// 0 = gesto lento del trackpad, ni arriba ni abajo (GalaxyApp.onWindowEvent)
+		area.onWheel = function(e : hxd.Event) if( e.wheelDelta != 0 ) scrollList(e.wheelDelta > 0 ? CELL : -CELL);
 		listMask = new h2d.Mask(COLS * CELL, ROWS * CELL, this);
 		listMask.setPosition(LX, LY);
 		gameList = new h2d.Object(listMask);
@@ -592,7 +593,7 @@ class KubeEditor extends Screen {
 			};
 		};
 		// la rueda acerca o aleja el punto que esta bajo el raton
-		it.onWheel = function(e : hxd.Event) zoomBy(e.wheelDelta > 0 ? -1 : 1, e.relX / PV * 2 - 1, 1 - e.relY / PV * 2);
+		it.onWheel = function(e : hxd.Event) if( e.wheelDelta != 0 ) zoomBy(e.wheelDelta > 0 ? -1 : 1, e.relX / PV * 2 - 1, 1 - e.relY / PV * 2);
 		it.onOver = function(_) { previewOver = true; refreshZoomText(); };
 		it.onOut = function(_) { previewOver = false; refreshZoomText(); };
 		zoomBack = new h2d.Graphics(this);
