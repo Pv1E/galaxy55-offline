@@ -1,0 +1,30 @@
+# agua acida vista de refilon (World.WaterGrazing), como la captura del jugador (1920x991): Bosque acido, lago hondo en 122,28
+# (mar hasta z = 32, su cara de arriba a 32.9). De pie en una roca bajo el agua, con los ojos 0.6 por encima, mirando a lo lejos
+# en cuatro direcciones: sin rayas finas y regulares sobre el fondo (las bandas de la textura estiradas). Desde 6 bloques mas
+# arriba mirando hacia abajo, la textura del agua se sigue viendo
+#   powershell -File port/dev/devrun.ps1 -Script port/dev/agua_refilon.txt -Extra "--bgbiome=BIAcidForest"
+wait 3
+planet
+winsize 1920 991
+wait 30
+creative
+helptext 0
+tap h
+set 122 28 31 BAcidRock
+wait 90
+tp 122.5 28.5 32.01 0 -0.15
+wait 2
+shot refilon_e
+tp 122.5 28.5 32.01 1.5708 -0.15
+wait 2
+shot refilon_n
+tp 122.5 28.5 32.01 3.1416 -0.15
+wait 2
+shot refilon_o
+tp 122.5 28.5 32.01 -1.5708 -0.15
+wait 2
+shot refilon_s
+tp 122.5 28.5 38 3.1416 -1.1
+wait 2
+shot refilon_arriba
+quit
