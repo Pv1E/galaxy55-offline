@@ -42,7 +42,7 @@ class KubPlanetsView extends KubView {
 		section("pl.comets");
 		for( b in Comets.KINDS ) biomeRow(b);
 		section("pl.anomalytypes");
-		for( a in d.anomalies ) anomalyRow(a);
+		for( a in d.anomalies ) if( d.listed(info, a) ) anomalyRow(a);
 		left.contentH = ly;
 		left.done();
 		var i = types.indexOf(lastType);
@@ -134,7 +134,7 @@ class KubPlanetsView extends KubView {
 		// las anomalias que pueden salir aqui: las conocidas por su nombre, las demas solo contadas
 		Theme.text(right.content, KubText.get("pl.anomalies"), 1.6, Theme.ACCENT, 0, y + 10);
 		y += 40;
-		var list = d.anomaliesIn(biome);
+		var list = d.anomaliesIn(info, biome);
 		if( list.length == 0 ) return line(KubText.get("pl.anomalynone"), 1.3, Theme.DIM, y);
 		var names = [for( a in list ) if( Kubindex.anomalyKnown(info, a.id) ) d.anomalyName(a.id)];
 		var unknown = list.length - names.length;

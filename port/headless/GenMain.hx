@@ -29,7 +29,8 @@ import Common;
 	                                                    azar: cada planeta acaba en S segundos (60)
 	  hl port/out/gen.hl --registry                     tipos de las estructuras (Structures) frente a las anomalias de kubindex.json
 	CASOS: --seeds A-B (o una sola), --biomes B1,B2 (todos menos BITest y BIShed; las cometas miden COMET_SIZE con cualquier
-	tamano), --sizes 1,2,3 (en trozos), --version N (Generator.VERSION). Por defecto: --profile 1-5 de tamano 3, --steps 1-100
+	tamano), --sizes 1,2,3 (en trozos), --version N (Generator.VERSION), --events E1,E2 (eventos del calendario activos,
+	CalendarEvents: ninguno por defecto). Por defecto: --profile 1-5 de tamano 3, --steps 1-100
 	de tamano 1, --census 1-50 de tamano 2.
 **/
 typedef GenCase = { seed : Int, biome : String, size : Int, ?version : Null<Int> };
@@ -48,6 +49,9 @@ class GenMain {
 
 	/** lado de una cometa (Comets.SIZE en el juego: aqui no se compila Comets) */
 	static inline var COMET_SIZE = 96;
+
+	/** --events de CASOS: eventos del calendario con los que se genera (Generator.events; ninguno por defecto) */
+	static var events : Array<String> = [];
 
 	/** --check: sin el resumen de cada caso, solo si cambia */
 	static var quiet = false;
@@ -88,6 +92,7 @@ class GenMain {
 		var gen = new gen.DetailsGenerator(sizeChunks << Const.BITS, seed);
 		#end
 		gen.version = version;
+		gen.events = events;
 		gen.reserveBlocks(biome);
 		gen.startGenerate(biome);
 		return gen;
@@ -223,6 +228,7 @@ class GenMain {
 			case "--sizes": sizes = v;
 			case "--biomes": biomes = v.split(",");
 			case "--version": version = Std.parseInt(v);
+			case "--events": events = v.split(",");
 			default: if( extra == null || !extra(a, v) ) throw "opcion desconocida: " + a;
 			}
 		}
@@ -586,7 +592,8 @@ class GenMain {
 		for( e in gen.Structures.ALL )
 			for( biome in allBiomes(false) ) {
 				var stage = e.stage;
-				if( gen.Structures.active(biome, stage, gen.Generator.VERSION, e.id).length == 0 ) continue;
+				// las de los eventos del calendario no compiten (Structures.active): solo si pueden salir en el bioma
+				if( e.event != null ? !gen.Structures.fits(e, biome, gen.Generator.VERSION) : gen.Structures.active(biome, stage, gen.Generator.VERSION, e.id).length == 0 ) continue;
 				var n = 0, worst = 0, slow = 0., err = null;
 				// las semillas pedidas y, si no ha salido, mas (hasta 12): en algunos biomas una estructura cabe pocas veces
 				var last = r.length > 1 ? r[1] : r[0], seed = r[0];

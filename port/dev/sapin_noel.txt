@@ -1,0 +1,55 @@
+# Evento del calendario christmas (CalendarEvents, del 1 al 31 de diciembre): el Sapin de Noel (Structures "christmastree").
+# -Extra "--date=2026-12-15 --lang=fr --seed=1234 --size=1" (con --bgbiome=BIMoon, cielo negro: se ven mejor las luces): un
+# sapin de bois Frimas (tronco 2x2) y touffes de sapin con guirnaldas de feuilles de Noel (dan luz y se nievan), 6 Kubes de
+# Noel repartidos al pie, suelo de terre glaciale nevado, y nieva sobre el en cualquier planeta (print gen: "nieve: zona").
+# Capturas sapin_noel_<bioma>_*.png y la ficha de la Feuille de Noel en la Base de datos ESCorp.
+# Sin --date (fuera de diciembre) o con --date=2026-11-30 / 2027-01-01: "find anomaly christmastree: no hay", ni nieve, y
+# el planeta es el de siempre.
+wait 60
+print gen
+creative
+find anomaly christmastree
+print found
+print around fx fy fz-1 1
+print block fx fy fz+3
+print block fx fy fz+25
+kub forget
+tp fx+12 fy+13 fz+6
+wait 30
+lookat fx fy fz+9
+wait 5
+print kub
+print gen
+print pos
+shot sapin_noel_%b_cote
+tp fx-6 fy+9 fz+1
+wait 30
+lookat fx fy fz+2
+wait 5
+shot sapin_noel_%b_cadeaux
+tp fx+14 fy+14 fz+24
+wait 30
+lookat fx fy fz+8
+wait 5
+shot sapin_noel_%b_dessus
+tp fx-15 fy-8 fz+5
+wait 30
+lookat fx fy fz+10
+wait 5
+shot sapin_noel_%b_autre_cote
+# fuera de diciembre (date) el sapin sigue en el mundo cargado, pero ya no nieva sobre el; otra vez en diciembre, si
+date 2027-01-01
+wait 5
+print gen
+date 2026-12-15
+wait 5
+print gen
+# la ficha de la Base de datos ESCorp
+kub got BChristmasLeaves
+kub
+wait 5
+kub pick BChristmasLeaves
+wait 5
+shot sapin_noel_%b_kubindex
+kub close
+quit

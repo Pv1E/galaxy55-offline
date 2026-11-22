@@ -244,6 +244,9 @@ class GalaxyApp extends hxd.App {
 	var bgCy = 64.;
 	var bgR = 38.;
 	var snow : Snow;
+	/** Dev: la zona de nieve de la ultima imagen (Snow.area; null = ninguna) */
+	public var snowZone(get, never) : { x : Float, y : Float, z : Float, r : Float };
+	function get_snowZone() return snow.visible ? snow.area : null;
 	var loadWorld : World;
 	var loadInfo : SaveInfo;
 	var game : GameView;
@@ -354,6 +357,7 @@ class GalaxyApp extends hxd.App {
 	override function init() {
 		var tInit = haxe.Timer.stamp();
 		GameRng.applyArgs();
+		CalendarEvents.applyArgs();
 		PortRules.apply();
 		for( a in Sys.args() ) {
 			if( StringTools.startsWith(a, "--shot=") ) shotPath = a.substr(7);
@@ -4426,6 +4430,31 @@ class GalaxyApp extends hxd.App {
 		nextFrame = (nextFrame <= 0 || now - nextFrame > step) ? now + step : nextFrame + step;
 	}
 
+	/** distancia hasta la que se busca una anomalia que nieva (snowArea): mas alla de su radio, la red de copos no la alcanza */
+	static inline var SNOW_AREA_REACH = 48.;
+
+	/**
+	 * Anadido del port: efecto de una anomalia en su entorno. La zona de nieve (Snow.area) de la anomalia mas cercana a la camara
+	 * cuya estructura nieva (Structures: snow), si su evento del calendario dura hoy (CalendarEvents: el Sapin de Noel deja de
+	 * nevar el 1 de enero aunque el planeta siga cargado); null si no hay ninguna cerca. Su centro es el de su caja (en x, y
+	 * respecto a su origen, sin salto en el borde del planeta: lo mas cerca de la camara; en z alturas del mundo), un poco alto
+	 */
+	function snowArea( w : World ) : { x : Float, y : Float, z : Float, r : Float } {
+		var cam = s3d.camera.pos, best = null, bestD = Math.POSITIVE_INFINITY;
+		for( a in w.anomalies() ) {
+			var def = gen.Structures.get(a.id);
+			if( def == null || def.snow == null || (def.event != null && !CalendarEvents.isActive(def.event)) ) continue;
+			var dx = a.x + (a.box[0] + a.box[3] + 1) * 0.5 - cam.x, dy = a.y + (a.box[1] + a.box[4] + 1) * 0.5 - cam.y;
+			dx -= Math.round(dx / w.size) * w.size;
+			dy -= Math.round(dy / w.size) * w.size;
+			var d = Math.sqrt(dx * dx + dy * dy);
+			if( d > def.snow + SNOW_AREA_REACH || d >= bestD ) continue;
+			bestD = d;
+			best = { x : cam.x + dx, y : cam.y + dy, z : (a.box[2] + a.box[5]) * 0.5 + 3, r : def.snow * 1. };
+		}
+		return best;
+	}
+
 	override function update( dt : Float ) {
 		var tFrame = haxe.Timer.stamp();
 		limitFps();
@@ -4681,13 +4710,15 @@ class GalaxyApp extends hxd.App {
 			targetName.y = H - 72;
 		}
 
-		// nieve (solo bioma de invierno): copos fijos en el mundo
+		// nieve (bioma de invierno, o sobre una anomalia con efecto snow: snowArea): copos fijos en el mundo
 		var snowWorld : World = null;
 		if( (state == Playing || state == Paused) && game != null )
 			snowWorld = game.world;
 		else if( (state == Menu || state == Loading) && bgIndex < bgWorlds.length )
 			snowWorld = bgWorlds[bgIndex];
-		snow.visible = snowWorld != null && snowWorld.biomeName == "BIWinterPeaks" && dim.alpha < 0.5;
+		var winter = snowWorld != null && snowWorld.biomeName == "BIWinterPeaks";
+		snow.area = snowWorld == null || winter ? null : snowArea(snowWorld);
+		snow.visible = (winter || snow.area != null) && dim.alpha < 0.5;
 		// dentro de la nave no nieva (la nave flota sobre el planeta)
 		if( snow.visible && (state == Playing || state == Paused) && game != null && game.pz >= World.SHIP_Z - 1 ) snow.visible = false;
 		// dentro de un liquido: velo de su color y sin nieve (reporte de Sekhmet: nevaba bajo el agua)

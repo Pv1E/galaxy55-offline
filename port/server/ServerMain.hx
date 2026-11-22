@@ -12,6 +12,7 @@ class ServerMain {
 
 	static function main() {
 		var args = Sys.args();
+		CalendarEvents.applyArgs();
 		// las reglas del port (lo que sueltan los bloques, etc.), como en el juego (GalaxyApp.init)
 		PortRules.apply();
 		if( args.length >= 4 && args[0] == "--gen" ) {
@@ -35,8 +36,10 @@ class ServerMain {
 			switch( args[i] ) {
 			case "--data" if( i + 1 < args.length ): dir = args[++i];
 			case "--port" if( i + 1 < args.length ): port = Std.parseInt(args[++i]);
+			// otra fecha para los eventos del calendario (pruebas; CalendarEvents.applyArgs)
+			case a if( StringTools.startsWith(a, "--date=") ):
 			case "--help", "-h", "/?":
-				Sys.println("usage: server.hl [--data FOLDER] [--port PORT]");
+				Sys.println("usage: server.hl [--data FOLDER] [--port PORT] [--date=YYYY-MM-DD]");
 				return;
 			default:
 				Sys.println("unknown option: " + args[i] + " (--help)");

@@ -1,5 +1,5 @@
 {
- "_doc": "Base de datos ESCorp (KubData): las cargas no son fichas. Sitios de cada bloque del mundo (constructor de BlockKind; las variantes y la roca rota cuentan para su ficha): un bioma de planeta, un tipo de cometa (Comets.KINDS) o a:<anomalia>. Anomalia con biomes null = en todos los planetas. recipeOrder: orden de las recetas en la base de datos, por grupos (madera, piedra, nave, vidrio y luz, agregados, hierro y aparatos, cargas, kubes), segun su resultado (una receta al azar, por el Kube misterioso que ensena el sintetizador); un resultado que no esta va tras las recetas con su mismo primer ingrediente.",
+ "_doc": "Base de datos ESCorp (KubData): las cargas no son fichas. Sitios de cada bloque del mundo (constructor de BlockKind; las variantes y la roca rota cuentan para su ficha): un bioma de planeta, un tipo de cometa (Comets.KINDS) o a:<anomalia>. Anomalia con biomes null = en todos los planetas. Anomalia con event: la de un evento del calendario (CalendarEvents); solo sale en la lista mientras dura o una vez identificada. recipeOrder: orden de las recetas en la base de datos, por grupos (madera, piedra, nave, vidrio y luz, agregados, hierro y aparatos, cargas, kubes), segun su resultado (una receta al azar, por el Kube misterioso que ensena el sintetizador); un resultado que no esta va tras las recetas con su mismo primer ingrediente.",
  "hidden": [
   "BTest",
   "BTreeHerbs",
@@ -340,6 +340,16 @@
     "BIMars"
    ],
    "byBlocks": true
+  },
+  {
+   "id": "christmastree",
+   "names": [
+    "Árbol de Navidad",
+    "Christmas tree",
+    "Sapin de Noël"
+   ],
+   "biomes": null,
+   "event": "christmas"
   }
  ],
  "special": [
@@ -704,10 +714,12 @@
    "a:caveveins"
   ],
   "BWinterSoil": [
-   "BIWinterPeaks"
+   "BIWinterPeaks",
+   "a:christmastree"
   ],
   "BWinterSoilCover": [
-   "BIWinterPeaks"
+   "BIWinterPeaks",
+   "a:christmastree"
   ],
   "BWinterBrokenRock": [
    "BIWinterPeaks"
@@ -737,15 +749,18 @@
   "BWinterWood": [
    "BIWinterPeaks",
    "a:grove",
-   "a:tree"
+   "a:tree",
+   "a:christmastree"
   ],
   "BWinterLeaves": [
    "BIWinterPeaks",
    "a:grove",
-   "a:tree"
+   "a:tree",
+   "a:christmastree"
   ],
   "BWinterLeavesCover": [
-   "BIWinterPeaks"
+   "BIWinterPeaks",
+   "a:christmastree"
   ],
   "BBlackIce": [
    "BIWinterPeaks",
@@ -1065,6 +1080,15 @@
   ],
   "BKubeChest": [
    "a:invisible"
+  ],
+  "BKubeNoel": [
+   "a:christmastree"
+  ],
+  "BChristmasLeaves": [
+   "a:christmastree"
+  ],
+  "BChristmasLeavesCover": [
+   "a:christmastree"
   ]
  }
 }
