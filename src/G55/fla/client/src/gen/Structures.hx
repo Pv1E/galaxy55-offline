@@ -14,7 +14,8 @@ enum StructureStage {
 
 /**
  * Una estructura del registro. id: su nombre (de el sale su azar: Generator.stream); group: su tipo de anomalia en kubindex.json
- * (Base de datos ESCorp; null en los relieves, que no lo son); p: ~1 region de 128x128 de cada p la tiene; biomes: nombres de
+ * (Base de datos ESCorp; null en los relieves, que no lo son); p: ~1 region de 128x128 de cada p la tiene (las de un evento:
+ * ~1 planeta de cada p, una sola vez; DetailsGenerator.placeEvents); biomes: nombres de
  * BiomeKind (null = todos los de planeta: PLANET_BIOMES; nunca el hangar, el bioma de prueba ni las cometas); since / until:
  * primera version del generador que la tiene / que ya no (Generator.VERSION; null = desde la 1 / sin fin); f: la pone en x, y, z
  * (z: el suelo, la gruta o nada) y dice si ha podido.
@@ -35,6 +36,12 @@ typedef StructureDef = {
 	 * cambia el nombre, no el mundo: se puede anadir a una estructura de una version que ya ha salido
 	 */
 	var ?lavaGroup : String;
+	/**
+	 * evento del calendario del que es (CalendarEvents): solo sale en un planeta generado con ese evento (Generator.events),
+	 * despues de todas las demas y sin competir con ellas (DetailsGenerator.placeEvents): sin el evento el planeta no cambia.
+	 * null = siempre
+	 */
+	var ?event : String;
 }
 
 /**
@@ -102,12 +109,14 @@ class Structures {
 		def("heal", "heal", Surface, 5, (g, x, y, z) -> g.detHeal(x, y, z)),
 		// aire (la anomalia Invisible: ~1 planeta normal de cada 8, flotando sobre lo mas alto de debajo)
 		def("invisible", "invisible", Air, 8, (g, x, y, z) -> g.detInvisible(x, y) >= 0),
+		// eventos del calendario (CalendarEvents), mientras dura el evento: ~1 planeta de cada p, una sola vez (placeEvents)
+		def("christmastree", "christmastree", Surface, 5, (g, x, y, z) -> g.detChristmasTree(x, y, z), null, null, null, null, null, "christmas"),
 	];
 
 	static function def( id : String, group : String, stage : StructureStage, p : Int, f : DetailsGenerator -> Int -> Int -> Int -> Bool,
-		?biomes : Array<String>, ?since : Int, ?until : Int, ?notIn : Array<String>, ?lavaGroup : String ) : StructureDef {
+		?biomes : Array<String>, ?since : Int, ?until : Int, ?notIn : Array<String>, ?lavaGroup : String, ?event : String ) : StructureDef {
 		return { id : id, group : group, stage : stage, p : p, biomes : biomes, notIn : notIn, since : since, until : until, f : f,
-			lavaGroup : lavaGroup };
+			lavaGroup : lavaGroup, event : event };
 	}
 
 	/** un planeta de verdad (PLANET_BIOMES): con estructuras y cristales de hexalita (bonus) */
@@ -115,19 +124,30 @@ class Structures {
 
 	/**
 	 * Las estructuras de una etapa en un bioma y una version, de la mas rara a la mas comun (p de mayor a menor) y luego por id:
-	 * el orden en el que se tiran en cada region. only: solo esa (GenMain --allstructures)
+	 * el orden en el que se tiran en cada region. only: solo esa (GenMain --allstructures). Nunca las de los eventos del
+	 * calendario: van aparte (forEvents, DetailsGenerator.placeEvents)
 	 */
 	public static function active( biome : String, stage : StructureStage, version : Int, ?only : String ) : Array<StructureDef> {
 		var out = [];
 		for( e in ALL ) {
-			if( e.stage != stage || (only != null && e.id != only) ) continue;
-			if( (e.since != null && version < e.since) || (e.until != null && version >= e.until) ) continue;
-			if( !isPlanet(biome) || (e.biomes != null && e.biomes.indexOf(biome) < 0) ) continue;
-			if( e.notIn != null && e.notIn.indexOf(biome) >= 0 ) continue;
+			if( e.stage != stage || (only != null && e.id != only) || e.event != null ) continue;
+			if( !fits(e, biome, version) ) continue;
 			out.push(e);
 		}
 		out.sort(function(a, b) return a.p != b.p ? b.p - a.p : (a.id < b.id ? -1 : (a.id > b.id ? 1 : 0)));
 		return out;
+	}
+
+	/** las estructuras de los eventos del calendario de la lista (Generator.events) que pueden salir en ese bioma y version */
+	public static function forEvents( biome : String, version : Int, events : Array<String> ) : Array<StructureDef> {
+		return [for( e in ALL ) if( e.event != null && events.indexOf(e.event) >= 0 && fits(e, biome, version) ) e];
+	}
+
+	/** puede salir en ese bioma y version (sin mirar su evento) */
+	public static function fits( e : StructureDef, biome : String, version : Int ) : Bool {
+		if( (e.since != null && version < e.since) || (e.until != null && version >= e.until) ) return false;
+		if( !isPlanet(biome) || (e.biomes != null && e.biomes.indexOf(biome) < 0) ) return false;
+		return e.notIn == null || e.notIn.indexOf(biome) < 0;
 	}
 
 	/** la estructura de un id (null si no hay) */

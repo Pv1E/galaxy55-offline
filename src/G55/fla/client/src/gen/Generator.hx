@@ -65,6 +65,11 @@ class Generator {
 	public var size(default,null) : Int;
 	/** anadido del port: version con la que se genera este planeta (VERSION si no se dice otra) */
 	public var version : Int;
+	/**
+	 * anadido del port: eventos del calendario activos al generar este planeta (CalendarEvents: los ids), que ponen sus
+	 * estructuras (Structures: event). Vacio = ninguno (las pruebas y port/headless/gen_ref.txt)
+	 */
+	public var events : Array<String> = [];
 	var seed : Int;
 	/** el azar del paso o de la estructura en curso (Rng: por nombre, initStep, stream) */
 	var rnd : Rng;

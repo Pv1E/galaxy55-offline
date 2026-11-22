@@ -72,7 +72,7 @@ class WorldData {
 	/** el mundo se ha soltado antes de acabar: el hilo para entre dos pasos */
 	var genCancel = false;
 	/** con que se creo el generador (--gencheck lo vuelve a crear igual) */
-	var genArgs : { seed : Int, biome : BiomeKind, comet : Bool, version : Null<Int> };
+	var genArgs : { seed : Int, biome : BiomeKind, comet : Bool, version : Null<Int>, events : Array<String> };
 	/** --loadtime (World.loadTime): lo que ha costado cada fase de la carga, en segundos, y cuantos pasos (step) ha llevado */
 	var load = { init : 0., gen : 0., cells : 0., sea : 0., edits : 0., light : 0., mesh : 0., meshEmit : 0., steps : 0, editCells : 0 };
 
@@ -86,7 +86,9 @@ class WorldData {
 		var comet = shipData == null && CometRules.isComet(biomeName);
 		size = comet ? CometRules.SIZE : sizeChunks << Const.BITS;
 		var biome : BiomeKind = Type.createEnum(BiomeKind, biomeName);
-		genArgs = { seed : seed, biome : biome, comet : comet, version : genVersion };
+		// los eventos del calendario de hoy (CalendarEvents: el Sapin de Noel en diciembre). El planeta se rehace con su semilla
+		// en cada carga: lo que pone un evento solo esta mientras dura
+		genArgs = { seed : seed, biome : biome, comet : comet, version : genVersion, events : shipData == null && !comet ? CalendarEvents.active() : [] };
 		gen = newGenerator();
 		var bd = Data.getBiome(biome);
 		if( shipData == null ) {
@@ -115,6 +117,7 @@ class WorldData {
 		// la version 0 (el generador del original) ya no existe: un planeta de antes se genera con la 1 y la partida guarda su 0
 		// (SaveData: "Ancienne partie")
 		if( a.version != null ) g.version = a.version < 1 ? 1 : a.version;
+		g.events = a.events;
 		g.reserveBlocks(a.biome);
 		return g;
 	}

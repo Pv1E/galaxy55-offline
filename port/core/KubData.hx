@@ -8,6 +8,8 @@ typedef KubAnomaly = {
 	var biomes : Array<String>;
 	/** el generador no la apunta (cristales de hexalita): se identifica al identificar uno de sus kubes propios */
 	var byBlocks : Bool;
+	/** la de un evento del calendario (CalendarEvents, el Sapin de Noel): solo se lista mientras dura o una vez identificada */
+	var event : String;
 }
 
 /** Donde se encuentra una ficha: biomas de planeta, anomalias (id) y tipos de cometa. */
@@ -91,6 +93,7 @@ class KubData {
 					names : [for( n in (a.names : Array<Dynamic>) ) Std.string(n)],
 					biomes : a.biomes == null ? null : [for( b in (a.biomes : Array<Dynamic>) ) Std.string(b)],
 					byBlocks : a.byBlocks == true,
+					event : a.event == null ? null : Std.string(a.event),
 				});
 		for( b in Block.all ) {
 			if( b == null || BlockNames.entry(b) != b || hidden.exists(Type.enumConstructor(b.k)) ) continue;
@@ -356,10 +359,15 @@ class KubData {
 		}
 	}
 
-	/** anomalias que pueden salir en un planeta de ese bioma (ninguna en una cometa) */
-	public function anomaliesIn( biome : String ) : Array<KubAnomaly> {
+	/** anomalias que pueden salir en un planeta de ese bioma (ninguna en una cometa), sin las de los eventos que no se listan */
+	public function anomaliesIn( info : SaveInfo, biome : String ) : Array<KubAnomaly> {
 		if( Comets.isComet(biome) ) return [];
-		return [for( a in anomalies ) if( a.biomes == null || a.biomes.indexOf(biome) >= 0 ) a];
+		return [for( a in anomalies ) if( (a.biomes == null || a.biomes.indexOf(biome) >= 0) && listed(info, a) ) a];
+	}
+
+	/** la anomalia sale en las listas: no es de un evento del calendario, o el evento dura hoy, o ya se ha identificado */
+	public function listed( info : SaveInfo, a : KubAnomaly ) : Bool {
+		return a.event == null || CalendarEvents.isActive(a.event) || Kubindex.anomalyKnown(info, a.id);
 	}
 
 	/** fichas que da una anomalia */
@@ -401,10 +409,15 @@ class KubData {
 		return out;
 	}
 
-	/** nombres de las anomalias identificadas, y "???" si queda alguna por cruzar */
+	/**
+	 * nombres de las anomalias identificadas, y "???" si queda alguna por cruzar (sin contar las de los eventos que no se listan,
+	 * salvo si no hay otra)
+	 */
 	function anomalyNames( info : SaveInfo, ids : Array<String> ) : String {
-		var names = [for( a in ids ) if( Kubindex.anomalyKnown(info, a) ) anomalyName(a)];
-		if( names.length < ids.length ) names.push(KubText.get("kub.unknown"));
+		var shown = [for( id in ids ) if( anomaly(id) == null || listed(info, anomaly(id)) ) id];
+		if( shown.length == 0 ) shown = ids;
+		var names = [for( a in shown ) if( Kubindex.anomalyKnown(info, a) ) anomalyName(a)];
+		if( names.length < shown.length ) names.push(KubText.get("kub.unknown"));
 		return names.join(", ");
 	}
 

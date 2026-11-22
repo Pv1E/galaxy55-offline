@@ -136,6 +136,8 @@ class Market {
 		// las vitres de gema: la gema sale del Cofre de Kube, que el robot no vende
 		"BShipGlassRed", "BShipGlassBlue", "BShipGlassGreen", "BShipGlassPink",
 		"BCircuit", "BCamera", "BHealBox", "BMiningGenerator", "BArtiBomb", "BAlienTreasure",
+		// evento de Navidad (CalendarEvents): solo sale en el Sapin de Noel
+		"BChristmasLeaves",
 	];
 
 	public static var wares(get, null) : Array<Ware>;

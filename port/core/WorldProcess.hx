@@ -200,9 +200,9 @@ class WorldProcess {
 			set(c.x, c.y, c.z, b, b.covered);
 	}
 
-	/** tierra glacial y touffe de sapin: su version cubierta lleva nieve encima */
+	/** tierra glacial, touffe de sapin y feuille de Noel: su version cubierta lleva nieve encima */
 	static inline function snowCover( b : Block ) : Bool {
-		return b.k == BWinterSoil || b.k == BWinterLeaves;
+		return b.k == BWinterSoil || b.k == BWinterLeaves || b.k == BChristmasLeaves;
 	}
 
 	/**

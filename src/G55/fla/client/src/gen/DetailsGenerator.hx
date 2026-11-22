@@ -1,5 +1,6 @@
 package gen;
 import Common;
+import Block;
 import gen.Structures;
 
 /**
@@ -45,6 +46,9 @@ class DetailsGenerator extends BiomeGenerator {
 	/** la estructura que se acaba de poner ha salido con lava en vez de agua (las cascadas): su tipo es su lavaGroup */
 	var poseLava : Bool;
 
+	/** ultimo intento de una estructura de evento en un planeta sin ninguna (placeEvents): menos exigente con el sitio */
+	var poseLoose = false;
+
 	/** lado de una region (128; una cometa de 96 es una sola region) */
 	inline function regionSize() return size < 128 ? size : 128;
 
@@ -84,9 +88,13 @@ class DetailsGenerator extends BiomeGenerator {
 		placeStage(Surface);
 	}
 
-	/** la Invisible, y despues la lista de anomalias: sin las que ha tapado otra estructura (fosa, gran crater...) */
+	/**
+	 * la Invisible, las estructuras de los eventos del calendario (placeEvents) y despues la lista de anomalias: sin las que ha
+	 * tapado otra estructura (fosa, gran crater...)
+	 */
 	override function stageAir() {
 		placeStage(Air);
+		placeEvents();
 		for( p in poses )
 			if( p.samples != null && p.samples.length > 0 ) {
 				var seen = false, i = 0;
@@ -118,6 +126,39 @@ class DetailsGenerator extends BiomeGenerator {
 					}
 				if( found != null ) pose(found, rx, ry, rs);
 			}
+	}
+
+	/**
+	 * Anadido del port: las estructuras de los eventos del calendario de este planeta (events, Structures.forEvents), despues de
+	 * todas las demas (y de los cristales de hexalita) y sin competir con ellas: con o sin el evento, el resto del planeta es el
+	 * mismo. Cada una sale en ~1 planeta de cada p (stream(id + "/planet")) y una sola vez: en la primera region en la que cabe,
+	 * probando region por region desde una al azar (stream(id + "/one")) con su azar (pose), y si no cabe en ninguna, otra vez
+	 * con poseLoose (el Sapin de Noel puede entonces meter sus ramas en las hojas de otros arboles: el bosque acido es casi todo
+	 * copas y pantano). Con forceStructure (GenMain --allstructures): solo esa, si es de un evento, en cada region
+	 */
+	function placeEvents() {
+		if( !hasStructures() ) return;
+		var forced = forceStructure != null;
+		var list = forced ? [] : Structures.forEvents(biomeName, version, events);
+		if( forced ) {
+			var f = Structures.get(forceStructure);
+			if( f != null && f.event != null && Structures.fits(f, biomeName, version) ) list = [f];
+		}
+		var rs = regionSize(), n = Std.int(size / rs);
+		for( e in list ) {
+			if( !forced && stream(e.id + "/planet").random(e.p) != 0 ) continue;
+			var before = poses.length, r = stream(e.id + "/one").random(n * n);
+			for( loose in [false, true] ) {
+				poseLoose = loose;
+				for( i in 0...n * n ) {
+					var k = (r + i) % (n * n);
+					pose(e, k % n, Std.int(k / n), rs);
+					if( !forced && poses.length > before ) break;
+				}
+				if( poses.length > before ) break;
+			}
+			poseLoose = false;
+		}
 	}
 
 	/**
@@ -1036,7 +1077,148 @@ class DetailsGenerator extends BiomeGenerator {
 		
 		return tree(x,y,z, trunk, leaves, fruit, flat);
 	}
-	
+
+	// ---------------------------------------------------------------- Sapin de Noel (evento christmas, anadido del port)
+
+	/** tronco a la vista bajo las ramas */
+	static inline var XMAS_TRUNK = 4;
+	/** filas de ramas por vuelta de las guirnaldas */
+	static inline var XMAS_GARLAND_PITCH = 5.;
+	/** Kubes de Noel al pie */
+	static inline var XMAS_GIFTS = 6;
+
+	/** celda que no estorba al sapin: aire o algo que no choca (hierbas, flores), nunca un liquido */
+	inline function xmasFree( b : Int ) return b == EMPTY || (!blocks[b].collide && !blocks[b].hasProp(PLiquid));
+
+	/** follaje (materia BGreenLeaves: hojas de cualquier arbol, opacas o no): no es suelo para el sapin */
+	inline function xmasFoliage( b : Int ) return b != EMPTY && blocks[b].matter.k == BGreenLeaves;
+
+	/**
+	 * el suelo de la columna x, y: la primera celda que estorba bajando de z1 a z0 (incluidos); -1 si no hay o es un liquido
+	 * (agua, lava)
+	 */
+	function xmasGround( x : Int, y : Int, z0 : Int, z1 : Int ) : Int {
+		var z = z1;
+		while( z >= z0 ) {
+			var b = get(x, y, z);
+			if( !xmasFree(b) ) return blocks[b].hasProp(PLiquid) ? -1 : z;
+			z--;
+		}
+		return -1;
+	}
+
+	/** angulo de dx, dy sin trigonometria (igual en todas las maquinas: cliente y servidor), de 0 a 1 por vuelta */
+	static function turnOf( dx : Int, dy : Int ) : Float {
+		var a = if( dy >= 0 ) dx >= 0 ? dy / (dx + dy) : 1 - dx / (-dx + dy) else dx < 0 ? 2 - dy / (-dx - dy) : 3 + dx / (dx - dy);
+		return a / 4;
+	}
+
+	/** distancia al cuadrado de la celda x + dx, y + dy al eje del sapin, que pasa por la esquina x + 1, y + 1 (tronco de 2x2) */
+	static inline function xmasDist2( dx : Int, dy : Int ) : Float {
+		return ((2 * dx - 1) * (2 * dx - 1) + (2 * dy - 1) * (2 * dy - 1)) / 4;
+	}
+
+	/**
+	 * Anadido del port (evento del calendario christmas, CalendarEvents): un gran Sapin de Noel. Tronco de bois Frimas de 2x2
+	 * (x, y a x + 1, y + 1; XMAS_TRUNK a la vista), tres pisos de touffes de sapin que se estrechan (el ultimo acaba en punta)
+	 * con dos guirnaldas en espiral de feuilles de Noel (luces de colores que dan luz) y una corona en la punta, XMAS_GIFTS Kubes
+	 * de Noel repartidos al pie y un suelo de terre glaciale alrededor; coverAll nieva el suelo, las touffes y las feuilles de Noel. Solo en
+	 * tierra seca, casi llana y con sitio para todo el arbol: no rompe nada de lo que han puesto las demas estructuras.
+	 */
+	function detChristmasTree( x : Int, y : Int, z : Int ) : Bool {
+		var fh = 12 + rnd.random(4), r0 = 5 + rnd.random(2);
+		// el suelo de verdad en el centro (las alturas no saben de las estructuras): no las hojas de otro arbol
+		var g = xmasGround(x, y, z - 10, z + 10);
+		if( g < 0 || xmasFoliage(get(x, y, g)) ) return false;
+		z = g + 1;
+		var top = z + XMAS_TRUNK + fh;
+		if( z <= waterLevel + 1 || top + 2 >= HEIGHT ) return false;
+		// bajo las ramas: suelo entre z - 3 y z - 1 y nada que estorbe hasta la punta (con poseLoose, hojas de otros arboles a la
+		// altura de las ramas: se quedan entre las suyas)
+		for( dy in -r0...r0 + 2 )
+			for( dx in -r0...r0 + 2 ) {
+				if( xmasDist2(dx, dy) > r0 * r0 + r0 ) continue;
+				var zz = top + 1;
+				while( zz >= z ) {
+					var b = get(x + dx, y + dy, zz);
+					if( !xmasFree(b) && !(poseLoose && zz >= z + XMAS_TRUNK && xmasFoliage(b)) ) return false;
+					zz--;
+				}
+				var gz = xmasGround(x + dx, y + dy, z - 4, z - 1);
+				if( gz < z - 3 || xmasFoliage(get(x + dx, y + dy, gz)) ) return false;
+			}
+		var wood = alloc(BWinterWood), leaves = alloc(BWinterLeaves), lights = alloc(BChristmasLeaves);
+		var gift = alloc(BKubeNoel), soil = alloc(BWinterSoil);
+		// suelo de terre glaciale (nevado por coverAll), con el borde irregular; sin hierbas encima
+		var rg = r0 + 3;
+		for( dy in -rg...rg + 2 )
+			for( dx in -rg...rg + 2 ) {
+				if( xmasDist2(dx, dy) > rg * rg + rg - rnd.random(rg * 2) ) continue;
+				// solo la capa de arriba de un suelo opaco (no las hojas de otro arbol ni el interior de una colina)
+				var gz = xmasGround(x + dx, y + dy, z - 4, z + 2);
+				var gb = gz < 0 ? EMPTY : get(x + dx, y + dy, gz);
+				if( gz < 0 || btrans[gb] || xmasFoliage(gb) || !xmasFree(get(x + dx, y + dy, gz + 1)) ) continue;
+				set(x + dx, y + dy, gz, soil);
+				if( isSolidAt(x + dx, y + dy, gz - 1) ) set(x + dx, y + dy, gz - 1, soil);
+				var zz = gz + 1;
+				while( zz < gz + 4 && get(x + dx, y + dy, zz) != EMPTY && xmasFree(get(x + dx, y + dy, zz)) )
+					set(x + dx, y + dy, zz++, EMPTY);
+			}
+		// tronco de 2x2, desde el suelo de cada columna hasta casi la punta
+		for( c in [[0, 0], [1, 0], [0, 1], [1, 1]] ) {
+			var tz = xmasGround(x + c[0], y + c[1], z - 4, z - 1) + 1;
+			while( tz < z + XMAS_TRUNK + fh - 2 )
+				set(x + c[0], y + c[1], tz++, wood);
+		}
+		// ramas: tres pisos; cada uno empieza mas ancho de lo que acaba el de debajo. La punta sigue el tronco: 2x2
+		var tierRows = Math.ceil(fh / 3), tierR = [r0, r0 * 0.7, r0 * 0.42];
+		for( h in 0...fh ) {
+			var t = Std.int(h / tierRows);
+			if( t > 2 ) t = 2;
+			var r = if( t < 2 ) tierR[t] * (1 - 0.6 * (h - t * tierRows) / tierRows) else tierR[2] * (1 - (h - 2 * tierRows) / (fh - 2 * tierRows));
+			var lim = r * r + r * 0.8, zz = z + XMAS_TRUNK + h, ri = Math.ceil(r);
+			for( dy in -ri...ri + 2 )
+				for( dx in -ri...ri + 2 ) {
+					var d2 = xmasDist2(dx, dy);
+					if( (d2 > lim && d2 > 0.5) || get(x + dx, y + dy, zz) == wood ) continue;
+					var outer = d2 > (r - 1.2) * (r - 1.2);
+					// dos guirnaldas en espiral y alguna luz suelta, por fuera
+					var light = false;
+					if( outer ) {
+						var garland = (turnOf(2 * dx - 1, 2 * dy - 1) + h / XMAS_GARLAND_PITCH) * 2;
+						light = garland - Math.floor(garland) < 0.2 || rnd.random(100) < 5;
+					}
+					set(x + dx, y + dy, zz, light ? lights : leaves);
+				}
+		}
+		for( c in [[0, 0], [1, 0], [0, 1], [1, 1]] )
+			set(x + c[0], y + c[1], z + XMAS_TRUNK + fh, lights);
+		// los regalos: XMAS_GIFTS Kubes de Noel repartidos al pie, uno en cada sexto de vuelta (desde un angulo al azar), a 2 a 4
+		// celdas del tronco, sin tocarse ni apilarse
+		var ring = [for( dy in -4...6 ) for( dx in -4...6 ) if( xmasDist2(dx, dy) >= 5 && xmasDist2(dx, dy) <= 20 ) [dx, dy]];
+		var turn0 = rnd.random(1000) / 1000;
+		for( i in 0...XMAS_GIFTS ) {
+			var cells = [for( c in ring ) if( Std.int((turnOf(2 * c[0] - 1, 2 * c[1] - 1) + 1 - turn0) * XMAS_GIFTS) % XMAS_GIFTS == i ) c];
+			var tries = 12;
+			while( cells.length > 0 && tries-- > 0 ) {
+				var c = cells[rnd.random(cells.length)];
+				var gx = x + c[0], gy = y + c[1];
+				var gz = xmasGround(gx, gy, z - 4, z) + 1;
+				if( gz <= 0 || get(gx, gy, gz) != EMPTY ) continue;
+				var alone = true;
+				for( ny in -1...2 )
+					for( nx in -1...2 )
+						for( nz in -1...2 )
+							if( get(gx + nx, gy + ny, gz + nz) == gift ) alone = false;
+				if( !alone ) continue;
+				set(gx, gy, gz, gift);
+				break;
+			}
+		}
+		poseOrigin = [x, y, z];
+		return true;
+	}
+
 	
 	function detRuin(x,y,z) {
 		var wx = 6 + rnd.random(6);

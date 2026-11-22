@@ -3,7 +3,8 @@ import Msg;
 
 /**
  * Banco de pruebas (solo para desarrollo): ejecuta un guion de ordenes sobre una partida nueva, sin ventana a la vista ni teclado.
- *   hl galaxy55.hl --script=guion.txt [--bgbiome=BIAutumn] [--creative] [--blockcount]
+ *   hl galaxy55.hl --script=guion.txt [--bgbiome=BIAutumn] [--creative] [--blockcount] [--date=AAAA-MM-DD]
+ *   (--date: otro dia para los eventos del calendario, CalendarEvents; port/dev/sapin_noel.txt)
  * Una orden por linea, "#" = comentario. Las coordenadas son del planeta salvo las de `tpl`, `setl` y `lookl` (locales a la nave).
  *   wait N                  esperar N actualizaciones
  *   until fade|tele X       esperar (600 actualizaciones como mucho) a que la opacidad del fundido o la carga del
@@ -86,7 +87,8 @@ import Msg;
  *                           ordenador abierto; escorp hexalite N deja N cargas de hexalita; print upgrades
  *   savegame                guardar la partida (como F5, sin aviso)
  *   genversion N            el planeta actual pasa a ser de la version N del generador (SaveInfo.genVersion; se nota al volver a
- *                           el); print gen: la del mundo cargado, la actual, la de la partida y las de los planetas visitados
+ *                           el); print gen: la del mundo cargado, la actual, la de la partida y las de los planetas visitados,
+ *                           y los eventos del calendario de hoy y del mundo cargado (CalendarEvents)
  *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
  *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
  *   print prune             poda de los cambios (World.prune): pone una lampara en el suelo delante del jugador y lo vuelve a
@@ -2215,6 +2217,10 @@ class Dev {
 			var visited = u == null ? "-" : [for( p in u.planets ) p.id + ":" + SaveData.genVersion(p.genVersion)].join(" ");
 			Sys.println("generador: mundo " + @:privateAccess w.gen.version + " actual " + gen.Generator.VERSION + " partida " + g.info.genVersion
 				+ " planeta " + (u == null ? "-" : "" + u.planetId) + " visitados " + (visited == "" ? "-" : visited));
+			// eventos del calendario (CalendarEvents): los de hoy (o de --date) y los del mundo cargado
+			var ev = @:privateAccess w.gen.events;
+			Sys.println("eventos: dia " + CalendarEvents.today() + " hoy " + (CalendarEvents.active().length == 0 ? "-" : CalendarEvents.active().join(","))
+				+ " mundo " + (ev.length == 0 ? "-" : ev.join(",")));
 		case "biome":
 			// bioma del mundo cargado, el de la partida y el de salida del universo; y el suelo que mas se ve (una columna de cada 8x8)
 			var u = g.info.uni;

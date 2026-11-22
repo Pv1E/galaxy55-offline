@@ -354,6 +354,7 @@ class GalaxyApp extends hxd.App {
 	override function init() {
 		var tInit = haxe.Timer.stamp();
 		GameRng.applyArgs();
+		CalendarEvents.applyArgs();
 		PortRules.apply();
 		for( a in Sys.args() ) {
 			if( StringTools.startsWith(a, "--shot=") ) shotPath = a.substr(7);
