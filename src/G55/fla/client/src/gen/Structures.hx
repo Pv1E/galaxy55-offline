@@ -44,8 +44,8 @@ typedef StructureDef = {
 class Structures {
 
 	/**
-	 * los planetas de verdad: solo ellos tienen estructuras y bonus (DetailsGenerator.hasStructures). El hangar (BIShed) no es un
-	 * planeta (se construye con shipData), ni el bioma de prueba (BITest) ni las cometas (CometGenerator)
+	 * los planetas de verdad: solo ellos tienen estructuras y cristales de hexalita (bonus, DetailsGenerator.hasStructures). El
+	 * hangar (BIShed) no es un planeta (se construye con shipData), ni el bioma de prueba (BITest) ni las cometas (CometGenerator)
 	 */
 	public static var PLANET_BIOMES = ["BIAutumn", "BIMoon", "BIMars", "BIWinterPeaks", "BIAcidForest", "BIDeadCity"];
 
@@ -104,7 +104,7 @@ class Structures {
 		return { id : id, group : group, stage : stage, p : p, biomes : biomes, notIn : notIn, since : since, until : until, f : f };
 	}
 
-	/** un planeta de verdad (PLANET_BIOMES): con estructuras y bonus */
+	/** un planeta de verdad (PLANET_BIOMES): con estructuras y cristales de hexalita (bonus) */
 	public static inline function isPlanet( biome : String ) : Bool return PLANET_BIOMES.indexOf(biome) >= 0;
 
 	/**

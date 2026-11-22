@@ -63,7 +63,7 @@ import Common;
  *                           rdrag A B..., down|up|move C [r], nav left|right|up|down|a|x; casilla = zona:N, out; print slots
  *   storage ORDEN           stockage de la nave (ShipStorage): open, close, put Bloque n (al stockage), charge K n (cargas del
  *                           stockage), invcharge K n (cargas del inventario), forget (sin stockage, como una partida de antes);
- *                           K = yellow|blue|pink|bonus; zonas de slots: 0 bloques, 1 cargas, 2 inventario, 3 sus cargas; print storage
+ *                           K = yellow|blue|pink|hexalite; zonas de slots: 0 bloques, 1 cargas, 2 inventario, 3 sus cargas; print storage
  *   fadelog on|off          fundido de color de pantalla imagen por imagen, tal como lo pinta el HUD (opacidad y color); off
  *                           dice cuantas veces subio (destellos) y cuantas como mucho en un segundo (WCAG 2.3.1: 3)
  *   shop / shopclose        abrir y cerrar la tienda del robot;  buy|sell Bloque n   comprar o vender (print credits)
@@ -82,7 +82,7 @@ import Common;
  *                           por recuperado; print kub|kubdata|kuborder (orden de las fichas y las recetas)
  *   escorp [upgrades]       ordenador de a bordo > Contactar con la ESCorp (anadido del port) y, con upgrades, su pantalla de
  *                           Mejoras ESCorp (close lo cierra todo; print menu); escorp button pulsa Contactar con la ESCorp en el
- *                           ordenador abierto; escorp bonus N deja N cargas de bonus; print upgrades
+ *                           ordenador abierto; escorp hexalite N deja N cargas de hexalita; print upgrades
  *   savegame                guardar la partida (como F5, sin aviso)
  *   genversion N            el planeta actual pasa a ser de la version N del generador (SaveInfo.genVersion; se nota al volver a
  *                           el); print gen: la del mundo cargado, la actual, la de la partida y las de los planetas visitados
@@ -621,9 +621,9 @@ class Dev {
 		return app.storage != null ? app.storage.grid : app.chest != null ? app.chest.grid : null;
 	}
 
-	/** tipo de carga de un nombre: yellow|blue|pink|bonus o el de ChargeKind (CYellow...); -1 = ninguno */
+	/** tipo de carga de un nombre: yellow|blue|pink|hexalite (CBonus) o el de ChargeKind (CYellow...); -1 = ninguno */
 	static function chargeOf( n : String ) : Int {
-		var i = ["yellow", "blue", "pink", "bonus"].indexOf(n);
+		var i = ["yellow", "blue", "pink", "hexalite"].indexOf(n);
 		return i >= 0 ? i : Type.getEnumConstructs(ChargeKind).indexOf(n);
 	}
 
@@ -1332,8 +1332,8 @@ class Dev {
 				case "escorp":
 					// escorp [upgrades]: el submenu Contactar con la ESCorp abierto desde el ordenador de a bordo, como el jugador (y su
 					// pantalla de Mejoras ESCorp); el guion sigue, close lo cierra. escorp button: pulsa el boton Contactar con la ESCorp
-					// del ordenador abierto (su sitio cambia con Pilotar la nave). escorp bonus N: deja N cargas de bonus (CBonus)
-					if( a[1] == "bonus" ) {
+					// del ordenador abierto (su sitio cambia con Pilotar la nave). escorp hexalite N: deja N cargas de hexalita (CBonus)
+					if( a[1] == "hexalite" ) {
 						while( g.inv.useCharge(CBonus) ) {}
 						if( Std.parseInt(a[2]) > 0 ) g.inv.addCharge(CBonus, Std.parseInt(a[2]));
 					} else if( a[1] == "button" ) {
@@ -1783,8 +1783,8 @@ class Dev {
 		case "credits":
 			Sys.println("creditos: " + g.info.credits);
 		case "upgrades":
-			// Mejoras ESCorp: cargas de bonus, cada mejora (precio, desbloqueada o se puede), las desbloqueadas y si se abren
-			Sys.println("mejoras: cargas de bonus " + EscorpUpgrades.bonus(g.inv) + " | lista " + (EscorpUpgrades.ALL.length == 0 ? "vacia"
+			// Mejoras ESCorp: cargas de hexalita, cada mejora (precio, desbloqueada o se puede), las desbloqueadas y si se abren
+			Sys.println("mejoras: cargas de hexalita " + EscorpUpgrades.hexalite(g.inv) + " | lista " + (EscorpUpgrades.ALL.length == 0 ? "vacia"
 				: [for( u in EscorpUpgrades.ALL ) u.id + " " + u.cost + (EscorpUpgrades.has(g.info, u.id) ? " DESBLOQUEADA" : EscorpUpgrades.canBuy(g.info, g.inv, u) ? " se puede" : "")].join(", "))
 				+ " | desbloqueadas " + (g.info.upgrades == null ? "-" : g.info.upgrades.join(",")) + " | se abren " + Tutorial.upgradesAllowed(g.info)
 				+ " tuto=" + (g.info.tuto == null ? "-" : "" + g.info.tuto.step));

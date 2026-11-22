@@ -198,9 +198,9 @@
   {
    "id": "bonus",
    "names": [
-    "Cristales verdes",
-    "Green crystals",
-    "Cristaux verts"
+    "Cristales de hexalita",
+    "Hexalite crystals",
+    "Cristaux d'hexalite"
    ],
    "biomes": null,
    "byBlocks": true
@@ -308,9 +308,9 @@
   {
    "id": "cavebonus",
    "names": [
-    "Cristales verdes subterráneos",
-    "Underground green crystals",
-    "Cristaux verts souterrains"
+    "Cristales de hexalita subterráneos",
+    "Underground hexalite crystals",
+    "Cristaux d'hexalite souterrains"
    ],
    "biomes": [
     "BIAutumn",

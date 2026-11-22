@@ -348,16 +348,16 @@ class Lang {
 		"escorp.contracts" => ["Contratos ESCorp", "ESCorp contracts", "Contrats ESCorp"],
 		"escorp.upgrades" => ["Mejoras ESCorp", "ESCorp upgrades", "Améliorations ESCorp"],
 		"upgrades.title" => ["MEJORAS ESCORP", "ESCORP UPGRADES", "AMÉLIORATIONS ESCORP"],
-		"upgrades.info" => ["Mejoras para el juego, el personaje o el equipo, a cambio de cargas de bonus.", "Upgrades for the game, your character or your equipment, in exchange for bonus charges.", "Des améliorations pour le jeu, le personnage ou l'équipement, en échange de charges bonus."],
-		// %n% = cargas de bonus (CBonus) del inventario
-		"upgrades.balance" => ["Tus cargas de bonus: %n%", "Your bonus charges: %n%", "Tes charges bonus : %n%"],
+		"upgrades.info" => ["Mejoras para el juego, el personaje o el equipo, a cambio de cargas de hexalita.", "Upgrades for the game, your character or your equipment, in exchange for hexalite charges.", "Des améliorations pour le jeu, le personnage ou l'équipement, en échange de charges d'hexalite."],
+		// %n% = cargas de hexalita (CBonus) del inventario
+		"upgrades.balance" => ["Tus cargas de hexalita: %n%", "Your hexalite charges: %n%", "Tes charges d'hexalite : %n%"],
 		"upgrades.none" => ["No hay ninguna mejora ESCorp disponible.", "No ESCorp upgrades available.", "Aucune amélioration ESCorp disponible."],
 		// boton de una mejora: su nombre (Lang "upgrade.<id>"), seguido del precio o de upgrades.bought
-		"upgrades.cost" => ["%n% cargas de bonus", "%n% bonus charges", "%n% charges bonus"],
+		"upgrades.cost" => ["%n% cargas de hexalita", "%n% hexalite charges", "%n% charges d'hexalite"],
 		"upgrades.bought" => ["Desbloqueada", "Unlocked", "Débloquée"],
 		"upgrades.ask" => ["¿Desbloquear %name%?", "Unlock %name%?", "Débloquer %name% ?"],
-		"upgrades.ask.cost" => ["Cuesta %n% cargas de bonus.", "It costs %n% bonus charges.", "Coût : %n% charges bonus."],
-		"upgrades.missing" => ["Te faltan cargas de bonus: la mejora cuesta %n%.", "Not enough bonus charges: the upgrade costs %n%.", "Pas assez de charges bonus : l'amélioration en coûte %n%."],
+		"upgrades.ask.cost" => ["Cuesta %n% cargas de hexalita.", "It costs %n% hexalite charges.", "Coût : %n% charges d'hexalite."],
+		"upgrades.missing" => ["Te faltan cargas de hexalita: la mejora cuesta %n%.", "Not enough hexalite charges: the upgrade costs %n%.", "Pas assez de charges d'hexalite : l'amélioration en coûte %n%."],
 		// cometas (Comets, añadido del port). %t% = 2:15
 		"exp.comet" => ["Cometa", "Comet", "Comète"],
 		"exp.comet.scan" => ["Escanear", "Scan", "Scanner cette comète"],

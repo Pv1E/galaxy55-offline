@@ -1366,7 +1366,7 @@ class GalaxyApp extends hxd.App {
 		return s;
 	}
 
-	/** Mejoras ESCorp: la pantalla se rehace cada vez (las cargas de bonus que llevas y lo desbloqueado) */
+	/** Mejoras ESCorp: la pantalla se rehace cada vez (las cargas de hexalita que llevas y lo desbloqueado) */
 	function openUpgrades() {
 		if( game == null || !Tutorial.upgradesAllowed(game.info) ) return;
 		var old = screens.get("upgrades");
@@ -1376,7 +1376,7 @@ class GalaxyApp extends hxd.App {
 	}
 
 	/**
-	 * Mejoras ESCorp (EscorpUpgrades, anadido del port): las cargas de bonus que llevas y un boton por mejora con su precio
+	 * Mejoras ESCorp (EscorpUpgrades, anadido del port): las cargas de hexalita que llevas y un boton por mejora con su precio
 	 * (desbloquear, con confirmacion); sin ninguna, el aviso. Se compone como las licencias (desde arriba y centrada en alto).
 	 * Volver o Esc vuelven al submenu Contactar con la ESCorp, con el foco en Mejoras ESCorp
 	 */
@@ -1389,8 +1389,8 @@ class GalaxyApp extends hxd.App {
 		var info = Theme.text(s, Lang.t("upgrades.info"), 1.6, Theme.DIM, px, y);
 		info.maxWidth = (PW - 80) / info.scaleX;
 		y += info.textHeight * info.scaleY + 18;
-		// las cargas de bonus: el icono de la barra del inventario (InvBar) y cuantas llevas, en su verde
-		var have = EscorpUpgrades.bonus(game.inv);
+		// las cargas de hexalita: el icono de la barra del inventario (InvBar) y cuantas llevas, en su verde
+		var have = EscorpUpgrades.hexalite(game.inv);
 		var icon = new h2d.Bitmap(EscorpUpgrades.icon(), s);
 		icon.setScale(2.5);
 		icon.setPosition(px, y);
@@ -1429,7 +1429,7 @@ class GalaxyApp extends hxd.App {
 		return s;
 	}
 
-	/** desbloquear una mejora: con confirmacion (precio en cargas de bonus); hecho, la pantalla se rehace */
+	/** desbloquear una mejora: con confirmacion (precio en cargas de hexalita); hecho, la pantalla se rehace */
 	function askUpgrade( parent : Screen, u : EscorpUpgrades.EscorpUpgrade ) {
 		var name = Lang.t("upgrade." + u.id);
 		askConfirm(parent, Lang.t("upgrades.ask").split("%name%").join(name), Lang.t("upgrades.ask.cost").split("%n%").join("" + u.cost), Theme.ACCENT, function() {

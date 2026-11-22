@@ -629,7 +629,7 @@ class GenMain {
 	/**
 	 * --fuzz N [--limit S]: todos los biomas (con el hangar BIShed y las cometas) en todos los tamanos (1 a 3; las cometas, el
 	 * suyo) con N semillas al azar: cada planeta tiene que acabar en S segundos (60), y el hangar y las cometas sin nada puesto
-	 * (ni estructuras ni bonus: Structures.PLANET_BIOMES)
+	 * (ni estructuras ni cristales de hexalita: Structures.PLANET_BIOMES)
 	 */
 	static function fuzz( args : Array<String> ) {
 		var n = args.length > 1 ? Std.parseInt(args[1]) : 5, limit = 60.;
@@ -668,7 +668,7 @@ class GenMain {
 
 	/**
 	 * --registry: los tipos (group) de las estructuras del registro estan en las anomalias de kubindex.json (Base de datos
-	 * ESCorp), y que anomalias no tiene ninguna estructura (bonus y cavebonus: los bonus, no son estructuras)
+	 * ESCorp), y que anomalias no tiene ninguna estructura (bonus y cavebonus: los cristales de hexalita, no son estructuras)
 	 */
 	static function registry() {
 		var o : Dynamic = haxe.Json.parse(sys.io.File.getContent("src/G55/fla/client/gfx/kubindex.json"));

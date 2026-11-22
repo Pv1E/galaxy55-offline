@@ -123,8 +123,8 @@ class Generator {
 	}
 	
 	/**
-	 * Azar de un nombre (Rng.hash de la semilla, el intento de fillSoil y el nombre): cada paso, estructura y bonus tiene el suyo,
-	 * asi que lo que se anade o se quita no cambia el de los demas
+	 * Azar de un nombre (Rng.hash de la semilla, el intento de fillSoil y el nombre): cada paso, estructura y bonus (cristales de
+	 * hexalita) tiene el suyo, asi que lo que se anade o se quita no cambia el de los demas
 	 */
 	public function stream( name : String, a = 0, b = 0, c = 0 ) : Rng {
 		return new Rng(Rng.hash(seed ^ (attempt << 20), name, a, b, c));
@@ -382,8 +382,8 @@ class Generator {
 	
 	/**
 	 * Los pasos del planeta, en un orden fijo (version 1): el terreno del bioma (initBiome; los relieves van dentro de fillSoil),
-	 * las estructuras de las grutas, las de la superficie, los bonus, las del aire, una sola pasada de lo que cubre o se propaga
-	 * (coverAll), el agua (checkWater) y la roca madre
+	 * las estructuras de las grutas, las de la superficie, los bonus (cristales de hexalita), las del aire, una sola pasada de lo
+	 * que cubre o se propaga (coverAll), el agua (checkWater) y la roca madre
 	 */
 	public function startGenerate( biome : BiomeKind ) {
 		spentTime = 0;
@@ -405,7 +405,7 @@ class Generator {
 		globalScale *= 1 / 180;
 	}
 
-	/** etapas de las estructuras y de los bonus (DetailsGenerator) */
+	/** etapas de las estructuras y de los bonus, los cristales de hexalita (DetailsGenerator) */
 	function stageRelief() {
 	}
 
@@ -426,7 +426,7 @@ class Generator {
 
 	/**
 	 * Version 1: donde los biomas ponian sus estructuras de gruta (addCaveDetails) se guardan las celdas CAVE; las estructuras y
-	 * los bonus de las grutas se ponen despues de todo el terreno, en su etapa (stageCave)
+	 * los bonus (cristales de hexalita) de las grutas se ponen despues de todo el terreno, en su etapa (stageCave)
 	 */
 	function saveCaveMask() {
 		var total = size * size * HEIGHT;

@@ -101,9 +101,9 @@ A player got it running on Linux this way; we have not tested it.
 
 - Snow in the winter biome is an addition of this port: the original does not have it.
 - Creative mode and its palette are an addition of this port. A creative game can switch to survival and back, and the palette
-  also has the blocks without a price that give charges (bonus crystals, citronox and etherium plants...).
+  also has the blocks without a price that give charges (hexalite crystals, citronox and etherium plants...).
 - The on-board computer menu has its own look, as in the Flash version (the original was a web page).
-  Trade, ESCorp contracts and ESCorp upgrades are in its "Contact ESCorp" sub-menu (port addition); upgrades, paid with bonus
+  Trade, ESCorp contracts and ESCorp upgrades are in its "Contact ESCorp" sub-menu (port addition); upgrades, paid with hexalite
   charges, have none yet.
 - The ESCorp canteen window also shows your inventory, works with drag and drop like the inventory screen (I in adventure,
   also a port addition), also closes with Esc, B or Close, and works with the keyboard and the gamepad (while it is open the arrow keys move its cursor, not the player). Its contents are kept in the save (the original
@@ -170,7 +170,7 @@ A player got it running on Linux this way; we have not tested it.
 - A save with blocks this version does not know (saved by a newer one) asks before loading; if accepted, it is copied to
   `saves/backups` and those blocks are deleted.
 - The ship storage (on-board computer > Storage) is an addition of this port: 4 block slots, like a canteen, and charges
-  without slots (yellow up to 24, blue 12, pink 5, bonus without limit). The original's was on the server and is lost.
+  without slots (yellow up to 24, blue 12, pink 5, hexalite without limit). The original's was on the server and is lost.
 - When you die or press Shift+K, what you carry (blocks and charges, not credits) stays in a small ESCorp canteen where you
   were, which never expires and is kept in the save (in the original the server left it, as loot that expired, and the local
   mode took nothing). It is a game option, on unless changed; nothing happens in creative, in the tutorial, in the hangar or
@@ -179,8 +179,8 @@ A player got it running on Linux this way; we have not tested it.
 - The 16 CroqueMotel paintings (Motion Twin, CC BY-NC-SA 4.0, in `NOTICE`) are an addition of this port: plates hung on a
   wall, in the creative palette only. In a creative game the kube editor kubes (the `.kube` files of the `kubes` folder) can
   be placed too.
-- The planet generator (version 1, a change of this port) follows the original's steps, but each step, structure and bonus
-  has its own randomness and structures are placed by region in a fixed order: planets are no longer identical to the Flash
-  version's, and adding a structure only changes the planet inside its box. Saves store blocks by name, so new blocks from
+- The planet generator (version 1, a change of this port) follows the original's steps, but each step, structure and hexalite
+  crystal has its own randomness and structures are placed by region in a fixed order: planets are no longer identical to the
+  Flash version's, and adding a structure only changes the planet inside its box. Saves store blocks by name, so new blocks from
   another version don't break them.
 - What is missing is in `TODO.md`, bugs in `BUGS.md` and ideas for later in `IDEAS.en.md` (repository root).
