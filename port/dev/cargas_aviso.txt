@@ -1,0 +1,79 @@
+# Junto a las cargas (InvBar, anadido del port). -Timeout 300 -Extra "--lang=fr"
+# 1) aventura: minar roca (pide una carga amarilla) sin cargas amarillas no la rompe y dice cual hace falta
+#    (aviso=need0 "Il te faut une charge jaune..."); se va ~1.5 s despues de soltar; con una carga amarilla se rompe sin aviso.
+#    Roca dura (carga azul): aviso=need1. En el sintetizador de la nave no hace falta carga: sin aviso.
+# 2) tutorial: al recoger los citronox, la carga amarilla late y se dice al lado (aviso=got0:N "+N charges jaunes"); sin
+#    tutorial, recoger cargas no avisa. La ventana de prueba minimizada va lenta (~13 imagenes/s): el aviso (3 s) dura ~40 de
+#    wait, por eso se mira enseguida.
+wait 3
+print mode
+planet
+wait 20
+charge CYellow 0
+charge CBlue 0
+filla 18 18 46 24 100 106 none
+filla 18 18 46 24 99 99 BWood
+set 24 21 100 BRock
+set 24 23 100 BHardRock
+tp 25.4 21.5 100.01 3.14 -0.3
+waitfor ground
+wait 10
+mine 24 21 100
+wait 5
+shot cargas_aviso_falta
+wait 15
+print charges
+wait 20
+print block 24 21 100
+print charges
+unkey
+wait 120
+print charges
+# roca dura: azul
+mine 24 23 100
+wait 30
+print charges
+unkey
+wait 120
+# con una carga amarilla: se rompe, sin aviso
+charge CYellow 1
+mine 24 21 100
+wait 150
+unkey
+print block 24 21 100
+print charges
+# sin tutorial, una carga que entra no avisa
+charge CYellow 0
+wait 5
+charge CYellow 4
+wait 5
+print charges
+# 2) tutorial
+tuto new 4242
+waitfor map
+expplanet 0
+waitfor window
+expbutton
+waitfor planet
+wait 30
+planet
+wait 10
+tuto step 3
+tuto goto
+tuto mine
+wait 2
+print charges
+shot cargas_aviso_tuto
+wait 5
+print charges
+wait 10
+print charges
+unkey
+wait 60
+print tuto
+print charges
+wait 240
+print charges
+# acabado: la carga a su tamano, sin halo ni aviso
+shot cargas_aviso_tuto_fin
+quit

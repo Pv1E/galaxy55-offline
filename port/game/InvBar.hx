@@ -6,6 +6,8 @@ import IconMesh.Icons;
  * Barra de inventario de arriba al centro, como en el original (Interface.hx / InterfInvent.hx):
  * casillas de 40 px cada 44, la primera es el excavador; el resto, bloques con su icono 3D y la cantidad debajo.
  * La casilla elegida se resalta; las cargas van a la izquierda (16 px por fila).
+ * Anadido del port, junto a las cargas: en el tutorial, la que se acaba de recoger late y se dice al lado ("+3 cargas
+ * amarillas"; con iconos de 16 px el jugador no veia que las tenia); y al minar un bloque sin la carga que pide, cual hace falta.
  */
 class InvBar extends h2d.Object {
 
@@ -23,6 +25,26 @@ class InvBar extends h2d.Object {
 	var bump = -1;
 	var bumpTime = 0.;
 	var slotObjs = new Array<h2d.Object>();
+	/** el tutorial esta en marcha (GalaxyApp): las cargas que suben se resaltan */
+	public var tutorial = false;
+	/** cargas del ultimo refresh (color -> cantidad); null hasta el primero, que no resalta nada */
+	var chargeSnap : Map<Int, Int>;
+	/** icono de cada carga del ultimo refresh, por color (update lo hace latir) */
+	var chargeBms = new Map<Int, h2d.Bitmap>();
+	/** x del icono de las cargas: el aviso va a su izquierda, pasada la cantidad */
+	var chargesX = 0.;
+	/** halo detras de la carga que late */
+	var glow = new h2d.Graphics();
+	var flashCharge = -1;
+	var flashGain = 0;
+	var flashTime = 0.;
+	var pulseTime = 0.;
+	/** aviso junto a las cargas (icono y texto): lo recogido en el tutorial o la carga que falta */
+	var notice = new h2d.Object();
+	var noticeKey : String;
+	var noticeTime = 0.;
+	static inline var FLASH_TIME = 3.;
+	static inline var NEED_TIME = 1.5;
 
 	public function new( parent : h2d.Object, inv : Inv, atlas : h3d.mat.Texture, width : Int ) {
 		super(parent);
@@ -98,16 +120,87 @@ class InvBar extends h2d.Object {
 		// cargas a la izquierda
 		var cs = inv.inv.charges.copy();
 		cs.sort(function(a, b) return a.c - b.c);
+		addChild(glow);
+		chargeBms = new Map();
+		chargesX = x0 - 20;
 		for( i in 0...cs.length ) {
 			var c = cs[i];
-			var bm = new h2d.Bitmap(chargeIcons.sub(c.c * 16, 0, 16, 16), this);
-			bm.x = x0 - 20;
-			bm.y = 5 + i * 16;
+			// el icono centrado en su casilla de 16 px, para que lata desde el centro
+			var bm = new h2d.Bitmap(chargeIcons.sub(c.c * 16, 0, 16, 16, -8, -8), this);
+			bm.x = x0 - 20 + 8;
+			bm.y = 5 + i * 16 + 8;
+			chargeBms.set(c.c, bm);
 			var tf = Theme.text(this, "" + c.n, 1.0, c.c >= 0 && c.c < 4 ? CHARGE_COLORS[c.c] : 0xFFFFFF);
 			tf.dropShadow = { dx : 1, dy : 1, color : 0, alpha : 1 };
 			tf.x = Std.int(x0 - 20 - tf.textWidth - 3);
 			tf.y = 5 + i * 16 + 2;
 		}
+		if( chargeSnap != null && tutorial )
+			for( c in cs ) {
+				var before = chargeSnap.exists(c.c) ? chargeSnap.get(c.c) : 0;
+				if( c.n > before ) gainedCharge(c.c, c.n - before);
+			}
+		chargeSnap = [for( c in cs ) c.c => c.n];
+		addChild(notice);
+	}
+
+	static inline function chargeColor( c : Int ) return c >= 0 && c < 4 ? CHARGE_COLORS[c] : 0xFFFFFF;
+
+	static function chargeName( c : Int ) return Type.getEnumConstructs(ChargeKind)[c];
+
+	/** tutorial: la carga c ha subido n; lo seguido en la misma carga se suma ("+1", luego "+2"...) */
+	function gainedCharge( c : Int, n : Int ) {
+		flashGain = flashCharge == c && flashTime > 0 ? flashGain + n : n;
+		if( flashCharge != c ) pulseTime = 0;
+		flashCharge = c;
+		flashTime = FLASH_TIME;
+		var msg = Lang.t((flashGain == 1 ? "charge.got." : "charges.got.") + chargeName(c)).split("%n%").join("" + flashGain);
+		showNotice("got" + c + ":" + flashGain, c, msg, 1.5, FLASH_TIME);
+	}
+
+	/**
+	 * se esta minando un bloque que pide la carga c y no se tiene (GameView.mine, cada actualizacion): se dice cual hace falta
+	 * mientras dura y un poco despues
+	 */
+	public function needCharge( c : Int ) {
+		if( noticeKey == "need" + c && noticeTime > 0 ) {
+			noticeTime = Math.max(noticeTime, NEED_TIME);
+			notice.alpha = 1;
+			return;
+		}
+		showNotice("need" + c, c, Lang.t("charge.need." + chargeName(c)), 1.3, NEED_TIME);
+	}
+
+	/** el aviso a la izquierda de las cargas: el texto (en su color, alineado a la derecha) y el icono de la carga */
+	function showNotice( key : String, c : Int, msg : String, scale : Float, time : Float ) {
+		notice.removeChildren();
+		noticeKey = key;
+		noticeTime = time;
+		notice.alpha = 1;
+		notice.visible = true;
+		// fondo oscuro: el texto va en el color de la carga y el amarillo no se leia sobre el cielo de Terres Rouges
+		var bg = new h2d.Graphics(notice);
+		var ic = new h2d.Bitmap(chargeIcons.sub(c * 16, 0, 16, 16), notice);
+		ic.setScale(1.5);
+		ic.x = Std.int(chargesX - 34 - 24);
+		ic.y = 6;
+		var tf = Theme.text(notice, msg, scale, chargeColor(c));
+		tf.dropShadow = { dx : 1, dy : 1, color : 0, alpha : 1 };
+		// lo que quepa entre el borde y el icono (a 1280 de ancho, unos 300 px); si no, en dos lineas, centrado en el icono
+		var room = Math.min(ic.x - 8 - 12, 420);
+		tf.maxWidth = room / tf.scaleX;
+		tf.textAlign = Right;
+		tf.x = Std.int(ic.x - 8 - room);
+		tf.y = Std.int(Math.max(2, 6 + 12 - tf.textHeight * tf.scaleY * 0.5));
+		var left = ic.x - 8 - tf.textWidth * tf.scaleX, top = Math.min(tf.y, ic.y), bottom = Math.max(tf.y + tf.textHeight * tf.scaleY, ic.y + 24);
+		Theme.rect(bg, left - 8, top - 3, ic.x + 24 + 6 - (left - 8), bottom - top + 6, 0x000000, 0.5);
+	}
+
+	/** lo que dice el aviso de las cargas, para las pruebas (Dev): null si no se ve */
+	public function devNotice() : String {
+		if( noticeTime <= 0 ) return null;
+		for( c in notice ) if( Std.isOfType(c, h2d.Text) ) return noticeKey + " \"" + cast(c, h2d.Text).text + "\"";
+		return noticeKey;
 	}
 
 	/** nombre del bloque bajo la casilla, que se desvanece (InterfInvent.bumpBlock) */
@@ -121,6 +214,26 @@ class InvBar extends h2d.Object {
 	}
 
 	public function update( dt : Float ) {
+		if( flashTime > 0 ) {
+			flashTime -= dt;
+			pulseTime += dt;
+			var bm = chargeBms.get(flashCharge);
+			var fade = Math.max(0, Math.min(1, flashTime / 0.6));
+			var k = Math.abs(Math.sin(pulseTime * 5)) * fade;
+			glow.clear();
+			if( bm != null ) bm.setScale(1 + 1.1 * k);
+			// al acabar, el icono vuelve a su tamano y el halo se borra
+			if( bm != null && flashTime > 0 ) {
+				glow.beginFill(chargeColor(flashCharge), (0.15 + 0.35 * k) * fade);
+				glow.drawCircle(bm.x, bm.y, 9 + 9 * k);
+				glow.endFill();
+			}
+		}
+		if( noticeTime > 0 ) {
+			noticeTime -= dt;
+			notice.alpha = Math.max(0, Math.min(1, noticeTime / 0.5));
+			notice.visible = noticeTime > 0;
+		}
 		if( bumpTime > 0 && bump >= 0 && bump < slotObjs.length ) {
 			bumpTime -= dt;
 			var k = Math.max(0, bumpTime / 0.45);

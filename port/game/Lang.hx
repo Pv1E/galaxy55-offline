@@ -65,6 +65,20 @@ class Lang {
 		"storage.yourcharges" => ["Tus cargas", "Your charges", "Tes charges"],
 		"storage.nolimit" => ["sin límite", "no limit", "sans limite"],
 		"storage.hint" => ["Las cargas van siempre a las de su color", "Charges always go to their own color", "Les charges vont toujours dans leur couleur"],
+		// junto a las cargas (InvBar, anadido del port): lo recogido en el tutorial (%n% = cuantas) y la carga que pide el bloque que se
+		// mina (cortos: a 1280 de ancho caben unos 300 px a la izquierda de las cargas)
+		"charge.got.CYellow" => ["+1 carga amarilla", "+1 yellow charge", "+1 charge jaune"],
+		"charges.got.CYellow" => ["+%n% cargas amarillas", "+%n% yellow charges", "+%n% charges jaunes"],
+		"charge.got.CBlue" => ["+1 carga azul", "+1 blue charge", "+1 charge bleue"],
+		"charges.got.CBlue" => ["+%n% cargas azules", "+%n% blue charges", "+%n% charges bleues"],
+		"charge.got.CPink" => ["+1 carga rosa", "+1 pink charge", "+1 charge rose"],
+		"charges.got.CPink" => ["+%n% cargas rosas", "+%n% pink charges", "+%n% charges roses"],
+		"charge.got.CBonus" => ["+1 carga de bonus", "+1 bonus charge", "+1 charge bonus"],
+		"charges.got.CBonus" => ["+%n% cargas de bonus", "+%n% bonus charges", "+%n% charges bonus"],
+		"charge.need.CYellow" => ["Te falta una carga amarilla", "You need a yellow charge", "Il te manque une charge jaune"],
+		"charge.need.CBlue" => ["Te falta una carga azul", "You need a blue charge", "Il te manque une charge bleue"],
+		"charge.need.CPink" => ["Te falta una carga rosa", "You need a pink charge", "Il te manque une charge rose"],
+		"charge.need.CBonus" => ["Te falta una carga de bonus", "You need a bonus charge", "Il te manque une charge bonus"],
 		"contracts.title" => ["Contratos de la ESCorp", "ESCorp contracts", "Contrats ESCorp"],
 		// %t% = mm:ss hasta el siguiente tablero
 		"contracts.renew" => ["Nuevos contratos dentro de %t%", "New contracts in %t%", "Nouveaux contrats dans %t%"],

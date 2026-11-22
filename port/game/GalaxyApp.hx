@@ -3201,8 +3201,13 @@ class GalaxyApp extends hxd.App {
 				updateHelmet(dt, p);
 				updateJetHud(p);
 				updateStatus(dt, p);
-					if( invBar != null ) invBar.update(dt);
-				if( invBar != null ) invBar.y = hudShake;
+				if( invBar != null ) {
+					invBar.tutorial = Tutorial.active(game.info);
+					if( game.lackCharge != null ) invBar.needCharge(Type.enumIndex(game.lackCharge));
+					invBar.update(dt);
+					invBar.y = hudShake;
+				}
+				game.lackCharge = null;
 				cross.y = dot.y = Std.int(H * 0.5) + hudShake;
 			}
 		} else if( state == Paused && game != null ) {
