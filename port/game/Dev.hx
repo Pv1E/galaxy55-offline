@@ -1663,6 +1663,16 @@ class Dev {
 		Sys.println("fadelog: destellos a los " + [for( t in L.rises ) r3(t - L.t0)].join(" ") + " s");
 	}
 
+	/** lo desplazada que esta cada zona (KubScroll) de una pestana de la Base de datos ESCorp, en el orden del arbol */
+	static function kubScrolls( o : h2d.Object ) : Array<Int> {
+		var out = [];
+		for( c in o ) {
+			if( Std.isOfType(c, KubScroll) ) out.push(Std.int(cast(c, KubScroll).top));
+			out = out.concat(kubScrolls(c));
+		}
+		return out;
+	}
+
 	function print( a : Array<String>, g : GameView, app : GalaxyApp ) {
 		if( a[1] == "screen" ) {
 			Sys.println("pantalla " + @:privateAccess app.currentName);
@@ -1812,8 +1822,8 @@ class Dev {
 				+ " recetas=" + [for( c in k.crafts ) c.id + "x" + c.n].join(",") + " stats=" + [for( s in k.stats ) s.k + ":" + s.p + "/" + s.b + (s.r == null ? "" : "/azar" + s.r)].join(",")
 				+ " anomalias=" + k.anomalies.join(",") + (g == null ? "" : " (planeta: " + [for( an in g.world.anomalies() ) an.n + "@" + an.x + "," + an.y + "," + an.z].join(" ") + ")")
 				+ " descubiertas=" + [for( r in Data.CRAFT ) if( Kubindex.recipeKnown(info, r) ) r].length + "/" + Data.CRAFT.length
-				+ " panel=" + (app.database == null ? "cerrado" : "pestana " + app.database.tab) + " tuto=" + (info.tuto == null ? "-" : "" + info.tuto.step)
-				+ " avisos=" + app.kubNotify.devInfo());
+				+ " panel=" + (app.database == null ? "cerrado" : "pestana " + app.database.tab + " desplazado=" + kubScrolls(app.database.view).join("/"))
+				+ " tuto=" + (info.tuto == null ? "-" : "" + info.tuto.step) + " avisos=" + app.kubNotify.devInfo());
 		case "roll":
 			// roll [N]: tira N veces (10000) cada receta al azar (Data.craftRoll) y dice cuantos de cada resultado han salido
 			var n = a.length > 2 ? Std.parseInt(a[2]) : 10000;

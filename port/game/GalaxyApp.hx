@@ -2385,7 +2385,10 @@ class GalaxyApp extends hxd.App {
 	/** rueda del raton: cambia de casilla (en el original, bajar la rueda pasa a la siguiente; con la opcion Rueda del raton en
 	    bucle da la vuelta en los extremos); con la paleta abierta, de pagina; en la lista de partidas la desplaza */
 	function onWindowEvent( e : hxd.Event ) {
-		if( e.kind != EWheel ) return;
+		// un paso de rueda de 0 no va ni arriba ni abajo: lo manda el trackpad (sobre todo el de un Mac). SDL3 da la rueda en
+		// decimales (0.1, 0.3...) y hlsdl la pasa a entero: los gestos lentos llegan como 0, y el "delta > 0 ? abajo : arriba" de
+		// cada lista los tomaba por subidas (la Base de datos ESCorp volvia arriba al bajar; la barra cambiaba de casilla)
+		if( e.kind != EWheel || e.wheelDelta == 0 ) return;
 		// la lista de teclas (Opciones, desde el menu, la pausa o el mapa)
 		if( current != null && current.active && Std.isOfType(current, KeysScreen) ) {
 			cast(current, KeysScreen).scroll(e.wheelDelta > 0 ? 1 : -1);

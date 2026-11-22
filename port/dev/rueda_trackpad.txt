@@ -1,0 +1,58 @@
+# Rueda a 0 (trackpad, sobre todo el de un Mac): SDL3 da la rueda en decimales y hlsdl la pasa a entero, asi que los gestos lentos
+# llegan como pasos de 0. No deben mover nada. Antes cada paso de 0 contaba como subida ("delta > 0 ? abajo : arriba"): la Base
+# de datos ESCorp volvia arriba mientras se bajaba con el trackpad y la barra de inventario cambiaba de casilla.
+# Esperado: desplazado= sube con wheel 1 y NO cambia con wheel 0; la casilla de la barra no cambia con wheel 0.
+wait 3
+planet
+wait 30
+kub all
+kub
+wait 10
+# pestana Kubindex: la rueda desplaza la zona que esta bajo el raton (la cuadricula de kubes)
+mouse 450 350
+wait 2
+print kub
+wheel 1
+wheel 1
+wheel 1
+wait 2
+print kub
+wheel 0
+wheel 0
+wheel 0
+wheel 0
+wheel 0
+wait 2
+print kub
+wheel 1
+wheel 0
+wheel 1
+wheel 0
+wait 2
+print kub
+shot rueda_trackpad_kubindex
+# pestana Recetas: una sola lista
+kub tab 2
+wait 5
+wheel 1
+wheel 1
+wait 2
+print kub
+wheel 0
+wheel 0
+wheel 0
+wait 2
+print kub
+kub close
+wait 5
+# barra de inventario: wheel 0 no cambia de casilla
+slot 3
+wait 2
+print inv
+wheel 0
+wheel 0
+wait 2
+print inv
+wheel 1
+wait 2
+print inv
