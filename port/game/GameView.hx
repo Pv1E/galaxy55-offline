@@ -1827,7 +1827,7 @@ class GameView {
 		} else
 			canBreak = false;
 		if( debugDeny || (info.mothership == true && !editMother) ) canBreak = false;
-		// sin la carga que pide (cambio del port: el original no decia nada): GalaxyApp lo dice junto a las cargas (InvBar.needCharge)
+		// sin la carga que pide (cambio del port: el original no decia nada): GalaxyApp lo avisa (KubNotify.missingCharge)
 		else if( noCharge && matter.quickBreaks != null ) lackCharge = matter.quickBreaks[0].c;
 		// en tu nave, ordenador y puertas solo se usan, no se rompen (ShipLogic.checkSelect: allowBreak = false)
 		if( s.z >= World.SHIP_Z && !inCraft && (b.activable != null || b.toggle != null) ) canBreak = false; // la nave nodriza no se rompe

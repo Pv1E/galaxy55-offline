@@ -1,8 +1,8 @@
-# Junto a las cargas (InvBar, anadido del port). -Timeout 300 -Extra "--lang=fr"
-# 1) aventura: minar roca (pide una carga amarilla) sin cargas amarillas no la rompe y dice cual hace falta
-#    (aviso=need0 "Il te faut une charge jaune..."); se va ~1.5 s despues de soltar; con una carga amarilla se rompe sin aviso.
-#    Roca dura (carga azul): aviso=need1. En el sintetizador de la nave no hace falta carga: sin aviso.
-# 2) tutorial: al recoger los citronox, la carga amarilla late y se dice al lado (aviso=got0:N "+N charges jaunes"); sin
+# Avisos de las cargas (anadido del port). -Timeout 300 -Extra "--lang=fr"
+# 1) aventura: minar roca (pide una carga de citronox) sin ellas no la rompe y lo avisa arriba a la derecha, como la Base de
+#    datos ESCorp (avisos=Charge de Citronox, un solo aviso aunque se siga minando); se va ~2 s despues de soltar; con una
+#    carga se rompe sin aviso. Roca dura: avisos=Charge d'etherium.
+# 2) tutorial: al recoger los citronox, la carga late y se dice al lado (aviso=got0:N "+N charges de Citronox"); sin
 #    tutorial, recoger cargas no avisa. La ventana de prueba minimizada va lenta (~13 imagenes/s): el aviso (3 s) dura ~40 de
 #    wait, por eso se mira enseguida.
 wait 3

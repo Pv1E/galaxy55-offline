@@ -1969,11 +1969,11 @@ class Dev {
 		case "mode": Sys.println("modo: " + modeInfo(app, g));
 		case "hit": Sys.println(g.debugPick());
 		case "charges":
-			// contadores de cargas (cantidad / maximo) y el aviso que hay junto a ellas (InvBar: lo recogido en el tutorial, la carga
-			// que falta para minar)
+			// contadores de cargas (cantidad / maximo), el aviso que hay junto a ellas (InvBar: lo recogido en el tutorial) y los de
+			// arriba a la derecha (KubNotify: la carga que falta para minar)
 			var bar = @:privateAccess app.invBar;
 			Sys.println("cargas: " + [for( c in g.inv.inv.charges ) { var k = Type.createEnumIndex(ChargeKind, c.c); k + "x" + c.n + "/" + Data.getCharge(k).max; }].join(" ")
-				+ " aviso=" + (bar == null ? "-" : bar.devNotice() == null ? "ninguno" : bar.devNotice()));
+				+ " aviso=" + (bar == null ? "-" : bar.devNotice() == null ? "ninguno" : bar.devNotice()) + " avisos=" + app.kubNotify.devInfo());
 		case "power":
 			// potencia de excavacion (turbo minero) y el icono "power" del casco
 			var ic = @:privateAccess app.statusIcon;

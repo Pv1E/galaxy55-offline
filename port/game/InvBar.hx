@@ -6,8 +6,8 @@ import IconMesh.Icons;
  * Barra de inventario de arriba al centro, como en el original (Interface.hx / InterfInvent.hx):
  * casillas de 40 px cada 44, la primera es el excavador; el resto, bloques con su icono 3D y la cantidad debajo.
  * La casilla elegida se resalta; las cargas van a la izquierda (16 px por fila).
- * Anadido del port, junto a las cargas: en el tutorial, la que se acaba de recoger late y se dice al lado ("+3 cargas
- * amarillas"; con iconos de 16 px el jugador no veia que las tenia); y al minar un bloque sin la carga que pide, cual hace falta.
+ * Anadido del port, en el tutorial: la carga que se acaba de recoger late y se dice al lado ("+3 charges de Citronox"); con
+ * iconos de 16 px el jugador no veia que las tenia. La carga que falta al minar va en los avisos (KubNotify.missingCharge).
  */
 class InvBar extends h2d.Object {
 
@@ -39,12 +39,11 @@ class InvBar extends h2d.Object {
 	var flashGain = 0;
 	var flashTime = 0.;
 	var pulseTime = 0.;
-	/** aviso junto a las cargas (icono y texto): lo recogido en el tutorial o la carga que falta */
+	/** aviso junto a las cargas (icono y texto): lo recogido en el tutorial */
 	var notice = new h2d.Object();
 	var noticeKey : String;
 	var noticeTime = 0.;
 	static inline var FLASH_TIME = 3.;
-	static inline var NEED_TIME = 1.5;
 
 	public function new( parent : h2d.Object, inv : Inv, atlas : h3d.mat.Texture, width : Int ) {
 		super(parent);
@@ -156,19 +155,6 @@ class InvBar extends h2d.Object {
 		flashTime = FLASH_TIME;
 		var msg = Lang.t((flashGain == 1 ? "charge.got." : "charges.got.") + chargeName(c)).split("%n%").join("" + flashGain);
 		showNotice("got" + c + ":" + flashGain, c, msg, 1.5, FLASH_TIME);
-	}
-
-	/**
-	 * se esta minando un bloque que pide la carga c y no se tiene (GameView.mine, cada actualizacion): se dice cual hace falta
-	 * mientras dura y un poco despues
-	 */
-	public function needCharge( c : Int ) {
-		if( noticeKey == "need" + c && noticeTime > 0 ) {
-			noticeTime = Math.max(noticeTime, NEED_TIME);
-			notice.alpha = 1;
-			return;
-		}
-		showNotice("need" + c, c, Lang.t("charge.need." + chargeName(c)), 1.3, NEED_TIME);
 	}
 
 	/** el aviso a la izquierda de las cargas: el texto (en su color, alineado a la derecha) y el icono de la carga */

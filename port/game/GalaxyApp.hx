@@ -3203,10 +3203,11 @@ class GalaxyApp extends hxd.App {
 				updateStatus(dt, p);
 				if( invBar != null ) {
 					invBar.tutorial = Tutorial.active(game.info);
-					if( game.lackCharge != null ) invBar.needCharge(Type.enumIndex(game.lackCharge));
 					invBar.update(dt);
 					invBar.y = hudShake;
 				}
+				// sin la carga que pide el bloque que se mina (GameView.mine): el aviso de siempre, arriba a la derecha
+				if( game.lackCharge != null ) kubNotify.push(KubNotify.missingCharge(game.lackCharge));
 				game.lackCharge = null;
 				cross.y = dot.y = Std.int(H * 0.5) + hudShake;
 			}
