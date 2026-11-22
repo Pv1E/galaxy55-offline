@@ -6,7 +6,8 @@ typedef CalendarEvent = { id : String, from : Int, to : Int };
  * reglas (Clock: la del servidor en multijugador) en UTC, asi el cliente y el servidor estan de acuerdo.
  * Lo que hace cada uno:
  * - christmas (1 al 31 de diciembre): el Sapin de Noel (Structures, estructura "christmastree") sale en los planetas generados
- *   esos dias. Los planetas se rehacen con su semilla cada vez que se cargan: fuera de esas fechas ya no esta.
+ *   esos dias, y nieva sobre el en cualquier planeta mientras dura (Structures: snow, GalaxyApp.snowArea). Los planetas se
+ *   rehacen con su semilla cada vez que se cargan: fuera de esas fechas ya no esta.
  * Para probar otra fecha: --date=AAAA-MM-DD (o MM-DD) en la linea de ordenes.
  */
 class CalendarEvents {

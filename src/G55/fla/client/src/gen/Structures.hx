@@ -42,6 +42,11 @@ typedef StructureDef = {
 	 * null = siempre
 	 */
 	var ?event : String;
+	/**
+	 * efecto en su entorno: radio (en bloques, desde el centro de su caja) en el que nieva sobre ella en cualquier planeta
+	 * (Snow.area, GalaxyApp), mientras dure su evento si es de uno. null = ninguno
+	 */
+	var ?snow : Int;
 }
 
 /**
@@ -110,13 +115,13 @@ class Structures {
 		// aire (la anomalia Invisible: ~1 planeta normal de cada 8, flotando sobre lo mas alto de debajo)
 		def("invisible", "invisible", Air, 8, (g, x, y, z) -> g.detInvisible(x, y) >= 0),
 		// eventos del calendario (CalendarEvents), mientras dura el evento: ~1 planeta de cada p, una sola vez (placeEvents)
-		def("christmastree", "christmastree", Surface, 5, (g, x, y, z) -> g.detChristmasTree(x, y, z), null, null, null, null, null, "christmas"),
+		def("christmastree", "christmastree", Surface, 5, (g, x, y, z) -> g.detChristmasTree(x, y, z), null, null, null, null, null, "christmas", 11),
 	];
 
 	static function def( id : String, group : String, stage : StructureStage, p : Int, f : DetailsGenerator -> Int -> Int -> Int -> Bool,
-		?biomes : Array<String>, ?since : Int, ?until : Int, ?notIn : Array<String>, ?lavaGroup : String, ?event : String ) : StructureDef {
+		?biomes : Array<String>, ?since : Int, ?until : Int, ?notIn : Array<String>, ?lavaGroup : String, ?event : String, ?snow : Int ) : StructureDef {
 		return { id : id, group : group, stage : stage, p : p, biomes : biomes, notIn : notIn, since : since, until : until, f : f,
-			lavaGroup : lavaGroup, event : event };
+			lavaGroup : lavaGroup, event : event, snow : snow };
 	}
 
 	/** un planeta de verdad (PLANET_BIOMES): con estructuras y cristales de hexalita (bonus) */

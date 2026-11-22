@@ -88,7 +88,10 @@ import Msg;
  *   savegame                guardar la partida (como F5, sin aviso)
  *   genversion N            el planeta actual pasa a ser de la version N del generador (SaveInfo.genVersion; se nota al volver a
  *                           el); print gen: la del mundo cargado, la actual, la de la partida y las de los planetas visitados,
- *                           y los eventos del calendario de hoy y del mundo cargado (CalendarEvents)
+ *                           los eventos del calendario de hoy y del mundo cargado (CalendarEvents) y la zona en la que nieva
+ *                           sobre una anomalia (GalaxyApp.snowArea)
+ *   date AAAA-MM-DD|MM-DD|off otro dia para los eventos del calendario desde ahora (como --date; off = el del reloj): el mundo
+ *                           cargado no cambia, lo que mira la fecha cada vez si (la nieve sobre el Sapin de Noel)
  *   seaflood [N]            dejar el contador de inundacion a N bloques (1) de la bajada del mar; seadrop la hace ya
  *   print sea|lightcheck    estado del mar; luz actual comparada con recalcular todo el planeta
  *   print prune             poda de los cambios (World.prune): pone una lampara en el suelo delante del jugador y lo vuelve a
@@ -1533,6 +1536,7 @@ class Dev {
 					}
 				case "savegame": @:privateAccess app.saveGame(false); // guardar la partida como F5 (sin aviso)
 				case "genversion": app.curInfo().genVersion = Std.parseInt(a[1]);
+				case "date": CalendarEvents.forcedDay = a[1] == "off" ? null : CalendarEvents.parseDay(a[1]);
 				case "deliver":
 					// deliver i: da lo que llevas a la linea i del tablero; deliver a J: al contrato en curso J (con el panel abierto, como
 					// su boton)
@@ -2219,6 +2223,8 @@ class Dev {
 				+ " planeta " + (u == null ? "-" : "" + u.planetId) + " visitados " + (visited == "" ? "-" : visited));
 			// eventos del calendario (CalendarEvents): los de hoy (o de --date) y los del mundo cargado
 			var ev = @:privateAccess w.gen.events;
+			var sz = app.snowZone;
+			Sys.println("nieve: " + (sz == null ? "no" : "zona " + Math.round(sz.x) + "," + Math.round(sz.y) + "," + Math.round(sz.z) + " r" + sz.r));
 			Sys.println("eventos: dia " + CalendarEvents.today() + " hoy " + (CalendarEvents.active().length == 0 ? "-" : CalendarEvents.active().join(","))
 				+ " mundo " + (ev.length == 0 ? "-" : ev.join(",")));
 		case "biome":

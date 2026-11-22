@@ -29,6 +29,14 @@ class Snow {
 	var sz = new Array<Float>();
 	var t = 0.;
 	var pt = new h3d.Vector();
+	/**
+	 * nieve solo sobre una zona (anadido del port: la de una anomalia con efecto snow, Structures): la red de copos se centra en
+	 * x, y, z en vez de en la camara, y solo se ven los copos a menos de r bloques de x, y (atenuados en el borde). null = la red
+	 * sigue a la camara (el planeta de nieve)
+	 */
+	public var area : { x : Float, y : Float, z : Float, r : Float };
+	/** atenuacion en el borde de area */
+	static inline var AREA_FADE = 3.;
 	/** altura del bloque macizo mas alto de cada columna (no nieva bajo techo ni en cuevas); se recalcula cada medio segundo */
 	var roof = new Map<Int, Int>();
 	var roofAge = 0.;
@@ -92,13 +100,15 @@ class Snow {
 		fz /= fl;
 		var focal = (visH * 0.5) / Math.tan(cam.fovY * Math.PI / 360);
 
+		// centro de la red: la camara o la zona (area)
+		var ax = area != null ? area.x : cx, ay = area != null ? area.y : cy, az = area != null ? area.z : cz;
 		for( i in 0...N ) {
 			var e = els[i];
-			// posicion sin envolver (caida y balanceo) y despues envuelta alrededor de la camara
+			// posicion sin envolver (caida y balanceo) y despues envuelta alrededor del centro
 			var ux = bx[i] + Math.sin(t * sf[i] + sp[i]) * 0.4;
 			var uy = by[i] + Math.cos(t * sf[i] * 0.8 + sp[i]) * 0.4;
 			var uz = bz[i] - t * vs[i];
-			var wx = wrap(ux, cx, LX), wy = wrap(uy, cy, LX), wz = wrap(uz, cz, LZ);
+			var wx = wrap(ux, ax, LX), wy = wrap(uy, ay, LX), wz = wrap(uz, az, LZ);
 
 			var dx = wx - cx, dy = wy - cy, dz = wz - cz;
 			var depth = dx * fx + dy * fy + dz * fz;
@@ -106,8 +116,11 @@ class Snow {
 				e.visible = false;
 				continue;
 			}
-			// atenuar cerca del borde de la red
-			var fade = Math.min(1, Math.min((LX * 0.5 - Math.abs(dx)) / FADE, Math.min((LX * 0.5 - Math.abs(dy)) / FADE, (LZ * 0.5 - Math.abs(dz)) / FADE)));
+			// atenuar cerca del borde de la red (o de la zona)
+			var fade = if( area != null ) {
+				var hx = wx - ax, hy = wy - ay;
+				Math.min(1, Math.min((area.r - Math.sqrt(hx * hx + hy * hy)) / AREA_FADE, (LZ * 0.5 - Math.abs(wz - az)) / FADE));
+			} else Math.min(1, Math.min((LX * 0.5 - Math.abs(dx)) / FADE, Math.min((LX * 0.5 - Math.abs(dy)) / FADE, (LZ * 0.5 - Math.abs(dz)) / FADE)));
 			if( fade <= 0 ) {
 				e.visible = false;
 				continue;
