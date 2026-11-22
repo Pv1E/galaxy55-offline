@@ -495,9 +495,9 @@ class World extends WorldData {
 	static inline var INV_NORMAL = 0;
 	static inline var INV_KUBE = 1;
 	static inline var INV_REVEAL = 2;
-	static inline var LAYER_INVIS = -7;
-	static inline var LAYER_INVIS_MARK = -6;
-	static inline var LAYER_INVIS_REVEAL = -5;
+	static inline var LAYER_INVIS = -9;
+	static inline var LAYER_INVIS_MARK = -8;
+	static inline var LAYER_INVIS_REVEAL = -7;
 	static inline var STENCIL_INVIS = 1;
 	static inline var STENCIL_REVEAL = 2;
 
@@ -1129,21 +1129,27 @@ class World extends WorldData {
 		return n == 0 ? 0.9 : sum / n;
 	}
 
-	/** caras de un liquido con la superficie inclinada; open dice que lados se ven */
-	function addLiquid( m : ChunkBuf, b : Block, fam : Int, x : Int, y : Int, z : Int, open : Int -> Int -> Int -> Bool, su : Float, sd : Float, sx : Float, sy : Float, neg : Bool ) {
+	/**
+	 * caras de un liquido con la superficie inclinada; open dice que lados se ven. Con touch (el agua), las caras contra un
+	 * bloque que no es aire (hielo, cristal, plantas, hojas, un bloque lleno sobre el mar con olas) van a touch y las demas,
+	 * contra el aire, a m (ver emitMesh, tipos 2 y 6)
+	 */
+	function addLiquid( m : ChunkBuf, b : Block, fam : Int, x : Int, y : Int, z : Int, open : Int -> Int -> Int -> Bool, su : Float, sd : Float, sx : Float, sy : Float, neg : Bool, ?touch : ChunkBuf ) {
 		var fx = x, fy = y, fz = z;
+		inline function side( nx, ny, nz ) return touch == null || voxel(nx, ny, nz) == 0 ? m : touch;
 		var full = liquidFull(x, y, z, fam);
 		var h00 = fz + (full ? 1. : liquidCorner(x, y, z, fam)), h10 = fz + (full ? 1. : liquidCorner(x + 1, y, z, fam));
 		var h11 = fz + (full ? 1. : liquidCorner(x + 1, y + 1, z, fam)), h01 = fz + (full ? 1. : liquidCorner(x, y + 1, z, fam));
 		// con olas, la capa de arriba del mar tiene su cara de arriba aunque haya un bloque lleno encima (Builder.hx del original:
-		// anim && z == waterLevel): si no, al bajar la ola quedaba una franja sin agua bajo el borde del bloque
+		// anim && z == waterLevel): si no, al bajar la ola quedaba una franja sin agua bajo el borde del bloque.
+		// La superficie inclinada queda por debajo de lo que haya encima, con aire entre los dos
 		if( !full || open(x, y, z + 1) || (fam == 1 && wave != null && !isWaterId(voxel(x, y, z + 1)) && z == waterLevel()) )
-			addQuadL(m, [fx, fy, h00, fx + 1, fy, h10, fx + 1, fy + 1, h11, fx, fy + 1, h01], b.tu, su, neg, 0, 0, 1, x, y, z);
-		if( open(x, y, z - 1) ) addQuadL(m, [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz], b.td, sd, neg, 0, 0, -1, x, y, z);
-		if( open(x - 1, y, z) ) addQuadL(m, [fx, fy + 1, fz, fx, fy, fz, fx, fy, h00, fx, fy + 1, h01], b.tlr, sx, neg, -1, 0, 0, x, y, z);
-		if( open(x + 1, y, z) ) addQuadL(m, [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, h11, fx + 1, fy, h10], b.tlr, sx, neg, 1, 0, 0, x, y, z);
-		if( open(x, y - 1, z) ) addQuadL(m, [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, h10, fx, fy, h00], b.tlr, sy, neg, 0, -1, 0, x, y, z);
-		if( open(x, y + 1, z) ) addQuadL(m, [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, h01, fx + 1, fy + 1, h11], b.tlr, sy, neg, 0, 1, 0, x, y, z);
+			addQuadL(full ? side(x, y, z + 1) : m, [fx, fy, h00, fx + 1, fy, h10, fx + 1, fy + 1, h11, fx, fy + 1, h01], b.tu, su, neg, 0, 0, 1, x, y, z);
+		if( open(x, y, z - 1) ) addQuadL(side(x, y, z - 1), [fx, fy + 1, fz, fx + 1, fy + 1, fz, fx + 1, fy, fz, fx, fy, fz], b.td, sd, neg, 0, 0, -1, x, y, z);
+		if( open(x - 1, y, z) ) addQuadL(side(x - 1, y, z), [fx, fy + 1, fz, fx, fy, fz, fx, fy, h00, fx, fy + 1, h01], b.tlr, sx, neg, -1, 0, 0, x, y, z);
+		if( open(x + 1, y, z) ) addQuadL(side(x + 1, y, z), [fx + 1, fy, fz, fx + 1, fy + 1, fz, fx + 1, fy + 1, h11, fx + 1, fy, h10], b.tlr, sx, neg, 1, 0, 0, x, y, z);
+		if( open(x, y - 1, z) ) addQuadL(side(x, y - 1, z), [fx, fy, fz, fx + 1, fy, fz, fx + 1, fy, h10, fx, fy, h00], b.tlr, sy, neg, 0, -1, 0, x, y, z);
+		if( open(x, y + 1, z) ) addQuadL(side(x, y + 1, z), [fx + 1, fy + 1, fz, fx, fy + 1, fz, fx, fy + 1, h01, fx + 1, fy + 1, h11], b.tlr, sy, neg, 0, 1, 0, x, y, z);
 		if( full ) {
 			// llena junto a liquido mas bajo: la pared entre las dos alturas, si no queda un hueco
 			inline function lower( nx, ny ) return liquidFam(voxel(nx, ny, z)) == fam && !liquidFull(nx, ny, z, fam);
@@ -1548,10 +1554,12 @@ class World extends WorldData {
 	 * todos los chunks estan en la misma posicion (sus vertices son absolutos; solo las copias de la vuelta al planeta se
 	 * mueven), asi que la distancia no los ordenaba y el agua y el hielo de chunks distintos salian en un orden que cambiaba
 	 * con la camara (cortes rectos en el borde de un chunk, hielo sumergido visible a ratos). Como en Render.hx del original:
-	 * primero el agua de todos los chunks, luego las estrellas (Sky), la profundidad y el color del hielo; el resto de la
-	 * pasada (capa 0) despues.
+	 * primero el agua de todos los chunks (sus caras contra el aire, su profundidad y sus caras contra otros bloques, ver
+	 * emitMesh), luego las estrellas (Sky), la profundidad y el color del hielo; el resto de la pasada (capa 0) despues.
 	 */
-	static inline var LAYER_WATER = -4;
+	static inline var LAYER_WATER = -6;
+	static inline var LAYER_WATER_DEPTH = -5;
+	static inline var LAYER_WATER_TOUCH = -4;
 	public static inline var LAYER_SKY = -3;
 	public static inline var LAYER_ALPHA_DEPTH = -2;
 	public static inline var LAYER_ALPHA = -1;
@@ -1581,7 +1589,7 @@ class World extends WorldData {
 		// sus buffers se crean y se suben ya, con el trozo (en la carga, dentro del tiempo de cada paso): si no, se hacian en el
 		// primer dibujo, los de todo el planeta en la misma imagen (~280 buffers y 350-730 ms al aparecer el menu o el planeta)
 		poly.alloc(h3d.Engine.getCurrent());
-		if( kind >= 4 ) {
+		if( kind == 4 || kind == 5 ) {
 			emitInvisible(poly, kind == 5);
 			return;
 		}
@@ -1591,7 +1599,7 @@ class World extends WorldData {
 		mat.mainPass.enableLights = false;
 		mat.mainPass.culling = None;
 		mat.mainPass.addShader(new h3d.shader.VertexColor());
-		if( kind == 2 && mat.texture == Atlas.mipped ) {
+		if( (kind == 2 || kind == 6) && mat.texture == Atlas.mipped ) {
 			// antes de sky.fog (mezcla el color con el del cielo)
 			if( waterGrazing == null ) {
 				waterGrazing = new WaterGrazing();
@@ -1620,16 +1628,29 @@ class World extends WorldData {
 			mat.mainPass.layer = LAYER_ALPHA;
 			// el mismo programa que las pasadas de los pixeles solidos y de profundidad (ver AlphaCut); umbral 0: no descarta nada
 			mat.mainPass.addShader(new AlphaCut(0));
-		} else if( kind == 2 ) {
-			// agua: translucida; escribe profundidad como la primera pasada del original (water0)
+		} else if( kind == 2 || kind == 6 ) {
+			// agua, translucida. Cambio del port: tres pasadas en vez de una que pintaba y escribia la profundidad. Asi, lo que se
+			// veia a traves de varias caras de agua (un monton de agua sobre el mar, sus escalones, el agua contra el hielo o las
+			// plantas sumergidas) dependia del orden de dibujo, que no esta ordenado (chunks en la misma posicion, caras en el orden
+			// en que se construyen): donde la cara cercana salia antes tapaba las de detras (una capa, clara) y donde salia despues
+			// se sumaban (mas oscura, o un cubo oscuro bajo el agua), con cortes rectos en el borde de los chunks y otro aspecto
+			// segun hacia donde se mirara. Ahora:
+			// - tipo 2, caras contra el aire (LAYER_WATER): todas, sin escribir la profundidad. Cada superficie que cruza la vista
+			//   cuenta, en cualquier orden (capas casi del mismo color dan casi lo mismo): el agua gruesa vista de lado se ve mas llena;
+			// - la profundidad de todas las caras (LAYER_WATER_DEPTH, waterDepth), como water0 del original;
+			// - tipo 6, caras contra otro bloque (LAYER_WATER_TOUCH): solo donde son la cara de agua mas cercana (LessEqual, como
+			//   water1 con depth Equal), asi las de un hielo o una planta sumergidos no se ven a traves de la superficie, y el agua
+			//   detras de un cristal si. El original pintaba asi todas las caras, pero su agua era casi opaca
 			mat.blendMode = Alpha;
 			mat.color.a = 0.6;
-			mat.mainPass.depthWrite = true;
+			mat.mainPass.depthWrite = false;
 			mat.mainPass.setPassName("alpha");
-			mat.mainPass.layer = LAYER_WATER;
+			if( kind == 6 ) mat.mainPass.depthTest = LessEqual;
+			mat.mainPass.layer = kind == 2 ? LAYER_WATER : LAYER_WATER_TOUCH;
 			if( wave != null ) mat.mainPass.addShader(wave);
 			// despues de sky.fog, que escribe projectedPosition
 			mat.mainPass.addShader(new WaterDepthBias());
+			addChunkMesh(poly, waterDepth(mat.texture, ts));
 		}
 		if( kind == 3 ) {
 			// pasada opaca de los pixeles solidos (marcos del cristal, bordes del hielo): escribe profundidad, asi las caras lejanas
@@ -1662,6 +1683,30 @@ class World extends WorldData {
 			addChunkMesh(poly, depth);
 		}
 		addChunkMesh(poly, mat);
+	}
+
+	/**
+	 * Profundidad de la cara de agua mas cercana (water0 del original): la de las caras contra otros bloques solo se pinta donde
+	 * coincide, y las estrellas, el hielo y las cascadas, que van despues, quedan detras del agua. Los mismos shaders que las
+	 * pasadas de color (olas, curvatura, sesgo), en el mismo orden: el mismo programa da la misma profundidad (ver AlphaCut). El
+	 * color queda como estaba (keepColor).
+	 */
+	function waterDepth( tex : h3d.mat.Texture, ts : TileScroll ) : h3d.mat.Material {
+		var depth = h3d.mat.Material.create(tex);
+		depth.shadows = false;
+		var p = depth.mainPass;
+		p.enableLights = false;
+		p.culling = None;
+		p.addShader(new h3d.shader.VertexColor());
+		if( tex == Atlas.mipped ) p.addShader(waterGrazing);
+		p.addShader(sky.fog);
+		if( ts != null ) p.addShader(ts);
+		p.setPassName("alpha");
+		keepColor(p);
+		p.layer = LAYER_WATER_DEPTH;
+		if( wave != null ) p.addShader(wave);
+		p.addShader(new WaterDepthBias());
+		return depth;
 	}
 
 	function addChunkMesh( poly : ChunkPrim, mat : h3d.mat.Material ) {
@@ -1785,6 +1830,7 @@ class World extends WorldData {
 		var solidBuf = new ChunkBuf();
 		var alphaBuf = new ChunkBuf();
 		var waterBuf = new ChunkBuf();
+		var waterTouchBuf = new ChunkBuf();
 		var blendBuf = new ChunkBuf();
 		// Kube invisible: caras que pintan el cielo, y caras de los cristales que lo revelan (emitInvisible)
 		var invisBuf = new ChunkBuf();
@@ -1836,7 +1882,7 @@ class World extends WorldData {
 					switch( b.type ) {
 					case BTWater:
 						// Builder.hx del original: cada cara contra un vecino que no es lleno ni agua (isTransparentNot(p, BTWater))
-						addLiquid(waterBuf, b, 1, x, y, z, waterOpen, su, sd, sx, sy, neg);
+						addLiquid(waterBuf, b, 1, x, y, z, waterOpen, su, sd, sx, sy, neg, waterTouchBuf);
 					case BTAlpha if( liquidFam(id) == 2 ):
 						// cascada: cada paso de Fall..Fall4 un poco mas bajo, superficie inclinada
 						addLiquid(blendBuf, b, 2, x, y, z, openCascade, su, sd, sx, sy, neg);
@@ -1901,6 +1947,7 @@ class World extends WorldData {
 		emitMesh(solidBuf, 0);
 		emitMesh(alphaBuf, 1);
 		emitMesh(waterBuf, 2);
+		emitMesh(waterTouchBuf, 6);
 		emitMesh(blendBuf, 3);
 		for( s in scrollBufs ) emitMesh(s.buf, s.kind, s.speed);
 		emitMesh(invisBuf, 4);

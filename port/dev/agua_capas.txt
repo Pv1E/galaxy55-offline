@@ -1,0 +1,93 @@
+# agua vista a traves de otras caras de agua (World.emitMesh: LAYER_WATER, LAYER_WATER_DEPTH y LAYER_WATER_TOUCH): una
+# piramide de agua en escalones sobre un estanque, vista desde los cuatro lados a la misma distancia. Las cuatro capturas
+# deben verse iguales (salvo el cielo) y cada una simetrica: antes, segun el orden de dibujo, una parte salia clara (solo la
+# cara cercana) y otra mas oscura (varias caras), con un corte recto en el borde del chunk (x = 64 en capas_n). Despues, de
+# arriba, un hielo y unas hojas sumergidos vistos desde dos lados (sin cubo oscuro ni manchas en escalera sobre las hojas,
+# como en un bosque inundado de Otono: antes salian desde un lado), un acuario de cristal (el agua de dentro se ve), desde
+# dentro del estanque y con agua puesta que baja de un pilar sobre el estanque, vista desde dos lados
+#   powershell -File port/dev/devrun.ps1 -Script port/dev/agua_capas.txt -Extra "--bgbiome=BIAutumn"
+wait 3
+planet
+winsize 1280 720
+wait 30
+creative
+helptext 0
+tap h
+filla 30 30 98 98 58 95 none
+filla 30 30 98 98 58 68 BRock
+filla 31 31 97 97 69 72 BWater
+filla 30 30 98 30 69 70 BRock
+filla 30 98 98 98 69 70 BRock
+filla 30 30 30 98 69 70 BRock
+filla 98 30 98 98 69 70 BRock
+filla 54 54 74 74 73 73 BWater
+filla 56 56 72 72 74 74 BWater
+filla 58 58 70 70 75 75 BWater
+filla 60 60 68 68 76 76 BWater
+# pilares para mirar sin caer
+filla 44 64 44 64 69 78 BRock
+filla 84 64 84 64 69 78 BRock
+filla 64 44 64 44 69 78 BRock
+filla 64 84 64 84 69 78 BRock
+filla 92 92 92 92 69 78 BRock
+filla 36 56 36 56 69 78 BRock
+# hielo sumergido: las caras del agua contra el no deben verse desde fuera (cubo oscuro bajo el agua), mire desde donde mire
+filla 39 59 40 60 70 70 BIce
+filla 39 66 42 69 69 71 BPinkLeaves
+# acuario sobre el estanque: el agua se sigue viendo a traves del cristal
+filla 76 38 80 42 73 77 BGlass
+filla 77 39 79 41 74 76 BWater
+wait 10
+tp 64.5 84.5 79.01 -1.5708 -0.35
+wait 3
+shot capas_s
+tp 44.5 64.5 79.01 0 -0.35
+wait 3
+shot capas_e
+tp 84.5 64.5 79.01 3.1416 -0.35
+wait 3
+shot capas_o
+tp 64.5 44.5 79.01 1.5708 -0.35
+wait 3
+shot capas_n
+# de arriba: los escalones como una sola lamina, como el estanque de al lado
+tp 44.5 64.5 79.01 0 -0.9
+wait 3
+shot capas_arriba
+tp 44.5 64.5 79.01 0 0
+lookat 40 60 70
+wait 3
+shot capas_hielo_a
+tp 36.5 56.5 79.01 0 0
+lookat 40 60 70
+wait 3
+shot capas_hielo_b
+tp 44.5 64.5 79.01 0 0
+lookat 40.5 67.5 70
+wait 3
+shot capas_hojas_a
+tp 36.5 56.5 79.01 0 0
+lookat 40.5 67.5 70
+wait 3
+shot capas_hojas_b
+tp 64.5 44.5 79.01 0 0
+lookat 78.5 40.5 75.5
+wait 3
+shot capas_acuario
+# desde dentro del estanque, mirando a la piramide
+tp 40.5 64.5 69.01 0 0.25
+wait 3
+shot capas_dentro
+# agua puesta en lo alto de un pilar: baja en escalones inclinados sobre el estanque
+filla 84 84 84 84 69 79 BRock
+setp 84 84 80 BWater
+tp 64.5 84.5 79.01 0 0
+wait 300
+lookat 84 84 75
+wait 3
+shot capas_flujo_o
+tp 92.5 92.5 79.01 0 0
+lookat 84 84 75
+wait 3
+shot capas_flujo_e
+quit
