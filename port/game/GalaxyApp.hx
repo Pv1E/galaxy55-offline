@@ -2234,7 +2234,10 @@ class GalaxyApp extends hxd.App {
 		loadWorld.root.visible = true;
 		if( shotPath != null ) {
 			Sys.println("mundo " + loadWorld.biomeName + ": " + loadWorld.faces + " caras, spawn z=" + loadWorld.spawnPoint().z);
-			Sys.println(loadWorld.debugStats());
+			// el recuento de bloques recorre todas las celdas del planeta: solo con --blockcount. Antes iba en cada prueba, dentro del
+			// fotograma que acaba la carga: ~0.1 s en un planeta de tamano 1 y 0.4-1.2 s en uno de tamano 3, la parada que --frametime
+			// daba en el primer fotograma jugando (el juego, sin --script ni --shot, nunca lo hizo)
+			if( Sys.args().indexOf("--blockcount") >= 0 ) Sys.println(loadWorld.debugStats());
 		}
 		var tView = haxe.Timer.stamp();
 		game = new GameView(s3d, loadWorld, loadInfo, atlas, loadShip);

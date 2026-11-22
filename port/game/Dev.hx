@@ -2,7 +2,7 @@ import Common;
 
 /**
  * Banco de pruebas (solo para desarrollo): ejecuta un guion de ordenes sobre una partida nueva, sin ventana a la vista ni teclado.
- *   hl galaxy55.hl --script=guion.txt [--bgbiome=BIAutumn] [--creative]
+ *   hl galaxy55.hl --script=guion.txt [--bgbiome=BIAutumn] [--creative] [--blockcount]
  * Una orden por linea, "#" = comentario. Las coordenadas son del planeta salvo las de `tpl`, `setl` y `lookl` (locales a la nave).
  *   wait N                  esperar N actualizaciones
  *   until fade|tele X       esperar (600 actualizaciones como mucho) a que la opacidad del fundido o la carga del
