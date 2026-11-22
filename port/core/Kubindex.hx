@@ -41,6 +41,13 @@ typedef KubNews = {
 	@:optional var text : String;
 	/** segundos en pantalla (TIME si no se dice) */
 	@:optional var time : Float;
+	/**
+	 * aviso que se repite (la carga que falta: en cada actualizacion mientras se mina): si ya esta en pantalla no se rehace, se
+	 * queda entero hasta que dejen de pedirlo y luego dura su tiempo
+	 */
+	@:optional var key : String;
+	/** color de la franja de la izquierda (Theme.ACCENT si no se dice; la carga que falta, en rojo) */
+	@:optional var bar : Int;
 }
 
 /** Estado de una ficha para el jugador. */

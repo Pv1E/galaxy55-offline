@@ -1720,6 +1720,16 @@ class Dev {
 		}
 	}
 
+	/** lo desplazada que esta cada zona (KubScroll) de una pestana de la Base de datos ESCorp, en el orden del arbol */
+	static function kubScrolls( o : h2d.Object ) : Array<Int> {
+		var out = [];
+		for( c in o ) {
+			if( Std.isOfType(c, KubScroll) ) out.push(Std.int(cast(c, KubScroll).top));
+			out = out.concat(kubScrolls(c));
+		}
+		return out;
+	}
+
 	function print( a : Array<String>, g : GameView, app : GalaxyApp ) {
 		if( a[1] == "mploots" ) {
 			// el anfitrion: los sueltos de su servidor (id bloque x n en x,y,z; espera; contenedor)
@@ -1899,8 +1909,8 @@ class Dev {
 				+ " recetas=" + [for( c in k.crafts ) c.id + "x" + c.n].join(",") + " stats=" + [for( s in k.stats ) s.k + ":" + s.p + "/" + s.b + (s.r == null ? "" : "/azar" + s.r)].join(",")
 				+ " anomalias=" + k.anomalies.join(",") + (g == null ? "" : " (planeta: " + [for( an in g.world.anomalies() ) an.n + "@" + an.x + "," + an.y + "," + an.z].join(" ") + ")")
 				+ " descubiertas=" + [for( r in Data.CRAFT ) if( Kubindex.recipeKnown(info, r) ) r].length + "/" + Data.CRAFT.length
-				+ " panel=" + (app.database == null ? "cerrado" : "pestana " + app.database.tab) + " tuto=" + (info.tuto == null ? "-" : "" + info.tuto.step)
-				+ " avisos=" + app.kubNotify.devInfo());
+				+ " panel=" + (app.database == null ? "cerrado" : "pestana " + app.database.tab + " desplazado=" + kubScrolls(app.database.view).join("/"))
+				+ " tuto=" + (info.tuto == null ? "-" : "" + info.tuto.step) + " avisos=" + app.kubNotify.devInfo());
 		case "roll":
 			// roll [N]: tira N veces (10000) cada receta al azar (Data.craftRoll) y dice cuantos de cada resultado han salido
 			var n = a.length > 2 ? Std.parseInt(a[2]) : 10000;
@@ -2056,8 +2066,11 @@ class Dev {
 		case "mode": Sys.println("modo: " + modeInfo(app, g));
 		case "hit": Sys.println(g.debugPick());
 		case "charges":
-			// contadores de cargas (cantidad / maximo)
-			Sys.println("cargas: " + [for( c in g.inv.inv.charges ) { var k = Type.createEnumIndex(ChargeKind, c.c); k + "x" + c.n + "/" + Data.getCharge(k).max; }].join(" "));
+			// contadores de cargas (cantidad / maximo), el aviso que hay junto a ellas (InvBar: lo recogido en el tutorial) y los de
+			// arriba a la derecha (KubNotify: la carga que falta para minar)
+			var bar = @:privateAccess app.invBar;
+			Sys.println("cargas: " + [for( c in g.inv.inv.charges ) { var k = Type.createEnumIndex(ChargeKind, c.c); k + "x" + c.n + "/" + Data.getCharge(k).max; }].join(" ")
+				+ " aviso=" + (bar == null ? "-" : bar.devNotice() == null ? "ninguno" : bar.devNotice()) + " avisos=" + app.kubNotify.devInfo());
 		case "power":
 			// potencia de excavacion (turbo minero) y el icono "power" del casco
 			var ic = @:privateAccess app.statusIcon;

@@ -1,0 +1,452 @@
+# cambio del port: la calendula en caja (BHealBox) se recupera siempre al romperla (90 % en el original) y la calendula silvestre
+# (BHealPlant) un 10 % (5 % en el original). En el planeta, fuera de la zona del sintetizador (alli todo se recupera: recuperar_zona.txt):
+# 20 BHealBox rotas en una celda dejan 20 sueltos BHealBox; 200 BHealPlant rotas en otra, unos 20 sueltos BHealPlant.
+# Uso: devrun.ps1 -Script port/dev/calendula_suelta.txt (contar BHealBox y BHealPlant en las lineas "sueltos:")
+wait 3
+ship
+wait 10
+set 60 61 99 BHealBox
+breakp 60 61 99
+set 60 61 99 BHealBox
+breakp 60 61 99
+set 60 61 99 BHealBox
+breakp 60 61 99
+set 60 61 99 BHealBox
+breakp 60 61 99
+set 60 61 99 BHealBox
+breakp 60 61 99
+set 60 61 99 BHealBox
+breakp 60 61 99
+set 60 61 99 BHealBox
+breakp 60 61 99
+set 60 61 99 BHealBox
+breakp 60 61 99
+set 60 61 99 BHealBox
+breakp 60 61 99
+set 60 61 99 BHealBox
+breakp 60 61 99
+set 60 61 99 BHealBox
+breakp 60 61 99
+set 60 61 99 BHealBox
+breakp 60 61 99
+set 60 61 99 BHealBox
+breakp 60 61 99
+set 60 61 99 BHealBox
+breakp 60 61 99
+set 60 61 99 BHealBox
+breakp 60 61 99
+set 60 61 99 BHealBox
+breakp 60 61 99
+set 60 61 99 BHealBox
+breakp 60 61 99
+set 60 61 99 BHealBox
+breakp 60 61 99
+set 60 61 99 BHealBox
+breakp 60 61 99
+set 60 61 99 BHealBox
+breakp 60 61 99
+wait 5
+print drops
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+set 64 61 99 BHealPlant
+breakp 64 61 99
+wait 5
+print drops
+quit

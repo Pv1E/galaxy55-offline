@@ -51,6 +51,16 @@ class PortRules {
 	/** radio del turbo minero (BFTrack): cambio del port, 5 en el original */
 	static inline var TURBO_RADIUS = 15;
 
+	/**
+	 * Probabilidad (%) de recuperar el bloque al romperlo fuera de la zona del sintetizador (BFDropChance), cambio del port:
+	 * - calendula en caja: 100 (90 en el original). Se fabrica con hierro y una calendula silvestre, y moverla no debe perderla;
+	 * - calendula silvestre: 10 (5 en el original).
+	 */
+	static var DROP_CHANCE : Array<{ k : BlockKind, chance : Int }> = [
+		{ k : BHealBox, chance : 100 },
+		{ k : BHealPlant, chance : 10 },
+	];
+
 	static var done = false;
 
 	public static function apply() {
@@ -78,6 +88,11 @@ class PortRules {
 			case BFTrack(t, _): turbo.flags[i] = BFTrack(t, TURBO_RADIUS);
 			default:
 			}
+		for( r in DROP_CHANCE ) {
+			var b = Block.get(r.k);
+			b.flags = [for( f in b.flags ) if( !f.match(BFDropChance(_)) ) f];
+			if( r.chance < 100 ) b.flags.push(BFDropChance(r.chance));
+		}
 		for( k in PLACE_OVER ) placeOverIdx.set(Block.get(k).index, true);
 		for( r in BREAKABLE ) {
 			var b = Block.get(r.k);

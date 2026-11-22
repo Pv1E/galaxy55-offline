@@ -65,6 +65,21 @@ class Lang {
 		"storage.yourcharges" => ["Tus cargas", "Your charges", "Tes charges"],
 		"storage.nolimit" => ["sin límite", "no limit", "sans limite"],
 		"storage.hint" => ["Las cargas van siempre a las de su color", "Charges always go to their own color", "Les charges vont toujours dans leur couleur"],
+		// cargas (anadido del port): lo recogido en el tutorial junto a las cargas (InvBar, %n% = cuantas); la que falta para minar
+		// (KubNotify.missingCharge: titulo y nombre). Con el nombre de su bloque (Charges de Citronox, Charge d'etherium), no su color
+		"charge.got.CYellow" => ["+1 carga de citronox", "+1 Citronox charge", "+1 charge de Citronox"],
+		"charges.got.CYellow" => ["+%n% cargas de citronox", "+%n% Citronox charges", "+%n% charges de Citronox"],
+		"charge.got.CBlue" => ["+1 carga de eterium", "+1 Etherium charge", "+1 charge d'etherium"],
+		"charges.got.CBlue" => ["+%n% cargas de eterium", "+%n% Etherium charges", "+%n% charges d'etherium"],
+		"charge.got.CPink" => ["+1 carga rosa", "+1 pink charge", "+1 charge rose"],
+		"charges.got.CPink" => ["+%n% cargas rosas", "+%n% pink charges", "+%n% charges roses"],
+		"charge.got.CBonus" => ["+1 carga de hexalita", "+1 hexalite charge", "+1 charge d'hexalite"],
+		"charges.got.CBonus" => ["+%n% cargas de hexalita", "+%n% hexalite charges", "+%n% charges d'hexalite"],
+		"charge.missing" => ["Láser · Falta una carga", "Laser · Missing charge", "Laser · Charge manquante"],
+		"charge.name.CYellow" => ["Carga de citronox", "Citronox charge", "Charge de Citronox"],
+		"charge.name.CBlue" => ["Carga de eterium", "Etherium charge", "Charge d'etherium"],
+		"charge.name.CPink" => ["Carga rosa", "Pink charge", "Charge rose"],
+		"charge.name.CBonus" => ["Carga de hexalita", "Hexalite charge", "Charge d'hexalite"],
 		"contracts.title" => ["Contratos de la ESCorp", "ESCorp contracts", "Contrats ESCorp"],
 		// %t% = mm:ss hasta el siguiente tablero
 		"contracts.renew" => ["Nuevos contratos dentro de %t%", "New contracts in %t%", "Nouveaux contrats dans %t%"],
