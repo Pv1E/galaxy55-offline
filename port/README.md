@@ -8,9 +8,10 @@ bugs, see `BUGS.md` in the repository root); the original Flash game, with its b
 ## Play
 
 Build it (see below) and double-click `jugar.bat`, or download the portable zip from the
-[release](../../../releases/tag/v0.8.1). The start menu offers Continue (the list of saved games: play, rename or delete), New game, Kube editor (port addition: draw new blocks and save them as `.kube` files in the `kubes` folder of the game data), Options and Quit.
-In New game you choose name, seed and mode: **Adventure** (as in the original, with an empty inventory) or **Creative** (our addition, with biome and size).
-Saved games and settings go to `%APPDATA%\Galaxy55\` (change it with the `GALAXY55_DATA` environment variable), and screenshots (F2) to its `screenshots` folder.
+[release](../../../releases/tag/v0.9). The start menu offers Continue (the list of saved games: play, edit or delete; each one says which game version created it and last saved it), New game, Kube editor (port addition: draw new blocks and save them as `.kube` files in the `kubes` folder of the game data), Options and Quit.
+In New game you choose name and mode: **Adventure** (as in the original, with an empty inventory) or **Creative** (our addition, with biome and size).
+Customize sets the seed and whether dying leaves your equipment on the ground (port addition, on unless changed); Edit, in the saves list, changes it later.
+Saved games (one `.g55` file per game, in `saves`) and settings go to `%APPDATA%\Galaxy55\` (change it with the `GALAXY55_DATA` environment variable), and screenshots (F2) to its `screenshots` folder.
 The game also writes `gpu.txt` there, with the graphics card and driver: attach it when reporting a drawing bug.
 The save format may change between versions: do not count on today's saves working forever.
 
@@ -27,13 +28,13 @@ They can be changed in Options > Controls > Customize keys (port addition). By d
 | Helmet | H takes it off or puts it on |
 | Coordinates and FPS | F shows or hides them (hidden at the start, as in the original) |
 | Dig or place | left click, E or Shift (hold). With an empty hand you dig; with a block you place it if something supports it |
-| Choose slot | 1-0 or mouse wheel; Tab = digger (empty hand) |
+| Choose slot | 1-0 or mouse wheel (goes from one end of the bar to the other; turned off in Options > Controls); Tab = digger (empty hand) |
 | Drop the selected stack | R or Del |
 | Activate (on-board computer, doors, ancient bomb) | aim, press and release. Holding on until the block breaks digs it out instead: that is how an ancient bomb is picked up without setting it off (it needs a pink charge, like ancient rock). The synthesizer computer also works with a block in hand and with right click (port change) |
-| ESCorp canteen (chest) | aim, press and release. The game goes on: click takes and drops (Shift half, Ctrl one; or arrows and Enter, or d-pad and A), dragging outside the window looks around and walking away closes it (so do Esc and B) |
-| Return to the ship | Shift+K, or step into the landing light beam |
+| ESCorp canteen (chest) | aim, press and release. The game goes on: drag and drop between the canteen and the inventory (right click half or one, Shift/Ctrl + click half/one, double click gathers; or arrows and Enter, or d-pad, A and X), dragging outside the window looks around and walking away closes it (so do Esc and B) |
+| Return to the ship | Shift+K (leaves what you carry in a container, see below), or step into the landing light beam |
 | Pilot the ship (port addition) | on-board computer > Pilot the ship: WASD or left stick move it over the planet, mouse or right stick turn the camera, E, Esc, B or Start leave it where it is (it slows down, straightens up and lands by itself) |
-| Creative: block palette | I (click = put the block in the selected slot, wheel = page) |
+| Inventory and palette | I: in adventure, the inventory screen (drag, split stacks, throw outside); in creative, the block palette (click = put the block in the selected slot, wheel = page) |
 | Pause | Esc |
 | Quick save | F5 |
 | Screenshot | F2: a PNG without the helmet or the HUD, at the window size, in `%APPDATA%\Galaxy55\screenshots\` |
@@ -84,27 +85,34 @@ A player got it running on Linux this way; we have not tested it.
 
 ## What is here
 
-- `game/` the game: menus (`GalaxyApp`, `Ui`), languages (`Lang`), settings (`Settings`), saves (`SaveData`), planet, light and meshing (`World`),
+- `game/` the game: menus (`GalaxyApp`, `Ui`), languages (`Lang`), settings (`Settings`), saves (`SaveData`, `SaveArchive`, `SaveNames`), planet, light and meshing (`World`),
   block models (`Models`), sky and fog (`Sky`), snow (`Snow`), player, digging and placing (`GameView`), inventory (`Inv`, `InvBar`, `Palette`),
-  effects and drops (`Fx`, `Drops`), the ship (`Ship`, `ShipData`), comets (`Comets`, `CometGenerator`) and the ESCorp
-  database (`Kubindex`, `KubData`, `DatabasePanel` and the `Kub*` views).
+  effects and drops (`Fx`, `Drops`), the ship (`Ship`, `ShipData`), comets (`Comets`, `CometGenerator`), the ESCorp
+  database (`Kubindex`, `KubData`, `DatabasePanel` and the `Kub*` views), canteen and storage (`Chest`, `ShipStorage`, `SlotGrid`),
+  the equipment left on death (`DeathDrops`), ESCorp upgrades (`EscorpUpgrades`), kube editor kubes in the world (`EditorKubes`) and
+  paintings (`Painting`).
 - `explore/` the star map (`Explorer`, with the merchant robot and the GPS arrows). Flowing water is in `game/WorldProcess.hx`.
 - `shim/` `flash.*` compatibility layer so the original generators compile in HashLink.
-- `headless/` verification programs: worlds are identical to the Flash ones (Adler-32 hash, water and blocks); they also read the ship and the saves.
+- `headless/` verification programs: the generator (Adler-32 hash, water and blocks), the ship and the saves (`SaveTest`,
+  `SaveTool`). With version 0 of the generator, worlds were identical to the Flash ones; since version 1 (v0.9),
+  `gen_ref.txt` holds the reference planets of each version (each planet remembers the version it was first visited with).
 
 ## Differences from the original
 
 - Snow in the winter biome is an addition of this port: the original does not have it.
-- Creative mode and its palette are an addition of this port.
+- Creative mode and its palette are an addition of this port. A creative game can switch to survival and back, and the palette
+  also has the blocks without a price that give charges (bonus crystals, citronox and etherium plants...).
 - The on-board computer menu has its own look, as in the Flash version (the original was a web page).
-- The ESCorp canteen window also shows your inventory, also closes with Esc, B or Close, and works with the keyboard and the
-  gamepad (while it is open the arrow keys move its cursor, not the player). Its contents are kept in the save (the original
+  Trade, ESCorp contracts and ESCorp upgrades are in its "Contact ESCorp" sub-menu (port addition); upgrades, paid with bonus
+  charges, have none yet.
+- The ESCorp canteen window also shows your inventory, works with drag and drop like the inventory screen (I in adventure,
+  also a port addition), also closes with Esc, B or Close, and works with the keyboard and the gamepad (while it is open the arrow keys move its cursor, not the player). Its contents are kept in the save (the original
   kept them on the server) and fall to the ground when it is broken.
 - The merchant robot's shop (the original was a web panel), its ship on the star map and the orange GPS arrow pointing to it
   are additions of this port. In the mothership, its stall is in the middle of the hangar and you talk to the robot (click on
   it) to trade or chat. Its prices are the port's own: crafted goods do not resell for more than their ingredients cost and
   some things are only bought.
-- ESCorp contracts (on-board computer > Contracts) are an addition of this port (in the original they came from the server;
+- ESCorp contracts (on-board computer > Contact ESCorp > ESCorp contracts) are an addition of this port (in the original they came from the server;
   only the list of trivial blocks for the base contracts survives). They are edited in `contracts.json`. With only part of
   the blocks you give what you have and the contract stays in progress: it no longer expires, takes one line of the board
   and only goes away once finished or abandoned (with confirmation; the blocks given are lost). Starting credits are 200
@@ -131,7 +139,8 @@ A player got it running on Linux this way; we have not tested it.
   stays at the same height, costs nothing, uses a camera behind and above it and lighter fog while it lasts; the light beam
   shows where it will stay (it fades out at full speed and comes back when going slowly, stopping or landing). It speeds up and slows down smoothly, turns to face where it goes and banks in turns; when you
   leave it, it returns to its usual heading before landing (its blocks, chests and synthesizers do not rotate). The spot is saved per planet; if you never pilot it, the ship lands where it always did.
-- Added options: a shadow of the block you are about to place, the name of the targeted block, hiding the selection frame and turning off the water waves.
+- Added options: a shadow of the block you are about to place, the name of the targeted block, hiding the selection frame, turning off the water waves
+  and a mouse wheel that wraps around (in the original it stopped at both ends of the bar).
 - The mining turbo makes you dig three times faster up to 15 blocks around it (5 in the original) and you get it back when
   you break it (the original lost it).
 - The F2 screenshot is saved straight to the `screenshots` folder and a message says where (the original opened Flash's save dialog).
@@ -160,4 +169,18 @@ A player got it running on Linux this way; we have not tested it.
   from dead lumen rocks (in the original, from moon rock).
 - A save with blocks this version does not know (saved by a newer one) asks before loading; if accepted, it is copied to
   `saves/backups` and those blocks are deleted.
+- The ship storage (on-board computer > Storage) is an addition of this port: 4 block slots, like a canteen, and charges
+  without slots (yellow up to 24, blue 12, pink 5, bonus without limit). The original's was on the server and is lost.
+- When you die or press Shift+K, what you carry (blocks and charges, not credits) stays in a small ESCorp canteen where you
+  were, which never expires and is kept in the save (in the original the server left it, as loot that expired, and the local
+  mode took nothing). It is a game option, on unless changed; nothing happens in creative, in the tutorial, in the hangar or
+  in the mothership.
+- Walking climbs plates (half blocks) without jumping: a change of this port, in the original they stopped you like a wall.
+- The 16 CroqueMotel paintings (Motion Twin, CC BY-NC-SA 4.0, in `NOTICE`) are an addition of this port: plates hung on a
+  wall, in the creative palette only. In a creative game the kube editor kubes (the `.kube` files of the `kubes` folder) can
+  be placed too.
+- The planet generator (version 1, a change of this port) follows the original's steps, but each step, structure and bonus
+  has its own randomness and structures are placed by region in a fixed order: planets are no longer identical to the Flash
+  version's, and adding a structure only changes the planet inside its box. Saves store blocks by name, so new blocks from
+  another version don't break them.
 - What is missing is in `TODO.md`, bugs in `BUGS.md` and ideas for later in `IDEAS.en.md` (repository root).
