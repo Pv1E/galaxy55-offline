@@ -31,6 +31,34 @@ class WaterDepthBias extends hxsl.Shader {
 }
 
 /**
+	Cambio del port: el agua vista de refilon toma el color medio de su casilla (el ultimo nivel de Atlas.mipped, un texel por
+	casilla). La textura del agua acida son bandas en diagonal; con el agua translucida, a ras de la superficie se estiraban en
+	rayas finas y regulares sobre el fondo, como lluvia (en el original era opaca: su casilla no tiene transparencia). De cara
+	se sigue viendo la textura.
+	c: coseno del angulo entre la vista y la cara; la textura se va de 0.5 (60 grados) a 0.1 (84 grados). Antes de la niebla.
+**/
+class WaterGrazing extends hxsl.Shader {
+	static var SRC = {
+		@global var camera : {
+			var position : Vec3;
+		};
+		var transformedPosition : Vec3;
+		var transformedNormal : Vec3;
+		var calculatedUV : Vec2;
+		var pixelColor : Vec4;
+		@param var texture : Sampler2D;
+		@param var flatLod : Float;
+		function fragment() {
+			var c = abs(dot(normalize(camera.position - transformedPosition), transformedNormal));
+			var k = 1.0 - smoothstep(0.1, 0.5, c);
+			var t = texture.get(calculatedUV);
+			var m = texture.getLod(calculatedUV, flatLod);
+			pixelColor *= mix(vec4(1.0), m / max(t, vec4(1.0 / 255.0)), k);
+		}
+	};
+}
+
+/**
 	Textura que corre por su casilla del atlas (BFScroll, anadido del port), como el agua y la lava de Kube (Level.updateTextures):
 	4 veces por segundo y a saltos de 2 pixeles (uno de sus texturas de 16), hacia abajo en los lados. speed: pixeles por segundo.
 	Cada fragmento vuelve a su casilla con fract, por eso va sin mipmaps: con ellos, donde la textura da la vuelta se elegiria
@@ -171,6 +199,8 @@ class World {
 	public var sky(default, null) : Sky;
 	/** olas del agua (animWater del original); null en la nave y en el hangar. GameView avanza su tiempo */
 	public var wave(default, null) : WaterWave;
+	/** el agua de refilon con el color medio de su casilla (emitMesh); uno para todos los trozos */
+	var waterGrazing : WaterGrazing;
 	/** altura de las olas: animWater.scale * 0.5 */
 	public static inline var WAVE_AMP = 0.3 * 0.5;
 	var gen : gen.DetailsGenerator;
@@ -1862,6 +1892,15 @@ class World {
 		mat.mainPass.enableLights = false;
 		mat.mainPass.culling = None;
 		mat.mainPass.addShader(new h3d.shader.VertexColor());
+		if( kind == 2 && mat.texture == Atlas.mipped ) {
+			// antes de sky.fog (mezcla el color con el del cielo)
+			if( waterGrazing == null ) {
+				waterGrazing = new WaterGrazing();
+				waterGrazing.texture = Atlas.mipped;
+				waterGrazing.flatLod = Atlas.MIP_LEVELS - 1;
+			}
+			mat.mainPass.addShader(waterGrazing);
+		}
 		mat.mainPass.addShader(sky.fog);
 		if( ts != null ) mat.mainPass.addShader(ts);
 		if( kind == 1 ) {
