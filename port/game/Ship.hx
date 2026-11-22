@@ -523,8 +523,9 @@ class Ship {
 	/**
 	 * Renderiza la nave desde arriba (camara a 35 de altura, inclinacion 0.5) en `angles` direcciones y devuelve un BitmapData por
 	 * fotograma, con el contraste y el contorno negro del original. Solo se ve la nave: el resto de la escena se oculta un momento.
+	 * Con finish = false salen sin el contraste ni el contorno, que se ponen despues con finishFrame (el mapa lo hace en otro hilo).
 	 */
-	public function captureFrames( engine : h3d.Engine, s3d : h3d.scene.Scene, size = 192, angles = 32 ) : Array<flash.display.BitmapData> {
+	public function captureFrames( engine : h3d.Engine, s3d : h3d.scene.Scene, size = 192, angles = 32, finish = true ) : Array<flash.display.BitmapData> {
 		var gx = 0., gy = 0.;
 		for( c in data.cells ) {
 			gx += c.x;
@@ -581,10 +582,7 @@ class Ship {
 			var bd = new flash.display.BitmapData(size, size, true, 0);
 			for( k in 0...size * size ) bd.px[k] = px.bytes.getInt32(k * 4);
 			px.dispose();
-			// la luz de la nave es mas fuerte que la del original: se oscurece antes del contraste y el contorno negro (Manager.initShip)
-			bd.colorTransform(bd.rect, new flash.geom.ColorTransform(0.58, 0.58, 0.6, 1));
-			bd.applyFilter(bd, bd.rect, new flash.geom.Point(0, 0), new flash.filters.ColorMatrixFilter([1 + 0.7 * 1.5, 0, 0, 0, -64 * 0.7, 0, 1 + 0.7 * 1.5, 0, 0, -64 * 0.7, 0, 0, 1 + 0.7 * 1.5, 0, -64 * 0.7, 0, 0, 0, 1, 0]));
-			bd.applyFilter(bd, bd.rect, new flash.geom.Point(0, 0), new flash.filters.GlowFilter(0x0, 1, 3, 3, 3));
+			if( finish ) finishFrame(bd);
 			frames.push(bd);
 		}
 		tex.depthBuffer.dispose();
@@ -604,5 +602,13 @@ class Ship {
 		for( i in 0...mats.length ) mats[i].color.load(oldColors[i]);
 		for( o in hidden ) o.visible = true;
 		return frames;
+	}
+
+	/** el retoque de cada imagen de captureFrames; solo toca la imagen (por software), asi que se puede hacer en otro hilo */
+	public static function finishFrame( bd : flash.display.BitmapData ) {
+		// la luz de la nave es mas fuerte que la del original: se oscurece antes del contraste y el contorno negro (Manager.initShip)
+		bd.colorTransform(bd.rect, new flash.geom.ColorTransform(0.58, 0.58, 0.6, 1));
+		bd.applyFilter(bd, bd.rect, new flash.geom.Point(0, 0), new flash.filters.ColorMatrixFilter([1 + 0.7 * 1.5, 0, 0, 0, -64 * 0.7, 0, 1 + 0.7 * 1.5, 0, 0, -64 * 0.7, 0, 0, 1 + 0.7 * 1.5, 0, -64 * 0.7, 0, 0, 0, 1, 0]));
+		bd.applyFilter(bd, bd.rect, new flash.geom.Point(0, 0), new flash.filters.GlowFilter(0x0, 1, 3, 3, 3));
 	}
 }

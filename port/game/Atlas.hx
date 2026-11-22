@@ -28,7 +28,7 @@ class Atlas {
 	 * Niveles de 2048 a 64 px: 1 texel por casilla en el ultimo. Cambio del port: el original seguia hasta 1x1 y, por debajo de
 	 * 64x64, cada texel mezclaba casillas vecinas (colores de otros bloques en el terreno lejano).
 	 */
-	static inline var MIP_LEVELS = 6;
+	public static inline var MIP_LEVELS = 6;
 
 	public static function build( png : haxe.io.Bytes ) : h3d.mat.Texture {
 		var pix = hxd.res.Any.fromBytes("texture.png", png).toImage().getPixels();

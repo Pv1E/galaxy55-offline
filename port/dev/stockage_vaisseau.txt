@@ -1,6 +1,6 @@
 # stockage de la nave (ShipStorage, anadido del port): boton Stockage del ordenador de a bordo (despues de Modificar la nave) y
 # panel con arrastrar y soltar (SlotGrid). Zonas de "slots": 0 = bloques guardados (4 casillas, las de un Conteneur ESCorp),
-# 1 = cargas guardadas (contadores: amarillas 24, azules 12, rosas 5, bonus sin limite), 2 = el inventario, 3 = sus cargas.
+# 1 = cargas guardadas (contadores: amarillas 24, azules 12, rosas 5, hexalita sin limite), 2 = el inventario, 3 = sus cargas.
 # "print storage" = lo guardado en la partida, las cargas del inventario y si el boton esta activo; "print slots" = lo que se ve
 # en el panel (la pila del cursor sigue en su casilla hasta dejarla) y el cursor.
 # Uso: powershell -File port/dev/devrun.ps1 -Script port/dev/stockage_vaisseau.txt -Timeout 900
@@ -14,7 +14,7 @@ give BKubeRubis 3
 storage invcharge yellow 30
 storage invcharge blue 20
 storage invcharge pink 10
-storage invcharge bonus 500
+storage invcharge hexalite 500
 print storage
 # 1) el ordenador de a bordo: Stockage despues de Modificar la nave (3 = el cuarto boton, con Pilotar); el panel sale vacio
 activatel 64 63 3
@@ -42,7 +42,7 @@ slots drag 3:2 0:3
 slots drag 2:1 1:0
 print storage
 print inv
-# 6) las de bonus no tienen limite: pasan las 500
+# 6) las de hexalita no tienen limite: pasan las 500
 slots drag 3:3 1:3
 print storage
 # 7) Mayus: la mitad (5 rosas de 10, justo el maximo); clic derecho: la mitad al cursor (3 de 5); con las rosas guardadas al
@@ -147,7 +147,7 @@ wait 3
 print storage
 storage close
 wait 3
-# 15) kubes del editor en el stockage de una partida creativa: se guardan aparte (editorKubes.storage) y vuelven al cargarla
+# 15) kubes del editor en el stockage de una partida creativa: se guardan por su nombre y vuelven al cargarla
 edkube clear
 edkube make test-pierre cube opaque FFB0B0B0 Pierre grise test
 reload

@@ -114,11 +114,7 @@ class RenderMain extends hxd.App {
 		var biome : BiomeKind = Type.createEnum(BiomeKind, biomeName);
 		size = sizeChunks << Const.BITS;
 		gen = new gen.DetailsGenerator(size, seed);
-		var bd = Data.getBiome(biome);
-		gen.alloc(bd.water);
-		gen.alloc(BMinIron);
-		gen.alloc(BMinAluminium);
-		for( s in bd.soils ) gen.alloc(s);
+		gen.reserveBlocks(biome);
 		gen.startGenerate(biome);
 		while( gen.process(1000000) ) {}
 		world = gen.getBytes().b;

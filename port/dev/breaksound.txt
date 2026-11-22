@@ -49,7 +49,7 @@ print snd destroyBlock
 breakp 68 62 100
 print block 68 62 101
 print snd destroyBlock
-# 6) bonus grande: suelta 25 cargas de golpe -> 25
+# 6) cristal de hexalita grande: suelta 25 cargas de golpe -> 25
 setp 66 66 100 BBonusLarge
 print snd destroyBlock
 breakp 66 66 100

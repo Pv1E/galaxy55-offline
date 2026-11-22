@@ -63,8 +63,8 @@ class BlockNames {
 		"BStainGreen" => "Green Stainshroom", "BRawGreen" => "Green Aggregate", "BMarsWall" => "Brick Wall", "BWinterWall" => "Frost Wall",
 		"BAcidWall" => "Soft Rock Wall", "BPlantRock" => "Imprisoned Rock", "BAcidHerb1" => "Stinging Dryad", "BAcidHerb2" => "Young Stinging Dryad",
 		"BAcidHerbCeil" => "Underground Dryad", "BHealPlant" => "Wild Calendula", "BCavePlantCeil" => "Hangvine", "BMinIron" => "Pyrite",
-		// cristales verdes y su carga: sin nombre en ningun idioma del original
-		"BBonusSmall" => "Small Bonus Crystal", "BBonusMedium" => "Bonus Crystal", "BBonusLarge" => "Large Bonus Crystal", "BBonusCharge" => "Bonus Charge",
+		// cristales verdes y su carga: sin nombre en ningun idioma del original (hexalita: nombre del port)
+		"BBonusSmall" => "Small Hexalite Crystal", "BBonusMedium" => "Hexalite Crystal", "BBonusLarge" => "Large Hexalite Crystal", "BBonusCharge" => "Hexalite Charge",
 		"BIron" => "Iron", "BIronFence" => "Wire Mesh", "BIronLight" => "Miner's Lantern", "BShipGlassBlack" => "Tinted Toughened Glass",
 		"BShiningWoodPlank" => "Starry Plank", "BHealBox" => "Boxed Calendula", "BCircuit" => "Circuit Block",
 		"BDeadRock" => "Dead Rock", "BDeadSoil" => "Dead Soil", "BDeadSwamp" => "Dead Swamp", "BDeadTree" => "Dead Tree", "BDarkLeaves" => "Dark Leaves",
@@ -119,7 +119,7 @@ class BlockNames {
 		"BMoonHerbs1" => "Brote lunar", "BMoonHerbs2" => "Brote lunar pequeño", "BWinterHerb1" => "Hierba escarchada",
 		"BWinterHerb2" => "Hierba escarchada corta", "BWinterHerb3" => "Hierba escarchada rasa", "BMarsHerb1" => "Hierba de arena rasa",
 		"BMarsHerb2" => "Hierba de arena corta", "BMarsHerb3" => "Hierba de arena",
-		"BBonusSmall" => "Cristal de bonus pequeño", "BBonusMedium" => "Cristal de bonus", "BBonusLarge" => "Cristal de bonus grande", "BBonusCharge" => "Carga de bonus",
+		"BBonusSmall" => "Cristal de hexalita pequeño", "BBonusMedium" => "Cristal de hexalita", "BBonusLarge" => "Cristal de hexalita grande", "BBonusCharge" => "Carga de hexalita",
 		"BDeadRock" => "Roca muerta", "BDeadSoil" => "Tierra muerta", "BDeadSwamp" => "Pantano muerto", "BDeadTree" => "Árbol muerto",
 		"BDarkLeaves" => "Hojas oscuras",
 		"BMotherHull" => "Blindaje de la nodriza", "BMotherPanel" => "Panel de la nodriza", "BMotherDark" => "Blindaje oscuro de la nodriza",
@@ -174,7 +174,7 @@ class BlockNames {
 		"BMoonHerbs1" => "Pousse lunaire", "BMoonHerbs2" => "Petite pousse lunaire", "BWinterHerb1" => "Herbe givrée",
 		"BWinterHerb2" => "Herbe givrée courte", "BWinterHerb3" => "Herbe givrée rase", "BMarsHerb1" => "Herbe des sables rase",
 		"BMarsHerb2" => "Herbe des sables courte", "BMarsHerb3" => "Herbe des sables",
-		"BBonusSmall" => "Petit cristal bonus", "BBonusMedium" => "Cristal bonus", "BBonusLarge" => "Gros cristal bonus", "BBonusCharge" => "Charge bonus",
+		"BBonusSmall" => "Petit cristal d'hexalite", "BBonusMedium" => "Cristal d'hexalite", "BBonusLarge" => "Gros cristal d'hexalite", "BBonusCharge" => "Charge d'hexalite",
 		"BDeadRock" => "Roche morte", "BDeadSoil" => "Terre morte", "BDeadSwamp" => "Marais mort", "BDeadTree" => "Arbre mort",
 		"BDarkLeaves" => "Feuillage sombre",
 		"BChest" => "Conteneur ESCorp",

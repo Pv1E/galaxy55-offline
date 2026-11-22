@@ -1,6 +1,9 @@
 --macro allowPackage('flash')
 -cp port/game
 -cp port/core
+-cp port/net
+-cp port/server
+-cp port/explore
 -cp port/headless
 -cp libs/libs-haxe3
 -cp libs/libs-haxe2
@@ -8,6 +11,9 @@
 -cp src/G55/fla/client/src
 -cp stubs
 -cp port/shim
+-lib heaps
+-lib hlopenal
+-lib hlsdl
 -D haxe3
 -main SaveTest
 -hl port/out/savetest.hl

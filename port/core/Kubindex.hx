@@ -123,7 +123,7 @@ class Kubindex {
 	public static function biomeKnown( info : SaveInfo, biome : String ) return full(info) || explored(info, biome) > 0;
 
 	/**
-	 * Anomalia identificada: se ha pasado cerca de una (encounter). Los cristales verdes, que el generador no apunta, se
+	 * Anomalia identificada: se ha pasado cerca de una (encounter). Los cristales de hexalita, que el generador no apunta, se
 	 * identifican al identificar uno de sus kubes propios (KubData.anomalyOwnBlocks).
 	 */
 	public static function anomalyKnown( info : SaveInfo, id : String ) : Bool {

@@ -25,6 +25,12 @@ class WorldData {
 
 	/** cambios respecto al terreno generado: celda -> indice global del bloque (0 = aire) | nivel del agua << 16 */
 	public var editMap = new Map<Int, Int>();
+	/**
+	 * Anadido del port: lo que habia en cada celda de editMap antes de su primer cambio (lo generado; indice global). Una celda que
+	 * vuelve a eso sale de editMap (prune): la partida no guarda lo que el generador ya pone. El agua del mar no: initSea y la
+	 * bajada del mar quitan capas generadas, y una celda de mar vuelta a poner tiene que seguir guardada
+	 */
+	var generated = new Map<Int, Int>();
 	var savedEdits : Array<Int>;
 	/** nivel del agua puesta por el jugador en cada celda (sin entrada = fuente o agua del mar) */
 	public var waterLvl = new Map<Int, Int>();
@@ -48,7 +54,27 @@ class WorldData {
 	/** ids locales ya dados de alta en las tablas de registerId */
 	var registered = 0;
 	/** terreno generado y cambios guardados aplicados (genStep ha terminado) */
-	var generated = false;
+	var terrainDone = false;
+
+	/**
+	 * El generador trabaja en otro hilo y genStep solo mira si ha acabado (el juego: World.GEN_THREAD). El servidor no: ya genera
+	 * cada planeta en su propio hilo (PlanetInstance.generateAsync) o de una vez
+	 */
+	var genThread = false;
+	/** el hilo ha acabado (lo suelta al terminar); null hasta que empieza */
+	var genLock : sys.thread.Lock;
+	/** error del generador en el hilo (se lanza en el principal) */
+	var genError : Dynamic;
+	/** lo que ha tardado en el hilo (s) */
+	var genSpent = 0.;
+	/** la generacion ha acabado (en el hilo o por tandas) */
+	var genFinished = false;
+	/** el mundo se ha soltado antes de acabar: el hilo para entre dos pasos */
+	var genCancel = false;
+	/** con que se creo el generador (--gencheck lo vuelve a crear igual) */
+	var genArgs : { seed : Int, biome : BiomeKind, comet : Bool, version : Null<Int> };
+	/** --loadtime (World.loadTime): lo que ha costado cada fase de la carga, en segundos, y cuantos pasos (step) ha llevado */
+	var load = { init : 0., gen : 0., cells : 0., sea : 0., edits : 0., light : 0., mesh : 0., meshEmit : 0., steps : 0, editCells : 0 };
 
 	/** genVersion: version del generador del planeta (SaveInfo.genVersion); null = la actual (gen.Generator.VERSION) */
 	public function new( seed : Int, biomeName : String, sizeChunks : Int, ?savedEdits : Array<Int>, ?shipData : ShipData.ShipDataInfo, ?genVersion : Null<Int> ) {
@@ -60,22 +86,15 @@ class WorldData {
 		var comet = shipData == null && CometRules.isComet(biomeName);
 		size = comet ? CometRules.SIZE : sizeChunks << Const.BITS;
 		var biome : BiomeKind = Type.createEnum(BiomeKind, biomeName);
-		// el generador usa la memoria global (flash.Memory): no mientras otro hilo genera (genLock)
-		genLock.acquire();
-		gen = comet ? new CometGenerator(size, seed) : new gen.DetailsGenerator(size, seed);
-		if( genVersion != null ) gen.version = genVersion;
+		genArgs = { seed : seed, biome : biome, comet : comet, version : genVersion };
+		gen = newGenerator();
 		var bd = Data.getBiome(biome);
-		gen.alloc(bd.water);
-		gen.alloc(BMinIron);
-		gen.alloc(BMinAluminium);
-		for( s in bd.soils ) gen.alloc(s);
 		if( shipData == null ) {
 			gen.startGenerate(biome);
 			seaLevel = gen.getWaterInfos().level;
 			seaBlock = Block.get(bd.water);
 		}
 		else initShip(shipData);
-		genLock.release();
 		// como Builder.init: los modelos sin BFSize usan su propia caja para las colisiones
 		for( b in Block.all )
 			if( b.model != null && b.size == null ) b.size = Models.get(b.model).box;
@@ -87,7 +106,47 @@ class WorldData {
 	/** progreso del generador (0..1) */
 	public function genProgress() : Float return gen.progress;
 
-	public inline function isGenerated() return generated;
+	public inline function isGenerated() return terrainDone;
+
+	/** el generador de este mundo, con sus bloques reservados (sin empezar: startGenerate o initShip) */
+	function newGenerator() : gen.DetailsGenerator {
+		var a = genArgs;
+		var g = a.comet ? new CometGenerator(size, a.seed) : new gen.DetailsGenerator(size, a.seed);
+		// la version 0 (el generador del original) ya no existe: un planeta de antes se genera con la 1 y la partida guarda su 0
+		// (SaveData: "Ancienne partie")
+		if( a.version != null ) g.version = a.version < 1 ? 1 : a.version;
+		g.reserveBlocks(a.biome);
+		return g;
+	}
+
+	/** genera el planeta en otro hilo (genThread); genLock se suelta al acabar, con genError si ha fallado */
+	function startGenThread() {
+		genLock = new sys.thread.Lock();
+		var g = gen, lock = genLock;
+		sys.thread.Thread.create(function() {
+			var t0 = haxe.Timer.stamp();
+			try {
+				while( !genCancel && g.process(50) ) {}
+			} catch( e : Dynamic ) {
+				genError = e;
+			}
+			genSpent = haxe.Timer.stamp() - t0;
+			lock.release();
+		});
+	}
+
+	/** --gencheck: el planeta otra vez, en el hilo principal: tiene que salir igual que en el hilo (por nombre de bloque) */
+	function checkThreadGen() {
+		if( Sys.args().indexOf("--gencheck") < 0 ) return;
+		var g = newGenerator();
+		g.startGenerate(genArgs.biome);
+		while( g.process(1000000) ) {}
+		var a = gen.getBytes().b, b = g.getBytes().b, diff = 0;
+		inline function kind( x : gen.DetailsGenerator, v : Int ) return (v & 127) < x.blocks.length ? Type.enumIndex(x.blocks[v & 127].k) : -1;
+		for( i in 0...a.length ) if( kind(gen, a.get(i)) != kind(g, b.get(i)) ) diff++;
+		var same = diff == 0 && [for( p in gen.placed ) p.n + p.x + "," + p.y + "," + p.z].join(" ") == [for( p in g.placed ) p.n + p.x + "," + p.y + "," + p.z].join(" ");
+		Sys.println("generacion en otro hilo " + biomeName + " " + size + ": " + (same ? "igual que en el principal" : "DISTINTA (" + diff + " celdas)"));
+	}
 
 	/**
 	 * Multijugador (anadido del port): aviso de cada mundo cuyo generador acaba de terminar, antes de usar su resultado (el
@@ -97,20 +156,13 @@ class WorldData {
 	public static var onGenerated : WorldData -> Void;
 
 	/**
-	 * Un solo generador a la vez: Generator y FPerlin trabajan sobre una memoria global (flash.Memory, la que eligen al
-	 * empezar cada process). El servidor genera sus planetas en otro hilo (PlanetInstance.generateAsync) mientras el juego del
-	 * anfitrion puede estar generando el suyo; cada paso del generador (y su creacion) se hace con este cerrojo.
-	 */
-	public static var genLock(default, null) = new sys.thread.Mutex();
-
-	/**
 	 * Toma el terreno que src acaba de generar (llamado desde onGenerated: su generador ha terminado y aun no ha cambiado
 	 * nada) si es el mismo planeta (semilla, bioma, tamano, version y tipo de generador): las celdas y lo del generador que se
 	 * usa despues (bloques por id local, agua, anomalias), y sigue como genStep (cambios guardados). false si no es el mismo
 	 * o este ya esta generado.
 	 */
 	public function adoptGenerated( src : WorldData ) : Bool {
-		if( generated || isShip || src.isShip || src.seed != seed || src.biomeName != biomeName || src.size != size ) return false;
+		if( terrainDone || isShip || src.isShip || src.seed != seed || src.biomeName != biomeName || src.size != size ) return false;
 		var g = gen, sg = src.gen;
 		if( g.version != sg.version || Type.getClass(g) != Type.getClass(sg) ) return false;
 		g.blocks = sg.blocks.copy();
@@ -125,45 +177,61 @@ class WorldData {
 			g.waterTotal = sg.waterTotal;
 		}
 		g.progress = 1;
+		genFinished = true;
 		wideCells(sg.getBytes().b);
 		initTables();
 		if( savedEdits != null && savedEdits.length > 0 ) shipPlace();
 		applySaved();
-		generated = true;
+		terrainDone = true;
 		return true;
 	}
 
 	/**
 	 * Genera el terreno (o pone las celdas de la nave) durante budgetMs desde t0 y, al acabar, aplica los cambios guardados.
-	 * true cuando esta todo (World sigue entonces con la luz y las mallas).
+	 * true cuando esta todo (World sigue entonces con la luz y las mallas). Con genThread el generador va en otro hilo y aqui
+	 * solo se mira si ha acabado. Cada generador tiene su propio tampon (paso 2 de la refundicion): varios pueden trabajar a la
+	 * vez (el juego del anfitrion y su servidor).
 	 */
 	public function genStep( t0 : Float, budgetMs : Float ) : Bool {
-		if( generated ) return true;
+		if( terrainDone ) return true;
 		if( isShip ) {
-			if( shipCells != null && !placeCells(t0, budgetMs) ) return false;
+			var placed = shipCells == null || placeCells(t0, budgetMs);
+			load.gen += haxe.Timer.stamp() - t0;
+			if( !placed ) return false;
 			applySaved();
-			generated = true;
+			terrainDone = true;
 			return true;
 		}
-		var p0 = gen.progress;
-		genLock.acquire();
-		var busy = false;
-		try busy = gen.process(Std.int(budgetMs)) catch( e : Dynamic ) {
-			genLock.release();
-			throw e;
+		if( !genFinished ) {
+			if( genThread ) {
+				if( genLock == null ) startGenThread();
+				if( !genLock.wait(0.) ) return false;
+				if( genError != null ) throw genError;
+				load.gen = genSpent;
+				checkThreadGen();
+			} else {
+				var p0 = gen.progress;
+				var busy = gen.process(Std.int(budgetMs));
+				var tg = haxe.Timer.stamp();
+				load.gen += tg - t0;
+				if( Sys.args().indexOf("--frametime") >= 0 && tg - t0 > 0.2 )
+					Sys.println("generador: " + Std.int((tg - t0) * 1000) + " ms en un paso (progreso " + Std.int(p0 * 100) + "% -> " + Std.int(gen.progress * 100) + "%)");
+				if( busy ) return false;
+			}
+			genFinished = true;
 		}
-		genLock.release();
-		if( Sys.args().indexOf("--frametime") >= 0 && haxe.Timer.stamp() - t0 > 0.2 )
-			Sys.println("generador: " + Std.int((haxe.Timer.stamp() - t0) * 1000) + " ms en un paso (progreso " + Std.int(p0 * 100) + "% -> " + Std.int(gen.progress * 100) + "%)");
-		if( busy ) return false;
 		if( onGenerated != null ) onGenerated(this);
+		var t1 = haxe.Timer.stamp();
 		wideCells(gen.getBytes().b);
 		initTables();
+		var t2 = haxe.Timer.stamp();
+		load.cells += t2 - t1;
 		// el sitio de la nave se elige antes de aplicar los cambios guardados: si no, con el suelo cavado o construido bajo
 		// la nave, al cargar la partida la nave aparecia en otro sitio
 		if( savedEdits != null && savedEdits.length > 0 ) shipPlace();
+		load.edits += haxe.Timer.stamp() - t2;
 		applySaved();
-		generated = true;
+		terrainDone = true;
 		return true;
 	}
 
@@ -468,6 +536,7 @@ class WorldData {
 	}
 
 	function applySaved() {
+		var t0 = haxe.Timer.stamp();
 		// el mar va antes que los cambios: las capas quitadas son del terreno generado y lo puesto despues se queda
 		if( seaBlock != null ) {
 			var level = seaLevel, flood = 0;
@@ -481,6 +550,8 @@ class WorldData {
 			}
 			initSea(level, flood);
 		}
+		var t1 = haxe.Timer.stamp();
+		load.sea += t1 - t0;
 		if( savedEdits == null ) return;
 		var i = 0;
 		while( i + 1 < savedEdits.length ) {
@@ -489,11 +560,32 @@ class WorldData {
 			if( key < 0 ) continue;
 			var lvl = gi >> 16;
 			var b = (gi & 0xFFFF) == 0 ? null : Block.all[gi & 0xFFFF];
+			noteGenerated(key);
 			setCell(key, localId(b));
 			editMap.set(key, gi);
+			prune(key);
 			if( lvl > 0 ) waterLvl.set(key, lvl);
+			load.editCells++;
 		}
 		savedEdits = null;
+		load.edits += haxe.Timer.stamp() - t1;
+	}
+
+	/** indice global (Block.all) del bloque de la celda p */
+	inline function globalAt( p : Int ) : Int {
+		var b = gen.blocks[cell(p)];
+		return b == null ? 0 : b.index;
+	}
+
+	/** antes de cambiar la celda p: si es la primera vez, lo que tenia (generated) */
+	inline function noteGenerated( p : Int ) {
+		if( !generated.exists(p) ) generated.set(p, globalAt(p));
+	}
+
+	/** la celda p ha vuelto a lo que puso el generador (sin nivel de agua): ya no es un cambio. Nunca el agua del mar (generated) */
+	function prune( p : Int ) {
+		var g = generated.get(p);
+		if( g != null && editMap.get(p) == g && (seaBlock == null || g != seaBlock.index) ) editMap.remove(p);
 	}
 
 	/** cambios para guardar: pares [celda, bloque, celda, bloque, ...] */
@@ -603,7 +695,9 @@ class WorldData {
 		if( block(x, y, z) != b ) setBlock(x, y, z, b);
 		else levelChanged(x, y);
 		if( level > 0 ) waterLvl.set(key, level) else waterLvl.remove(key);
+		noteGenerated(key);
 		editMap.set(key, b.index | (level << 16));
+		prune(key);
 	}
 
 	/** Cambia un bloque (null = aire). World rehace el trozo al momento y la luz y los vecinos en los siguientes fotogramas. */
@@ -618,8 +712,10 @@ class WorldData {
 		y = wrapC(y);
 		if( z < 1 || z >= HEIGHT - 1 ) return;
 		var key = ((x + y * size) << ZBITS) | z;
+		noteGenerated(key);
 		setCell(key, localId(b));
 		editMap.set(key, b == null ? 0 : b.index);
+		prune(key);
 		waterLvl.remove(key);
 		cellChanged(x, y, z, key);
 		if( onSetBlock != null ) onSetBlock(x, y, z);

@@ -1,4 +1,4 @@
-# nombres de los cristales verdes (BBonus*): esquina del bloque apuntado e inventario. Probar con -Extra "--lang=fr" (en, es)
+# nombres de los cristales de hexalita (BBonus*): esquina del bloque apuntado e inventario. Probar con -Extra "--lang=fr" (en, es)
 wait 3
 planet
 wait 30
@@ -10,18 +10,21 @@ setp 66 60 top BBonusMedium
 setp 66 68 top BBonusLarge
 slot 0
 tp 64.5 64.5 top
-lookat 66.5 64.5 76.2
-wait 10
+find BBonusSmall 4
+lookat fx+0.5 fy+0.5 fz+0.2
+wait 9
 print select
 shot bn_small
 tp 64.5 60.5 top
-lookat 66.5 60.5 76.3
-wait 10
+find BBonusMedium 4
+lookat fx+0.5 fy+0.5 fz+0.3
+wait 9
 print select
 shot bn_medium
 tp 64.5 68.5 top
-lookat 65.9 68.5 76.5
-wait 10
+find BBonusLarge 4
+lookat fx-0.1 fy+0.5 fz+0.5
+wait 9
 print select
 shot bn_large
 # inventario: el nombre sale bajo la casilla al recibir el bloque

@@ -1,0 +1,64 @@
+# Partida de un generador anterior (SaveData.isOldGeneration: genVersion < gen.Generator.VERSION, anadido del port): la lista la
+# marca "Ancienne partie" (a la derecha, encima de las versiones) y cada vez que se abre avisa de que el terreno de alrededor de lo
+# construido puede haber cambiado, con Volver (el foco) y Continuar. Una partida de antes (.json, version 0):
+# port/headless/fixtures/legacy_mixta.json. Mira los antigua_*.png
+wait 3
+devsaves 2
+menu
+waitfor menu
+savecopy port/headless/fixtures/legacy_mixta.json
+screen load
+wait 3
+print saves
+print menu
+shot antigua_lista
+# Intro: el aviso, con el foco en Volver; Volver deja la lista como estaba (sigue siendo un .json)
+tap enter
+wait 3
+print menu
+shot antigua_aviso
+tap enter
+wait 3
+print menu
+print saves
+# otra vez y Continuar (a la derecha): se migra y se juega
+tap enter
+wait 3
+tap down
+wait 2
+print menu
+tap enter
+waitfor planet
+wait 10
+print inv
+# guardada al volver al menu: sigue siendo antigua y vuelve a avisar al abrirla
+menu
+waitfor menu
+screen load
+wait 3
+print saves
+tap enter
+wait 3
+print menu
+shot antigua_aviso_otra_vez
+tap esc
+wait 2
+# en ingles y en frances
+setlang en
+screen load
+wait 3
+tap enter
+wait 3
+shot antigua_aviso_en
+tap esc
+wait 2
+setlang fr
+screen load
+wait 3
+shot antigua_lista_fr
+tap enter
+wait 3
+shot antigua_aviso_fr
+tap esc
+wait 2
+quit

@@ -49,7 +49,7 @@ class KubText {
 		"chargetag.CYellow" => ["Carga amarilla", "Yellow charge", "Charge jaune"],
 		"chargetag.CBlue" => ["Carga azul", "Blue charge", "Charge bleue"],
 		"chargetag.CPink" => ["Carga rosa", "Pink charge", "Charge rose"],
-		"chargetag.CBonus" => ["Carga de bonus", "Bonus charge", "Charge bonus"],
+		"chargetag.CBonus" => ["Carga de hexalita", "Hexalite charge", "Charge d'hexalite"],
 		"kub.stats" => ["Puestos: %p%   Rotos: %b%   Fabricados: %c%", "Placed: %p%   Broken: %b%   Crafted: %c%", "Posés : %p%   Cassés : %b%   Fabriqués : %c%"],
 		"kub.broken" => ["Se produce al romperlo", "Produced when broken", "Produit en cassant"],
 		"kub.made" => ["Fabricación", "Crafting", "Fabrication"],

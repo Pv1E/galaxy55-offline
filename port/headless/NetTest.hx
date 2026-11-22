@@ -53,6 +53,7 @@ class NetTest {
 		cometTest(Sys.args().length > 0 ? Sys.args()[0] + "_comete" : "port/out/net_test_comete");
 		tutoTest(Sys.args().length > 0 ? Sys.args()[0] + "_tuto" : "port/out/net_test_tuto");
 		kubeTest(Sys.args().length > 0 ? Sys.args()[0] + "_kubes" : "port/out/net_test_kubes");
+		kubeSlotsTest();
 		// endurance: 30 s por defecto; --soak=S para mas (port/headless: net_test.hl DIR --soak=600)
 		var soak = 30.;
 		for( a in Sys.args() ) if( StringTools.startsWith(a, "--soak=") ) soak = Std.parseFloat(a.substr(7));
@@ -371,6 +372,37 @@ class NetTest {
 	}
 
 	/** inventario que el servidor ha mandado por ultima vez a c (SInventory) */
+	/**
+	 * El punto de aparicion o, si hay agua o lava cerca, el sitio mas cercano (en espiral) de suelo lleno que suelta algo, sin
+	 * liquidos a 14 bloques o menos: lo que se hace alli (hasta 4 bloques al lado, la bomba con radio 8) no lo toca el agua
+	 */
+	static function dryPoint( w : WorldData ) : { x : Float, y : Float, z : Float } {
+		var sp = w.spawnPoint();
+		var cx = Std.int(sp.x), cy = Std.int(sp.y);
+		for( r in 0...80 )
+			for( dy in -r...r + 1 )
+				for( dx in -r...r + 1 ) {
+					if( Math.abs(dx) != r && Math.abs(dy) != r ) continue;
+					var x = (cx + dx + w.size) % w.size, y = (cy + dy + w.size) % w.size;
+					var top = w.topCollide(x, y);
+					var b = w.block(x, y, top - 1);
+					if( b == null || b.type != BTFull || b.getDrop() == null || b.hasFlag(BFIsLava) ) continue;
+					if( dryAround(w, x, y, top, 14) ) return { x : x + 0.5, y : y + 0.5, z : top + 0.01 };
+				}
+		return sp;
+	}
+
+	/** ningun liquido (agua, lava) a r bloques o menos de x, y, z */
+	static function dryAround( w : WorldData, x : Int, y : Int, z : Int, r : Int ) : Bool {
+		for( dx in -r...r + 1 )
+			for( dy in -r...r + 1 )
+				for( dz in -r...r + 1 ) {
+					var b = z + dz < 1 ? null : w.block(x + dx, y + dy, z + dz);
+					if( b != null && b.hasProp(PLiquid) ) return false;
+				}
+		return true;
+	}
+
 	static function lastInv( c : TestClient ) : NetInv {
 		var r : NetInv = null;
 		for( m in c.msgs ) switch( m ) { case SInventory(_, i): r = i; default: }
@@ -419,7 +451,9 @@ class NetTest {
 		var inst : PlanetInstance = null;
 		until(() -> { for( i in @:privateAccess server.worlds.instances ) inst = i; inst != null && inst.ready(); }, 30);
 		var w = inst.world;
-		var sp = w.spawnPoint();
+		// en tierra seca: junto al mar, el agua que entra por lo que se rompe rompe la cantina y la bomba (WorldProcess.canPropagate)
+		// cuando le toca, y con la version 1 del generador el punto de aparicion de este planeta esta en la costa
+		var sp = dryPoint(w);
 		var st = { id : 0, x : sp.x, y : sp.y, z : sp.z, yaw : 0., pitch : 0., flags : 0, charge : -1, hx : 0., hy : 0., hz : 0. };
 		p.client.send(CState(st));
 		var bx = Std.int(sp.x), by = Std.int(sp.y), bz = Std.int(sp.z) - 1;
@@ -606,7 +640,7 @@ class NetTest {
 		fake.uni.licenses = [1, 2, 3, 4, 5, 6, 7];
 		fake.px = 12.5;
 		var lic = es.record.uni.licenses.length;
-		e.client.send(CSaveRecord(NetZip.packString(haxe.Json.stringify(SaveData.diskEncode(fake)))));
+		e.client.send(CSaveRecord(NetZip.packString(haxe.Json.stringify(SaveData.serverEncode(fake)))));
 		e.client.send(CEcon(5, EDeliver, "", 0));
 		until(() -> e.has(m -> m.match(SInventory(5, _))));
 		check("progresion: la partida del cliente no da creditos, objetos ni licencias", es.record.credits == c3
@@ -873,7 +907,7 @@ class NetTest {
 		var fake : SaveData.SaveInfo = haxe.Json.parse(haxe.Json.stringify(ts.record));
 		fake.tuto.spots = null;
 		fake.tuto.step = 3;
-		t.client.send(CSaveRecord(NetZip.packString(haxe.Json.stringify(SaveData.diskEncode(fake)))));
+		t.client.send(CSaveRecord(NetZip.packString(haxe.Json.stringify(SaveData.serverEncode(fake)))));
 		t.client.send(CEcon(1, EDeliver, "", 0));
 		until(() -> t.has(m -> m.match(SInventory(1, _))));
 		check("tutorial: la partida del cliente lleva el paso pero no borra los sitios", ts.record.tuto.step == 3 && ts.record.tuto.spots != null);
@@ -885,7 +919,7 @@ class NetTest {
 		t.client.send(CEcon(3, EEndTutorial, "", 0));
 		until(() -> t.has(m -> m.match(SInventory(3, _))));
 		fake.tuto = { step : 0 };
-		t.client.send(CSaveRecord(NetZip.packString(haxe.Json.stringify(SaveData.diskEncode(fake)))));
+		t.client.send(CSaveRecord(NetZip.packString(haxe.Json.stringify(SaveData.serverEncode(fake)))));
 		t.client.send(CEcon(4, EEndTutorial, "", 0));
 		until(() -> t.has(m -> m.match(SInventory(4, _))));
 		check("tutorial: el envio una sola vez, y no se vuelve a empezar", ts.record.credits == c1 && ts.record.tuto == null);
@@ -1049,6 +1083,20 @@ class NetTest {
 	 * (validos, del tamano exacto), sus bloques existen en el servidor (se pueden poner) y cada kube guarda su numero al volver a
 	 * arrancar aunque se quite otro; un kube malformado se rechaza al leer el mensaje.
 	 */
+	/**
+	 * Los bloques de los kubes del servidor (KubeCore.blocksFor) tienen los mismos indices en el servidor y en cada juego: un bloque
+	 * de remplazo (SaveNames, una partida con bloques que esta version no conoce) va detras de los MAX kubes, que siguen seguidos
+	 */
+	static function kubeSlotsTest() {
+		var first = KubeCore.blocksFor(0)[0].index;
+		var p = SaveNames.resolve("BNoSuchBlockFromANewerVersion");
+		var last = KubeCore.blocksFor(KubeCore.MAX - 1);
+		var contiguous = true;
+		for( i in 0...KubeCore.MAX ) if( KubeCore.blocksFor(i)[0].index != first + i * KubeCore.PER ) contiguous = false;
+		check("kubes: un bloque de remplazo va detras de los " + KubeCore.MAX + " kubes, que siguen seguidos",
+			SaveNames.isUnknown(p) && contiguous && p.index > last[KubeCore.PER - 1].index, "remplazo #" + p.index + ", ultimo kube #" + last[KubeCore.PER - 1].index);
+	}
+
 	static function kubeTest( dir : String ) {
 		deleteDir(dir);
 		sys.FileSystem.createDirectory(dir);

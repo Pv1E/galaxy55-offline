@@ -52,23 +52,28 @@ class Generator {
 
 	/**
 	 * Anadido del port: version de la generacion. Las partidas solo guardan los cambios del jugador y rehacen el planeta con su
-	 * semilla: cada planeta se genera siempre con la version con la que se visito por primera vez (SaveInfo.genVersion), asi lo
-	 * que se anada al generador solo sale en los planetas nuevos y no cambia el terreno bajo lo ya construido. Reglas:
-	 * - un cambio de lo que genera el generador (anomalia, bioma, minerales...) sube VERSION y solo se aplica con version >= la
-	 *   nueva (las anomalias: since en su linea de DetailsGenerator);
-	 * - lo de una version que ya ha salido no se cambia, quita ni reordena: para retocar una anomalia, una funcion nueva con since
-	 *   y la vieja con until;
-	 * - port/headless/gen_ref.txt: las lineas de las versiones que ya han salido no cambian nunca; con una version nueva se anaden
-	 *   las suyas (haxe port/headless.hxml, hl port/out/gen.hl --check port/headless/gen_ref.txt).
+	 * semilla (SaveInfo.genVersion: la version con la que se visito por primera vez).
+	 * - 0: el generador del original (un solo azar para todo). Ya no existe: un planeta de version 0 se genera con la 1 y la
+	 *   partida sale como "Ancienne partie" (World, GalaxyApp).
+	 * - 1: azar por nombre (Rng, Generator.stream), estructuras en un registro (Structures) puestas por regiones, etapas en un
+	 *   orden fijo. Anadir una estructura (Structures: since) solo cambia el planeta dentro de su caja.
+	 * Reglas: lo que cambie lo que genera el generador sube VERSION y solo se aplica con version >= la nueva (Structures: since /
+	 * until); port/headless/gen_ref.txt: las lineas de las versiones que ya han salido no cambian nunca.
 	 */
-	public static inline var VERSION = 0;
+	public static inline var VERSION = 1;
 
 	public var size(default,null) : Int;
 	/** anadido del port: version con la que se genera este planeta (VERSION si no se dice otra) */
 	public var version : Int;
 	var seed : Int;
-	var genStep : Int;
-	var rnd : mt.Rand;
+	/** el azar del paso o de la estructura en curso (Rng: por nombre, initStep, stream) */
+	var rnd : Rng;
+	/** vueltas a empezar de fillSoil (poca agua en un planeta grande): entra en todos los hashes (stream) */
+	var attempt = 0;
+	/** nombre del bioma (prefijo de los nombres de los pasos) */
+	var biomeName = "";
+	/** veces que se ha hecho cada paso (stepRetry: el nombre de la siguiente vez lleva "/rN") */
+	var stepTries : Array<Int> = [];
 	
 	var perlin : FPerlin;
 	var globalScale : Float;
@@ -83,7 +88,7 @@ class Generator {
 	public var maxTime : Int;
 	public var fast : Bool;
 	
-	var steps : Array<{ f : Void->Void, p : haxe.PosInfos }>;
+	var steps : Array<{ name : String, f : Void->Void, p : haxe.PosInfos }>;
 	var curPosition : Int;
 	
 	var maxHeight : Int;
@@ -102,13 +107,13 @@ class Generator {
 		this.size = size;
 		this.seed = seed;
 		version = VERSION;
-		genStep = 0;
 		models = new Hash();
 		perlin = new FPerlin(size);
 		outHeight = perlin.buf.length;
 		perlin.buf.length += size * size;
 		outPos = perlin.buf.length;
 		perlin.buf.length += size * size << HBITS;
+		perlin.bind();
 		blocks = [];
 		btrans = [];
 		steps = [];
@@ -117,9 +122,32 @@ class Generator {
 		alloc(BBedrock);
 	}
 	
-	public inline function initStep() {
-		genStep++;
-		rnd.initSeed(seed+genStep);
+	/**
+	 * Azar de un nombre (Rng.hash de la semilla, el intento de fillSoil y el nombre): cada paso, estructura y bonus (cristales de
+	 * hexalita) tiene el suyo, asi que lo que se anade o se quita no cambia el de los demas
+	 */
+	public function stream( name : String, a = 0, b = 0, c = 0 ) : Rng {
+		return new Rng(Rng.hash(seed ^ (attempt << 20), name, a, b, c));
+	}
+
+	/** principio de un paso: su azar y la semilla del perlin, de su nombre */
+	function initStep( name : String ) {
+		rnd = stream(name);
+		perlin.seed = Rng.hash(seed ^ (attempt << 20), name, 0x5EED) & 0x1FFFFFFF;
+	}
+
+	/**
+	 * Anadido del port: los bloques reservados (numeros locales fijos: WATER 2, MINERAL_COM 3, MINERAL_RARE 4, ROCK 5, SOIL 6),
+	 * antes en World, GenMain y RenderMain. Un bioma sin suelos (BIShed) usa roca y tierra: si no, el siguiente alloc se quedaba
+	 * con el numero 5 y la lava de fillLava se tomaba por ROCK (el hangar de tamano 3 no acababa nunca)
+	 */
+	public function reserveBlocks( biome : BiomeKind ) {
+		var bd = Data.getBiome(biome);
+		alloc(bd.water);
+		alloc(BMinIron);
+		alloc(BMinAluminium);
+		var soils = bd.soils != null && bd.soils.length >= 2 ? bd.soils : [BRock, BSoil];
+		for( s in soils ) alloc(s);
 	}
 	
 	public function forceBlock( b : BlockKind ) {
@@ -135,16 +163,9 @@ class Generator {
 		blocks.push(b);
 		btrans.push( b.type != BTFull && b.type != BTAlpha);
 		hblocks.set(bid, id);
-		// load other blocks
-		if( b.covered != null ) {
-			var id2 = alloc(b.covered.k);
-			addStep(addCover.bind(id, id2));
-		}
-		if( b.propagate != null ) {
-			var tid = 0;
-			addStep(function() addPropagate(id, tid, b.hasFlag(BFFallCopy) ? id : tid));
-			tid = alloc(b.propagate.k);
-		}
+		// mientras se genera, el numero local va en 7 bits (el octavo es TMP / CAVE); despues World guarda 2 bytes por celda
+		if( id > TMASK && curPosition < steps.length ) throw "demasiados bloques en el generador: " + id;
+		// lo que cubre o se propaga se hace en una sola pasada al final (coverAll)
 		return id;
 	}
 	
@@ -165,7 +186,68 @@ class Generator {
 	}
 	
 	inline function fset(addr, v) {
-		flash.Memory.setByte(addr + outPos, v);
+		if( tracking ) trackCell(addr, v);
+		perlin.setByte(addr + outPos, v);
+	}
+
+	// ---------------------------------------------------------------- lo que cambia una estructura (anadido del port)
+
+	/** se esta poniendo una estructura (DetailsGenerator.pose): cada celda y altura que cambia agranda su caja */
+	var tracking = false;
+	/** origen de la estructura (la caja va respecto a el, con realDist: sigue bien en el borde del mapa) */
+	var trackX = 0;
+	var trackY = 0;
+	/** caja: x0, y0, z0, x1, y1, z1 (incluidos) */
+	var trackBox : Array<Int>;
+	/** celdas y alturas cambiadas */
+	var trackChanged = 0;
+	/** algunas celdas puestas (direccion, valor), para ver al final si otra estructura la ha tapado */
+	var trackSamples : Array<Int>;
+	static inline var TRACK_SAMPLES = 48;
+
+	function beginTrack( x : Int, y : Int ) {
+		tracking = true;
+		trackX = real(x);
+		trackY = real(y);
+		trackBox = null;
+		trackChanged = 0;
+		trackSamples = [];
+	}
+
+	function endTrack() {
+		tracking = false;
+	}
+
+	inline function trackPoint( dx : Int, dy : Int, z0 : Int, z1 : Int ) {
+		var b = trackBox;
+		if( b == null ) trackBox = [dx, dy, z0, dx, dy, z1];
+		else {
+			if( dx < b[0] ) b[0] = dx;
+			if( dy < b[1] ) b[1] = dy;
+			if( z0 < b[2] ) b[2] = z0;
+			if( dx > b[3] ) b[3] = dx;
+			if( dy > b[4] ) b[4] = dy;
+			if( z1 > b[5] ) b[5] = z1;
+		}
+	}
+
+	function trackCell( addr : Int, v : Int ) {
+		if( fget(addr) == v ) return;
+		var c = addr >> HBITS, z = addr & (HEIGHT - 1);
+		trackPoint(realDist((c % size) - trackX), realDist(Std.int(c / size) - trackY), z, z);
+		trackChanged++;
+		// muestras repartidas: las primeras y luego una de cada vez mas
+		if( trackSamples.length < TRACK_SAMPLES * 2 || trackChanged % (trackChanged >> 4) == 0 ) {
+			if( trackSamples.length >= TRACK_SAMPLES * 2 ) trackSamples.splice(0, 2);
+			trackSamples.push(addr);
+			trackSamples.push(v);
+		}
+	}
+
+	function trackHeight( x : Int, y : Int, old : Int, v : Int ) {
+		if( old == v ) return;
+		trackPoint(realDist(real(x) - trackX), realDist(real(y) - trackY), old < v ? old : v, old < v ? v : old);
+		trackChanged++;
 	}
 
 	inline function set(x, y, z, v) {
@@ -173,7 +255,7 @@ class Generator {
 			fset(((real(x) + real(y) * size) << HBITS) | z, v);
 	}
 	
-	function get(x, y, z) {
+	inline function get(x, y, z) {
 		if( z < 0 ) return BEDROCK;
 		if( z >= HEIGHT ) return EMPTY;
 		return fget(((real(x) + real(y) * size) << HBITS) | z);
@@ -191,11 +273,57 @@ class Generator {
 	}
 	
 	inline function fget(addr) {
-		return flash.Memory.getByte(addr + outPos);
+		return perlin.byte(addr + outPos);
 	}
-	
+
+	/**
+	 * Anadido del port: la primera celda del mundo en [start, end) que vale v (o end), en un bucle cerrado sobre el tampon: para
+	 * recorrer todo el mundo buscando un bloque en el mismo orden (las mismas tiradas de rnd) sin pagar fget celda a celda
+	 */
+	inline function findCell( start : Int, end : Int, v : Int ) : Int {
+		#if (hl && !genCheck)
+		var m = perlin.mem, o = outPos, i = start + o, e = end + o;
+		while( i < e && m.getUI8(i) != v ) i++;
+		return i - o;
+		#else
+		var i = start;
+		while( i < end && fget(i) != v ) i++;
+		return i;
+		#end
+	}
+
+	/** la primera celda del mundo en [start, end) que vale v o w (o end) */
+	inline function findCell2( start : Int, end : Int, v : Int, w : Int ) : Int {
+		#if (hl && !genCheck)
+		var m = perlin.mem, o = outPos, i = start + o, e = end + o;
+		while( i < e ) {
+			var c = m.getUI8(i);
+			if( c == v || c == w ) break;
+			i++;
+		}
+		return i - o;
+		#else
+		var i = start;
+		while( i < end ) {
+			var c = fget(i);
+			if( c == v || c == w ) break;
+			i++;
+		}
+		return i;
+		#end
+	}
+
+	/** n celdas seguidas del mundo a v, desde addr (anadido del port: fill del tampon en vez de fset una a una) */
+	inline function fillCells( addr : Int, n : Int, v : Int ) {
+		#if (hl && !genCheck)
+		if( n > 0 ) perlin.mem.fill(addr + outPos, n, v);
+		#else
+		for( i in 0...n ) fset(addr + i, v);
+		#end
+	}
+
 	inline function hval(addr) {
-		return flash.Memory.getByte(addr + outHeight);
+		return perlin.byte(addr + outHeight);
 	}
 	
 	inline function height(x, y) {
@@ -203,7 +331,8 @@ class Generator {
 	}
 
 	inline function setHeight(x, y, v) {
-		flash.Memory.setByte(real(x) + real(y) * size + outHeight, v);
+		if( tracking ) trackHeight(x, y, height(x, y), v);
+		perlin.setByte(real(x) + real(y) * size + outHeight, v);
 	}
 	
 	inline function hash(n) {
@@ -223,12 +352,13 @@ class Generator {
 	}
 	
 	inline function realHeight(p) {
-		return flash.Memory.getDouble(perlin.outOffset + (p << 3));
+		return perlin.double(perlin.outOffset + (p << 3));
 	}
-	
+
 	function setRealHeight(x, y, v) {
 		var p = real(x) + real(y) * size;
-		flash.Memory.setDouble(perlin.outOffset + (p << 3), v);
+		if( tracking && realHeight(p) != v ) trackHeight(x, y, 0, height(x, y) + 1);
+		perlin.setDouble(perlin.outOffset + (p << 3), v);
 	}
 	
 	inline function real(v) {
@@ -250,61 +380,150 @@ class Generator {
 		return perlin.gradient3DAt(x * curScale, y * curScale, z * curScale);
 	}
 	
-	public function startGenerate(biome) {
+	/**
+	 * Los pasos del planeta, en un orden fijo (version 1): el terreno del bioma (initBiome; los relieves van dentro de fillSoil),
+	 * las estructuras de las grutas, las de la superficie, los bonus (cristales de hexalita), las del aire, una sola pasada de lo
+	 * que cubre o se propaga (coverAll), el agua (checkWater) y la roca madre
+	 */
+	public function startGenerate( biome : BiomeKind ) {
 		spentTime = 0;
 		maxTime = 0;
 		totalTime = 0;
 		progress = 0;
-		rnd = new mt.Rand(seed);
+		biomeName = Type.enumConstructor(biome);
+		rnd = stream("start");
 		perlin.init(seed, 0, 0);
-		var finalSteps = steps;
 		steps = [];
 		initBiome(biome);
-		addStep(addDetails);
-		addStep(addBonus);
-		for( s in finalSteps )
-			steps.push(s);
-		addStep(checkWater);
-		addStep(fillBedrock);
+		addStep("caves", stageCave);
+		addStep("surface", stageSurface);
+		addStep("bonus", addBonus);
+		addStep("air", stageAir);
+		addStep("cover", coverAll);
+		addStep("checkWater", checkWater);
+		addStep("fillBedrock", fillBedrock);
 		globalScale *= 1 / 180;
 	}
-	
-	function addDetails() {
+
+	/** etapas de las estructuras y de los bonus, los cristales de hexalita (DetailsGenerator) */
+	function stageRelief() {
 	}
 
-	function addCaveDetails() {
+	function stageCave() {
 	}
-	
+
+	function stageSurface() {
+	}
+
+	function stageAir() {
+	}
+
 	function addBonus() {
 	}
-	
-	function addHeightDetails() {
+
+	/** las celdas CAVE al llegar a saveCaveMask (un bit cada una), para la etapa de las grutas (DetailsGenerator.stageCave) */
+	var caveMask : haxe.io.Bytes;
+
+	/**
+	 * Version 1: donde los biomas ponian sus estructuras de gruta (addCaveDetails) se guardan las celdas CAVE; las estructuras y
+	 * los bonus (cristales de hexalita) de las grutas se ponen despues de todo el terreno, en su etapa (stageCave)
+	 */
+	function saveCaveMask() {
+		var total = size * size * HEIGHT;
+		caveMask = haxe.io.Bytes.alloc((total >> 3) + 1);
+		gcFree(true);
+		var addr = findCell(0, total, CAVE);
+		while( addr < total ) {
+			caveMask.set(addr >> 3, caveMask.get(addr >> 3) | (1 << (addr & 7)));
+			addr = findCell(addr + 1, total, CAVE);
+		}
+		gcFree(false);
+	}
+
+	/**
+	 * Anadido del port (paso 5): alrededor de un bucle largo que solo lee y escribe bytes (ni reserva memoria ni guarda referencias).
+	 * El recolector de HashLink espera a que todos los hilos esten parados: un bucle asi, en el hilo de World, hacia esperar al
+	 * principal. Con hl.Gc.blocking(true) no lo espera; con false, si hay una recoleccion en curso, este hilo espera a que acabe.
+	 * Nada dentro puede reservar memoria (si no, el recolector no veria lo reservado); nada de esto cambia el mundo
+	 */
+	inline function gcFree( b : Bool ) {
+		#if hl
+		hl.Gc.blocking(b);
+		#end
+	}
+
+	/** un paso con nombre (Macro.generate pone "funcion#n"): su azar sale de el y del bioma (initStep) */
+	function addStep( name : String, f : Void -> Void, ?p : haxe.PosInfos ) {
+		steps.push( { name : name, f : f, p : p } );
+	}
+
+	/** el paso que toca, entero: su azar (con "/rN" si se repite: stepRetry) y su funcion */
+	function runStep( i : Int ) {
+		var s = steps[i];
+		while( stepTries.length <= i ) stepTries.push(0);
+		var n = stepTries[i];
+		stepTries[i] = n + 1;
+		initStep(biomeName + "/" + s.name + (n == 0 ? "" : "/r" + n));
+		s.f();
+	}
+
+	/** nombre del paso i (GenMain --steps) */
+	public function stepName( i : Int ) : String {
+		var s = steps[i];
+		return s == null ? null : s.name;
 	}
 	
-	function addStep(f #if genDebug, ?p : haxe.PosInfos #end ) {
-		#if !genDebug var p = null; #end
-		steps.push( { f : function() { initStep(); f(); }, p : p } );
-	}
-	
-	#if genDebug
+	/** anadido del port: el paso que toca (fichero y linea de su addStep); null al acabar */
 	public function getCurrentStep() {
 		var s = steps[curPosition];
 		if( s == null ) return null;
 		return s.p;
 	}
-	#end
 	
 	function stepRetry() {
 		curPosition--;
+	}
+
+	/** pasadas de smooth3D como mucho (version 1: antes hasta que no cambiara nada; en el original salian de 1 a 8) */
+	static inline var SMOOTH_PASSES = 8;
+
+	/** otra pasada de smooth3DLater si la ultima cambio algo y no se han hecho ya SMOOTH_PASSES (una mas no cambiaria nada) */
+	function smoothAgain( changed : Int ) {
+		if( changed > 0 && stepTries[curPosition - 1] < SMOOTH_PASSES ) stepRetry();
 	}
 	
 	function initBiome(biome:BiomeKind) {
 	}
 	
+	/**
+	 * Anadido del port (version 1): lo que cubre (tierra -> tierra con hierba) o se propaga (cae o se extiende), en una sola pasada
+	 * despues de todas las estructuras, sobre todos los bloques del planeta por orden de nombre. Antes cada alloc ponia su paso
+	 * al final, en el orden de los alloc: una estructura nueva cambiaba lo que se hacia despues en todo el planeta
+	 */
+	function coverAll() {
+		var i = 0;
+		while( i < blocks.length ) {
+			var b = blocks[i++];
+			if( b.covered != null ) alloc(b.covered.k);
+			if( b.propagate != null ) alloc(b.propagate.k);
+		}
+		var ids = [for( id in 0...blocks.length ) if( blocks[id].covered != null || blocks[id].propagate != null ) id];
+		ids.sort(function(a, b) return Reflect.compare(Type.enumConstructor(blocks[a].k), Type.enumConstructor(blocks[b].k)));
+		for( id in ids ) {
+			var b = blocks[id];
+			if( b.covered != null ) addCover(id, alloc(b.covered.k));
+			if( b.propagate != null ) {
+				var tid = alloc(b.propagate.k);
+				addPropagate(id, tid, b.hasFlag(BFFallCopy) ? id : tid);
+			}
+		}
+	}
+
 	function addCover( bid : Int, bid2 : Int ) {
 		perlin.select();
 		var transp = btrans;
 		var addr = 0;
+		gcFree(true);
 		for( y in 0...size )
 			for( x in 0...size ) {
 				addr += HEIGHT - 1;
@@ -318,11 +537,13 @@ class Generator {
 				}
 				addr += HEIGHT;
 			}
+		gcFree(false);
 	}
 	
 	function addPropagate( bid : Int, bid2 : Int, fallId : Int ) {
 		perlin.select();
 		var addr = 0;
+		gcFree(true);
 		for( y in 0...size )
 			for( x in 0...size ) {
 				addr += HEIGHT;
@@ -347,6 +568,7 @@ class Generator {
 				}
 				addr += HEIGHT;
 			}
+		gcFree(false);
 	}
 	
 	#if genDebug
@@ -385,6 +607,49 @@ class Generator {
 		if( !j() ) jobs.remove(j);
 	}
 
+	/**
+	 * Anadido del port (GenMain --profile / --steps / genDebug): si no es null, cada paso se hace entero, con sus trabajos, y
+	 * luego se llama con su numero, su addStep y lo que ha tardado en ms. No cambia el mundo.
+	 */
+	public var onStep : Int -> haxe.PosInfos -> Float -> Void;
+
+	/**
+	 * Anadido del port (GenMain --steps): sumas Adler-32 de las alturas y de las alturas reales (cada 3 bytes), y una suma
+	 * (h * 31 + c, 32 bits: cualquier celda cambiada la cambia) de todas las celdas del mundo, cada una con el nombre de su
+	 * bloque (blocks[id].k) en vez de su numero local, que depende del orden de los alloc; los bits TMP / CAVE cuentan aparte.
+	 */
+	public function stepSums() : String {
+		perlin.select();
+		var code = new haxe.ds.Vector<Int>(256);
+		for( v in 0...256 ) {
+			var id = v & TMASK;
+			var n = id < blocks.length ? Type.enumConstructor(blocks[id].k) : "#" + id;
+			var h = 5381;
+			for( i in 0...n.length ) h = ((h << 5) + h + StringTools.fastCodeAt(n, i)) & 0xFFFF;
+			code[v] = h | ((v & TMP) << 9);
+		}
+		var w = 0, i = outPos, end = outPos + (size * size << HBITS);
+		while( i < end )
+			w = (w << 5) - w + code[perlin.byte(i++)];
+		// mezcla final (cada paso se puede deshacer: dos sumas distintas siguen siendo distintas)
+		w ^= w >>> 16;
+		w ^= w << 11;
+		w ^= w >>> 7;
+		var ha = 1, hb = 0;
+		for( j in 0...size * size ) {
+			ha = (ha + perlin.byte(outHeight + j)) % 65521;
+			hb = (hb + ha) % 65521;
+		}
+		var da = 1, db = 0, j = perlin.outOffset;
+		var dend = perlin.outOffset + size * size * 8;
+		while( j < dend ) {
+			da = (da + perlin.byte(j)) % 65521;
+			db = (db + da) % 65521;
+			j += 3;
+		}
+		return "heights=" + StringTools.hex(ha, 4) + StringTools.hex(hb, 4) + " doubles=" + StringTools.hex(da, 4) + StringTools.hex(db, 4) + " world=" + StringTools.hex(w, 8);
+	}
+
 	public function process( maxTimeSlice = 100 ) {
 		var t0 = flash.Lib.getTimer();
 		perlin.select();
@@ -398,40 +663,17 @@ class Generator {
 			else {
 				var cur = steps[curPosition];
 				curPosition++;
-				#if genDebug
-				var dbgT0 = haxe.Timer.stamp();
-				#end
-				cur.f();
-				#if genDebug
-				// el paso entero, con sus trabajos: las sumas son las de antes
-				while( jobs.length > 0 ) runJob();
-				{
-					var a = 1, b = 0, i = outPos, end = outPos + (size * size << HBITS);
-					while( i < end ) {
-						a = (a + flash.Memory.getByte(i)) % 65521;
-						b = (b + a) % 65521;
-						i += 7;
-					}
-					var ha = 1, hb = 0;
-					for( j in 0...size * size ) {
-						ha = (ha + flash.Memory.getByte(outHeight + j)) % 65521;
-						hb = (hb + ha) % 65521;
-					}
-					var da = 1, db = 0, j = perlin.outOffset;
-					var dend = perlin.outOffset + size * size * 8;
-					while( j < dend ) {
-						da = (da + flash.Memory.getByte(j)) % 65521;
-						db = (db + da) % 65521;
-						j += 3;
-					}
-					var msg = "STEP " + (curPosition - 1) + " " + cur.p.fileName + ":" + cur.p.lineNumber + " heights=" + StringTools.hex(ha, 4) + StringTools.hex(hb, 4) + " doubles=" + StringTools.hex(da, 4) + StringTools.hex(db, 4) + " world=" + StringTools.hex(a, 4) + StringTools.hex(b, 4) + " ms=" + Std.int((haxe.Timer.stamp() - dbgT0) * 1000);
-					#if flash
-					flash.Lib.trace(msg);
-					#else
-					Sys.println(msg);
-					#end
+				stepRuns++;
+				if( onStep == null )
+					runStep(curPosition - 1);
+				else {
+					// el paso entero, con sus trabajos (entre ellos no se toca nada mas: mismo mundo)
+					var st = haxe.Timer.stamp();
+					runStep(curPosition - 1);
+					while( jobs.length > 0 ) runJob();
+					onStep(curPosition - 1, cur.p, (haxe.Timer.stamp() - st) * 1000);
+					perlin.select();
 				}
-				#end
 			}
 			var t2 = flash.Lib.getTimer();
 			spentTime += t2 - t;
@@ -453,6 +695,11 @@ class Generator {
 
 	inline function plusOne(v) {
 		return v == size-1 ? 1-size : 1;
+	}
+
+	/** la coordenada anterior (x - 1 o y - 1, dando la vuelta al mapa) */
+	inline function prevC(v) {
+		return v == 0 ? size - 1 : v - 1;
 	}
 	
 	inline function addHeight( scale : Float, power : Float ) {
@@ -509,7 +756,7 @@ class Generator {
 		for( p in 0...size * size ) {
 			var fh = Std.int((realHeight(p) - realHeightMin) * realHeightScale);
 			if( fh < 0 ) fh = 0 else if( fh > 0xFFFF ) fh = 0xFFFF;
-			flash.Memory.setByte(outHeight + p, heights[fh]);
+			perlin.setByte(outHeight + p, heights[fh]);
 		}
 	}
 	
@@ -536,9 +783,13 @@ class Generator {
 		var b = alloc(b);
 		var by = alloc(by);
 		spread(size, function(y) {
-			for( i in y * size * HEIGHT...(y + 1) * size * HEIGHT )
-				if( fget(i) == b && rnd.random(100)<pctChance )
+			var end = (y + 1) * size * HEIGHT;
+			var i = findCell(y * size * HEIGHT, end, b);
+			while( i < end ) {
+				if( rnd.random(100)<pctChance )
 					fset(i, by);
+				i = findCell(i + 1, end, b);
+			}
 		});
 	}
 	
@@ -556,14 +807,18 @@ class Generator {
 	}
 
 	
+	/** vueltas a empezar de fillSoil como mucho (si no, se queda con lo que salga) */
+	static inline var MAX_ATTEMPTS = 8;
+
 	function fillSoil( minWater : Float ) {
-		addHeightDetails();
+		stageRelief();
 		var wh = waterLevel;
 		// fill soil
 		initPerlin(4);
 		var hscale = 0.9 * (maxHeight - wh);
 		var p = -1;
 		var water = 0;
+		gcFree(true);
 		for( y in 0...size )
 			for( x in 0...size ) {
 				var h = hval(++p);
@@ -572,23 +827,25 @@ class Generator {
 				if( rock < 0 ) rock = 0;
 				if( rock > h ) rock = h;
 				var addr = p << HBITS;
-				for( i in 0...rock )
-					fset(addr++, ROCK);
-				for( i in rock...h )
-					fset(addr++, SOIL);
+				fillCells(addr, rock, ROCK);
+				fillCells(addr + rock, h - rock, SOIL);
+				addr += h;
 				if( (realHeight(p) - realHeightMin) * realHeightScale < waterLimit )
 					for( i in h...wh+1 ) {
 						fset(addr++, WATER);
 						water++;
 					}
 			}
+		gcFree(false);
 		var w = water / (size * size);
-		if( w < minWater && size > 128 ) {
-			// change perlin seed
-			perlin.seed = hash(perlin.seed);
-			for( i in 0...size * size * HEIGHT )
-				fset(i, 0);
+		if( w < minWater && size > 128 && attempt < MAX_ATTEMPTS - 1 ) {
+			// poca agua: otra vez desde el principio, con otro azar en todos los pasos (attempt entra en stream)
+			attempt++;
+			perlin.clear();
+			fillCells(0, size * size * HEIGHT, 0);
 			curPosition = 0;
+			stepTries = [];
+			jobs = [];
 		}
 	}
 
@@ -634,11 +891,12 @@ class Generator {
 				var h = hval(p);
 				var min = hstart + 1;
 				var addr = (p << HBITS) + min;
+				// cada pasada se para en la primera celda vacia de la columna, como el original: las 100 pasadas de Marte solo
+				// agrandan por debajo lo que dejo la primera, y quedan los pilares y las grietas estrechas bajo las arenas movedizas
 				for( z in min...h ) {
 					if( fget(addr) == EMPTY )
-						continue;
-					var g = perlin3D(x, y, z);
-					if( g < heights[z] )
+						break;
+					if( perlin3D(x, y, z) < heights[z] )
 						fset(addr, block);
 					addr++;
 				}
@@ -646,60 +904,74 @@ class Generator {
 		};
 	}
 	
-	var blobsStep : Int;
-	
+	/**
+	 * Quita lo que flota: se marca (TMP) lo que hay por encima del primer vacio de cada columna, se desmarca lo que toca algo
+	 * apoyado y lo que toca eso, y se borra lo que queda marcado. Version 1: un solo relleno (antes varias pasadas de
+	 * removeBlobRec con stepRetry, que llegaban a lo mismo salvo en el borde del mapa)
+	 */
 	function removeBlobs() {
-		if( blobsStep == 0 ) {
-			for( y in 0...size )
-				for( x in 0...size ) {
-					var addr = (x + y * size) << HBITS;
-					for( z in 0...HEIGHT ) {
-						var b = fget(addr++);
-						if( b == CAVE )
-							fset(addr-1,EMPTY);
-						else if( b != EMPTY )
-							continue;
-						// mark upper part as to-do
-						for( i in z + 1...HEIGHT ) {
-							var b = fget(addr);
-							if( b == CAVE )
-								fset(addr, EMPTY);
-							else if( b != EMPTY )
-								fset(addr, b | TMP);
-							addr++;
-						}
-						break;
-					}
-				}
-			blobsStep++;
-			stepRetry();
-		} else if( blobsStep > 0 ) {
-			var count = 0, match = 0;
-			for( y in 0...size )
-				for( x in 0...size ) {
-					var addr = (x + y * size) << HBITS;
-					for( z in 0...HEIGHT ) {
+		gcFree(true);
+		for( y in 0...size )
+			for( x in 0...size ) {
+				var addr = (x + y * size) << HBITS;
+				for( z in 0...HEIGHT ) {
+					var b = fget(addr++);
+					if( b == CAVE )
+						fset(addr-1,EMPTY);
+					else if( b != EMPTY )
+						continue;
+					// mark upper part as to-do
+					for( i in z + 1...HEIGHT ) {
 						var b = fget(addr);
-						if( b & TMP != 0 ) {
-							match++;
-							count += removeBlobRec(x,y,z,addr,30);
-						}
+						if( b == CAVE )
+							fset(addr, EMPTY);
+						else if( b != EMPTY )
+							fset(addr, b | TMP);
 						addr++;
 					}
+					break;
 				}
-			if( count == 0 )
-				blobsStep = -1;
-			else
-				blobsStep++;
-			stepRetry();
-		} else {
-			for( addr in 0...size * size * HEIGHT ) {
-				var b = fget(addr);
-				if( b & TMP != 0 )
-					fset(addr, EMPTY);
 			}
-			blobsStep = 0;
+		gcFree(false);
+		// lo marcado que toca algo apoyado (lleno y sin TMP), y desde ahi todo lo marcado que se toca
+		var queue = new Array<Int>();
+		var total = size * size * HEIGHT;
+		for( addr in 0...total )
+			if( fget(addr) & TMP != 0 && supported(addr) ) {
+				fset(addr, fget(addr) & TMASK);
+				queue.push(addr);
+			}
+		while( queue.length > 0 ) {
+			var addr = queue.pop();
+			var c = addr >> HBITS, z = addr & (HEIGHT - 1);
+			var x = c % size, y = Std.int(c / size);
+			inline function visit( n : Int ) {
+				if( fget(n) & TMP != 0 ) {
+					fset(n, fget(n) & TMASK);
+					queue.push(n);
+				}
+			}
+			visit(addr + (minusOne(x) << HBITS));
+			visit(addr + (plusOne(x) << HBITS));
+			visit(addr + ((minusOne(y) * size) << HBITS));
+			visit(addr + ((plusOne(y) * size) << HBITS));
+			if( z > 0 ) visit(addr - 1);
+			if( z < HEIGHT - 1 ) visit(addr + 1);
 		}
+		gcFree(true);
+		for( addr in 0...total )
+			if( fget(addr) & TMP != 0 )
+				fset(addr, EMPTY);
+		gcFree(false);
+	}
+
+	/** una vecina llena y sin TMP (apoyada) */
+	function supported( addr : Int ) : Bool {
+		var c = addr >> HBITS, z = addr & (HEIGHT - 1);
+		var x = c % size, y = Std.int(c / size);
+		inline function solid( n : Int ) return (fget(n) - 1) & TMP == 0;
+		return solid(addr + (minusOne(x) << HBITS)) || solid(addr + (plusOne(x) << HBITS)) || solid(addr + ((minusOne(y) * size) << HBITS))
+			|| solid(addr + ((plusOne(y) * size) << HBITS)) || (z > 0 && solid(addr - 1)) || (z < HEIGHT - 1 && solid(addr + 1));
 	}
 	
 	function smoothHeight() {
@@ -707,35 +979,9 @@ class Generator {
 		for( y in 0...size )
 			for( x in 0...size ) {
 				var h = (hval(addr) << 2) + (hval(addr + minusOne(x)) + hval(addr + plusOne(x)) + hval(addr + minusOne(y) * size) + hval(addr + plusOne(y)*size)) * 3;
-				flash.Memory.setByte(outHeight + addr, (h + 7) >> 4);
+				perlin.setByte(outHeight + addr, (h + 7) >> 4);
 				addr++;
 			}
-	}
-	
-	function removeBlobRec(x, y, z, addr, depth ) {
-		var count = 0;
-		if( fget(addr + (minusOne(x) << HBITS)) - 1 & TMP == 0 || fget(addr + (plusOne(x) << HBITS)) - 1 & TMP == 0 ||
-			fget(addr + (minusOne(y) << HBITS) * size) - 1 & TMP == 0 || fget(addr + (plusOne(y) << HBITS) * size) - 1 & TMP == 0 ||
-			(z > 0 && fget(addr - 1)-1 & TMP == 0) || (z < HEIGHT-1 && fget(addr + 1)-1 & TMP == 0) ) {
-			fset(addr, fget(addr) & TMASK);
-			count++;
-			depth--;
-			if( depth > 0 ) {
-				var naddr;
-				naddr = addr + (minusOne(x) << HBITS);
-				if( fget(naddr) & TMP != 0 )
-					count += removeBlobRec(minusOne(x), y, z, naddr, depth);
-				naddr = addr + (minusOne(y) << HBITS)*size;
-				if( fget(naddr) & TMP != 0 )
-					count += removeBlobRec(x, minusOne(y), z, naddr, depth);
-				if( z > 0 ) {
-					naddr = addr - 1;
-					if( fget(naddr) & TMP != 0 )
-						count += removeBlobRec(x, y, z--, naddr, depth);
-				}
-			}
-		}
-		return count;
 	}
 	
 	inline function countEmpty(x, y, z, addr) {
@@ -755,35 +1001,134 @@ class Generator {
 		return count;
 	}
 	
+	/** countEmpty(x, y, z, addr) <= 2, sin leer las vecinas que ya no cambian la respuesta (anadido del port) */
+	inline function fewEmpty(x, y, z, addr) {
+		var n = (fget(addr + (minusOne(x) << HBITS)) == EMPTY ? 1 : 0) + (fget(addr + (plusOne(x) << HBITS)) == EMPTY ? 1 : 0);
+		if( fget(addr + (minusOne(y) << HBITS) * size) == EMPTY ) n++;
+		if( n <= 2 ) {
+			if( fget(addr + (plusOne(y) << HBITS) * size) == EMPTY ) n++;
+			if( n <= 2 ) {
+				if( z > 0 && fget(addr - 1) == EMPTY ) n++;
+				if( n <= 2 && z < HEIGHT - 1 && fget(addr + 1) == EMPTY ) n++;
+			}
+		}
+		return n <= 2;
+	}
+
+	/** countEmpty(x, y, z, addr) >= 5, sin leer las vecinas que ya no cambian la respuesta (anadido del port) */
+	inline function manyEmpty(x, y, z, addr) {
+		// vecinas que no cuentan como vacias (fuera del mundo en z o llenas): con 2 ya no llega a 5
+		var miss = (z > 0 ? 0 : 1) + (z < HEIGHT - 1 ? 0 : 1);
+		if( fget(addr + (minusOne(x) << HBITS)) != EMPTY ) miss++;
+		if( miss < 2 ) {
+			if( fget(addr + (plusOne(x) << HBITS)) != EMPTY ) miss++;
+			if( miss < 2 ) {
+				if( fget(addr + (minusOne(y) << HBITS) * size) != EMPTY ) miss++;
+				if( miss < 2 && fget(addr + (plusOne(y) << HBITS) * size) != EMPTY ) miss++;
+				if( miss < 2 && z > 0 && fget(addr - 1) != EMPTY ) miss++;
+				if( miss < 2 && z < HEIGHT - 1 && fget(addr + 1) != EMPTY ) miss++;
+			}
+		}
+		return miss < 2;
+	}
+
+	/**
+	 * Anadido del port: lo que hace falta para que smooth3D no mire mas de lo necesario, con el mismo resultado:
+	 * - smoothTop: por columna, lo mas alto que no esta vacio (o mas: solo sube). Por encima del maximo de una columna y de sus
+	 *   4 vecinas, mas uno, una celda vacia tiene 5 o 6 vecinas vacias (no se rellena) y no hay celdas llenas: no se mira;
+	 * - smoothDirty: columnas en las que se ha escrito en la pasada anterior (bit 0) y en esta (bit 1). En una reanudacion
+	 *   (stepRetry o el bucle de Marte, smoothSeq), una columna sin escrituras en ella ni en sus vecinas desde la ultima vez que
+	 *   se miro no cambiaria nada: cada cambio empieza en una celda de la columna que se mira y solo depende de sus 6 vecinas.
+	 */
+	var smoothTop : haxe.ds.Vector<Int>;
+	var smoothDirty : haxe.ds.Vector<Int>;
+	/** la ultima pasada de smooth3D que cambio algo: en que ejecucion de paso (stepRuns), en que paso y con que alturas */
+	var smoothSeq : { run : Int, pos : Int, hmin : Int, hmax : Int };
+	/** pasos empezados (process): una reanudacion de smooth3D es en el mismo o en el siguiente, el mismo paso otra vez */
+	var stepRuns = 0;
+
+	/** principio de una pasada de smooth3D: la primera de una serie mira todas las columnas */
+	function smoothBegin( hmin : Int, hmax : Int ) {
+		var n = size * size;
+		var s = smoothSeq;
+		var resume = s != null && s.hmin == hmin && s.hmax == hmax && (s.run == stepRuns || (s.run == stepRuns - 1 && s.pos == curPosition - 1));
+		if( resume ) {
+			for( c in 0...n ) smoothDirty[c] = smoothDirty[c] >> 1;
+			return;
+		}
+		if( smoothTop == null ) {
+			smoothTop = new haxe.ds.Vector(n);
+			smoothDirty = new haxe.ds.Vector(n);
+		}
+		for( c in 0...n ) {
+			var addr = (c << HBITS) + HEIGHT - 1, z = HEIGHT - 1;
+			while( z > 0 && fget(addr) == EMPTY ) {
+				z--;
+				addr--;
+			}
+			smoothTop[c] = z;
+			smoothDirty[c] = 1;
+		}
+	}
+
+	/** fin de una pasada: si cambio algo, la siguiente puede ser una reanudacion */
+	function smoothEnd( changed : Int, hmin : Int, hmax : Int ) {
+		smoothSeq = changed > 0 ? { run : stepRuns, pos : curPosition - 1, hmin : hmin, hmax : hmax } : null;
+	}
+
+	/** se ha escrito en la celda addr (si es del mundo: los saltos de minusOne pueden salirse) */
+	inline function smoothWrote( addr : Int, filled : Bool ) {
+		if( addr >= 0 && addr < size * size * HEIGHT ) {
+			var c = addr >> HBITS;
+			smoothDirty[c] = smoothDirty[c] | 2;
+			if( filled && (addr & (HEIGHT - 1)) > smoothTop[c] ) smoothTop[c] = addr & (HEIGHT - 1);
+		}
+	}
+
 	function smooth3D( hmin = -1, hmax = 255 ) {
 		var changed = 0;
 		if( hmin < 0 ) hmin = waterLevel;
+		smoothBegin(hmin, hmax);
 		for( y in 0...size )
 			changed += smooth3DRow(y, hmin, hmax);
+		smoothEnd(changed, hmin, hmax);
 		return changed;
 	}
 
 	/** smooth3D() repartido, una fila por llamada (anadido del port, ver jobs); then recibe lo que ha cambiado */
 	function smooth3DLater( then : Int -> Void ) {
 		var changed = 0, hmin = waterLevel;
-		spread(size, function(y) changed += smooth3DRow(y, hmin, 255), function() then(changed));
+		smoothBegin(hmin, 255);
+		spread(size, function(y) changed += smooth3DRow(y, hmin, 255), function() {
+			smoothEnd(changed, hmin, 255);
+			then(changed);
+		});
 	}
 
 	function smooth3DRow( y : Int, hmin : Int, hmax : Int ) {
 		var changed = 0;
+		var top = smoothTop, dirty = smoothDirty;
+		var row = y * size, up = minusOne(y) * size, down = plusOne(y) * size;
 		for( x in 0...size ) {
 			var h = height(x,y);
 			if( h <= hmin || h > hmax ) continue;
-			var addr = ((x + y * size) << HBITS) + hmin;
-			for( z in hmin...HEIGHT ) {
+			var c = row + x, l = c + minusOne(x), r = c + plusOne(x), u = c + up, d = c + down;
+			if( (dirty[c] | dirty[l] | dirty[r] | dirty[u] | dirty[d]) == 0 ) continue;
+			var zmax = top[c];
+			if( top[l] > zmax ) zmax = top[l];
+			if( top[r] > zmax ) zmax = top[r];
+			if( top[u] > zmax ) zmax = top[u];
+			if( top[d] > zmax ) zmax = top[d];
+			zmax += 2;
+			if( zmax > HEIGHT ) zmax = HEIGHT;
+			var addr = (c << HBITS) + hmin;
+			for( z in hmin...zmax ) {
 				var b = fget(addr);
 				if( b == EMPTY ) {
-					var count = countEmpty(x, y, z, addr);
-					if( count <= 2 )
+					if( fewEmpty(x, y, z, addr) )
 						changed += smooth3DEmptyRec(x, y, z, addr, 4);
 				} else if( b != WATER ) {
-					var count = countEmpty(x, y, z, addr);
-					if( count >= 5 )
+					if( manyEmpty(x, y, z, addr) )
 						changed += smooth3DRec(x, y, z, addr, 10);
 				}
 				addr++;
@@ -791,39 +1136,42 @@ class Generator {
 		}
 		return changed;
 	}
-	
+
 	function smooth3DRec(x, y, z, addr, depth) {
 		if( fget(addr) == WATER )
 			return 0;
 		fset(addr, EMPTY);
+		smoothWrote(addr, false);
 		var count = 1;
 		depth--;
 		if( depth == 0 ) return count;
+		// version 1: la x / y de la vecina (antes se pasaba el desplazamiento de minusOne: mal en el borde del mapa)
 		var naddr = addr + (minusOne(x) << HBITS);
-		if( countEmpty(minusOne(x), y, z, naddr) >= 5 )
-			count += smooth3DRec(minusOne(x), y, z, naddr, depth);
+		if( manyEmpty(prevC(x), y, z, naddr) )
+			count += smooth3DRec(prevC(x), y, z, naddr, depth);
 		var naddr = addr + (minusOne(y) << HBITS) * size;
-		if( countEmpty(x,minusOne(y), z, naddr) >= 5 )
-			count += smooth3DRec(x, minusOne(y), z, naddr, depth);
+		if( manyEmpty(x, prevC(y), z, naddr) )
+			count += smooth3DRec(x, prevC(y), z, naddr, depth);
 		var naddr = addr - 1;
-		if( z > 0 && countEmpty(x,y, z-1, naddr) >= 5 )
+		if( z > 0 && manyEmpty(x,y, z-1, naddr) )
 			count += smooth3DRec(x, y, z - 1, naddr, depth);
 		return count;
 	}
-	
+
 	function smooth3DEmptyRec(x, y, z, addr, depth) {
 		fset(addr, SOIL);
+		smoothWrote(addr, true);
 		var count = 1;
 		depth--;
 		if( depth == 0 ) return count;
 		var naddr = addr + (minusOne(x) << HBITS);
-		if( countEmpty(minusOne(x), y, z, naddr) <= 2 )
-			count += smooth3DEmptyRec(minusOne(x), y, z, naddr, depth);
+		if( fewEmpty(prevC(x), y, z, naddr) )
+			count += smooth3DEmptyRec(prevC(x), y, z, naddr, depth);
 		var naddr = addr + (minusOne(y) << HBITS) * size;
-		if( countEmpty(x,minusOne(y), z, naddr) <= 2 )
-			count += smooth3DEmptyRec(x, minusOne(y), z, naddr, depth);
+		if( fewEmpty(x, prevC(y), z, naddr) )
+			count += smooth3DEmptyRec(x, prevC(y), z, naddr, depth);
 		var naddr = addr - 1;
-		if( z > 0 && countEmpty(x,y, z-1, naddr) <= 2 )
+		if( z > 0 && fewEmpty(x,y, z-1, naddr) )
 			count += smooth3DEmptyRec(x, y, z - 1, naddr, depth);
 		return count;
 	}
@@ -831,7 +1179,7 @@ class Generator {
 	public function getBitmap() {
 		var bmp = new flash.display.BitmapData(size, size, true, 0);
 		var colors = bmp.getVector(bmp.rect);
-		flash.Memory.select(perlin.buf);
+		perlin.select();
 		
 		var wh = waterLevel;
 		for( y in 0...size )
@@ -1105,7 +1453,7 @@ class Generator {
 		for( addr in 0...tot )
 			if( fget(addr) == CAVE )
 				tmp[addr] = 1;
-		addStep(function() {
+		addStep("showCaves", function() {
 			var addr = 0;
 			for( y in 0...size )
 				for( x in 0...size )
@@ -1126,15 +1474,17 @@ class Generator {
 		var transp = btrans.copy();
 		transp[WATER] = false;
 		var isLiquid = blocks[WATER].hasProp(PLiquid);
+		// version 1: solo el agua hasta el nivel del mar (la de las cascadas de las estructuras corre en el juego)
+		var top = waterLevel < HEIGHT - 1 ? waterLevel : HEIGHT - 2;
+		gcFree(true);
 		for( y in 0...size )
 			for( x in 0...size ) {
-				addr++;
-				for( z in 1...HEIGHT ) {
-					var f = fget(addr);
-					if( f != WATER ) {
-						addr++;
-						continue;
-					}
+				var col = (x + y * size) << HBITS;
+				addr = col + 1;
+				// anadido del port: de un agua a la siguiente de la columna (findCell), en el mismo orden
+				var colEnd = col + top + 1;
+				while( (addr = findCell(addr, colEnd, WATER)) < colEnd ) {
+					var z = addr & (HEIGHT - 1);
 					waterTotal++;
 					if( isLiquid ) {
 						var a = addr + (minusOne(x) << HBITS);
@@ -1155,6 +1505,7 @@ class Generator {
 					addr++;
 				}
 			}
+		gcFree(false);
 	}
 	
 	function fillBedrock() {

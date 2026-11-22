@@ -11,7 +11,7 @@ import StorageData.StorageInfo;
  *   - bloques: tantas casillas como un Conteneur ESCorp (BChest, BFContainer(4)), con las pilas del inventario; las gemas son
  *     bloques y van aqui
  *   - cargas: un contador por tipo, sin casillas (como en el inventario); amarillas, azules y rosas hasta la cuarta parte del
- *     maximo del inventario (24, 12 y 5), las de bonus sin limite
+ *     maximo del inventario (24, 12 y 5), las de hexalita sin limite
  * Uno por partida (solo hay una nave): no cambia al modificar la nave en el hangar. Se mueve con arrastrar y soltar (SlotGrid):
  * zona 0 = los bloques guardados, 1 = las cargas guardadas, 2 = el inventario, 3 = las cargas del inventario. Lo que sale va al
  * inventario: la barra y el Kubindex lo ven (Inv.display).

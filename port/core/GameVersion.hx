@@ -6,7 +6,7 @@ import Common;
  */
 class GameVersion {
 
-	public static inline var VERSION = "0.8.1";
+	public static inline var VERSION = "0.9";
 
 	static var hash : String;
 

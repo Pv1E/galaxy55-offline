@@ -58,6 +58,10 @@ class DeathDropsPlay {
 			x += w.shipDX;
 			y += w.shipDY;
 		} else if( d.key != DeathDrops.planetKey(g.info) || g.ship == null || g.info.mothership == true ) return;
+		else if( w.solid(Math.floor(x), Math.floor(y), Math.floor(d.z)) ) {
+			// anadido del port: dentro de algo solido (ver GameView), sube a la superficie y se guarda alli
+			d.z = w.topCollide(Math.floor(x), Math.floor(y)) + 0.01;
+		}
 		var drop = g.drops.add(DeathDrops.wrap(x, w.size), DeathDrops.wrap(y, w.size), d.z, DeathDrops.block());
 		// cae recto, sin la deriva al azar de lo que se suelta (Dummy): en el sitio exacto y en el mismo en cada carga
 		drop.vx = drop.vy = 0;

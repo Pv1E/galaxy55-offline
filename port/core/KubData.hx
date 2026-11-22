@@ -6,7 +6,7 @@ typedef KubAnomaly = {
 	var id : String;
 	var names : Array<String>;
 	var biomes : Array<String>;
-	/** el generador no la apunta (cristales verdes): se identifica al identificar uno de sus kubes propios */
+	/** el generador no la apunta (cristales de hexalita): se identifica al identificar uno de sus kubes propios */
 	var byBlocks : Bool;
 }
 
@@ -55,7 +55,7 @@ class KubData {
 
 	/** todas las fichas, en el orden de los datos (sin las cargas) */
 	public var entries(default, null) : Array<Block> = [];
-	/** las cargas con ficha propia (categoria Cargas): amarilla, azul y rosa; la de bonus no */
+	/** las cargas con ficha propia (categoria Cargas): amarilla, azul y rosa; la de hexalita no */
 	public var charges(default, null) : Array<Block> = [];
 	public var anomalies(default, null) : Array<KubAnomaly> = [];
 	var places = new Map<Int, KubPlace>();

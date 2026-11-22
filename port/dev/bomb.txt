@@ -87,7 +87,7 @@ shot bomb_crater
 # 3) cadena: A en x=52, B en 58, C en 64 (cada una a 6 de la anterior) y D en 73 (a 9 de C, fuera de su alcance)
 filla 44 52 84 76 46 56 BRock
 filla 44 52 84 76 57 75 none
-tp 64.5 78.5 57.01 0 0
+tp 64.5 78.5 top 0 0
 wait 20
 life 100
 set 52 64 57 BArtiBomb

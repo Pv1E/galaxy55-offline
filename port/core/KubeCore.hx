@@ -93,6 +93,12 @@ class KubeCore {
 		return slots[i];
 	}
 
+	/**
+	 * Los bloques de los MAX kubes, ya: los que se anadan despues a Block.all (bloques de remplazo de SaveNames) van detras y el
+	 * kube numero i sigue teniendo los mismos indices que en el servidor (que no tiene bloques de remplazo)
+	 */
+	public static function reserveAll() blocksFor(MAX - 1);
+
 	/** un bloque mas al final de Block.all, con el BlockKind de los kubes del editor */
 	static function newBlock() : Block {
 		var b = new Block(BKubeEditor);

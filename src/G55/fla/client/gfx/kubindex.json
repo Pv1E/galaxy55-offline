@@ -169,6 +169,15 @@
    "biomes": null
   },
   {
+   "id": "lavafall",
+   "names": [
+    "Cascada de lava",
+    "Lava fall",
+    "Cascade de lave"
+   ],
+   "biomes": null
+  },
+  {
    "id": "tree",
    "names": [
     "Árbol solitario",
@@ -198,9 +207,9 @@
   {
    "id": "bonus",
    "names": [
-    "Cristales verdes",
-    "Green crystals",
-    "Cristaux verts"
+    "Cristales de hexalita",
+    "Hexalite crystals",
+    "Cristaux d'hexalite"
    ],
    "biomes": null,
    "byBlocks": true
@@ -306,11 +315,24 @@
    ]
   },
   {
+   "id": "cavelava",
+   "names": [
+    "Manantial de lava",
+    "Lava spring",
+    "Source de lave"
+   ],
+   "biomes": [
+    "BIAutumn",
+    "BIWinterPeaks",
+    "BIMars"
+   ]
+  },
+  {
    "id": "cavebonus",
    "names": [
-    "Cristales verdes subterráneos",
-    "Underground green crystals",
-    "Cristaux verts souterrains"
+    "Cristales de hexalita subterráneos",
+    "Underground hexalite crystals",
+    "Cristaux d'hexalite souterrains"
    ],
    "biomes": [
     "BIAutumn",
@@ -827,14 +849,14 @@
    "BICometCinder",
    "a:volcano",
    "a:crater",
-   "a:cavecascade"
+   "a:cavelava"
   ],
   "BLava": [
    "BICometCinder",
    "a:largepit",
    "a:volcano",
-   "a:cascade",
-   "a:cavecascade"
+   "a:lavafall",
+   "a:cavelava"
   ],
   "BShipHull": [
    "a:capsule",

@@ -3,7 +3,6 @@ import SaveData.SaveInfo;
 import IconMesh.Icons;
 import KubeSaveData.EditorKubesSave;
 
-
 /** un kube del editor cargado en la sesion: sus bloques de Block.all no cambian de indice mientras dura */
 private class Slot {
 	public var id : String;
@@ -41,8 +40,9 @@ private class Slot {
  *   hacen falta y guardan su indice toda la sesion. El mundo los distingue por su indice (World.localId).
  * - Sus caras van a casillas libres del atlas (transparentes y sin bloque), desde el final; Atlas.updateTiles las sube.
  * - Como mucho MAX kubes: primero los que tiene la partida, luego los mas recientes de la carpeta.
- * - En la partida guardada van por el nombre de su archivo (EditorKubesSave), en un campo aparte. Un kube cambiado en el
- *   editor se ve con su dibujo nuevo al cargar; uno borrado (o que ya no se puede leer) desaparece: aire y casilla vacia.
+ * - En la partida guardada van por el nombre de su archivo: "editor:<archivo>#<variante>" (SaveNames). Un kube cambiado en el
+ *   editor se ve con su dibujo nuevo al cargar; uno borrado (o que ya no se puede leer), y todos en aventura, quedan en un bloque
+ *   de remplazo con su nombre: vuelven cuando su archivo esta y se juega en creativo.
  * - En supervivencia de una partida creativa son bloques como los demas; en aventura no se cargan (ni paleta, ni nada).
  */
 class EditorKubes {
@@ -63,6 +63,11 @@ class EditorKubes {
 	public static var enabled(default, null) = false;
 
 	public static inline function isEditor( b : Block ) : Bool return b != null && b.k == BKubeEditor;
+
+	/** SaveNames (port/core, sin el juego) nombra los kubes con estas funciones: se le dan antes de cargar el primero */
+	static function linkNames() {
+		if( SaveNames.editorKubes == null ) SaveNames.editorKubes = { idOfBlock : idOfBlock, variantOf : variantOf, blockOrFirst : blockOrFirst };
+	}
 
 	/** kube de un archivo: su nombre sin la extension, en minusculas */
 	public static function idOf( path : String ) : String return new haxe.io.Path(path).file.toLowerCase();
@@ -105,6 +110,7 @@ class EditorKubes {
 	 * carpeta se dejan hasta useLocal. Se ven en todas las partidas del servidor y salen en la paleta en creativo.
 	 */
 	public static function useServer( list : Array<KubeCore.NetKube>, n : Int ) {
+		linkNames();
 		serverMode = true;
 		enabled = true;
 		byId = new Map();
@@ -149,18 +155,21 @@ class EditorKubes {
 		}
 		enabled = info.creative == true;
 		if( !enabled ) {
+			// en aventura no hay ninguno: los de la partida pasan a bloques de remplazo, con su nombre (vuelven al jugarla en creativo)
+			SaveNames.mapBlocks(info, function(k, _) return isEditor(Block.all[k]) ? SaveNames.placeholderFor(SaveNames.nameOfIndex(k)).index : k);
 			for( s in slots ) s.active = false;
 			skipped = 0;
 			return;
 		}
-		var raw = info.editorKubes;
-		var wanted = raw != null ? raw.ids.copy() : [];
-		for( id in usedIds(info) ) if( wanted.indexOf(id) < 0 ) wanted.push(id);
-		refresh(wanted);
-		if( raw != null ) {
-			merge(info, raw);
-			info.editorKubes = null;
-		}
+		refresh(usedIds(info));
+		// otra vez por su nombre, ahora que estan cargados los de la partida: los que esperaban en un bloque de remplazo pasan a su
+		// bloque si su archivo se ha podido cargar, y los de un archivo que ya no esta (leidos antes de refresh) a uno de remplazo
+		SaveNames.mapBlocks(info, function(k, _) {
+			var b = Block.all[k];
+			var n = SaveNames.placeholderName(b);
+			if( n == null && isEditor(b) ) n = SaveNames.nameOf(b);
+			return n != null && StringTools.startsWith(n, SaveNames.EDITOR) ? SaveNames.resolve(n).index : k;
+		});
 	}
 
 	/**
@@ -169,6 +178,7 @@ class EditorKubes {
 	 */
 	public static function refresh( ?wanted : Array<String> ) {
 		if( serverMode ) return;
+		linkNames();
 		var files = new Map<String, String>();
 		var order = [];
 		for( p in KubeData.list() ) {
@@ -302,62 +312,70 @@ class EditorKubes {
 
 	// ---------------------------------------------------------------- partida guardada
 
-	/** kubes que la partida (ya con sus bloques) tiene en el terreno, la nave, el inventario o las cantinas */
+	/**
+	 * kubes que la partida tiene en el terreno, la nave, el inventario o las cantinas: los ya cargados y los que esperan en un
+	 * bloque de remplazo "editor:<archivo>#<variante>" (SaveNames)
+	 */
 	static function usedIds( info : SaveInfo ) : Array<String> {
 		var out = [];
-		function note( gi : Int ) {
-			var id = idOfBlock(Block.all[gi & 0xFFFF]);
-			if( id != null && out.indexOf(id) < 0 ) out.push(id);
-		}
-		function edits( e : Array<Int> ) {
-			if( e == null ) return;
-			var i = 0;
-			while( i + 1 < e.length ) {
-				if( e[i] >= 0 ) note(e[i + 1]);
-				i += 2;
+		SaveNames.mapBlocks(info, function(k, _) {
+			var b = Block.all[k];
+			var id = idOfBlock(b);
+			if( id == null ) {
+				var e = SaveNames.parseEditor(SaveNames.placeholderName(b));
+				if( e != null ) id = e.id;
 			}
-		}
-		function slotsOf( t : Protocol.BlockInventory ) if( t != null ) for( s in t ) if( s != null ) note(s.k);
-		edits(info.edits);
-		edits(info.shipEdits);
-		if( info.uni != null && info.uni.planets != null ) for( p in info.uni.planets ) edits(p.edits);
-		if( info.deathDrops != null ) for( d in info.deathDrops ) slotsOf(d.t);
-		if( info.inv != null ) slotsOf(info.inv.t);
-		if( info.chests != null ) for( c in info.chests ) slotsOf(c.t);
-		if( info.storage != null ) slotsOf(info.storage.t);
+			if( id != null && out.indexOf(id) < 0 ) out.push(id);
+			return k;
+		});
 		return out;
 	}
 
-	/** bloque de un numero de la partida guardada (null: el kube ya no esta o la variante no existe en su forma de ahora) */
-	static function decode( raw : EditorKubesSave, n : Int ) : Block {
-		var i = n >> 2, v = n & 3;
-		if( i < 0 || i >= raw.ids.length ) return null;
-		var s = byId.get(raw.ids[i]);
-		if( s == null || !s.active ) return null;
-		// la forma ha cambiado en el editor (una puerta abierta que ahora es un cubo): el bloque del kube
-		return s.blocks[v < s.variants() ? v : 0];
+	/** variante de un bloque de un kube (0 = el bloque; la puerta, el tableau y el plano tienen mas: PER) */
+	public static function variantOf( b : Block ) : Int {
+		var s = slotOf(b);
+		return s == null ? 0 : b.index - s.blocks[0].index;
 	}
 
-	/** los kubes de la partida guardada pasan a los campos de siempre (KubeSaveData.merge: el servidor hace lo mismo) */
-	static function merge( info : SaveInfo, raw : EditorKubesSave ) KubeSaveData.merge(info, raw, function( n ) return decode(raw, n));
+	/**
+	 * el bloque de un kube cargado para un nombre guardado (SaveNames.resolve); si la forma ha cambiado en el editor y ya no tiene
+	 * esa variante (una puerta abierta que ahora es un cubo), el bloque del kube. null si no esta cargado
+	 */
+	public static function blockOrFirst( id : String, variant : Int ) : Block {
+		var s = byId.get(id.toLowerCase());
+		if( s == null || !s.active ) return null;
+		return s.blocks[variant < s.variants() ? variant : 0];
+	}
 
 	/**
-	 * Lo que SaveData.write escribe: sin kubes del editor en los campos de siempre, la misma partida; si no, una copia con aire y
-	 * casillas vacias en su sitio y los kubes en editorKubes. La partida en juego no cambia.
+	 * Multijugador (anadido del port): la partida tal como va al servidor (la que el anfitrion lleva a su servidor, GalaxyApp.hostSave,
+	 * y la que el juego le manda, CSaveRecord). Alli los bloques de los kubes del editor de esta sesion no significan nada: sin
+	 * ninguno, la misma partida; si no, una copia con aire y casillas vacias en su sitio y los kubes por su archivo en editorKubes
+	 * (KubeSaveData; el servidor los pasa a los suyos, ServerWorlds.importHost). La partida en juego no cambia.
 	 */
-	public static function encode( info : SaveInfo ) : SaveInfo {
+	public static function encodeForServer( info : SaveInfo ) : SaveInfo {
 		if( usedIds(info).length == 0 ) return info;
 		var out : SaveInfo = Reflect.copy(info);
 		var raw : EditorKubesSave = { ids : [] };
+		// un kube cargado, o uno que espera en un bloque de remplazo "editor:<archivo>#<variante>" (SaveNames)
+		function kube( b : Block ) : Bool return isEditor(b) || SaveNames.parseEditor(SaveNames.placeholderName(b)) != null;
 		function num( b : Block ) : Int {
-			var s = slotOf(b);
-			if( s == null || !s.active ) return -1;
-			var i = raw.ids.indexOf(s.id);
+			var s = slotOf(b), id = null, v = 0;
+			if( s != null && s.active ) {
+				id = s.id;
+				v = b.index - s.blocks[0].index;
+			} else {
+				var e = SaveNames.parseEditor(SaveNames.placeholderName(b));
+				if( e == null ) return -1;
+				id = e.id;
+				v = e.variant;
+			}
+			var i = raw.ids.indexOf(id);
 			if( i < 0 ) {
 				i = raw.ids.length;
-				raw.ids.push(s.id);
+				raw.ids.push(id);
 			}
-			return (i << 2) | (b.index - s.blocks[0].index);
+			return (i << 2) | v;
 		}
 		// pares de celdas: los kubes del editor pasan a aire y a la lista aparte
 		function edits( e : Array<Int>, put : Array<Int> -> Void ) : Array<Int> {
@@ -366,7 +384,7 @@ class EditorKubes {
 			var i = 0;
 			while( i + 1 < copy.length ) {
 				var b = copy[i] >= 0 ? Block.all[copy[i + 1] & 0xFFFF] : null;
-				if( isEditor(b) ) {
+				if( kube(b) ) {
 					var n = num(b);
 					if( n >= 0 ) {
 						mine.push(copy[i]);
@@ -384,7 +402,7 @@ class EditorKubes {
 			var copy = [for( s in t ) s == null ? null : { k : s.k, n : s.n }], mine = [];
 			for( i in 0...copy.length ) {
 				var s = copy[i];
-				if( s == null || !isEditor(Block.all[s.k]) ) continue;
+				if( s == null || !kube(Block.all[s.k]) ) continue;
 				var n = num(Block.all[s.k]);
 				if( n >= 0 ) {
 					mine.push(i);
@@ -432,9 +450,6 @@ class EditorKubes {
 		out.editorKubes = raw.ids.length > 0 ? raw : null;
 		return out;
 	}
-
-	/** editorKubes de una partida leida de disco; null si no hay o esta mal formado */
-	public static function readSave( o : Dynamic ) : EditorKubesSave return KubeSaveData.read(o);
 
 	// ---------------------------------------------------------------- pruebas (Dev)
 

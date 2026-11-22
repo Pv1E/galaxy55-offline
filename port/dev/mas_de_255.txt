@@ -1,6 +1,6 @@
 # Un mundo con mas de 255 bloques distintos (World.cells: el id local de cada celda va en dos bytes; antes en uno y
 # World.hasRoom no dejaba poner el que ya no cabia). Todos los bloques (sin vacio, liquidos, lava, cascadas, bomba ni
-# bonus) en el aire sobre el planeta, en z = 100 (17 x 17 desde 100,100), y BShipGlassPink, de los ultimos, con la mano.
+# hexalita) en el aire sobre el planeta, en z = 100 (17 x 17 desde 100,100), y BShipGlassPink, de los ultimos, con la mano.
 # Luego Menu principal y Continuar (reload): los bloques siguen ahi y la luz es la de recalcularla toda.
 # Esperado: "ids: mundo" > 255, "con id > 255" > 0, la misma suma antes y despues de cargar, BShipGlassPink en 42 42 57.
 # Capturas port/out/mas255_*.png

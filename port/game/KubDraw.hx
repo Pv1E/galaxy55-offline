@@ -54,7 +54,7 @@ class KubDraw {
 		t.text = StringTools.rtrim(s) + "...";
 	}
 
-	/** color de cada carga (amarilla, azul, rosa, bonus verde) */
+	/** color de cada carga (amarilla, azul, rosa, hexalita verde) */
 	public static function chargeColor( c : ChargeKind ) : Int {
 		return switch( c ) {
 			case CYellow: 0xFFD23F;

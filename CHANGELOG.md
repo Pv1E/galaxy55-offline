@@ -2,20 +2,7 @@
 
 [English: `CHANGELOG.en.md`](CHANGELOG.en.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
-## Sin publicar
-- **Multijugador** (añadido del port): botón Multijugador en el menú principal, con los servidores guardados y las partidas de la
-  red local (estado, jugadores, ping, versión), añadir y modificar, contraseña y pseudo. "Crear una partida" parte de una partida
-  guardada, que sigue siendo la misma (se juega sola, sin red, y se vuelve a hospedar): nombre, puerto, contraseña, red local,
-  UPnP (si no, el puerto que abrir a mano) y equipo al suelo. Servidor dedicado sin ventana: `galaxy55-serveur.bat` (consola: stop,
-  list, kick, ban, op, say…). Identidad secreta sin cuenta (`identite.g55`, se copia para conservarla), conexión cifrada y la
-  misma versión obligatoria. Cada jugador tiene su galaxia; sus planetas se abren a invitados exploradores o visitantes (derechos
-  de los visitantes, visita de todo el servidor para los gestores, cesión, abandono) y su sistema sale en el mapa del invitado.
-  Los demás jugadores son conos con su nombre y su láser; chat de mundo, planeta o privado (T), lista de jugadores (Tab
-  mantenido) y Pausa > Opciones multijugador para los gestores. El servidor decide todo lo que crea o destruye objetos
-  (inventarios, sueltos, cantinas, muerte, nave, sintetizador, hangar, tienda, contratos, licencias, cometas de cada jugador,
-  tutorial): sin duplicación, comprobado con una prueba de resistencia. En multijugador la pausa no para el mundo.
-  Los kubes del editor vienen del servidor (los del anfitrión, o la carpeta `serveur/kubes` del servidor dedicado), enviados
-  como píxeles en bruto: ni archivo ni imagen que decodificar, nada se escribe en el disco del jugador.
+## v0.9 — pre-release
 - PRs 130-139 acoplados: contrato especial el primero en Contratos (130), Contenedor ESCorp con arrastrar y soltar (131),
   almacén de la nave en el ordenador de a bordo (132), al morir lo que llevas queda en un contenedor y opción para quitarlo (133),
   los clics fuera de una ventana ya no llegan al menú de debajo (134), cristales verdes de bonus y demás bloques de carga en la
@@ -23,6 +10,48 @@
   "Contactar con la ESCorp" con Comerciar, contratos y mejoras (139). Todo añadido o cambio del port.
 - Ordenador de a bordo (cambio del port, al acoplar 132 y 139): Almacén queda como botón propio y Comerciar y Contratos pasan al
   submenú de la ESCorp.
+- **Nuevo generador de planetas** (cambio del port, PR 143 y 146): sigue los pasos del original, pero cada paso, cada estructura
+  y cada bonus tienen su propio azar, y las estructuras se ponen por regiones en un orden fijo; así, una estructura nueva solo
+  cambiará el planeta dentro de su caja, y cada planeta recuerda la versión del generador con la que se visitó por primera vez.
+  Los planetas ya no son idénticos a los de la versión Flash. **Las partidas de antes cambian**: sus planetas se generan con el
+  generador nuevo, lo construido sigue ahí, pero el terreno de alrededor puede cambiar (agujeros, bloques que flotan o quedan
+  enterrados); la lista las marca como "Partida antigua" y avisa al abrirlas.
+- **Partidas en archivos `.g55`** (cambio del port, PR 146): cada partida es un solo archivo en `saves`, que guarda los bloques
+  por su nombre. Una partida con bloques de una versión más nueva ya no pierde nada: se ven como kubes misteriosos y se guardan
+  tal cual (antes se borraban, con una copia). Ocupa mucho menos (una partida de prueba pasa de 791 KB a 1,9 KB) y se guarda y
+  se lee más deprisa; el archivo anterior solo se sustituye cuando el nuevo está entero (si el juego se cierra a mitad, queda el
+  anterior). Las partidas `.json` de antes se convierten al jugarlas, y el `.json` y su miniatura pasan a `saves/backups`. Una
+  partida que no se puede leer sale como "Partida ilegible".
+- **Cuadros** (añadido del port, PR 141): los 16 cuadros de CroqueMotel (Motion Twin) están en la paleta creativa. Un cuadro es
+  una placa fina pegada a la pared que se apunta, girada hacia el jugador; en el suelo o en el techo no se pone. Deja pasar la
+  luz, el agua y la lava lo rompen y, si se quita su pared, cae con su bloque. El editor de kubes tiene una forma nueva,
+  "Cuadro (en la pared)", con tres modelos.
+- **Kubes del editor en tu mundo** (añadido del port, PR 129): en una partida creativa, los `.kube` de la carpeta `kubes` (hechos
+  en el editor de kubes o dejados ahí) salen al final de la paleta, con una esquina cian, y se ponen y se rompen como los demás
+  bloques, con todas las formas del editor (también la puerta que se abre y el plano que gira). Hasta 128 por partida. Un kube
+  retocado se ve nuevo al volver a cargar la partida; uno borrado pasa a kube misterioso y vuelve con su archivo. Las partidas de aventura no los cargan y en el
+  hangar no se pueden poner.
+- **Versión de cada partida** (añadido del port, PR 127): la lista de partidas muestra, abajo a la derecha, la versión del juego
+  que creó la partida y la que la guardó por última vez ("Versión 0.8.1", o "Versiones 0.7 a 0.8.1" si no coinciden; "?" para
+  una partida de antes de este cambio).
+- Andando se suben las planchas sin saltar (cambio del port, PR 140; en el original paraban como un muro): Plancha de madera,
+  Plancha blindada, y una plancha y después un bloque entero en dos pasos. La vista sube con suavidad. Un bloque entero, o una
+  plancha bajo un techo sin sitio para la cabeza, siguen parando.
+- Carga más rápida (PR 146): el planeta se genera 2-3 veces más deprisa y en segundo plano, sin parones de 0,5-1 s en la pantalla
+  de carga, y la malla de un planeta grande se sube en 0,2-0,8 s (antes 2,6-3,7 s).
+- El mapa de estrellas se abre sin congelar el juego (PR 144): al despegar se paraba unos 9 s; ahora la pantalla de carga sigue
+  respondiendo y su barra avanza mientras se dibujan los fondos (8-12 s en el PC de pruebas). Entrar en un sistema tarda
+  también menos (unos 130 ms, antes 200).
+- Con una Intel HD 4600 en Linux (Mesa), las cascadas y las gemas ya no son invisibles ni se ven negras, el vidrio ya no
+  muestra solo su marco y el menú principal se dibuja (PR 126 y 128, comprobado en el PC afectado). Las estrellas tienen el
+  mismo aspecto.
+- El agua ácida vista de refilón ya no se cubre de rayas finas, como de lluvia (PR 148): de refilón, el agua toma el color medio
+  de su textura; vista desde arriba no cambia. Las demás aguas pierden también su moaré a lo lejos.
+- Editor de kubes: el `datagen.txt` ya no da precio a las variantes de una puerta (girada, abierta) ni de un plano (girado),
+  que así no salen en la paleta creativa, como las puertas y ventanas del juego (PR 142).
+- En francés, la opción "Equipo al suelo" se llama « Dépôt de l'équipement à la mort » (antes « Équipement à terre », PR 147).
+- Banco de pruebas (PR 145 y 146): `port/dev/runall.ps1` pasa todos los guiones y compara dos compilaciones; los guiones buscan
+  lo generado (`find`) en vez de usar coordenadas fijas; las pruebas ya no se paran en su primer fotograma.
 
 ## v0.8.1 — pre-release
 - **Pantalla de inventario** (añadido del port, PR 125): en aventura, I (o R3) abre un panel con las 10 casillas de la barra:

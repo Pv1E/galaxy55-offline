@@ -142,7 +142,7 @@ class PlanetInstance {
 
 	/**
 	 * Genera el mundo en otro hilo (cambio del port: en el mismo, cada paso del generador, unos 55 ms, paraba el juego del
-	 * anfitrion y el bucle del servidor dedicado). El generador comparte su memoria global con los demas (WorldData.genLock).
+	 * anfitrion y el bucle del servidor dedicado). Cada generador tiene su propio tampon: puede ir a la vez que el del juego.
 	 * Se llama en cada vuelta: true cuando esta listo (lo ultimo, finishGen, se hace en este hilo).
 	 */
 	public function generateAsync() : Bool {

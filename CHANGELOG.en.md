@@ -2,26 +2,54 @@
 
 [Español: `CHANGELOG.md`](CHANGELOG.md) · [Français : `CHANGELOG.fr.md`](CHANGELOG.fr.md)
 
-## Unreleased
-- **Multiplayer** (port addition): Multiplayer button in the main menu, with saved servers and local network games (status,
-  players, ping, version), add and edit, password and nickname. "Create a game" starts from a saved game, which stays the same
-  game (playable alone without network, and hostable again): name, port, password, local network, UPnP (otherwise the port to
-  forward by hand) and death drop. Dedicated server without a window: `galaxy55-serveur.bat` (console: stop, list, kick, ban, op,
-  say…). Secret identity without an account (`identite.g55`, copy it to keep it), encrypted connection, same version required.
-  Each player has their own galaxy; their planets open to explorer or visitor guests (visitor rights, server-wide visits by
-  managers, handing over, abandoning) and the system shows up on the guest's map. Other players are cones with their name and
-  laser; world, planet or private chat (T), player list (hold Tab) and Pause > Multiplayer options for managers. The server
-  decides everything that creates or destroys items (inventories, loose items, chests, death, ship, synthesizer, hangar, shop,
-  contracts, licences, per-player comets, tutorial): no duplication, checked by an endurance test. In multiplayer the pause does
-  not stop the world.
-  Editor kubes come from the server (the host's, or the `serveur/kubes` folder of the dedicated server), sent as raw pixels:
-  no file or image to decode, nothing written to the player's disk.
+## v0.9 — pre-release
 - PRs 130-139 merged: special contract listed first (130), ESCorp Container drag and drop (131), ship storage on the board
   computer (132), dying leaves your gear in a container plus an option to turn it off (133), clicks outside a dialog no longer
   reach the menu below (134), green bonus crystals and other charge blocks in the creative palette (135, 136), mouse wheel wraps
   around (137), a thrown stack of charge blocks can be picked up (138) and a "Contact ESCorp" menu with trade, contracts and
   upgrades (139). All port additions or changes.
 - Board computer (port change, merging 132 and 139): Storage keeps its own button; Trade and Contracts move into the ESCorp submenu.
+- **New planet generator** (port change, PRs 143 and 146): it follows the original's steps, but each step, structure and bonus
+  has its own randomness, and structures are placed by region in a fixed order; so a new structure will only change the planet
+  inside its box, and each planet remembers the generator version it was first visited with. Planets are no longer identical
+  to the Flash version's. **Older saves change**: their planets are generated with the new generator, what you built is still
+  there, but the terrain around it may change (holes, blocks floating or buried); the list marks them as "Old save" and warns
+  when they are opened.
+- **Saves as `.g55` files** (port change, PR 146): each game is a single file in `saves` that stores blocks by name. A save with
+  blocks from a newer version no longer loses anything: they show as mystery kubes and are saved as they are (they used to be
+  deleted, with a copy). Much smaller (a test save goes from 791 KB to 1.9 KB) and faster to save and read; the previous file
+  is only replaced once the new one is complete (if the game closes halfway, the previous one stays). Older `.json` saves are
+  converted when played, and the `.json` and its thumbnail move to `saves/backups`. A save that can't be read is listed as
+  "Unreadable save".
+- **Paintings** (port addition, PR 141): the 16 paintings of CroqueMotel (Motion Twin) are in the creative palette. A painting is
+  a thin plate stuck to the wall you aim at, turned towards the player; it can't go on a floor or a ceiling. Light goes through
+  it, water and lava break it and, if its wall is removed, it falls with its block. The kube editor has a new shape,
+  "Painting (on a wall)", with three models.
+- **Kube editor kubes in your world** (port addition, PR 129): in a creative game, the `.kube` files of the `kubes` folder (made
+  in the kube editor or dropped there) come last in the palette, with a cyan corner, and are placed and broken like the other
+  blocks, with every shape of the editor (the door that opens and the plane that turns too). Up to 128 per game. A retouched
+  kube shows its new look the next time the game is loaded; a deleted one turns into a mystery kube and comes back with its file. Adventure games don't load them
+  and they can't be placed in the hangar.
+- **Version of each save** (port addition, PR 127): the saves list shows, at the bottom right, the game version that created the
+  save and the one that last saved it ("Version 0.8.1", or "Versions 0.7 to 0.8.1" when they differ; "?" for a save made before
+  this change).
+- Walking climbs plates without jumping (port change, PR 140; in the original they stopped you like a wall): Wood Plating,
+  Armour Plate, and a plate then a full block in two steps. The view rises smoothly. A full block, or a plate under a ceiling
+  with no room for the head, still stop you.
+- Faster loading (PR 146): the planet is generated 2-3 times faster and in the background, with no 0.5-1 s stops on the loading
+  screen, and the mesh of a large planet is uploaded in 0.2-0.8 s (2.6-3.7 s before).
+- The star map opens without freezing the game (PR 144): taking off stopped it for about 9 s; now the loading screen keeps
+  responding and its bar moves while the backgrounds are drawn (8-12 s on the test PC). Entering a system is faster too
+  (about 130 ms, 200 before).
+- With an Intel HD 4600 on Linux (Mesa), waterfalls and gems are no longer invisible or black, glass no longer shows only its
+  frame and the main menu is drawn (PRs 126 and 128, checked on the affected PC). The stars look the same.
+- Acid water seen at a grazing angle is no longer covered in thin streaks, like rain (PR 148): at a grazing angle the water takes
+  the mean colour of its texture; seen from above it is unchanged. The other waters also lose their far-away moiré.
+- Kube editor: `datagen.txt` no longer gives a price to the variants of a door (turned, open) or of a plane (turned), so they
+  stay out of the creative palette, like the game's own doors and windows (PR 142).
+- In French, the "Drop equipment" option is called « Dépôt de l'équipement à la mort » (« Équipement à terre » before, PR 147).
+- Test bench (PRs 145 and 146): `port/dev/runall.ps1` runs every script and compares two builds; scripts find what was generated
+  (`find`) instead of using fixed coordinates; test runs no longer stop on their first frame.
 
 ## v0.8.1 — pre-release
 - **Inventory screen** (port addition, PR 125): in adventure, I (or R3) opens a panel with the 10 slots of the bar: drag, split

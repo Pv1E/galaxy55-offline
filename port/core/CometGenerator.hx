@@ -2,8 +2,8 @@ import Common;
 
 /**
  * Terreno de las cometas (Comets, añadido del port): un caso por tipo de cometa, como BiomeGenerator con los biomas. Sin
- * anomalias ni edificios (addDetails), sin cristales verdes (addBonus) y sin mar. La roca es soils[0] del bioma y el agua
- * del bioma no se pone nunca.
+ * estructuras ni cristales de hexalita (structuresOn: Structures no las pone en las cometas) y sin mar. La roca es soils[0] del
+ * bioma y el agua del bioma no se pone nunca.
  */
 @:access(gen.Generator)
 class CometGenerator extends gen.DetailsGenerator {
@@ -15,6 +15,8 @@ class CometGenerator extends gen.DetailsGenerator {
 	static inline var HEIGHT = gen.Generator.HEIGHT;
 
 	override function initBiome( biome : BiomeKind ) {
+		// sin estructuras ni cristales de hexalita (Structures: nunca en las cometas)
+		structuresOn = false;
 		switch( biome ) {
 		case BICometCinder:
 			// cometa calcinada: un valle entre dos crestas (que se juntan al dar la vuelta), roca de lecho de meteorito con roca
@@ -38,10 +40,6 @@ class CometGenerator extends gen.DetailsGenerator {
 			super.initBiome(biome);
 		}
 	}
-
-	override function addDetails() {}
-
-	override function addBonus() {}
 
 	/**
 	 * Alturas en forma de valle: el fondo (floor) sigue un eje que serpentea a lo largo de y y sube hasta la cresta (ridge) a

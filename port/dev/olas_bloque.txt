@@ -1,42 +1,43 @@
 # olas con un bloque encima del mar: la capa de arriba del mar dibuja su cara de arriba aunque tenga un bloque lleno encima,
 # como el original; si no, al bajar la ola queda una franja sin agua bajo el borde del bloque. Con y sin olas, desde fuera
-# y desde dentro del agua. Necesita mar: devrun.ps1 -Extra "--bgbiome=BIWinterPeaks" (shore: agua 30,0,31, mar=32)
+# y desde dentro del agua. Necesita mar: devrun.ps1 -Extra "--bgbiome=BIWinterPeaks" (shore: agua 30,0,31, mar=32). Todo va
+# respecto a esa orilla (fx fy fz = el agua de arriba del mar)
 wait 3
 planet
 wait 30
 shore
 # losa de roca justo encima del mar (z = mar + 1)
-filla 22 1 27 5 33 33 BRock
+filla fx-8 fy+1 fx-3 fy+5 fz+2 fz+2 BRock
 wait 5
 waves 0
-tp 31.5 0.5 32.01 0 0
-lookat 28 2.5 32.9
+tp fx+1.5 fy+0.5 fz+1.01 0 0
+lookat fx-2 fy+2.5 fz+1.9
 wait 10
 shot olas_bloque0
 print pos
 waves 1
 wait 30
-tp 31.5 0.5 32.01 0 0
-lookat 28 2.5 32.9
+tp fx+1.5 fy+0.5 fz+1.01 0 0
+lookat fx-2 fy+2.5 fz+1.9
 wait 2
 shot olas_bloque1
 print pos
 wait 25
-tp 31.5 0.5 32.01 0 0
-lookat 28 2.5 32.9
+tp fx+1.5 fy+0.5 fz+1.01 0 0
+lookat fx-2 fy+2.5 fz+1.9
 wait 2
 shot olas_bloque2
 print pos
 # desde dentro del agua, mirando al borde de la losa
-tp 30.5 3.5 29.5 0 0
-lookat 26 3.5 33
+tp fx+0.5 fy+3.5 fz-1.5 0 0
+lookat fx-4 fy+3.5 fz+2
 wait 5
 shot olas_bloque_uw1
 print pos
 waves 0
 wait 10
-tp 30.5 3.5 29.5 0 0
-lookat 26 3.5 33
+tp fx+0.5 fy+3.5 fz-1.5 0 0
+lookat fx-4 fy+3.5 fz+2
 wait 2
 shot olas_bloque_uw0
 print pos
