@@ -83,16 +83,27 @@ class ServerItems {
 		sendInv(s);
 	}
 
-	/** CPlace: el bloque sale de la casilla slot (1 = la primera tras el excavador); false si no lo tiene */
+	/**
+	 * CPlace: el bloque sale de la casilla slot (1 = la primera tras el excavador); false si no lo tiene. Una variante (la puerta
+	 * blindada en Y, los giros de un tableau) sale de su bloque principal, el que tienen los inventarios (placesFrom)
+	 */
 	public function consumeForPlace( s : Session, slot : Int, gi : Int ) : Bool {
 		if( s.creative ) return true;
 		var t = s.record.inv.t;
 		var st = slot >= 1 && slot <= t.length ? t[slot - 1] : null;
-		if( st == null || st.k != gi || st.n <= 0 ) return false;
+		if( st == null || st.n <= 0 || !placesFrom(st.k, gi) ) return false;
 		st.n--;
 		if( st.n == 0 ) t[slot - 1] = null;
 		worlds.markRecord(s);
 		return true;
+	}
+
+	/**
+	 * el bloque gi se pone desde una casilla con el bloque k: el mismo, o una variante suya (Block.getMain) como las que pone el
+	 * cliente (GameView.placedBlock: getFlip, onWall). Romper la variante suelta lo mismo que romper k (getDrop): no crea nada
+	 */
+	static function placesFrom( k : Int, gi : Int ) : Bool {
+		return gi == k || (gi > 0 && gi < Block.all.length && Block.all[gi].getMain().index == k);
 	}
 
 	/** totales por bloque (y por carga, con clave negativa) de un inventario: lo que no puede cambiar al ordenarlo */
