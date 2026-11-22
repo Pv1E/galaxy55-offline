@@ -1,0 +1,122 @@
+# Licencias > Liberar una licencia (anadido del port), en solo. Aventura sin tutorial, semilla 4242 (sistema 0: planetas 0 y 1;
+# sistema 1: 10, 11 y 12). El 0 es el principal; con licencia el 10, el 11 y el 12. En el 12 la lista tiene el 10 y el 11 (ni el
+# principal ni aquel en el que estas); liberar el 11 pide confirmacion, libera la licencia y rehace la lista. En el 0 (el
+# principal) se liberan el 10 y el 12: el sistema 1 se queda sin planetas, desaparece y aparece otro cerca (tambien al
+# recargar). -Extra "--lang=fr" -Timeout 900
+wait 3
+tuto notuto 4242
+waitfor map
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+explore
+waitfor map 6000
+waitfor system
+expgo 0 0
+waitfor sector
+expsys 1
+waitfor system
+expplanet 10
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+explore
+waitfor map 6000
+waitfor system
+expplanet 11
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+explore
+waitfor map 6000
+waitfor system
+expplanet 12
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+print licenses
+# en el 12: Liberar una licencia, con el 10 y el 11
+ship
+wait 10
+computer
+wait 3
+licenses open
+wait 3
+print menu
+shot liberar_licencias
+licenses release
+wait 3
+print menu
+shot liberar_lista
+# liberar el 11: confirmacion, licencia liberada, la lista se rehace con el 10
+rowact 1 release
+wait 3
+print menu
+shot liberar_confirmar
+button 1
+wait 5
+print toast
+print licenses
+print menu
+shot liberar_hecho
+# Esc: las licencias, con 3 en uso y el foco en Liberar una licencia
+tap esc
+wait 3
+print menu
+close
+wait 3
+# en el 0 (el principal): se liberan el 10 y el 12 y el sistema 1 desaparece
+explore
+waitfor map 6000
+waitfor system
+expgo 0 0
+waitfor sector
+expsys 0
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+ship
+wait 10
+computer
+wait 3
+licenses release
+wait 3
+print menu
+rowact 0 release
+wait 3
+button 1
+wait 5
+print toast
+print menu
+rowact 0 release
+wait 3
+button 1
+wait 5
+print toast
+print licenses
+print menu
+shot liberar_vacia
+close
+wait 3
+explore
+waitfor map 6000
+waitfor system
+expgo 0 0
+waitfor sector
+wait 60
+print licenses
+expinfo
+shot liberar_sistema_nuevo
+reload
+waitfor map 6000
+wait 30
+print licenses

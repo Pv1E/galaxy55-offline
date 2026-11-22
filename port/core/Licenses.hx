@@ -13,6 +13,9 @@ import ExpData;
  *   primera vez, luego MAIN_COST creditos; tras cada cambio hay que esperar MAIN_COOLDOWN segundos de hora real.
  * - Abandonar un planeta con licencia (ventana del mapa, con la nave a su lado; nunca el principal) libera la licencia y borra
  *   sus cambios: ya no se puede ir a el. Un sistema con todos sus planetas abandonados desaparece y deja otro cerca (UniInfo.gone).
+ *   Desde el ordenador de a bordo (Licencias > Liberar una licencia) se libera igual cualquiera menos el principal y aquel en el
+ *   que estas (releasable). En multijugador no se libera un planeta con otros jugadores dentro (ServerWorlds, CAbandon): el
+ *   propietario les quita antes el acceso, lo que los expulsa.
  * Todo va en UniInfo, en campos opcionales: las partidas anteriores se completan al leerlas (migrate).
  */
 class Licenses {
@@ -46,6 +49,9 @@ class Licenses {
 	public static function isMain( uni : UniInfo, id : Int ) return uni != null && uni.main == id;
 
 	public static function isAbandoned( uni : UniInfo, id : Int ) return uni != null && uni.abandoned != null && uni.abandoned.indexOf(id) >= 0;
+
+	/** las licencias que se liberan desde el ordenador de a bordo: ni la del principal ni la del planeta en el que estas */
+	public static function releasable( uni : UniInfo ) : Array<Int> return [for( id in uni.licenses ) if( id != uni.main && id != uni.planetId ) id];
 
 	/** se puede escanear un planeta nuevo (queda una licencia libre) */
 	public static function canClaim( info : SaveInfo ) return unlimited(info) || info.uni.licenses.length < MAX;
