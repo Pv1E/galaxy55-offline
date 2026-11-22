@@ -210,7 +210,7 @@ class GalaxyApp extends hxd.App {
 	static inline var H = Theme.H;
 	static inline var TITLE = "Galaxy 55 (offline)";
 	/** version del juego: la del menu principal y la que se apunta en las partidas guardadas (SaveData); se cambia en cada release */
-	public static inline var VERSION = "0.8.1";
+	public static inline var VERSION = "0.9";
 	/** el juego corre en pruebas (--script o --shot): no se mueve el cursor del sistema (centerMouse) */
 	static var TEST_RUN = Lambda.exists(Sys.args(), a -> StringTools.startsWith(a, "--shot=") || StringTools.startsWith(a, "--script="));
 	/** color de fx.Load */

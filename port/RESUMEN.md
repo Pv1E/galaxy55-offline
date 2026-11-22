@@ -220,6 +220,73 @@ etiqueta `flash-version` y la rama `flash`, con sus SWF y archivos de compilaci�
     `teclas_paleta`.
   - 119: el kube invisible (y la niebla de Kube) suelto y en la mano se dibujan con mezcla y sus 6 caras
     (`IconMesh.seeThrough`), porque `killAlpha 0.5` descartaba todos sus texeles. Guion `kube_invisible_suelto`.
+- PR 126-129 y 140-148 de Cornor923 (2026-11-13 a 2026-11-22):
+  - 126: cascada invisible y luego negra con una Intel HD 4600 (Mesa 25.2, crocus). `World.AlphaCut` (umbral como parámetro:
+    0.9, 0.25 y 0 en la pasada de color) sustituye a `killAlpha` (constante de hxsl) en las tres pasadas de `BTAlpha` y en la
+    vista previa del editor: un solo programa GLSL, así que la misma profundidad en cualquier controlador. `World.keepColor`
+    (mezcla `Zero, One`) sustituye a `setColorMask(false x4)` en la pasada de profundidad, en la marca de stencil del vidrio
+    que revela el kube invisible y en la vista previa. Guion `cascada_negra`. En el PC afectado no bastó (ver 128).
+  - 127 (añadido del port): `GalaxyApp.VERSION` (el menú se hace con ella), `SaveInfo.createdWith` (`SaveData.create`) y
+    `savedWith` (`SaveData.write`, con la fecha); la lista de partidas los muestra abajo a la derecha (`save.version`,
+    `save.versions`). Los dos campos son opcionales. Guion `version_partidas`.
+  - 128: las estrellas (`StarShader`) y el cielo que pinta el kube invisible (`InvisibleSkyShader`) leen una textura 2D RGBA
+    con `faceUV` (la cara por el eje mayor) en vez de un cube map (`SamplerCube` R8, el único del juego): con el controlador
+    crocus salía mal lo que se dibujaba justo después (cascadas, gemas, vidrio, menú principal). Mismas estrellas. Comprobado
+    por el jugador del PC afectado. Guiones `estrellas`, `anomalia_invisible` y `cielo_liquido`.
+  - 129 (añadido del port): `EditorKubes.hx` pone los `.kube` de la carpeta `kubes` en las partidas creativas. Tipo nuevo
+    `BKubeEditor` al final de `BlockKind`; cada kube cargado añade 4 bloques al final de `Block.all` al arrancar (sus índices
+    nunca se guardan) y sus caras van a casillas libres del atlas (`Atlas.updateTiles`, con sus mipmaps). El guardado los lleva
+    por nombre de archivo en `editorKubes`, con aire y casillas vacías en los campos de siempre (`EditorKubes.encode`). Como
+    mucho 128 por partida; el hangar los rechaza. Guion `kubes_editeur_monde`.
+  - 140 (cambio del port): en `GameView.doMove`, la sonda de pared a la altura de los pies ya no empuja si `canStepOn` dice
+    que el obstáculo acaba como mucho `STEP_UP` (0,5) por encima de los pies, con sitio para el cuerpo y la cabeza; `viewZ`
+    baja lo que sube el jugador y `updateViewZ` lo devuelve a 1,5. Guion `escalon`.
+  - 141 (añadido del port): `BFOnWall(turn)` (`Block.wall`, `Block.onWall`): un cuadro son 4 bloques seguidos, uno por pared,
+    y se pone el de la cara que toca el rayo (`GameView.placedBlock`). Modelo `Painting.hx` (por `Models.of`), choque solo con
+    su placa (`World.collidePoint`), se rompe con su pared (`WorldProcess.onSet`). Forma `painting` en el editor (`KubeData`,
+    tres modelos). Los 16 cuadros de CroqueMotel (`BKubePainting*`, `BKubePortrait*` y sus `Turn1..3`) van al final de
+    `BlockKind`, después de `BKubeEditor`, en la fila 43 de `texture.png`; sus `.kube` en `port/kubes` y el crédito en
+    `NOTICE`. Guion `tableaux`.
+  - 142: `KubeData.line()` recibe el precio y `dataGen()` pone `null` a las variantes de puerta (Y, Open, YOpen) y de plano
+    (Y). Guion `kube_variantes_prix`.
+  - 143 (añadido del port): `Generator.VERSION` (0 = el generador de hoy) y `Generator.version`; las líneas de anomalías de
+    `addDetails` y `addCaveDetails` pueden llevar `since` / `until` y `DetailsGenerator.forVersion` las filtra (misma lista y
+    mismas tiradas para una versión antigua). `SaveInfo.genVersion` y `UniPlanet.genVersion` guardan la versión de la primera
+    visita (sin campo = 0). `port/headless/gen_ref.txt`: 17 planetas de referencia. Guion `version_generador`.
+  - 144: el `Explorer` arranca oculto y un solo hilo prepara los marcos de la nave (`Ship.finishFrame`), el fondo común, el del
+    sector y el sistema de la nave, ya en píxeles de textura; la pantalla de carga sigue su barra y `Explorer.prepare` sube
+    las texturas. Un hilo por fondo tardaba más (se pelean por el GC de HashLink). Sin la parada de 9-12 s (`--frametime=50`);
+    entrar en un sistema, ~130 ms (antes ~200). Mismo dibujo, píxel a píxel (`explore` y `cometa` con `--rngseed=1`).
+  - 147: `deathdrop.option` en francés pasa a « Dépôt de l'équipement à la mort ».
+  - 145: `GalaxyApp.finishLoading` ya no imprime `World.debugStats()` en cada `--script` / `--shot`: contaba todas las celdas
+    dentro del fotograma que acaba la carga (0,4-1,2 s en tamaño 3). Solo con `--blockcount`. Guion `primer_fotograma`.
+  - 146 (cambio del port, seis pasos que salen juntos):
+    - Herramientas: `port/dev/runall.ps1` pasa todos los guiones con datos nuevos, limpia la salida, apunta las líneas
+      inestables y compara con una referencia (texto, HTML y hojas); `devrun.ps1 -OutFile -Shots`; GenMain `--profile`,
+      `--steps`, `--compare` y `--census`; `--loadtime`; órdenes `find` y `bench`.
+    - Guiones que buscan lo generado (`find ship`, `find anomaly`, `find shore`, `tuto spot`) en vez de coordenadas fijas.
+    - Generación más rápida con los mismos mundos: cada generador y su Perlin leen su propio `hl.Bytes` (sin `flash.Memory`
+      ni comprobación de límites; `-D genCheck` la vuelve a poner) y `smooth3D` es incremental. Sumas por paso iguales en 875
+      planetas; tamaño 3, 5 semillas por bioma: 117-130 s antes, 44-55 s después.
+    - Partidas `.g55` (`SaveArchive.hx`, `SaveNames.hx`): un zip con `meta.json`, `thumb.png`, `game.json`, `planets/*.bin`,
+      `ship.bin` y `shipdata.bin`; bloques y cargas por nombre (tablas de nombres); los desconocidos salen como kubes
+      misteriosos y se vuelven a escribir con su nombre; escritura segura (`.tmp` / `.bak`, se recupera tras un cierre); la
+      lista solo lee `meta.json`; los `.json` de antes se migran al leerlos (`SaveData.migrate`, el `.json` y su `.png` a
+      `saves/backups`). `mothership.bin` pasa al formato `G55P` (nombres de bloque, sin el corte a 255). `SaveTool dump` y
+      `SaveTest` (194 comprobaciones). Partida de prueba: 791 274 a 1 870 bytes, escribir 81 a 29 ms, leer 59 a 6 ms.
+    - Generador versión 1 (`Generator.VERSION = 1`): azar por nombre (`gen/Rng.hx`: cada paso, estructura y bonus tiene su
+      propio azar) y registro de estructuras (`gen/Structures.hx`, 40) puestas por regiones de 128x128 en etapas de orden
+      fijo. Bucles acotados (el hangar de tamaño 3 se genera en 1 s) y arreglos (bordes en el suavizado, `holesRow`,
+      `removeBlobs`, `checkWater` hasta el nivel del mar). La versión 0 ya no existe: sus planetas se generan con la 1 y la
+      partida sale como "Partida antigua" (`oldGeneration` en `meta.json`) y avisa al abrirla. Comprobado con GenMain
+      `--locality`, `--allstructures`, `--fuzz`, `--registry` y `gen_ref.txt` v1 (21 casos).
+    - Carga: el planeta se genera en un hilo (`--nothread` lo quita, `--gencheck` comprueba que sale igual) y las mallas de
+      los trozos van directas a búferes planos (subir la de un planeta de tamaño 3: 2,6-3,7 s antes, 0,2-0,8 s después).
+    - Último commit: los cañones de Marte excavan como el original (cada pasada de `holesRow` se para en la primera celda de
+      aire de la columna); solo cambian las dos líneas de Marte de `gen_ref.txt`.
+  - 148: shader `WaterGrazing` en el material del agua (`World.hx`), antes de la niebla: de refilón (coseno entre la vista y la
+    cara de 0,5 a 0,1, es decir de 60° a 84°) el agua toma el color medio de su casilla, el último nivel de `Atlas.mipped`;
+    `Atlas.MIP_LEVELS` pasa a público. Guion `agua_refilon` (`--bgbiome=BIAcidForest`).
 
 ## Qué falló y cómo se resolvió
 | Problema | Causa | Solución |
@@ -295,6 +362,13 @@ desconocidos; `devsaves` borra también las copias de prueba), `contracts ...` y
 azar), `print icons` (iconos que quedan y hechos), y para el editor de kubes `kube tile|zoom|view`, `tap` y `mouse X Y down|up`.
 PR 116 y 118 (2026-11-12): `print ids` (bloques distintos y ids locales > 255), `keyrow ACCION CASILLA` (pantalla de teclas),
 `print keys`, `print keyinfo`, `print tutotext TECLA...`; `tap`/`press` conocen también `delete`, `alt`, `f2` y `f5`.
+PR 127-143 (2026-11-13/17): `print saves` da `version=` y `devsaves` crea desde la 4.ª partida una de la 0.7 y otra sin
+versiones (127); `edkube import|make|fill|delete|clear|refresh`, `kube:ARCHIVO[/variante]` donde se espera un bloque,
+`print edkubes` y `print edsave` (129); `genversion N`, `print gen` y `hl port\out\gen.hl --check port\headless\gen_ref.txt`
+(143).
+PR 145 y 146 (2026-11-22): `runall.ps1`, `devrun.ps1 -OutFile -Shots`, `find ship|anomaly N|NOMBRE|shore`, `tuto spot N`,
+`bench`, `--loadtime`, `--nothread`, `--gencheck` y `--blockcount`; GenMain `--profile|--steps|--compare|--census|--locality|
+--allstructures|--fuzz|--registry`; `savetool.hxml` (`SaveTool dump`) y `savetest.hxml` (`SaveTest`, necesita `GALAXY55_DATA`).
 Los ganchos antiguos `--screen=... --craft --at=...` siguen funcionando, pero para pruebas nuevas se usa Dev.
 
 ## Paquete de prueba (HECHO: zips con `package.ps1` y pre-releases en GitHub desde la v0.4; plan original de octubre de 2026)

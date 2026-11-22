@@ -295,6 +295,47 @@ ES/EN/FR y a ERRORES/BUGS. Todo pasa de "Sin publicar" a v0.8.1; enlaces de los 
 de novedades; menú "v0.8.1 · port nativo"; notas en `port/RELEASE.md` (3 idiomas) con todo lo nuevo desde la v0.8 (PR 116-125). Compilan SDL y DX. Zips con
 `package.ps1 -Version 0.8.1 -HashLink ..\tools-portable\hashlink\hashlink-1.16.0-win` en `port/out/release`.
 
+## PR 126-129 y 140-148 de Cornor923 integrados (2026-11-13 a 2026-11-22)
+Cornor fusionó en GitHub los PR 126, 127 y 128 (2026-11-13), 129 (2026-11-14), 140, 141, 143 y 142 (2026-11-17), 144
+(2026-11-19), 147 (2026-11-21), y 148, 146 y 145 (2026-11-22). El 142 fusionó `main` en su rama antes de entrar (`b32c5f2`:
+las variantes de puerta sin precio junto a la forma de cuadro del 141) y el 146 también (#144: solo chocó el guardado al
+cerrar la ventana, se dejaron los dos cambios). Los 130-139 entraron en medio (sección de arriba). Cada PR trae su guion en
+`port/dev/` (ver su entrada en RESUMEN).
+Añadidos del port: 127 (versión en las partidas), 129 (kubes del editor en las partidas creativas), 141 (cuadros y los 16 de
+CroqueMotel) y 143 (versión del generador por planeta). Cambios del port respecto al original: 140 (subir planchas andando) y
+146 (generador versión 1 y partidas `.g55`). Arreglos: 126 y 128 (Intel HD 4600 con Mesa), 142 (precio de las variantes del
+editor), 144 (mapa sin congelar), 147 (texto en francés) y 148 (rayas del agua ácida de refilón). 145 solo toca las pruebas.
+Al preparar la v0.9 se añadieron también a LEEME/README/LISEZMOI los PR 120-125 y 130-139 que faltaban (almacén, equipo al
+morir, "Contactar con la ESCorp", cantina con arrastrar y soltar, rueda en bucle, pantalla de inventario), y a ERRORES/BUGS los
+arreglos 134 y 138.
+A tener en cuenta:
+- 126 + 128: el jugador con la Intel HD 4600 (Ubuntu, Mesa 25.2, crocus) confirmó que con el 128 se ve bien. La causa era el
+  cube map de las estrellas, no las pasadas de profundidad del 126, que se quedan (no cambian la imagen en otros PC).
+- 146: las partidas de la v0.8.1 y anteriores cambian. Sus planetas eran de la versión 0 del generador, que ya no existe: se
+  generan con la 1, así que lo construido sigue en su sitio pero el terreno de alrededor cambia. La lista las marca como
+  "Partida antigua" y avisan al abrirlas. Al jugarlas se migran a `.g55` y el `.json` pasa a `saves/backups`; una versión
+  anterior no lee los `.g55`.
+- 146: los bloques y las cargas se guardan por nombre, así que los bloques nuevos al final de `BlockKind` (los cuadros del 141,
+  por ejemplo) ya no rompen las partidas; un bloque desconocido se ve como kube misterioso y se guarda con su nombre. Los kubes
+  del editor van como `editor:<archivo>#<variante>`; el campo `editorKubes` del 129 solo sirve para migrar los `.json`.
+- 146: `Generator.VERSION = 1`. Lo que cambie lo que genera el generador sube `VERSION` y solo se aplica desde esa versión
+  (`Structures`: `since` / `until`); las líneas de `port/headless/gen_ref.txt` de una versión publicada no cambian nunca
+  (hoy 21 casos de la versión 1, también el Shed de tamaño 3, que antes no acababa).
+- 146: `mothership.bin` pasa al formato `G55P` (nombres de bloque), así que el editor de la nave nodriza ya no corta los
+  bloques por encima de 255.
+- 145: las referencias de `runall.ps1` hechas antes del 145 tienen la línea del recuento de bloques en cada guion: hay que
+  hacerlas otra vez.
+- 144: la pantalla de carga del mapa dura lo que tardan los fondos (8-12 s en el PC de Cornor), pero el juego responde.
+
+## v0.9 preparada (2026-11-22)
+Changelogs ES/EN/FR y ERRORES/BUGS pasan de "Sin publicar" a v0.9; enlaces de los README a `releases/tag/v0.9`;
+`GalaxyApp.VERSION = "0.9"` (menú "v0.9 · port nativo" y versión de las partidas); notas en `port/RELEASE.md` (3 idiomas)
+con todo lo nuevo desde la v0.8.1 (PR 126-148). En el README, las novedades de la v0.9 con 4 fotos nuevas en `docs/img`
+(`cuadros`, `kubes-editor-mundo`, `almacen-nave`, `equipo-muerte`), sacadas en inglés, a 1280x720 y sin la ayuda de teclas
+(`setlang en`, `helptext 0`) con guiones cortos hechos a partir de `tableaux`, `kubes_editeur_monde`, `stockage_vaisseau` y
+`mort_conteneur`, con el 146 ya dentro; la v0.8.1, la v0.8 y la v0.7 quedan en una línea con su enlace. Compila SDL.
+Falta: los zips (`package.ps1 -Version 0.9`), probarlos, la etiqueta `v0.9` y crear la release (pre-release) con los dos zips.
+
 ## Lo siguiente (orden acordado en octubre; la lista al día es `PENDIENTES.md`)
 1. (HECHO: bahías del hangar y tienda en el centro, v0.8) **Pvie está construyendo en Minecraft el hangar y la zona de comercio dentro de la Hades:**
    - 3 bahías de al menos 19x19 y 18 de alto (caben las naves del hangar, como máximo 17x17x14), y puestos de comercio;

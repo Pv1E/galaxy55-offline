@@ -8,9 +8,10 @@ connus, voir `BUGS.fr.md` à la racine du dépôt) ; le jeu Flash d'origine, ave
 ## Jouer
 
 Compile-le (voir plus bas) et double-clique sur `jugar.bat`, ou télécharge le zip portable depuis la
-[release](../../../releases/tag/v0.8.1). Le menu de démarrage propose Continuer (la liste des parties : jouer, renommer ou supprimer), Nouvelle partie, Éditeur de Kubes (ajout du portage : dessiner de nouveaux blocs et les enregistrer en `.kube` dans le dossier `kubes` des données), Options et Quitter.
-Dans Nouvelle partie, tu choisis le nom, la graine et le mode : **Aventure** (comme dans l'original, inventaire vide) ou **Créatif** (notre ajout, avec biome et taille).
-Les parties et les réglages sont enregistrés dans `%APPDATA%\Galaxy55\` (modifiable avec la variable d'environnement `GALAXY55_DATA`), et les captures d'écran (F2) dans son dossier `screenshots`.
+[release](../../../releases/tag/v0.9). Le menu de démarrage propose Continuer (la liste des parties : jouer, modifier ou supprimer ; chacune indique avec quelle version du jeu elle a été créée et enregistrée), Nouvelle partie, Éditeur de Kubes (ajout du portage : dessiner de nouveaux blocs et les enregistrer en `.kube` dans le dossier `kubes` des données), Options et Quitter.
+Dans Nouvelle partie, tu choisis le nom et le mode : **Aventure** (comme dans l'original, inventaire vide) ou **Créatif** (notre ajout, avec biome et taille).
+Personnaliser fixe la graine (« Seed ») et le dépôt de l'équipement à la mort (ajout du port, activé sauf changement) ; Modifier, dans la liste des parties, le change ensuite.
+Les parties (un fichier `.g55` par partie, dans `saves`) et les réglages sont enregistrés dans `%APPDATA%\Galaxy55\` (modifiable avec la variable d'environnement `GALAXY55_DATA`), et les captures d'écran (F2) dans son dossier `screenshots`.
 Le jeu y écrit aussi `gpu.txt`, avec la carte graphique et le pilote : joins-le si tu signales un bug d'affichage.
 Le format des sauvegardes peut changer d'une version à l'autre : ne compte pas sur le fait que les parties d'aujourd'hui fonctionnent toujours.
 
@@ -27,13 +28,13 @@ Elles se changent dans Options > Contrôles > Personnaliser les touches (ajout d
 | Casque | H l'enlève ou le remet |
 | Coordonnées et FPS | F les affiche ou les masque (masquées au départ, comme dans l'original) |
 | Creuser ou poser | clic gauche, E ou Maj (maintenir). Main vide : tu creuses ; avec un bloc, tu le poses si quelque chose le soutient |
-| Choisir une case | 1–0 ou molette de la souris ; Tab = laser de minage (main vide) |
+| Choisir une case | 1–0 ou molette de la souris (passe d'un bout de la barre à l'autre ; se désactive dans Options > Contrôles) ; Tab = laser de minage (main vide) |
 | Jeter la pile choisie | R ou Suppr |
 | Activer (ordinateur de bord, portes, bombe antique) | viser, appuyer et relâcher. En maintenant jusqu'à ce que le bloc casse, on le creuse : c'est ainsi qu'on ramasse une bombe antique sans la faire exploser (il faut la charge rose, comme pour la roche antique). L'ordinateur du synthétiseur marche aussi avec un bloc en main et au clic droit (changement du portage) |
-| Conteneur ESCorp (coffre) | viser, appuyer et relâcher. Le jeu continue : clic prend et pose (Maj la moitié, Ctrl un ; ou flèches et Entrée, ou croix et A), glisser hors de la fenêtre fait regarder et s'éloigner le ferme (Échap et B aussi) |
-| Retourner au vaisseau | Maj+K, ou entrer dans le rayon de lumière d'atterrissage |
+| Conteneur ESCorp (coffre) | viser, appuyer et relâcher. Le jeu continue : glisser-déposer entre le conteneur et l'inventaire (clic droit la moitié ou un, Maj/Ctrl + clic la moitié/un, double clic rassemble ; ou flèches et Entrée, ou croix, A et X), glisser hors de la fenêtre fait regarder et s'éloigner le ferme (Échap et B aussi) |
+| Retourner au vaisseau | Maj+K (laisse ce que tu portes dans un conteneur, voir plus bas), ou entrer dans le rayon de lumière d'atterrissage |
 | Piloter le vaisseau (ajout du portage) | ordinateur de bord > Piloter le vaisseau : WASD ou stick gauche le déplacent au-dessus de la planète, la souris ou le stick droit tournent la caméra, E, Échap, B ou Start le laissent où il est (il freine, se redresse et atterrit tout seul) |
-| Créatif : palette de blocs | I (clic = mettre le bloc dans la case choisie, molette = page) |
+| Inventaire et palette | I : en aventure, l'écran d'inventaire (glisser, partager les piles, jeter dehors) ; en créatif, la palette de blocs (clic = mettre le bloc dans la case choisie, molette = page) |
 | Pause | Échap |
 | Sauvegarde rapide | F5 |
 | Capture d'écran | F2 : un PNG sans le casque ni le HUD, à la taille de la fenêtre, dans `%APPDATA%\Galaxy55\screenshots\` |
@@ -86,28 +87,36 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
 
 ## Contenu du dossier
 
-- `game/` le jeu : menus (`GalaxyApp`, `Ui`), langues (`Lang`), réglages (`Settings`), sauvegardes (`SaveData`), planète, lumière et
+- `game/` le jeu : menus (`GalaxyApp`, `Ui`), langues (`Lang`), réglages (`Settings`), sauvegardes (`SaveData`, `SaveArchive`, `SaveNames`), planète, lumière et
   maillage (`World`), écoulement de l'eau (`WorldProcess`), modèles de blocs (`Models`), ciel et brouillard (`Sky`), neige (`Snow`),
   joueur, creuser et poser (`GameView`), inventaire (`Inv`, `InvBar`, `Palette`), effets et objets tombés (`Fx`, `Drops`), le
-  vaisseau (`Ship`, `ShipData`), les comètes (`Comets`, `CometGenerator`) et la base de données ESCorp (`Kubindex`, `KubData`,
-  `DatabasePanel` et les vues `Kub*`).
+  vaisseau (`Ship`, `ShipData`), les comètes (`Comets`, `CometGenerator`), la base de données ESCorp (`Kubindex`, `KubData`,
+  `DatabasePanel` et les vues `Kub*`), conteneur et stockage (`Chest`, `ShipStorage`, `SlotGrid`), l'équipement laissé à la mort
+  (`DeathDrops`), les améliorations ESCorp (`EscorpUpgrades`), les kubes de l'éditeur dans le monde (`EditorKubes`) et les tableaux
+  (`Painting`).
 - `explore/` la carte stellaire (`Explorer`, avec le robot marchand et les flèches GPS).
 - `shim/` couche de compatibilité `flash.*` pour que les générateurs d'origine compilent en HashLink.
-- `headless/` programmes de vérification : les mondes sont identiques à ceux de Flash (empreinte Adler-32, eau et blocs) ; ils lisent aussi le vaisseau et les sauvegardes.
+- `headless/` programmes de vérification : le générateur (empreinte Adler-32, eau et blocs), le vaisseau et les sauvegardes
+  (`SaveTest`, `SaveTool`). Avec la version 0 du générateur, les mondes étaient identiques à ceux de Flash ; depuis la
+  version 1 (v0.9), `gen_ref.txt` garde les planètes de référence de chaque version (chaque planète retient la version de sa
+  première visite).
 
 ## Différences avec l'original
 
 - La neige du biome d'hiver est un ajout du port : l'original ne l'a pas.
-- Le mode créatif et sa palette sont un ajout du port.
+- Le mode créatif et sa palette sont un ajout du port. Une partie créative peut passer en survie et revenir, et la palette a
+  aussi les blocs sans prix qui donnent des charges (cristaux de bonus, plantes de citronox et d'etherium...).
 - Le menu de l'ordinateur de bord a son propre style, comme dans la version Flash (l'original était une page web).
-- La fenêtre du conteneur ESCorp montre aussi ton inventaire, se ferme aussi avec Échap, B ou Fermer et se manie au clavier
-  et à la manette (tant qu'elle est ouverte, les flèches déplacent sa sélection et pas le joueur). Son contenu est gardé dans
+  Commercer, Contrats ESCorp et Améliorations ESCorp sont dans son sous-menu « Contacter l'ESCorp » (ajout du port) ; les
+  améliorations, payées en charges bonus, n'en ont encore aucune.
+- La fenêtre du conteneur ESCorp montre aussi ton inventaire, se manie par glisser-déposer comme l'écran d'inventaire (I en
+  aventure, ajout du port lui aussi), se ferme aussi avec Échap, B ou Fermer et se manie au clavier et à la manette (tant qu'elle est ouverte, les flèches déplacent sa sélection et pas le joueur). Son contenu est gardé dans
   la partie (dans l'original, sur le serveur) et tombe au sol quand on le casse.
 - La boutique du robot marchand (dans l'original, c'était un panneau web), son vaisseau sur la carte stellaire et la flèche
   GPS orange qui le désigne sont des ajouts du port. Dans le vaisseau-mère, son étal est au milieu du hangar et on parle au
   robot (clic dessus) pour commercer ou discuter. Ses prix sont propres au portage : ce qui est fabriqué ne se revend pas plus
   cher que ses ingrédients et certaines choses sont seulement achetées.
-- Les contrats ESCorp (ordinateur de bord > Contrats) sont un ajout du port (dans l'original, ils venaient du serveur ; seule
+- Les contrats ESCorp (ordinateur de bord > Contacter l'ESCorp > Contrats ESCorp) sont un ajout du port (dans l'original, ils venaient du serveur ; seule
   reste la liste des blocs triviaux des contrats de base). Ils se modifient dans `contracts.json`. Avec une partie des blocs,
   on donne ce qu'on a et le contrat reste en cours : il n'expire plus, prend une ligne du tableau et ne part qu'une fois
   terminé ou abandonné (avec confirmation ; les blocs donnés sont perdus). Les crédits de départ sont de 200 et arrivent à la
@@ -140,7 +149,8 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
   va et s'incline dans les virages ; quand on le laisse, il reprend son orientation habituelle avant d'atterrir (ses blocs,
   coffres et synthétiseurs ne tournent pas). L'endroit est enregistré par planète ; sans le
   piloter, le vaisseau atterrit au même endroit que d'habitude.
-- Options ajoutées : ombre du bloc que tu vas poser, nom du bloc visé, cacher le cadre de sélection et désactiver les vagues de l'eau.
+- Options ajoutées : ombre du bloc que tu vas poser, nom du bloc visé, cacher le cadre de sélection, désactiver les vagues de l'eau et
+  molette en boucle (dans l'original, elle s'arrêtait aux deux bouts de la barre).
 - Le turbo mineur fait creuser trois fois plus vite jusqu'à 15 blocs autour de lui (5 dans l'original) et se récupère quand
   on le casse (dans l'original, il était perdu).
 - La capture d'écran de F2 est enregistrée directement dans le dossier `screenshots` et un message indique où (l'original ouvrait la boîte de dialogue de Flash pour l'enregistrer).
@@ -171,4 +181,20 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
   ESCorp avec 8 fers. Le tronc de lunimeuse se fait avec des lunimeuses mortes (dans l'original, avec de la roche lunaire).
 - Une partie avec des blocs que cette version ne connaît pas (enregistrée par une plus récente) demande confirmation avant
   de se charger ; si on accepte, elle est copiée dans `saves/backups` et ces blocs sont supprimés.
+- Le stockage du vaisseau (ordinateur de bord > Stockage) est un ajout du port : 4 cases de blocs, comme un conteneur, et les
+  charges sans cases (jaunes jusqu'à 24, bleues 12, roses 5, bonus sans limite). Celui de l'original était sur le serveur et
+  il est perdu.
+- À la mort ou avec Maj+K, ce que tu portes (blocs et charges, pas les crédits) reste dans un petit conteneur ESCorp là où tu
+  étais, qui n'expire pas et est gardé dans la partie (dans l'original, le serveur le laissait, en butin qui expirait, et le
+  mode local ne retirait rien). C'est une option de la partie, activée sauf changement ; rien en créatif, dans le tutoriel,
+  dans le hangar ni dans le vaisseau-mère.
+- En marchant, on monte sur les dalles (demi-blocs) sans sauter : changement du port, dans l'original elles arrêtaient comme
+  un mur.
+- Les 16 tableaux de CroqueMotel (Motion Twin, CC BY-NC-SA 4.0, dans `NOTICE`) sont un ajout du port : des plaques accrochées
+  à un mur, seulement dans la palette créative. Dans une partie créative, on pose aussi les kubes de l'éditeur (les `.kube` du
+  dossier `kubes`).
+- Le générateur de planètes (version 1, changement du port) suit les étapes de l'original, mais chaque étape, structure et
+  bonus a son propre hasard et les structures sont placées par régions dans un ordre fixe : les planètes ne sont plus
+  identiques à celles de la version Flash, et ajouter une structure ne change la planète que dans sa boîte. Les parties gardent
+  les blocs par leur nom, donc les nouveaux blocs d'une autre version ne les cassent pas.
 - Ce qui manque est dans `TODO.fr.md`, les bugs dans `BUGS.fr.md` et les idées pour plus tard dans `IDEAS.fr.md` (racine du dépôt).

@@ -1,3 +1,159 @@
+## Galaxy 55 (offline) v0.9 — novedades
+
+La versión 0.9 del port nativo **no oficial** de Galaxy 55 (Motion Twin, 2012) ya está aquí. Sin Flash, sin navegador y sin servidor.
+
+**Cómo jugar (Windows):** descomprime la carpeta entera y haz doble clic en `jugar.bat`. Si no abre (equipos sin OpenGL 3.2 o máquinas virtuales), usa `jugar_dx.bat`, la versión DirectX. No hay que instalar nada. Las partidas se guardan en `%APPDATA%\Galaxy55\`.
+**Linux y macOS:** zip aparte; necesita HashLink 1.16 instalado (ver su `LEEME.txt`).
+
+Todo lo nuevo es obra de **Cornor923** (¡gracias!, PR 126-148). Cinco grandes novedades que no estaban en el juego original: el almacén de la nave, el equipo que se queda en el suelo al morir, el menú "Contactar con la ESCorp", los cuadros y tus kubes del editor en las partidas creativas. Por debajo cambian también el generador de planetas y el formato de las partidas: lee "Tus partidas guardadas" antes de abrir una partida antigua.
+
+### Las cinco grandes novedades
+
+#### El almacén de la nave
+Nuevo botón "Almacén" en el ordenador de a bordo, después de "Modificar la nave": 4 casillas de bloques, como una cantina de ESCorp, y las cargas aparte, sin casillas (amarillas hasta 24, azules 12, rosas 5 y de bonus sin límite). Se arrastra y se suelta como en la pantalla de inventario. En la nave nodriza, el ordenador de tu nave aparcada también lo abre. Hay uno por partida y se queda aunque rehagas la nave en el hangar.
+
+#### Al morir, el equipo se queda en el suelo
+Al morir o al volver a la nave con Mayús+K, lo que llevas (bloques, gemas y cargas; los créditos no) cae en una cantina de ESCorp pequeña, donde estabas. No caduca: puedes volver a por ella. En creativo, en el tutorial, en el hangar y en la nave nodriza no se deja nada.
+Es una opción de cada partida, activada si no se cambia. En Nueva partida, el botón nuevo "Personalizar" tiene la semilla y la casilla "Equipo al suelo"; en Continuar, "Renombrar" pasa a ser "Modificar" y la cambia después.
+
+#### Contactar con la ESCorp
+El ordenador de a bordo agrupa "Comerciar", "Contratos ESCorp" y "Mejoras ESCorp" en un submenú nuevo, "Contactar con la ESCorp". Las mejoras, a cambio de cargas de bonus, llegarán más adelante: de momento la pantalla muestra tus cargas de bonus y que no hay ninguna. El contrato especial sale ahora el primero del panel de contratos y, en el tutorial, el botón que toca pulsar se marca en verde.
+
+#### Cuadros
+Los 16 cuadros de CroqueMotel (Motion Twin) están en la paleta creativa. Se cuelgan en la pared que apuntas, girados hacia ti (ni en el suelo ni en el techo), y caen si quitas la pared. El editor de kubes tiene una forma nueva, "Cuadro (en la pared)", para hacer los tuyos.
+
+#### Tus kubes en tu mundo
+En una partida creativa, los kubes que dibujas en el editor de kubes (o los `.kube` que dejas en su carpeta) salen al final de la paleta, con una esquina cian, y se ponen como cualquier bloque, puertas y planos incluidos. Hasta 128 por partida. Un kube retocado se ve nuevo la próxima vez que cargas la partida.
+
+### También en la v0.9
+- **Subir planchas andando:** se sube a una plancha sin saltar, y a una plancha y luego un bloque en dos pasos (en el original había que saltar).
+- **Cantina de ESCorp con arrastrar y soltar,** como la pantalla de inventario: clic derecho, Mayús o Ctrl para la mitad o una, doble clic para juntar, y también con el mando.
+- **Paleta creativa:** los tres cristales verdes de bonus y los demás bloques que dan cargas.
+- **Rueda del ratón en bucle:** pasa de la última casilla al excavador y al revés (se quita en Opciones > Controles).
+- **Versión de cada partida:** la lista de partidas dice con qué versión del juego se creó y se guardó cada una.
+- **Generador de planetas nuevo:** sigue los pasos del original, pero cada paso y cada estructura tienen su propio azar, así que lo que se añada más adelante (anomalías nuevas) solo cambiará el planeta en su sitio, y cada planeta recuerda la versión con la que lo visitaste. Los planetas ya no son idénticos a los de la versión Flash.
+- **Partidas en archivos `.g55`:** un archivo por partida, con los bloques por su nombre. Los bloques de una versión más nueva ya no se pierden: salen como kubes misteriosos y se conservan. Las partidas ocupan mucho menos y se guardan y se leen más deprisa.
+- **Carga más rápida:** el planeta se genera 2-3 veces más deprisa y en segundo plano, sin parones en la pantalla de carga.
+- **Mapa de estrellas sin parones:** al despegar, el juego se quedaba parado unos 9 s; ahora la pantalla de carga sigue respondiendo.
+
+#### Arreglos (selección)
+- Con una Intel HD 4600 en Linux, las cascadas, las gemas y el vidrio ya se ven, y el menú principal también.
+- Un clic fuera de una ventana ya no llega al menú de debajo (detrás de Renombrar, un clic en otra partida la abría).
+- Una pila tirada de bloques de carga se puede volver a recoger.
+- Las variantes de puerta y de plano de un kube del editor ya no salen en la paleta creativa.
+- El agua ácida vista de refilón ya no se cubre de rayas finas.
+
+Todo está en el [CHANGELOG](../CHANGELOG.md), y los errores conocidos en `ERRORES.md`. Gracias también al jugador que probó en su Intel HD 4600 los arreglos de las cascadas invisibles.
+
+### Tus partidas guardadas
+Las partidas de la v0.8.1 se abren, pero **cambian**: sus planetas se generan ahora con el generador nuevo. Lo que construiste sigue ahí, pero el terreno de alrededor puede haber cambiado (agujeros, bloques que flotan o quedan enterrados). La lista las marca como "Partida antigua" y avisa cada vez que se abren. Al jugarlas se convierten al formato nuevo (`.g55`) y el archivo de antes queda en `saves/backups`; las versiones anteriores no leen el formato nuevo. **El formato de las partidas todavía puede cambiar entre versiones.**
+
+---
+
+## Galaxy 55 (offline) v0.9 — what's new
+
+Version 0.9 of the **unofficial** native port of Galaxy 55 (Motion Twin, 2012) is out. No Flash, no browser and no server.
+
+**How to play (Windows):** unzip the whole folder and double-click `jugar.bat`. If it doesn't open (PCs without OpenGL 3.2 or virtual machines), use `jugar_dx.bat`, the DirectX build. Nothing to install. Saves go to `%APPDATA%\Galaxy55\`.
+**Linux and macOS:** separate zip; it needs HashLink 1.16 installed (see its `LEEME.txt`).
+
+Everything new is by **Cornor923** (thank you!, PRs 126-148). Five big new features that were not in the original game: the ship storage, the equipment left on the ground when you die, the "Contact ESCorp" menu, paintings and your kube editor kubes in creative games. Under the hood, the planet generator and the save format change too: read "Your old saves" before you open an old game.
+
+### The five big new features
+
+#### The ship storage
+New "Storage" button on the on-board computer, after "Modify the ship": 4 block slots, like an ESCorp Canteen, and the charges apart, without slots (yellow up to 24, blue 12, pink 5 and bonus without limit). Drag and drop works as in the inventory screen. In the mothership, the computer of your parked ship opens it too. There is one per game, and it stays when you rebuild the ship in the hangar.
+
+#### When you die, your equipment stays on the ground
+When you die or go back to the ship with Shift+K, what you carry (blocks, gems and charges; not credits) falls in a small ESCorp Canteen where you were. It never expires: you can go back for it. Nothing is left in creative, in the tutorial, in the hangar or in the mothership.
+It is an option of each game, on unless changed. In New game, the new "Customize" button holds the seed and the "Drop equipment" box; in Continue, "Rename" becomes "Edit" and changes it later.
+
+#### Contact ESCorp
+The on-board computer groups "Trade", "ESCorp contracts" and "ESCorp upgrades" in a new sub-menu, "Contact ESCorp". Upgrades, paid with bonus charges, will come later: for now the screen shows your bonus charges and that there are none. The special contract now comes first in the contracts panel and, in the tutorial, the button to press is marked in green.
+
+#### Paintings
+The 16 paintings of CroqueMotel (Motion Twin) are in the creative palette. They hang on the wall you aim at, turned towards you (not on a floor or a ceiling), and fall if you remove the wall. The kube editor has a new shape, "Painting (on a wall)", to make your own.
+
+#### Your kubes in your world
+In a creative game, the kubes you draw in the kube editor (or the `.kube` files you drop in its folder) come last in the palette, with a cyan corner, and are placed like any block, doors and planes included. Up to 128 per game. A retouched kube shows its new look the next time you load the game.
+
+### Also in v0.9
+- **Walking up plates:** you climb a plate without jumping, and a plate then a block in two steps (in the original you had to jump).
+- **ESCorp Canteen with drag and drop,** like the inventory screen: right click, Shift or Ctrl for half or one, double click to gather, and with the gamepad too.
+- **Creative palette:** the three green bonus crystals and the other blocks that give charges.
+- **Mouse wheel wraps around:** it goes from the last slot to the digger and back (turned off in Options > Controls).
+- **Version of each save:** the saves list says which game version created and last saved each one.
+- **New planet generator:** it follows the original's steps, but each step and structure has its own randomness, so what is added later (new anomalies) will only change the planet where it goes, and each planet remembers the version you visited it with. Planets are no longer identical to the Flash version's.
+- **Saves as `.g55` files:** one file per game, with blocks stored by name. Blocks from a newer version are no longer lost: they show as mystery kubes and are kept. Saves are much smaller and faster to write and read.
+- **Faster loading:** the planet is generated 2-3 times faster and in the background, with no stops on the loading screen.
+- **Star map without the freeze:** taking off stopped the game for about 9 s; now the loading screen keeps responding.
+
+#### Bug fixes (selection)
+- With an Intel HD 4600 on Linux, waterfalls, gems and glass show up again, and so does the main menu.
+- A click outside a dialog no longer reaches the menu below (behind Rename, a click on another save played it).
+- A thrown stack of charge blocks can be picked up again.
+- The door and plane variants of a kube editor kube no longer show up in the creative palette.
+- Acid water seen at a grazing angle is no longer covered in thin streaks.
+
+Everything is in the [CHANGELOG](../CHANGELOG.en.md), and the known bugs in `BUGS.md`. Thanks also to the player who tested the invisible waterfall fixes on their Intel HD 4600.
+
+### Your old saves
+v0.8.1 saves open, but they **change**: their planets are now generated with the new generator. What you built is still there, but the terrain around it may have changed (holes, blocks floating or buried). The list marks them as "Old save" and warns every time they are opened. When you play them they are converted to the new format (`.g55`) and the old file stays in `saves/backups`; older versions can't read the new format. **The save format may still change between versions.**
+
+---
+
+## Galaxy 55 (offline) v0.9 — les nouveautés
+
+La version 0.9 du portage natif **non officiel** de Galaxy 55 (Motion Twin, 2012) est sortie. Sans Flash, sans navigateur et sans serveur.
+
+**Comment jouer (Windows) :** décompresse tout le dossier et double-clique sur `jugar.bat`. S'il ne s'ouvre pas (PC sans OpenGL 3.2 ou machines virtuelles), utilise `jugar_dx.bat`, la version DirectX. Rien à installer. Les parties sont enregistrées dans `%APPDATA%\Galaxy55\`.
+**Linux et macOS :** zip séparé ; il faut HashLink 1.16 installé (voir son `LEEME.txt`).
+
+Tout ce qui est nouveau est de **Cornor923** (merci !, PR 126-148). Cinq grandes nouveautés qui n'étaient pas dans le jeu original : le stockage du vaisseau, l'équipement qui reste au sol à la mort, le menu « Contacter l'ESCorp », les tableaux et tes kubes de l'éditeur dans les parties créatives. En dessous, le générateur de planètes et le format des parties changent aussi : lis « Tes anciennes parties » avant d'ouvrir une ancienne partie.
+
+### Les cinq grandes nouveautés
+
+#### Le stockage du vaisseau
+Nouveau bouton « Stockage » sur l'ordinateur de bord, après « Modifier le vaisseau » : 4 cases de blocs, comme un Conteneur ESCorp, et les charges à part, sans cases (jaunes jusqu'à 24, bleues 12, roses 5 et bonus sans limite). Le glisser-déposer marche comme dans l'écran d'inventaire. Dans le vaisseau-mère, l'ordinateur de ton vaisseau garé l'ouvre aussi. Il y en a un par partie, et il reste quand tu refais le vaisseau dans le hangar.
+
+#### À la mort, l'équipement reste au sol
+À la mort ou en revenant au vaisseau avec Maj+K, ce que tu portes (blocs, gemmes et charges ; pas les crédits) tombe dans un petit Conteneur ESCorp, là où tu étais. Il n'expire pas : tu peux revenir le chercher. Rien n'est laissé en créatif, dans le tutoriel, dans le hangar ni dans le vaisseau-mère.
+C'est une option de chaque partie, activée sauf changement. Dans Nouvelle partie, le nouveau bouton « Personnaliser » contient la graine (« Seed ») et la case « Dépôt de l'équipement à la mort » ; dans Continuer, « Renommer » devient « Modifier » et la change ensuite.
+
+#### Contacter l'ESCorp
+L'ordinateur de bord regroupe « Commercer », « Contrats ESCorp » et « Améliorations ESCorp » dans un nouveau sous-menu, « Contacter l'ESCorp ». Les améliorations, payées en charges bonus, viendront plus tard : pour l'instant l'écran montre tes charges bonus et qu'il n'y en a aucune. Le contrat spécial arrive maintenant en premier dans le panneau des contrats et, dans le tutoriel, le bouton à choisir est marqué en vert.
+
+#### Tableaux
+Les 16 tableaux de CroqueMotel (Motion Twin) sont dans la palette créative. Ils s'accrochent au mur visé, tournés vers toi (ni au sol ni au plafond), et tombent si on enlève le mur. L'éditeur de Kubes a une nouvelle forme, « Tableau (au mur) », pour faire les tiens.
+
+#### Tes kubes dans ton monde
+Dans une partie créative, les kubes que tu dessines dans l'éditeur de Kubes (ou les `.kube` déposés dans son dossier) arrivent à la fin de la palette, avec un coin cyan, et se posent comme n'importe quel bloc, portes et plans compris. Jusqu'à 128 par partie. Un kube retouché a son nouvel aspect au prochain chargement de la partie.
+
+### Aussi dans la v0.9
+- **Monter sur les dalles en marchant :** on monte sur une dalle sans sauter, et sur une dalle puis un bloc en deux pas (dans l'original, il fallait sauter).
+- **Conteneur ESCorp en glisser-déposer,** comme l'écran d'inventaire : clic droit, Maj ou Ctrl pour la moitié ou un, double clic pour rassembler, et aussi à la manette.
+- **Palette créative :** les trois cristaux verts de bonus et les autres blocs qui donnent des charges.
+- **Molette en boucle :** elle passe de la dernière case au laser de minage et inversement (se désactive dans Options > Contrôles).
+- **Version de chaque partie :** la liste des parties indique avec quelle version du jeu chacune a été créée et enregistrée.
+- **Nouveau générateur de planètes :** il suit les étapes de l'original, mais chaque étape et chaque structure a son propre hasard, donc ce qui sera ajouté plus tard (nouvelles anomalies) ne changera la planète qu'à sa place, et chaque planète retient la version de ta visite. Les planètes ne sont plus identiques à celles de la version Flash.
+- **Parties en fichiers `.g55` :** un fichier par partie, avec les blocs gardés par leur nom. Les blocs d'une version plus récente ne sont plus perdus : ils s'affichent en kubes mystère et sont conservés. Les parties prennent bien moins de place et s'enregistrent et se lisent plus vite.
+- **Chargement plus rapide :** la planète est générée 2 à 3 fois plus vite et en arrière-plan, sans arrêts sur l'écran de chargement.
+- **Carte des étoiles sans blocage :** au décollage, le jeu restait figé environ 9 s ; maintenant l'écran de chargement répond toujours.
+
+#### Corrections (sélection)
+- Avec une Intel HD 4600 sous Linux, les cascades, les gemmes et le verre se voient de nouveau, et le menu principal aussi.
+- Un clic hors d'une fenêtre n'atteint plus le menu dessous (derrière Renommer, un clic sur une autre partie la lançait).
+- Une pile jetée de blocs de charge se ramasse de nouveau.
+- Les variantes de porte et de plan d'un kube de l'éditeur n'apparaissent plus dans la palette créative.
+- L'eau acide vue en rasant n'est plus couverte de fines rayures.
+
+Tout est dans le [CHANGELOG](../CHANGELOG.fr.md), et les bugs connus dans `BUGS.fr.md`. Merci aussi au joueur qui a testé sur son Intel HD 4600 les corrections des cascades invisibles.
+
+### Tes anciennes parties
+Les parties de la v0.8.1 s'ouvrent, mais elles **changent** : leurs planètes sont maintenant générées avec le nouveau générateur. Ce que tu as construit est toujours là, mais le terrain autour peut avoir changé (trous, blocs qui flottent ou se retrouvent enterrés). La liste les marque « Ancienne partie » et prévient à chaque ouverture. Quand tu les joues, elles sont converties au nouveau format (`.g55`) et l'ancien fichier reste dans `saves/backups` ; les versions plus anciennes ne lisent pas le nouveau format. **Le format des parties peut encore changer d'une version à l'autre.**
+
+---
+
 ## Galaxy 55 (offline) v0.8.1
 
 Todo lo nuevo desde la v0.8, obra de **Cornor923** (PR 116-125). Las partidas de la v0.8 siguen valiendo.
@@ -248,4 +404,4 @@ Celles de la v0.7 continuent : les planètes sans l'anomalie invisible ne change
 ---
 
 ### Licencia / License / Licence
-Código y datos de Galaxy 55 © Motion Twin, **CC BY-NC-SA 4.0**. Este port es una obra derivada bajo la misma licencia: uso no comercial y con crédito. Ver `LICENSE` y `NOTICE`. El icono de "nuevo" de la base de datos es de Mush, y las texturas de los kubes de Kube son de Kube (Motion Twin, CC BY-NC-SA 4.0).
+Código y datos de Galaxy 55 © Motion Twin, **CC BY-NC-SA 4.0**. Este port es una obra derivada bajo la misma licencia: uso no comercial y con crédito. Ver `LICENSE` y `NOTICE`. El icono de "nuevo" de la base de datos es de Mush, las texturas de los kubes de Kube son de Kube y los cuadros son de CroqueMotel (Motion Twin, CC BY-NC-SA 4.0).

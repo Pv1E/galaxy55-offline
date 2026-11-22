@@ -7,9 +7,10 @@ conocidos, ver `ERRORES.md` en la raíz); el juego original en Flash, con sus ar
 
 ## Jugar
 
-Compila (ver abajo) y haz doble clic en `jugar.bat`. Abre el menú de inicio: Continuar (la lista de partidas: jugar, renombrar o borrar), Nueva partida, Editor de kubes (añadido del port: dibujar bloques nuevos y guardarlos como `.kube` en la carpeta `kubes` de los datos), Opciones y Salir.
-En Nueva partida eliges nombre, semilla y modo: **Aventura** (como el original, con el inventario vacío) o **Creativo** (añadido nuestro, con bioma y tamaño).
-Las partidas y los ajustes se guardan en `%APPDATA%\Galaxy55\` (se puede cambiar con la variable `GALAXY55_DATA`), y las capturas (F2) en su carpeta `screenshots`.
+Compila (ver abajo) y haz doble clic en `jugar.bat`. Abre el menú de inicio: Continuar (la lista de partidas: jugar, modificar o borrar; cada una dice con qué versión del juego se creó y se guardó), Nueva partida, Editor de kubes (añadido del port: dibujar bloques nuevos y guardarlos como `.kube` en la carpeta `kubes` de los datos), Opciones y Salir.
+En Nueva partida eliges nombre y modo: **Aventura** (como el original, con el inventario vacío) o **Creativo** (añadido nuestro, con bioma y tamaño).
+Personalizar fija la semilla y si al morir se deja el equipo en el suelo (añadido del port, activado si no se cambia); Modificar, en la lista de partidas, lo cambia después.
+Las partidas (un archivo `.g55` por partida, en `saves`) y los ajustes se guardan en `%APPDATA%\Galaxy55\` (se puede cambiar con la variable `GALAXY55_DATA`), y las capturas (F2) en su carpeta `screenshots`.
 El juego deja ahí también `gpu.txt`, con la tarjeta gráfica y el controlador: adjúntalo si avisas de un fallo de dibujo.
 El formato de las partidas puede cambiar entre versiones: no cuentes con que las de hoy sirvan siempre.
 
@@ -26,13 +27,13 @@ Se pueden cambiar en Opciones > Controles > Personalizar teclas (añadido del po
 | Casco | H quita o pone el casco |
 | Coordenadas y FPS | F las muestra u oculta (ocultas al empezar, como en el original) |
 | Excavar o colocar | clic izquierdo, E o Mayús (mantener). Con la mano vacía excava; con un bloque, lo coloca si algo lo sujeta |
-| Elegir casilla | 1–0 o la rueda del ratón; Tab = excavador (mano vacía) |
+| Elegir casilla | 1–0 o la rueda del ratón (pasa de un extremo de la barra al otro; se quita en Opciones > Controles); Tab = excavador (mano vacía) |
 | Tirar la pila elegida | R o Supr |
 | Activar (ordenador de a bordo, puertas, bomba exótica) | apuntar y pulsar y soltar. Si se mantiene hasta que el bloque se rompe, se excava: así se recoge la bomba exótica sin que explote (hace falta la carga rosa, como para la roca exótica). El ordenador del sintetizador también funciona con un bloque en la mano y con el clic derecho (cambio del port) |
-| Cantina de ESCorp (cofre) | apuntar y pulsar y soltar. El juego no se para: clic coge y deja (Mayús la mitad, Ctrl una; o flechas e Intro, o cruceta y A), arrastrar fuera de la ventana mira y alejarse la cierra (Esc y B también) |
-| Volver a la nave | Mayús+K, o entrar en el haz de luz del aterrizaje |
+| Cantina de ESCorp (cofre) | apuntar y pulsar y soltar. El juego no se para: arrastrar y soltar entre la cantina y el inventario (clic derecho la mitad o una, Mayús/Ctrl + clic la mitad/una, doble clic junta; o flechas e Intro, o cruceta, A y X), arrastrar fuera de la ventana mira y alejarse la cierra (Esc y B también) |
+| Volver a la nave | Mayús+K (deja lo que llevas en un contenedor, ver más abajo), o entrar en el haz de luz del aterrizaje |
 | Pilotar la nave (añadido del port) | ordenador de a bordo > Pilotar la nave: WASD o palanca izquierda la mueven sobre el planeta, el ratón o la palanca derecha giran la cámara, E, Esc, B o Start la dejan donde está (frena, se endereza y aterriza sola) |
-| Creativo: paleta de bloques | I (clic = poner el bloque en la casilla elegida, rueda = página) |
+| Inventario y paleta | I: en aventura, la pantalla de inventario (arrastrar, partir montones, tirar fuera); en creativo, la paleta de bloques (clic = poner el bloque en la casilla elegida, rueda = página) |
 | Pausa | Esc |
 | Guardado rápido | F5 |
 | Captura de pantalla | F2: un PNG sin el casco ni el HUD, al tamaño de la ventana, en `%APPDATA%\Galaxy55\screenshots\` |
@@ -78,27 +79,35 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
 
 ## Qué hay
 
-- `game/` el juego: menús (`GalaxyApp`, `Ui`), idiomas (`Lang`), ajustes (`Settings`), partidas (`SaveData`), planeta, luz y mallado (`World`),
+- `game/` el juego: menús (`GalaxyApp`, `Ui`), idiomas (`Lang`), ajustes (`Settings`), partidas (`SaveData`, `SaveArchive`, `SaveNames`), planeta, luz y mallado (`World`),
   modelos de bloque (`Models`), cielo y niebla (`Sky`), nieve (`Snow`), jugador, excavar y colocar (`GameView`), inventario (`Inv`, `InvBar`, `Palette`),
-  efectos y sueltos (`Fx`, `Drops`), la nave (`Ship`, `ShipData`), los cometas (`Comets`, `CometGenerator`) y la Base de datos
-  ESCorp (`Kubindex`, `KubData`, `DatabasePanel` y las vistas `Kub*`).
+  efectos y sueltos (`Fx`, `Drops`), la nave (`Ship`, `ShipData`), los cometas (`Comets`, `CometGenerator`), la Base de datos
+  ESCorp (`Kubindex`, `KubData`, `DatabasePanel` y las vistas `Kub*`), cantina y almacén (`Chest`, `ShipStorage`, `SlotGrid`),
+  el equipo al morir (`DeathDrops`), las mejoras ESCorp (`EscorpUpgrades`), los kubes del editor en el mundo (`EditorKubes`) y los
+  cuadros (`Painting`).
 - `explore/` el mapa de estrellas (`Explorer`, con el robot comerciante y las flechas GPS). El agua que fluye está en `game/WorldProcess.hx`.
 - `shim/` capa de compatibilidad `flash.*` para que los generadores originales compilen en HashLink.
-- `headless/` programas de verificación: los mundos son idénticos a los de Flash (hash Adler-32, agua y bloques); también leen la nave y el guardado.
+- `headless/` programas de verificación: el generador (hash Adler-32, agua y bloques), la nave y las partidas (`SaveTest`,
+  `SaveTool`). Con la versión 0 del generador los mundos eran idénticos a los de Flash; desde la versión 1 (v0.9),
+  `gen_ref.txt` guarda los planetas de referencia de cada versión (cada planeta recuerda la versión con la que se visitó por
+  primera vez).
 
 ## Diferencias con el original
 
 - La nieve del bioma de invierno es un añadido de este port: el original no la tiene.
-- El modo creativo y su paleta son un añadido de este port.
+- El modo creativo y su paleta son un añadido de este port. Una partida creativa puede pasar a supervivencia y volver, y la
+  paleta trae también los bloques sin precio que dan cargas (cristales de bonus, plantas de citronox y de etherium...).
 - El menú del ordenador de a bordo tiene un aspecto propio, como en la versión Flash (el original era una página web).
-- La ventana de la cantina de ESCorp muestra también tu inventario, se cierra además con Esc, B o Cerrar y se maneja con el
-  teclado y el mando (mientras está abierta, las flechas mueven su marca y no al jugador). Lo que guarda va en la partida
+  Comerciar, Contratos ESCorp y Mejoras ESCorp están en su submenú "Contactar con la ESCorp" (añadido del port); las mejoras,
+  a cambio de cargas de bonus, todavía no tienen ninguna.
+- La ventana de la cantina de ESCorp muestra también tu inventario, se maneja arrastrando y soltando como la pantalla de
+  inventario (I en aventura, también añadido del port), se cierra además con Esc, B o Cerrar y se maneja con el teclado y el mando (mientras está abierta, las flechas mueven su marca y no al jugador). Lo que guarda va en la partida
   (en el original, en el servidor) y sale suelto si se rompe.
 - La tienda del robot comerciante (en el original era un panel web), su nave por el mapa de estrellas y la flecha GPS naranja
   que lo señala son un añadido de este port. En la nave nodriza, su puesto está en el centro del hangar y se habla con el
   robot (clic en él) para comerciar o charlar. Sus precios son del port: lo fabricado no se revende por más de lo que cuestan
   sus ingredientes y algunas cosas solo las compra.
-- Los contratos de la ESCorp (ordenador de a bordo > Contratos) son un añadido de este port (en el original los daba el
+- Los contratos de la ESCorp (ordenador de a bordo > Contactar con la ESCorp > Contratos ESCorp) son un añadido de este port (en el original los daba el
   servidor; solo queda la lista de bloques triviales de los contratos de base). Se editan en `contracts.json`. Con parte de
   los bloques se dan los que lleves y el contrato queda en curso: ya no caduca, ocupa una línea del tablero y solo se quita
   terminándolo o abandonándolo (con confirmación; los bloques dados se pierden). Los créditos de salida son 200 y llegan al
@@ -125,7 +134,8 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
   siempre a la misma altura, sin gasto, con una cámara por detrás y por encima y la niebla más suave mientras dura; el haz de
   luz marca dónde quedará (a toda velocidad se desvanece y vuelve al ir despacio, al pararse y al aterrizar). Acelera y frena con suavidad, gira hacia donde va y se inclina en las curvas; al dejarla vuelve a su
   orientación de siempre antes de aterrizar (sus bloques, cofres y sintetizadores no giran). El sitio se guarda por planeta; sin pilotarla, la nave aterriza donde siempre.
-- Opciones añadidas: sombra del bloque que vas a poner, nombre del bloque apuntado, quitar el marco de selección y quitar las olas del agua.
+- Opciones añadidas: sombra del bloque que vas a poner, nombre del bloque apuntado, quitar el marco de selección, quitar las olas del agua y
+  rueda del ratón en bucle (en el original se paraba en los extremos de la barra).
 - El turbo minero hace excavar tres veces más rápido hasta 15 bloques a su alrededor (5 en el original) y se recupera al
   romperlo (en el original se perdía).
 - La captura de F2 se guarda directamente en la carpeta `screenshots` y un mensaje dice dónde (el original abría el diálogo de Flash para guardarla).
@@ -154,4 +164,19 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
   tronco de lunimosa se hace con lunimosas muertas (en el original, con roca lunar).
 - Una partida con bloques que esta versión no conoce (guardada por una más nueva) pregunta antes de cargarse; si se acepta,
   se copia en `saves/backups` y se borran esos bloques.
+- El almacén de la nave (ordenador de a bordo > Almacén) es un añadido de este port: 4 casillas de bloques, como una cantina, y
+  las cargas sin casillas (amarillas hasta 24, azules 12, rosas 5, de bonus sin límite). El del original estaba en el servidor
+  y se perdió.
+- Al morir o con Mayús+K, lo que llevas (bloques y cargas, no los créditos) queda en una cantina de ESCorp pequeña donde
+  estabas, que no caduca y se guarda en la partida (en el original lo dejaba el servidor, en un botín que caducaba, y el modo
+  local no quitaba nada). Es una opción de la partida, activada si no se cambia; nada en creativo, en el tutorial, en el hangar
+  ni en la nave nodriza.
+- Andando se suben las planchas (medio bloque) sin saltar: cambio de este port, en el original paraban como un muro.
+- Los 16 cuadros de CroqueMotel (Motion Twin, CC BY-NC-SA 4.0, en `NOTICE`) son un añadido de este port: placas que se
+  cuelgan en una pared, solo en la paleta creativa. En una partida creativa también se ponen los kubes del editor (los `.kube`
+  de la carpeta `kubes`).
+- El generador de planetas (versión 1, cambio de este port) sigue los pasos del original, pero cada paso, estructura y bonus
+  tiene su propio azar y las estructuras se ponen por regiones en un orden fijo: los planetas ya no son idénticos a los de la
+  versión Flash, y añadir una estructura solo cambia el planeta dentro de su caja. Las partidas guardan los bloques por su
+  nombre, así que los bloques nuevos de otra versión no las rompen.
 - Lo que falta está en `PENDIENTES.md`, los fallos en `ERRORES.md` y las ideas para más adelante en `IDEAS.md` (raíz del repositorio).
