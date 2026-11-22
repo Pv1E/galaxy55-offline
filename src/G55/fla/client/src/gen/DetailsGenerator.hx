@@ -3,10 +3,10 @@ import Common;
 import gen.Structures;
 
 /**
- * Anadido del port: una estructura o un bonus puesto (DetailsGenerator.poses). n: su tipo de anomalia (kubindex.json; null en los
- * relieves y los bonus); x, y, z: su origen; box: lo que ha cambiado, respecto al origen (x0, y0, z0, x1, y1, z1, incluidos; en x
- * e y con realDist: sigue bien en el borde del mapa); samples: algunas celdas puestas (direccion, valor); covered: otra estructura
- * puesta despues la ha tapado entera (no sale en placed)
+ * Anadido del port: una estructura o un bonus (cristales de hexalita) puesto (DetailsGenerator.poses). n: su tipo de anomalia
+ * (kubindex.json; null en los relieves y los bonus); x, y, z: su origen; box: lo que ha cambiado, respecto al origen (x0, y0,
+ * z0, x1, y1, z1, incluidos; en x e y con realDist: sigue bien en el borde del mapa); samples: algunas celdas puestas
+ * (direccion, valor); covered: otra estructura puesta despues la ha tapado entera (no sale en placed)
  */
 typedef Pose = { id : String, n : String, stage : String, x : Int, y : Int, z : Int, box : Array<Int>, samples : Array<Int>, ?covered : Bool };
 
@@ -28,12 +28,15 @@ class DetailsGenerator extends BiomeGenerator {
 	 * Se rellena al acabar las estructuras (etapa del aire)
 	 */
 	public var placed : Array<PlacedAnomaly> = [];
-	/** todo lo puesto, tambien los relieves y los bonus (GenMain --locality, --census) */
+	/** todo lo puesto, tambien los relieves y los bonus (cristales de hexalita; GenMain --locality, --census) */
 	public var poses : Array<Pose> = [];
-	/** sin estructuras ni bonus (las cometas: CometGenerator) */
+	/** sin estructuras ni cristales de hexalita (las cometas: CometGenerator) */
 	var structuresOn = true;
 
-	/** estructuras y bonus: solo en los planetas de verdad (Structures.PLANET_BIOMES: nunca el hangar ni el bioma de prueba) */
+	/**
+	 * estructuras y cristales de hexalita (bonus): solo en los planetas de verdad (Structures.PLANET_BIOMES: nunca el hangar ni
+	 * el bioma de prueba)
+	 */
 	inline function hasStructures() return structuresOn && Structures.isPlanet(biomeName);
 	/** GenMain --allstructures: en cada region solo esta estructura, siempre (sin tirar su p) */
 	public var forceStructure : String = null;
@@ -53,7 +56,7 @@ class DetailsGenerator extends BiomeGenerator {
 
 	/**
 	 * Las grutas: las celdas guardadas por saveCaveMask (donde los biomas llamaban a addCaveDetails) que siguen vacias vuelven a
-	 * ser CAVE, se ponen sus estructuras y sus bonus, y lo que queda de CAVE se vacia
+	 * ser CAVE, se ponen sus estructuras y sus cristales de hexalita, y lo que queda de CAVE se vacia
 	 */
 	override function stageCave() {
 		if( caveMask == null ) return;
@@ -165,6 +168,8 @@ class DetailsGenerator extends BiomeGenerator {
 	}
 
 	// ---------------------------------------------------------------- bonus
+	// bonus = los cristales de hexalita (BBonusSmall, BBonusMedium, BBonusLarge) y sus hierbas. Los pasos, los azares (stream)
+	// y las anomalias (kubindex.json) siguen llamandose bonus: cambiar esos nombres cambiaria los planetas y las partidas
 
 	private function bonusHerb(x,y,z, ?empty=EMPTY) {
 		var herb1 = alloc(BBonusHerb1);
@@ -177,8 +182,8 @@ class DetailsGenerator extends BiomeGenerator {
 	}
 
 	/**
-	 * Un bonus (o un paquete de bonus) con su propio azar (stream(name, i)): su region (de todas las del planeta), hasta 500
-	 * sitios en ella y lo que pone. place(x, y) dice si el sitio vale y lo pone. Queda en poses
+	 * Un bonus (un cristal de hexalita o un paquete de cristales) con su propio azar (stream(name, i)): su region (de todas las
+	 * del planeta), hasta 500 sitios en ella y lo que pone. place(x, y) dice si el sitio vale y lo pone. Queda en poses
 	 */
 	function placeBonus( name : String, i : Int, cave : Bool, place : Int -> Int -> Int -> Bool ) {
 		var keep = rnd;
@@ -204,8 +209,8 @@ class DetailsGenerator extends BiomeGenerator {
 	}
 
 	/**
-	 * Bonus de la superficie: los mismos que en el original (15 sueltos y de 0 a 5 paquetes con hierbas), cada uno en una region
-	 * con su propio azar (placeBonus)
+	 * Cristales de hexalita de la superficie (bonus): los mismos que en el original (15 sueltos y de 0 a 5 paquetes con hierbas),
+	 * cada uno en una region con su propio azar (placeBonus)
 	 */
 	override function addBonus() {
 		if( !hasStructures() ) return;
@@ -231,7 +236,7 @@ class DetailsGenerator extends BiomeGenerator {
 			});
 	}
 
-	/** bonus de las grutas: de 0 a 2 grandes y de 3 a 9 paquetes, en el suelo de una gruta (placeBonus) */
+	/** cristales de hexalita de las grutas (bonus): de 0 a 2 grandes y de 3 a 9 paquetes, en el suelo de una gruta (placeBonus) */
 	function caveBonus() {
 		var small = alloc(BBonusSmall);
 		var medium = alloc(BBonusMedium);

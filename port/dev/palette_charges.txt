@@ -1,5 +1,5 @@
 # paleta del modo creativo (I): los bloques que dan cargas y no tienen precio en los datos no salian. Ahora van con los cristales
-# de bonus, justo despues de los otros cristales: casillas 23 a 28 de la primera pagina, una sola vez (Plante a citronox,
+# de hexalita, justo despues de los otros cristales: casillas 23 a 28 de la primera pagina, una sola vez (Plante a citronox,
 # Stalactite de citronox, Tortillant fleuri, Plante a etherium, Meteorite d'etherium y Charge rose, la carga misma). Lanzar con
 # -Extra "--lang=fr".
 # print paldup: 244 bloques, 0 repetidos. print palette: nombre de abajo de las casillas 19 a 29 (29 Mur de rosh). La busqueda
@@ -15,7 +15,7 @@ slot 1
 palette
 wait 5
 print paldup
-# Etherium bleu, los tres cristales de bonus, los seis nuevos y Mur de rosh
+# Etherium bleu, los tres cristales de hexalita, los seis nuevos y Mur de rosh
 palhover 19
 print palette
 palhover 19 out

@@ -6,7 +6,8 @@
 # Lo que no cambia es la suma (el mundo); los nombres de las anomalias si pueden cambiar (las cascadas con lava: cavelava, lavafall).
 # Version 1 (azar por nombre, estructuras por regiones: Generator, Structures): las lineas de la version 0 se han quitado, ese
 # generador ya no existe (un planeta de version 0 se genera con la 1: "Ancienne partie"). Todos los biomas en los tres tamanos,
-# la Cite muerta, el hangar (BIShed de tamano 3, que antes no acababa; sin estructuras ni bonus: no es un planeta) y la cometa.
+# la Cite muerta, el hangar (BIShed de tamano 3, que antes no acababa; sin estructuras ni cristales de hexalita: no es un
+# planeta) y la cometa.
 1234 BIAutumn 2 1 7C40384B cavegarden,cavelava
 5 BIAutumn 1 1 861CBEE4 -
 808 BIAutumn 3 1 7DA3DAAC cavegarden,cavecascade,cavecascade,cavegarden,cavecascade,largepit,crater,invisible,invisible

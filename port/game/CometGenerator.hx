@@ -2,8 +2,8 @@ import Common;
 
 /**
  * Terreno de las cometas (Comets, añadido del port): un caso por tipo de cometa, como BiomeGenerator con los biomas. Sin
- * estructuras ni bonus (structuresOn: Structures no las pone en las cometas) y sin mar. La roca es soils[0] del bioma y el agua
- * del bioma no se pone nunca.
+ * estructuras ni cristales de hexalita (structuresOn: Structures no las pone en las cometas) y sin mar. La roca es soils[0] del
+ * bioma y el agua del bioma no se pone nunca.
  */
 @:access(gen.Generator)
 class CometGenerator extends gen.DetailsGenerator {
@@ -15,7 +15,7 @@ class CometGenerator extends gen.DetailsGenerator {
 	static inline var HEIGHT = gen.Generator.HEIGHT;
 
 	override function initBiome( biome : BiomeKind ) {
-		// sin estructuras ni bonus (Structures: nunca en las cometas)
+		// sin estructuras ni cristales de hexalita (Structures: nunca en las cometas)
 		structuresOn = false;
 		switch( biome ) {
 		case BICometCinder:

@@ -1,4 +1,4 @@
-# nombres de los cristales verdes (BBonus*): esquina del bloque apuntado e inventario. Probar con -Extra "--lang=fr" (en, es)
+# nombres de los cristales de hexalita (BBonus*): esquina del bloque apuntado e inventario. Probar con -Extra "--lang=fr" (en, es)
 wait 3
 planet
 wait 30

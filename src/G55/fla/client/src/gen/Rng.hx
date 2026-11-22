@@ -1,9 +1,9 @@
 package gen;
 
 /**
- * Anadido del port (generador version 1): el azar del generador, por nombre. Cada paso, cada estructura y cada bonus tiene su
- * propia suite (Generator.stream), hecha del hash de la semilla del planeta y de su nombre: anadir o quitar algo no cambia el
- * azar de lo demas (antes todo tiraba de una sola suite y una anomalia nueva cambiaba medio planeta).
+ * Anadido del port (generador version 1): el azar del generador, por nombre. Cada paso, cada estructura y cada bonus (cristales
+ * de hexalita) tiene su propia suite (Generator.stream), hecha del hash de la semilla del planeta y de su nombre: anadir o
+ * quitar algo no cambia el azar de lo demas (antes todo tiraba de una sola suite y una anomalia nueva cambiaba medio planeta).
  * La misma interfaz que mt.Rand (random, rand, sign, clone, getSeed) para no tocar las llamadas. Solo desplazamientos, XOR y
  * sumas de 32 bits (xorshift32 y djb2), sin multiplicaciones: da lo mismo en HashLink y en el GenMain de Flash.
  */
