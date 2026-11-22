@@ -1302,7 +1302,17 @@ class Dev {
 					}
 				case "maxfps": Settings.maxFps = Std.parseInt(a[1]);
 				case "fps": Sys.println("fps " + Std.int(hxd.Timer.fps()));
-				case "helptext": Settings.showHelp = a[1] == "1"; // helptext 0|1: opcion de ayuda en pantalla
+				case "helptext":
+					// helptext 0|1: opcion de ayuda en pantalla (no se guarda); helptext old: settings.json como el de una version
+					// anterior (showHelp true, sin helpText), que se lee la proxima vez que se abra el juego
+					if( a[1] == "old" ) {
+						var path = Settings.dir() + "/settings.json";
+						var o : Dynamic = haxe.Json.parse(sys.io.File.getContent(path));
+						Reflect.deleteField(o, "helpText");
+						Reflect.setField(o, "showHelp", true);
+						sys.io.File.saveContent(path, haxe.Json.stringify(o, null, "  "));
+					} else
+						Settings.showHelp = a[1] == "1";
 				case "wheelwrap":
 					// wheelwrap 0|1: opcion Rueda del raton en bucle (se guarda); wheelwrap old: quita el campo de settings.json, como el
 					// de una version anterior (la proxima vez que se abra el juego, la opcion vuelve a la de por defecto)
@@ -1917,6 +1927,14 @@ class Dev {
 			Sys.println("shelf: " + [for( m in Market.shelf ) Std.string(m.block.k)].join(" "));
 		case "inv":
 			Sys.println("inv: " + [for( s in g.inv.inv.t ) s == null ? "-" : EditorKubes.label(Block.all[s.k]) + "x" + s.n].join(" ") + "  casilla=" + g.inv.blockIndex);
+		case "helptext":
+			// opcion de ayuda en pantalla, lo que dice settings.json y cuantas lineas tiene el texto de arriba a la izquierda
+			var path = Settings.dir() + "/settings.json";
+			var o : Dynamic = sys.FileSystem.exists(path) ? haxe.Json.parse(sys.io.File.getContent(path)) : null;
+			var hud = @:privateAccess app.hud.text;
+			Sys.println("helptext=" + (Settings.showHelp ? 1 : 0) + " settings.json=" + (o == null ? "no existe" : "helpText " + o.helpText + " showHelp " + o.showHelp)
+				+ " hud=" + (hud == "" ? 0 : hud.split("
+").length) + " lineas");
 		case "wheelwrap":
 			// opcion Rueda del raton en bucle y lo que dice settings.json (sin el campo: ajustes de una version anterior)
 			var path = Settings.dir() + "/settings.json";

@@ -12,8 +12,12 @@ class Settings {
 	/** la rueda del raton da la vuelta a la barra de inventario (tras el ultimo bloque, el excavador, y al reves); false: se para en
 	    los extremos, como el original. Los ajustes de antes no lo tienen: activada */
 	public static var wheelWrap = true;
-	/** ayuda de controles en pantalla (arriba a la izquierda) */
-	public static var showHelp = true;
+	/**
+	 * ayuda de controles en pantalla (arriba a la izquierda). Desactivada por defecto: tres lineas de teclas encima del juego todo
+	 * el rato. Se guarda como helpText: los ajustes de antes guardaban siempre showHelp, true por defecto aunque nadie lo hubiera
+	 * elegido, y se ignora (la ayuda se apaga una vez para todos; quien la vuelva a activar la conserva)
+	 */
+	public static var showHelp = false;
 	/** sombra del bloque de la mano en la celda donde se pondra */
 	public static var placePreview = true;
 	/** marco de seleccion: el bloque apuntado (mano vacia) o la celda donde se pondra el de la mano */
@@ -56,7 +60,7 @@ class Settings {
 			if( o.invertY != null ) invertY = o.invertY;
 			if( o.turnKeys != null ) turnKeys = o.turnKeys;
 			if( o.wheelWrap != null ) wheelWrap = o.wheelWrap;
-			if( o.showHelp != null ) showHelp = o.showHelp;
+			if( o.helpText != null ) showHelp = o.helpText;
 			if( o.placePreview != null ) placePreview = o.placePreview;
 			if( o.selectBox != null ) selectBox = o.selectBox;
 			if( o.waterWaves != null ) waterWaves = o.waterWaves;
@@ -70,7 +74,7 @@ class Settings {
 	}
 
 	public static function save() {
-		var o = { lang : lang, mouseSens : mouseSens, fov : fov, volume : volume, fullscreen : fullscreen, invertY : invertY, turnKeys : turnKeys, wheelWrap : wheelWrap, showHelp : showHelp, placePreview : placePreview, selectBox : selectBox, waterWaves : waterWaves, targetName : targetName, vsync : vsync, maxFps : maxFps, keys : Keys.save() };
+		var o = { lang : lang, mouseSens : mouseSens, fov : fov, volume : volume, fullscreen : fullscreen, invertY : invertY, turnKeys : turnKeys, wheelWrap : wheelWrap, helpText : showHelp, placePreview : placePreview, selectBox : selectBox, waterWaves : waterWaves, targetName : targetName, vsync : vsync, maxFps : maxFps, keys : Keys.save() };
 		try sys.io.File.saveContent(dir() + "/settings.json", haxe.Json.stringify(o, null, "  ")) catch( e : Dynamic ) {}
 	}
 }
