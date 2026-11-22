@@ -891,9 +891,12 @@ class Generator {
 				var h = hval(p);
 				var min = hstart + 1;
 				var addr = (p << HBITS) + min;
-				// version 1: la direccion avanza tambien en las celdas vacias (antes no: se miraba otra celda que la de z)
+				// cada pasada se para en la primera celda vacia de la columna, como el original: las 100 pasadas de Marte solo
+				// agrandan por debajo lo que dejo la primera, y quedan los pilares y las grietas estrechas bajo las arenas movedizas
 				for( z in min...h ) {
-					if( fget(addr) != EMPTY && perlin3D(x, y, z) < heights[z] )
+					if( fget(addr) == EMPTY )
+						break;
+					if( perlin3D(x, y, z) < heights[z] )
 						fset(addr, block);
 					addr++;
 				}

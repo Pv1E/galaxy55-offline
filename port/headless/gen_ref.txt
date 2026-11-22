@@ -12,9 +12,9 @@
 7 BIMoon 2 1 8A7EBC0B fence
 321 BIMoon 1 1 C9709F42 burned
 9001 BIMoon 3 1 E77C4620 artifact,invisible
-99 BIMars 2 1 34A64D20 cavecascade,cavecascade,ice
+99 BIMars 2 1 8FBEBB97 cavecascade,cavecascade,ice
 4040 BIMars 1 1 8D273E8C capsule
-2077 BIMars 3 1 0F5B84CD caveveins,cavegarden,burned,largepit
+2077 BIMars 3 1 546351D5 caveveins,cavegarden,burned,largepit
 4242 BIWinterPeaks 2 1 FED823F5 cavecascade,cavecascade,crater
 15 BIWinterPeaks 1 1 053C543A meadow
 2026 BIWinterPeaks 3 1 6E7F0839 cavecascade,cavecascade,cavegarden,cavecascade,cavecascade,cavegarden,artifact,tree,meadow
