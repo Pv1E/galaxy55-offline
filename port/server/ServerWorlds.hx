@@ -515,7 +515,10 @@ class ServerWorlds {
 		enforce(row);
 	}
 
-	/** tras cambiar los accesos: derechos al dia de los que estan alli, fuera los que ya no pueden, mapas al dia */
+	/**
+	 * tras cambiar los accesos: derechos al dia de los que estan alli, fuera los que ya no pueden (planeta cerrado, o abierto
+	 * pero sin acceso para el: el propietario se lo ha quitado), mapas al dia
+	 */
 	function enforce( row : ServerDb.PlanetRow ) {
 		var inst = instances.get(row.gkey);
 		if( inst != null )
@@ -523,7 +526,7 @@ class ServerWorlds {
 				var r = rightsFor(p.uid, row);
 				if( r & REnter == 0 ) {
 					leaveInstance(p);
-					p.send(SPlanetLost("mp.planet.closed"));
+					p.send(SPlanetLost(readAccess(row.access).open ? "mp.planet.removed" : "mp.planet.closed"));
 				} else if( r != p.rights ) {
 					p.rights = r;
 					p.send(SRights(r));
@@ -642,28 +645,38 @@ class ServerWorlds {
 			s.send(SNotice("mp.transfer.done", [t.display]));
 		case CAbandon(pid):
 			var row = ownedPlanet(s, pid);
-			if( row == null ) return;
-			var inst = instances.get(row.gkey);
+			var uni = s.record == null ? null : s.record.uni;
+			// de su galaxia: con su fila, o con licencia y aun sin fila (de la partida solo del anfitrion, sin pisar desde entonces)
+			var own = uni != null && (row == null ? Licenses.has(uni, pid) : row.galaxy == s.uid);
+			if( row == null && !own ) return;
+			// el principal no se abandona (el cliente no lo ofrece)
+			if( own && Licenses.isMain(uni, pid) ) return;
+			var inst = row == null ? null : instances.get(row.gkey);
 			if( inst != null ) {
-				for( p in inst.players.copy() ) {
-					leaveInstance(p);
-					if( p != s ) p.send(SPlanetLost("mp.planet.abandoned"));
+				// con otros jugadores dentro no se abandona: el propietario les quita antes el acceso (enforce los expulsa)
+				var others = [for( p in inst.players ) if( p != s ) p.display];
+				if( others.length > 0 ) {
+					others.sort(Reflect.compare);
+					s.send(SNotice("mp.abandon.occupied", [others.join(", ")]));
+					return;
 				}
+				for( p in inst.players.copy() ) leaveInstance(p);
 				instances.remove(row.gkey);
 			}
-			db.begin();
-			db.deletePlanet(row.gkey);
-			db.commit();
-			// un planeta de su galaxia: pierde la licencia y, si era el ultimo del sistema, el sistema (Licenses.abandon, lo mismo
-			// que hace el cliente en su copia); uno cedido por otro solo se borra
-			var uni = s.record == null ? null : s.record.uni;
-			if( uni != null && row.galaxy == s.uid ) {
+			if( row != null ) {
+				db.begin();
+				db.deletePlanet(row.gkey);
+				db.commit();
+			}
+			// un planeta de su galaxia: pierde la licencia y, si era el ultimo del sistema, el sistema (Licenses.abandon; el cliente
+			// hace lo mismo en su copia al recibir el SPatch); uno cedido por otro solo se borra
+			if( own ) {
 				var f = ExpData.ExpOffline.planet(ExpData.ExpOffline.make(uni.seed, uni.start, null, null, null, uni.gone), pid);
 				if( f != null ) Licenses.abandon(s.record, f.p, f.s);
 				saveRecord(s);
 				s.send(SPatch("licenses", haxe.Json.stringify({ licenses : uni.licenses, main : uni.main, abandoned : uni.abandoned, gone : uni.gone })));
 			}
-			server.files.log(s.display + " abandons " + row.gkey);
+			server.files.log(s.display + " abandons " + (row != null ? row.gkey : ownKey(s, pid)));
 			for( p in server.playing() ) sendForeign(p);
 		default:
 		}

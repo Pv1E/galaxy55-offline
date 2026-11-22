@@ -44,13 +44,17 @@ import Msg;
  *   button N                activar el control N de la ventana de confirmacion o del menu abierto (print menu)
  *   comet force N|time S|speed|stats   cometas (anadido del port): el sistema N con cometa en cualquier franja; quedan S
  *                           segundos en la cometa; velocidad de la nave y tiempo de amarre; cometas de cada sistema (print comet)
- *   licenses clock H|open|credits N|forget   licencias de la ESCorp: adelantar H horas su reloj; abrir su pantalla; dejar N
- *                           creditos; quitar sus datos como en una partida antigua (print licenses)
+ *   rowact N ACCION         en una pantalla de filas (Multijugador, accesos, Liberar una licencia), la accion ACCION de la fila N
+ *                           (release, access, remove...), como al pulsarla (print menu)
+ *   licenses clock H|open|credits N|forget|release   licencias de la ESCorp: adelantar H horas su reloj; abrir su pantalla;
+ *                           dejar N creditos; quitar sus datos como en una partida antigua; abrir Liberar una licencia
+ *                           (print licenses)
  *   walk avance [lado]      andar (1 = adelante, -1 = atras; 0 0 para parar)
  *   waitfor COSA [max]      esperar (como mucho max fotogramas, 2000 por defecto) a: map (mapa abierto), sector (la nave fuera
  *                           de los sistemas), window (ventana del mapa
  *                           abierta), system (dentro de un sistema), planet (jugando en un planeta), mother (jugando en la nave nodriza), ready (cargado: jugando
- *                           o en el mapa); si no llega, lo dice
+ *                           o en el mapa), mapready (mapa hecho y conectado), mponN (multijugador: otro jugador en tu planeta
+ *                           N); si no llega, lo dice
  *   waitfor ground          esperar a estar de pie en el suelo (el fotograma del aterrizaje tras una caida)
  *   waitfor jump            esperar a que la nave salte en el mapa (entrada o salida de un sistema); exprsys pulsa el sistema
  *                           abierto mas cercano al robot comerciante; exprinfo dice donde esta el robot y como se dibuja
@@ -764,6 +768,8 @@ class Dev {
 		var playing = Type.enumConstructor(@:privateAccess app.state) == "Playing";
 		return switch( what ) {
 			case "map": g == null && app.explorer != null;
+			// el mapa ya hecho y conectado con la partida (al rehacerse, p. ej. tras SForeign, "map" ya se cumple mientras carga)
+			case "mapready": g == null && app.explorer != null && app.explorer.ready && @:privateAccess app.space != null;
 			// en el sector y con la animacion de salida del sistema ya terminada (mientras dura, el mapa no hace caso)
 			case "sector": app.explorer != null && app.explorer.shipPos() != null && !@:privateAccess app.explorer.locked && !@:privateAccess app.explorer.serverLock;
 			case "window": app.explorer != null && app.explorer.devWindowOpen();
@@ -783,6 +789,8 @@ class Dev {
 			case w if( StringTools.startsWith(w, "mpremotes") ): g != null && g.net != null && g.net.remotes.count() >= Std.parseInt(w.substr(9));
 			case w if( StringTools.startsWith(w, "mpplayers") ): app.mp != null && Lambda.count(app.mp.players) >= Std.parseInt(w.substr(9));
 			case w if( StringTools.startsWith(w, "mpchat") ): app.mp != null && app.mp.chat.length >= Std.parseInt(w.substr(6));
+			// mponN: otro jugador esta en tu planeta N (lo que ve Liberar una licencia)
+			case w if( StringTools.startsWith(w, "mpon") ): @:privateAccess app.playersOn(Std.parseInt(w.substr(4))).length > 0;
 			default: true;
 		}
 	}
@@ -1113,6 +1121,15 @@ class Dev {
 				case "expsys": app.explorer.devClickSystem(Std.parseInt(a[1]));
 				case "expplanet": app.explorer.devClickPlanet(Std.parseInt(a[1]));
 				case "expbutton": app.explorer.devPressButton(a.length > 1 ? Std.parseInt(a[1]) : 0);
+				case "rowact":
+					// rowact N ACCION: la accion ACCION de la fila N de la pantalla abierta (ServerListScreen), como al pulsarla
+					var l = Std.downcast(@:privateAccess app.current, MultiServers.ServerListScreen), i = Std.parseInt(a[1]);
+					var row = l == null || i == null || i < 0 || i >= l.rows.length ? null : l.rows[i];
+					if( row == null || row.actions.indexOf(a[2]) < 0 ) Sys.println("rowact: no hay fila " + a[1] + " con " + a[2]);
+					else {
+						row.action = row.actions.indexOf(a[2]);
+						row.activate();
+					}
 				case "button":
 					// button N: activa el control N de la ventana de confirmacion o del menu abierto (print menu los lista)
 					var s = @:privateAccess (app.modal != null && app.modal.parent != null ? app.modal : app.current);
@@ -1125,6 +1142,7 @@ class Dev {
 					switch( a[1] ) {
 					case "clock": Licenses.devShift += f(a[2]) * 3600;
 					case "open": @:privateAccess app.openLicenses();
+					case "release": @:privateAccess app.openRelease();
 					case "credits": info.credits = Std.parseInt(a[2]);
 					case "forget":
 						var u = info.uni;

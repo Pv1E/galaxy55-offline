@@ -1,0 +1,76 @@
+# multijugador (anadido del port), con port/dev/mp_liberar_guest.txt: Licencias > Liberar una licencia del anfitrion con el
+# invitado en el planeta. En el sistema de salida (siempre con 2 planetas o mas): el 1 es el principal y el 0 se abre al
+# invitado, que aterriza en el (mp landforeign toma el primero que le sale abierto). Desde el 1, la fila del 0 dice que esta
+# alli y Liberar no se puede (aviso); Accesos > Retirer lo expulsa (vuelve al espacio con "Ton accès à cette planète a été
+# retiré.") y entonces se libera. multirun.ps1 -ScriptList "a,b" -Timeout 900
+setlang fr
+waitfor planet
+mp host 55196
+waitfor map 6000
+waitfor system
+expplanet 1
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+explore
+waitfor map 6000
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+mp access 0 1
+waitfor mpplayers2 9000
+wait 60
+mp invite 0 2 0
+wait 30
+explore
+waitfor map 6000
+waitfor system
+expplanet 1
+waitfor window
+expbutton
+waitfor planet 6000
+waitfor mpon0 20000
+wait 60
+print mp
+ship
+wait 10
+computer
+wait 3
+licenses open
+wait 3
+print menu
+licenses release
+wait 3
+print menu
+shot mp_liberar_occupee
+rowact 0 release
+wait 5
+print toast
+print menu
+rowact 0 access
+wait 60
+print menu
+shot mp_liberar_acces
+rowact 0 remove
+wait 3
+button 1
+wait 60
+tap esc
+wait 30
+print menu
+shot mp_liberar_libre
+rowact 0 release
+wait 3
+button 1
+wait 60
+print toast
+print licenses
+print menu
+shot mp_liberar_fait
+wait 300
+mp leave
+waitfor mpend 600

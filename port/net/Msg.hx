@@ -169,6 +169,8 @@ enum ClientMsg {
 	CGuest( pid : Int, pub : String, role : Int );
 	/** propietario: ceder el titulo a un jugador conectado */
 	CTransfer( pid : Int, target : Int );
+	/** propietario: abandonar el planeta (liberar su licencia). Con otros jugadores dentro, SNotice "mp.abandon.occupied" y nada
+	    mas; hecho, SPatch "licenses" (el cliente lo aplica entonces en su copia) */
 	CAbandon( pid : Int );
 	/** pedir los accesos de un planeta propio (SAccess) */
 	CGetAccess( pid : Int );
@@ -277,7 +279,7 @@ enum ServerMsg {
  */
 class Msg {
 
-	public static inline var PROTOCOL = 9;
+	public static inline var PROTOCOL = 10;
 	/** cambios de celdas en un mensaje, y bytes de un terreno descomprimido */
 	public static inline var CHANGES_MAX = 1 << 16;
 	public static inline var EDITS_MAX = 64 << 20;

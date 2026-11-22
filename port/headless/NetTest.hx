@@ -307,14 +307,16 @@ class NetTest {
 	/**
 	 * Accesos: otro jugador no entra en un planeta cerrado; abierto e invitado, lo ve en su mapa (SForeign), entra, los dos se ven
 	 * (SStates) y lo que rompe el invitado le llega al propietario; visitante, no rompe; cerrado, sale; cesion (el que cede se
-	 * queda de explorador) y abandono (todos fuera).
+	 * queda de explorador), abandono (no con otro jugador dentro: quitarle el acceso lo expulsa) y liberar una licencia de su
+	 * galaxia (el principal no).
 	 */
 	static function access( w : TestClient, inst : PlanetInstance, pid : Int, sp : { x : Float, y : Float, z : Float }, bx : Int, by : Int, bz : Int ) {
 		var x = add(new TestClient("Xavier", secret(10)));
 		x.tcp(55098);
 		check("acceso: llega otro jugador", until(() -> x.welcome != null), x.lastEvent());
 		x.client.send(CNewGame(false));
-		until(() -> x.has(m -> m.match(SRecord(_))));
+		var xrec : Dynamic = null;
+		until(() -> { for( m in x.msgs ) switch( m ) { case SRecord(d): xrec = haxe.Json.parse(NetZip.unpackString(d, 1 << 24)); default: } xrec != null; });
 		var wuid = server.db.findIdentity("ed25519", Identity.fromSecret(secret(9)).keysFor(server.publicKey()).pk.toHex());
 		var wpub = server.db.pubOf(wuid);
 		x.client.send(CLand(wpub, pid));
@@ -366,8 +368,32 @@ class NetTest {
 		w.client.send(CLand("", pid));
 		until(() -> w.has(m -> m.match(SPlanetData(_, _, _, _, _, _, _, "Xavier", _))));
 		check("acceso: el que cede sigue entrando (explorador)", w.has(m -> switch( m ) { case SPlanetData(_, _, _, _, _, _, _, "Xavier", r): r == Rights.EXPLORER; default: false; }));
+		// con Wanda dentro no se abandona (el aviso dice quien esta); quitarle el acceso la expulsa, y entonces si
 		x.client.send(CAbandon(pid));
-		check("acceso: abandono, todos fuera", until(() -> w.has(m -> m.match(SPlanetLost("mp.planet.abandoned")))) && server.db.getPlanet(wuid + ":" + pid) == null);
+		check("acceso: no se abandona con otro jugador dentro", until(() -> x.has(m -> m.match(SNotice("mp.abandon.occupied", ["Wanda"]))))
+			&& server.db.getPlanet(wuid + ":" + pid) != null);
+		x.client.send(CGuest(pid, wpub, -1));
+		check("acceso: quitarle el acceso la expulsa", until(() -> w.has(m -> m.match(SPlanetLost("mp.planet.removed")))));
+		x.client.send(CAbandon(pid));
+		check("acceso: ya sin nadie, se abandona", until(() -> server.db.getPlanet(wuid + ":" + pid) == null));
+		// su galaxia: el primer planeta es el principal y no se libera; otro si, desde el principal (SPatch con el abandonado)
+		var xuid = server.db.findIdentity("ed25519", Identity.fromSecret(secret(10)).keysFor(server.publicKey()).pk.toHex());
+		var own = [for( sy in ExpData.ExpOffline.make(xrec.uni.seed, xrec.uni.start).systems ) for( p in sy.planets ) p.id];
+		var a = own[0], b = own[1];
+		for( q in [a, b, a] ) {
+			x.msgs = [];
+			x.client.send(CLand("", q));
+			until(() -> x.has(m -> m.match(SPlanetData(_, _, _, _, _, _, _, _, _))));
+		}
+		x.client.send(CAbandon(a));
+		x.client.send(CAbandon(b));
+		check("liberar: otro planeta de su galaxia", until(() -> x.has(m -> switch( m ) {
+			case SPatch("licenses", j):
+				var v : Dynamic = haxe.Json.parse(j);
+				v.abandoned != null && (v.abandoned : Array<Int>).indexOf(b) >= 0 && (v.licenses : Array<Int>).indexOf(b) < 0;
+			default: false;
+		})) && server.db.getPlanet(xuid + ":" + b) == null);
+		check("liberar: el principal no", server.db.getPlanet(xuid + ":" + a) != null);
 		x.client.close();
 	}
 

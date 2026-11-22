@@ -1,0 +1,22 @@
+# multijugador (anadido del port): el invitado de port/dev/mp_liberar_host.txt. Aterriza en el 0 del anfitrion; cuando este le
+# quita el acceso, vuelve al espacio con el aviso
+setlang fr
+waitfor planet
+wait 300
+mp join 55196
+waitfor map 9000
+print mp
+waitfor mpforeign 60000
+print mp
+wait 30
+waitfor mapready 9000
+expinfo
+wait 30
+mp landforeign
+waitfor planet 9000
+wait 60
+print mp
+waitfor map 9000
+print toast
+shot mp_liberar_expulse
+waitfor mpend 9000
