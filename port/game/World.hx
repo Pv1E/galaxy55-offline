@@ -102,6 +102,18 @@ class AlphaCut extends hxsl.Shader {
 	}
 }
 
+/**
+ * Raiz de las mallas de un mundo, planeta o nave (anadido del port): en cada imagen, con la camara ya puesta (Scene.render la
+ * actualiza antes de sync), World.cullChunks marca culled los trozos que caen fuera de su campo
+ */
+class ChunkRoot extends h3d.scene.Object {
+	public var onSync : h3d.scene.RenderContext -> Void;
+	override function sync( ctx : h3d.scene.RenderContext ) {
+		if( onSync != null ) onSync(ctx);
+		super.sync(ctx);
+	}
+}
+
 /** Geometria acumulada de un chunk para un material. */
 class MeshBuf {
 	public var pts = new Array<h3d.col.Point>();
@@ -340,7 +352,9 @@ class World extends WorldData {
 		genThread = GEN_THREAD;
 		this.atlas = atlas;
 		chunkMeshes = [for( i in 0...(size >> 4) * (size >> 4) ) null];
-		root = new h3d.scene.Object(parent);
+		var croot = new ChunkRoot(parent);
+		croot.onSync = cullChunks;
+		root = croot;
 		var biome : BiomeKind = Type.createEnum(BiomeKind, biomeName);
 		// la nave comparte el cielo (niebla y curvatura) del planeta
 		if( sharedSky != null ) {
@@ -1765,6 +1779,55 @@ class World extends WorldData {
 		rv.mainPass.stencil.setFunc(Equal, STENCIL_INVIS | STENCIL_REVEAL, STENCIL_INVIS | STENCIL_REVEAL, 0);
 		rv.mainPass.stencil.setOp(Keep, Keep, Keep);
 		addChunkMesh(poly, rv);
+	}
+
+	/**
+	 * Anadido del port: los trozos fuera del campo de la camara no se dibujan (culled). Heaps no lo hace en la pasada principal:
+	 * cada imagen mandaba a la tarjeta TODAS las mallas del planeta, tambien las de detras (tamano 3: 1286 mallas, y a ras de
+	 * suelo solo se ven entre 350 y 550). Cada trozo se prueba con una esfera que contiene su caja ya bajada por la curvatura
+	 * del planeta (Sky.FogShader: cada vertice baja distancia^2 * curve), contra los 4 planos de los lados de la camara: lo que
+	 * se ve no cambia. La caja pasa antes a coordenadas del mundo con la posicion de la raiz: la de la nave se mueve y gira
+	 * (Ship.placeRoot), la del planeta no
+	 */
+	function cullChunks( ctx : h3d.scene.RenderContext ) {
+		var fr = ctx.camera.frustum;
+		var ex = ctx.camera.pos.x, ey = ctx.camera.pos.y, k = sky.fog.curve;
+		var t = root.getAbsPos();
+		for( i in 0...meshes.length ) {
+			var m = meshes[i];
+			if( m != null ) m.culled = !chunkInView(m, fr, t, ex, ey, k);
+			var e = i < meshExtra.length ? meshExtra[i] : null;
+			if( e != null ) for( c in e ) if( c != null ) c.culled = !chunkInView(c, fr, t, ex, ey, k);
+		}
+	}
+
+	var cullPt = new h3d.col.Point();
+
+	function chunkInView( m : h3d.scene.Mesh, fr : h3d.col.Frustum, t : h3d.Matrix, ex : Float, ey : Float, k : Float ) : Bool @:privateAccess {
+		var b = m.primitive.getBounds();
+		if( b == null || b.isEmpty() ) return true;
+		// centro de la caja en la raiz, y despues en el mundo; las mitades del giro de la caja salen de |t| (sin giro: las mismas)
+		var lx = (b.xMin + b.xMax) * 0.5 + m.x, ly = (b.yMin + b.yMax) * 0.5 + m.y, lz = (b.zMin + b.zMax) * 0.5 + m.z;
+		var ax = (b.xMax - b.xMin) * 0.5, ay = (b.yMax - b.yMin) * 0.5, az = (b.zMax - b.zMin) * 0.5;
+		var cx = lx * t._11 + ly * t._21 + lz * t._31 + t._41;
+		var cy = lx * t._12 + ly * t._22 + lz * t._32 + t._42;
+		var cz = lx * t._13 + ly * t._23 + lz * t._33 + t._43;
+		var hx = ax * Math.abs(t._11) + ay * Math.abs(t._21) + az * Math.abs(t._31);
+		var hy = ax * Math.abs(t._12) + ay * Math.abs(t._22) + az * Math.abs(t._32);
+		var bz = ax * Math.abs(t._13) + ay * Math.abs(t._23) + az * Math.abs(t._33);
+		var r = Math.sqrt(hx * hx + hy * hy);
+		var dx = cx - ex, dy = cy - ey;
+		var d = Math.sqrt(dx * dx + dy * dy);
+		var dn = d > r ? d - r : 0., df = d + r;
+		// lo mas bajo y lo mas alto del trozo una vez curvado (las olas del agua: 1 de margen)
+		var z0 = cz - bz - df * df * k - 1, z1 = cz + bz - dn * dn * k + 1;
+		var hz = (z1 - z0) * 0.5;
+		var rad = Math.sqrt(r * r + hz * hz) + 1;
+		var p = cullPt;
+		p.x = cx;
+		p.y = cy;
+		p.z = (z0 + z1) * 0.5;
+		return fr.pleft.distance(p) >= -rad && fr.pright.distance(p) >= -rad && fr.ptop.distance(p) >= -rad && fr.pbottom.distance(p) >= -rad;
 	}
 
 	/**
