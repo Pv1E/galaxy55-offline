@@ -784,6 +784,25 @@ class GameView {
 		}
 	}
 
+	/** sobre una anomalia: hasta cuantos bloques por encima de lo alto de su caja (de pie en lo alto, o saltando) */
+	static inline var ANOMALY_ABOVE = 2;
+
+	/**
+	 * Anadido del port: los tipos de anomalia (kubindex.json) en los que esta el jugador: dentro de la caja de la anomalia, sin
+	 * margen alrededor, o de pie encima (ANOMALY_ABOVE). Sin repetir un tipo; ninguno en el hangar, en la nodriza ni a la altura
+	 * de la nave. La tecla F los muestra en creativo, debajo de las coordenadas (GalaxyApp)
+	 */
+	public function anomaliesHere() : Array<String> {
+		var out = [];
+		if( hangar != null || info.mothership == true || pz >= World.SHIP_Z ) return out;
+		for( a in world.anomalies() ) {
+			var b = a.box, dx = wrapDist(px - a.x), dy = wrapDist(py - a.y);
+			if( dx >= b[0] && dx < b[3] + 1 && dy >= b[1] && dy < b[4] + 1 && pz >= b[2] && pz < b[5] + 1 + ANOMALY_ABOVE && out.indexOf(a.n) < 0 )
+				out.push(a.n);
+		}
+		return out;
+	}
+
 	function updateComet( dt : Float ) {
 		var c = info.comet;
 		if( c == null || hangar != null || ship == null ) return;

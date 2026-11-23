@@ -1,0 +1,49 @@
+# Tecla F en creativo (anadido del port): debajo de las coordenadas, la anomalia en la que se esta (GameView.anomaliesHere:
+# dentro de su caja, sin margen, o de pie encima, hasta 2 bloques por encima de lo alto).
+# uso: devrun.ps1 -Script port/dev/anomalia_aqui.txt -Extra "--date=2026-12-15 --lang=fr --seed=1234 --size=1"
+# Esperado (print hud): en aventura solo las coordenadas, aun sobre el sapin; en creativo "Anomalie : Sapin de Noël" en lo alto
+# del sapin y en el suelo nevado de su pie (caja x 103..118, y 3..18); justo fuera de la caja (y 19), nada; bajo tierra en la
+# caja de las vetas, "Anomalie : Filons"; lejos de toda anomalia (print anomalies: "aqui: -") sin esa linea; otra F, nada.
+wait 60
+helptext 0
+print anomalies
+find anomaly christmastree
+tp fx+0.5 fy+0.5 top
+wait 10
+press f
+wait 2
+release f
+print pos
+print hud
+creative
+wait 3
+print pos
+print hud
+print anomalies
+shot anomalia_aqui_sapin
+tp fx-5.5 fy+5.5 top
+lookat fx fy fz+6
+wait 10
+print pos
+print hud
+shot anomalia_aqui_pie
+tp fx-6 fy+9 top
+wait 10
+print pos
+print hud
+find anomaly caveveins
+tp fx+0.5 fy+0.5 fz
+wait 3
+print pos
+print hud
+find anomaly christmastree
+tp fx+0.5 fy+60.5 top
+wait 10
+print pos
+print hud
+print anomalies
+press f
+wait 2
+release f
+print hud
+quit

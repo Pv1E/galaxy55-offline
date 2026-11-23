@@ -153,6 +153,8 @@ import Msg;
  *                           crea uno de ese color con el borde oscuro, fill N crea N cubos lot-1..N, delete ARCHIVO, clear vacia
  *                           la carpeta, refresh la vuelve a leer como al empezar a jugar. En hand, give, set...: kube:ARCHIVO[/variante]
  *   print edkubes|edsave    kubes del editor cargados / los de la partida guardada en disco (celdas, casillas, de remplazo)
+ *   print anomalies         anomalias del planeta (World.anomalies): numero, tipo, estructura, origen y caja en coordenadas
+ *                           del mundo, y en las que esta el jugador (GameView.anomaliesHere: la tecla F en creativo)
  *   quit
  */
 class Dev {
@@ -2232,6 +2234,14 @@ class Dev {
 				Sys.println("cielo: " + (flat == null ? "degradado" : "color " + StringTools.hex(flat.color.toColor() & 0xFFFFFF, 6))
 					+ ", estrellas " + (st != null && st.visible ? "si" : "no"));
 			}
+		case "anomalies":
+			var l = w.anomalies();
+			for( i in 0...l.length ) {
+				var p = l[i], b = p.box;
+				Sys.println("anomalia " + i + " " + p.n + " (" + p.id + ") origen " + p.x + "," + p.y + "," + p.z + " caja x " + (p.x + b[0]) + ".." + (p.x + b[3])
+					+ " y " + (p.y + b[1]) + ".." + (p.y + b[4]) + " z " + b[2] + ".." + b[5]);
+			}
+			Sys.println("aqui: " + (g.anomaliesHere().length == 0 ? "-" : g.anomaliesHere().join(" ")) + (g.creative ? "" : " (no creativo)"));
 		case "found":
 			Sys.println("find: " + (found == null ? "nada" : found.x + " " + found.y + " " + found.z));
 		case "gen":
