@@ -176,6 +176,8 @@ class Lang {
 		"palette.hint" => ["Clic / A: poner en la casilla elegida   Rueda / LB RB: cambiar de pagina   %palette% / Esc / B: cerrar", "Click / A: put in the selected slot   Wheel / LB RB: change page   %palette% / Esc / B: close", "Clic / A : mettre dans la case choisie   Molette / LB RB : changer de page   %palette% / Échap / B : fermer"],
 		"hud.pilot" => ["Pilotando: %move% mover la nave   Ratón girar la cámara   %leave% / Esc dejar la nave aquí", "Piloting: %move% move the ship   Mouse turn the camera   %leave% / Esc leave the ship here", "Pilotage : %move% déplacer le vaisseau   Souris tourner la caméra   %leave% / Échap laisser le vaisseau ici"],
 		"hud.creative" => ["Creativo: %palette% abre la paleta de bloques", "Creative: %palette% opens the block palette", "Créatif : %palette% ouvre la palette de blocs"],
+		// tecla F en creativo, debajo de las coordenadas: la anomalia en la que se esta (%n% = su nombre del kubindex.json)
+		"hud.anomaly" => ["Anomalía: %n%", "Anomaly: %n%", "Anomalie : %n%"],
 		// pantalla de inventario del modo aventura (InvScreen)
 		"hud.inventory" => ["%palette% abre el inventario", "%palette% opens the inventory", "%palette% ouvre l'inventaire"],
 		"invscreen.title" => ["Inventario", "Inventory", "Inventaire"],

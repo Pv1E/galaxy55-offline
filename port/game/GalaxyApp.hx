@@ -4612,6 +4612,9 @@ class GalaxyApp extends hxd.App {
 				if( chest == null && Keys.pressed("fps") ) showFps = !showFps; // con la cantina abierta no (actionKeys = false)
 				var lines = [];
 				if( showFps ) lines.push(Std.int(p.px) + ", " + Std.int(p.py) + ", " + Std.int(p.pz) + "   " + Std.int(engine.fps) + " fps");
+				// anadido del port: en creativo, debajo, la anomalia en la que se esta (GameView.anomaliesHere), si hay una
+				var here = showFps && p.creative ? p.anomaliesHere() : [];
+				if( here.length > 0 ) lines.push(StringTools.replace(Lang.t("hud.anomaly"), "%n%", [for( n in here ) KubData.get().anomalyName(n)].join(", ")));
 				// con la cantina abierta, la ayuda de las teclas del juego no (casi todas estan desactivadas; la ventana tiene la suya)
 				if( Settings.showHelp && chest == null ) lines.push(Keys.fill(p.piloting ? Lang.t("hud.pilot") : Lang.t("hud.help")) + (p.piloting ? "" : "\n" + Keys.fill(Lang.t(p.creative ? "hud.creative" : p.canSwitchMode() ? "hud.survival" : "hud.inventory"))));
 				hud.text = lines.join("\n");
