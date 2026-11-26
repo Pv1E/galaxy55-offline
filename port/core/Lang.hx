@@ -63,7 +63,6 @@ class Lang {
 		"storage.blocks" => ["Bloques guardados", "Stored blocks", "Blocs stockés"],
 		"storage.charges" => ["Cargas guardadas", "Stored charges", "Charges stockées"],
 		"storage.yourcharges" => ["Tus cargas", "Your charges", "Tes charges"],
-		"storage.nolimit" => ["sin límite", "no limit", "sans limite"],
 		"storage.hint" => ["Las cargas van siempre a las de su color", "Charges always go to their own color", "Les charges vont toujours dans leur couleur"],
 		// cargas (anadido del port): lo recogido en el tutorial junto a las cargas (InvBar, %n% = cuantas); la que falta para minar
 		// (KubNotify.missingCharge: titulo y nombre). Con el nombre de su bloque (Charges de Citronox, Charge d'etherium), no su color
@@ -73,13 +72,13 @@ class Lang {
 		"charges.got.CBlue" => ["+%n% cargas de eterium", "+%n% Etherium charges", "+%n% charges d'etherium"],
 		"charge.got.CPink" => ["+1 carga rosa", "+1 pink charge", "+1 charge rose"],
 		"charges.got.CPink" => ["+%n% cargas rosas", "+%n% pink charges", "+%n% charges roses"],
-		"charge.got.CBonus" => ["+1 carga de hexalita", "+1 hexalite charge", "+1 charge d'hexalite"],
-		"charges.got.CBonus" => ["+%n% cargas de hexalita", "+%n% hexalite charges", "+%n% charges d'hexalite"],
+		"charge.got.CBonus" => ["+1 hexalita", "+1 hexalite", "+1 hexalite"],
+		"charges.got.CBonus" => ["+%n% hexalita", "+%n% hexalite", "+%n% hexalite"],
 		"charge.missing" => ["Láser · Falta una carga", "Laser · Missing charge", "Laser · Charge manquante"],
 		"charge.name.CYellow" => ["Carga de citronox", "Citronox charge", "Charge de Citronox"],
 		"charge.name.CBlue" => ["Carga de eterium", "Etherium charge", "Charge d'etherium"],
 		"charge.name.CPink" => ["Carga rosa", "Pink charge", "Charge rose"],
-		"charge.name.CBonus" => ["Carga de hexalita", "Hexalite charge", "Charge d'hexalite"],
+		"charge.name.CBonus" => ["Hexalita", "Hexalite", "Hexalite"],
 		"contracts.title" => ["Contratos de la ESCorp", "ESCorp contracts", "Contrats ESCorp"],
 		// %t% = mm:ss hasta el siguiente tablero
 		"contracts.renew" => ["Nuevos contratos dentro de %t%", "New contracts in %t%", "Nouveaux contrats dans %t%"],
@@ -375,16 +374,16 @@ class Lang {
 		"escorp.contracts" => ["Contratos ESCorp", "ESCorp contracts", "Contrats ESCorp"],
 		"escorp.upgrades" => ["Mejoras ESCorp", "ESCorp upgrades", "Améliorations ESCorp"],
 		"upgrades.title" => ["MEJORAS ESCORP", "ESCORP UPGRADES", "AMÉLIORATIONS ESCORP"],
-		"upgrades.info" => ["Mejoras para el juego, el personaje o el equipo, a cambio de cargas de hexalita.", "Upgrades for the game, your character or your equipment, in exchange for hexalite charges.", "Des améliorations pour le jeu, le personnage ou l'équipement, en échange de charges d'hexalite."],
-		// %n% = cargas de hexalita (CBonus) del inventario
-		"upgrades.balance" => ["Tus cargas de hexalita: %n%", "Your hexalite charges: %n%", "Tes charges d'hexalite : %n%"],
+		"upgrades.info" => ["Compra mejoras para tu exploración a cambio de hexalita.", "Buy upgrades for your exploration with hexalite.", "Achète des améliorations pour ton exploration contre de l'hexalite."],
+		// %n% = hexalita del inventario (la carga CBonus)
+		"upgrades.balance" => ["Tu hexalita: %n%", "Your hexalite: %n%", "Ton hexalite : %n%"],
 		"upgrades.none" => ["No hay ninguna mejora ESCorp disponible.", "No ESCorp upgrades available.", "Aucune amélioration ESCorp disponible."],
 		// boton de una mejora: su nombre (Lang "upgrade.<id>"), seguido del precio o de upgrades.bought
-		"upgrades.cost" => ["%n% cargas de hexalita", "%n% hexalite charges", "%n% charges d'hexalite"],
+		"upgrades.cost" => ["%n% hexalita", "%n% hexalite", "%n% hexalite"],
 		"upgrades.bought" => ["Desbloqueada", "Unlocked", "Débloquée"],
 		"upgrades.ask" => ["¿Desbloquear %name%?", "Unlock %name%?", "Débloquer %name% ?"],
-		"upgrades.ask.cost" => ["Cuesta %n% cargas de hexalita.", "It costs %n% hexalite charges.", "Coût : %n% charges d'hexalite."],
-		"upgrades.missing" => ["Te faltan cargas de hexalita: la mejora cuesta %n%.", "Not enough hexalite charges: the upgrade costs %n%.", "Pas assez de charges d'hexalite : l'amélioration en coûte %n%."],
+		"upgrades.ask.cost" => ["Cuesta %n% hexalita.", "It costs %n% hexalite.", "Coût : %n% hexalite."],
+		"upgrades.missing" => ["Te falta hexalita: la mejora cuesta %n%.", "Not enough hexalite: the upgrade costs %n%.", "Pas assez d'hexalite : l'amélioration en coûte %n%."],
 		// cometas (Comets, añadido del port). %t% = 2:15
 		"exp.comet" => ["Cometa", "Comet", "Comète"],
 		"exp.comet.scan" => ["Escanear", "Scan", "Scanner cette comète"],

@@ -15,7 +15,7 @@ class StorageData {
 	/** tipos de carga (amarilla, azul, rosa, hexalita; SlotZone.CHARGE_KINDS) */
 	public static inline var CHARGE_KINDS = 4;
 
-	/** los maximos de las cargas del inventario (DataGen.CHARGES: 99, 50, 20 y 99999; SlotZone.invChargeMax) */
+	/** los maximos de las cargas del inventario (DataGen.CHARGES: 99, 50, 10 y 99999; SlotZone.invChargeMax) */
 	public static function invChargeMax() : Array<Int> {
 		return [for( k in 0...CHARGE_KINDS ) Data.getCharge(Type.createEnumIndex(ChargeKind, k)).max];
 	}
@@ -26,11 +26,13 @@ class StorageData {
 		return 4;
 	}
 
-	/** cuantas cargas de cada tipo caben: la cuarta parte del maximo del inventario (24, 12 y 5), las de hexalita sin limite (-1) */
-	public static function chargeMax() : Array<Int> {
-		var inv = invChargeMax();
-		return [for( k in 0...CHARGE_KINDS ) Type.createEnumIndex(ChargeKind, k) == CBonus ? -1 : Std.int(inv[k] / 4)];
-	}
+	/**
+	 * cuantas cargas de cada tipo caben: amarillas, azules, rosas y hexalita (-1 = sin limite). Antes era la cuarta parte del
+	 * maximo del inventario (24, 12 y 5); con 10 rosas en el inventario, 2 en el stockage
+	 */
+	public static var BASE_CHARGES = [24, 12, 2, -1];
+
+	public static function chargeMax() : Array<Int> return BASE_CHARGES.copy();
 
 	public static function empty() : StorageInfo {
 		return { t : [for( i in 0...blockSlots() ) null], charges : [] };

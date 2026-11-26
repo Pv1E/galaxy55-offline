@@ -392,7 +392,7 @@ class DataGen {
 	public static var CHARGES : Array<ChargeData> = [
 		{ id : CYellow, max : 99, effects : [CECanBreak(BRock),CECanBreak(BBlueCrystalLight),CECanBreak(BBlueCrystalDense)] },
 		{ id : CBlue, max : 50, effects : [CECanBreak(BHardRock),CECanBreak(BMinAluminium),CECanBreak(BMinIron)] },
-		{ id : CPink, max : 20, effects : [CECanBreak(BMarsRockFossil),CECanBreak(BAlienRock)] },
+		{ id : CPink, max : 10, effects : [CECanBreak(BMarsRockFossil),CECanBreak(BAlienRock)] },
 		{ id : CBonus, max : 99999, effects : [] }
 	];
 

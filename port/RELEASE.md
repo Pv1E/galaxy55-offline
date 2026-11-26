@@ -10,14 +10,14 @@ Todo lo nuevo es obra de **Cornor923** (¡gracias!, PR 126-148). Cinco grandes n
 ### Las cinco grandes novedades
 
 #### El almacén de la nave
-Nuevo botón "Almacén" en el ordenador de a bordo, después de "Modificar la nave": 4 casillas de bloques, como una cantina de ESCorp, y las cargas aparte, sin casillas (amarillas hasta 24, azules 12, rosas 5 y de bonus sin límite). Se arrastra y se suelta como en la pantalla de inventario. En la nave nodriza, el ordenador de tu nave aparcada también lo abre. Hay uno por partida y se queda aunque rehagas la nave en el hangar.
+Nuevo botón "Almacén" en el ordenador de a bordo, después de "Modificar la nave": 4 casillas de bloques, como una cantina de ESCorp, y las cargas aparte, sin casillas (amarillas hasta 24, azules 12, rosas 5 y hexalita sin límite). Se arrastra y se suelta como en la pantalla de inventario. En la nave nodriza, el ordenador de tu nave aparcada también lo abre. Hay uno por partida y se queda aunque rehagas la nave en el hangar.
 
 #### Al morir, el equipo se queda en el suelo
 Al morir o al volver a la nave con Mayús+K, lo que llevas (bloques, gemas y cargas; los créditos no) cae en una cantina de ESCorp pequeña, donde estabas. No caduca: puedes volver a por ella. En creativo, en el tutorial, en el hangar y en la nave nodriza no se deja nada.
 Es una opción de cada partida, activada si no se cambia. En Nueva partida, el botón nuevo "Personalizar" tiene la semilla y la casilla "Equipo al suelo"; en Continuar, "Renombrar" pasa a ser "Modificar" y la cambia después.
 
 #### Contactar con la ESCorp
-El ordenador de a bordo agrupa "Comerciar", "Contratos ESCorp" y "Mejoras ESCorp" en un submenú nuevo, "Contactar con la ESCorp". Las mejoras, a cambio de cargas de bonus, llegarán más adelante: de momento la pantalla muestra tus cargas de bonus y que no hay ninguna. El contrato especial sale ahora el primero del panel de contratos y, en el tutorial, el botón que toca pulsar se marca en verde.
+El ordenador de a bordo agrupa "Comerciar", "Contratos ESCorp" y "Mejoras ESCorp" en un submenú nuevo, "Contactar con la ESCorp". Las mejoras, a cambio de hexalita, llegarán más adelante: de momento la pantalla muestra tu hexalita y que no hay ninguna. El contrato especial sale ahora el primero del panel de contratos y, en el tutorial, el botón que toca pulsar se marca en verde.
 
 #### Cuadros
 Los 16 cuadros de CroqueMotel (Motion Twin) están en la paleta creativa. Se cuelgan en la pared que apuntas, girados hacia ti (ni en el suelo ni en el techo), y caen si quitas la pared. El editor de kubes tiene una forma nueva, "Cuadro (en la pared)", para hacer los tuyos.
@@ -28,7 +28,7 @@ En una partida creativa, los kubes que dibujas en el editor de kubes (o los `.ku
 ### También en la v0.9
 - **Subir planchas andando:** se sube a una plancha sin saltar, y a una plancha y luego un bloque en dos pasos (en el original había que saltar).
 - **Cantina de ESCorp con arrastrar y soltar,** como la pantalla de inventario: clic derecho, Mayús o Ctrl para la mitad o una, doble clic para juntar, y también con el mando.
-- **Paleta creativa:** los tres cristales verdes de bonus y los demás bloques que dan cargas.
+- **Paleta creativa:** los tres cristales verdes de hexalita y los demás bloques que dan cargas.
 - **Rueda del ratón en bucle:** pasa de la última casilla al excavador y al revés (se quita en Opciones > Controles).
 - **Versión de cada partida:** la lista de partidas dice con qué versión del juego se creó y se guardó cada una.
 - **Generador de planetas nuevo:** sigue los pasos del original, pero cada paso y cada estructura tienen su propio azar, así que lo que se añada más adelante (anomalías nuevas) solo cambiará el planeta en su sitio, y cada planeta recuerda la versión con la que lo visitaste. Los planetas ya no son idénticos a los de la versión Flash.
@@ -62,14 +62,14 @@ Everything new is by **Cornor923** (thank you!, PRs 126-148). Five big new featu
 ### The five big new features
 
 #### The ship storage
-New "Storage" button on the on-board computer, after "Modify the ship": 4 block slots, like an ESCorp Canteen, and the charges apart, without slots (yellow up to 24, blue 12, pink 5 and bonus without limit). Drag and drop works as in the inventory screen. In the mothership, the computer of your parked ship opens it too. There is one per game, and it stays when you rebuild the ship in the hangar.
+New "Storage" button on the on-board computer, after "Modify the ship": 4 block slots, like an ESCorp Canteen, and the charges apart, without slots (yellow up to 24, blue 12, pink 5 and hexalite without limit). Drag and drop works as in the inventory screen. In the mothership, the computer of your parked ship opens it too. There is one per game, and it stays when you rebuild the ship in the hangar.
 
 #### When you die, your equipment stays on the ground
 When you die or go back to the ship with Shift+K, what you carry (blocks, gems and charges; not credits) falls in a small ESCorp Canteen where you were. It never expires: you can go back for it. Nothing is left in creative, in the tutorial, in the hangar or in the mothership.
 It is an option of each game, on unless changed. In New game, the new "Customize" button holds the seed and the "Drop equipment" box; in Continue, "Rename" becomes "Edit" and changes it later.
 
 #### Contact ESCorp
-The on-board computer groups "Trade", "ESCorp contracts" and "ESCorp upgrades" in a new sub-menu, "Contact ESCorp". Upgrades, paid with bonus charges, will come later: for now the screen shows your bonus charges and that there are none. The special contract now comes first in the contracts panel and, in the tutorial, the button to press is marked in green.
+The on-board computer groups "Trade", "ESCorp contracts" and "ESCorp upgrades" in a new sub-menu, "Contact ESCorp". Upgrades, paid with hexalite, will come later: for now the screen shows your hexalite and that there are none. The special contract now comes first in the contracts panel and, in the tutorial, the button to press is marked in green.
 
 #### Paintings
 The 16 paintings of CroqueMotel (Motion Twin) are in the creative palette. They hang on the wall you aim at, turned towards you (not on a floor or a ceiling), and fall if you remove the wall. The kube editor has a new shape, "Painting (on a wall)", to make your own.
@@ -80,7 +80,7 @@ In a creative game, the kubes you draw in the kube editor (or the `.kube` files 
 ### Also in v0.9
 - **Walking up plates:** you climb a plate without jumping, and a plate then a block in two steps (in the original you had to jump).
 - **ESCorp Canteen with drag and drop,** like the inventory screen: right click, Shift or Ctrl for half or one, double click to gather, and with the gamepad too.
-- **Creative palette:** the three green bonus crystals and the other blocks that give charges.
+- **Creative palette:** the three green hexalite crystals and the other blocks that give charges.
 - **Mouse wheel wraps around:** it goes from the last slot to the digger and back (turned off in Options > Controls).
 - **Version of each save:** the saves list says which game version created and last saved each one.
 - **New planet generator:** it follows the original's steps, but each step and structure has its own randomness, so what is added later (new anomalies) will only change the planet where it goes, and each planet remembers the version you visited it with. Planets are no longer identical to the Flash version's.
@@ -114,14 +114,14 @@ Tout ce qui est nouveau est de **Cornor923** (merci !, PR 126-148). Cinq grandes
 ### Les cinq grandes nouveautés
 
 #### Le stockage du vaisseau
-Nouveau bouton « Stockage » sur l'ordinateur de bord, après « Modifier le vaisseau » : 4 cases de blocs, comme un Conteneur ESCorp, et les charges à part, sans cases (jaunes jusqu'à 24, bleues 12, roses 5 et bonus sans limite). Le glisser-déposer marche comme dans l'écran d'inventaire. Dans le vaisseau-mère, l'ordinateur de ton vaisseau garé l'ouvre aussi. Il y en a un par partie, et il reste quand tu refais le vaisseau dans le hangar.
+Nouveau bouton « Stockage » sur l'ordinateur de bord, après « Modifier le vaisseau » : 4 cases de blocs, comme un Conteneur ESCorp, et les charges à part, sans cases (jaunes jusqu'à 24, bleues 12, roses 5 et hexalite sans limite). Le glisser-déposer marche comme dans l'écran d'inventaire. Dans le vaisseau-mère, l'ordinateur de ton vaisseau garé l'ouvre aussi. Il y en a un par partie, et il reste quand tu refais le vaisseau dans le hangar.
 
 #### À la mort, l'équipement reste au sol
 À la mort ou en revenant au vaisseau avec Maj+K, ce que tu portes (blocs, gemmes et charges ; pas les crédits) tombe dans un petit Conteneur ESCorp, là où tu étais. Il n'expire pas : tu peux revenir le chercher. Rien n'est laissé en créatif, dans le tutoriel, dans le hangar ni dans le vaisseau-mère.
 C'est une option de chaque partie, activée sauf changement. Dans Nouvelle partie, le nouveau bouton « Personnaliser » contient la graine (« Seed ») et la case « Dépôt de l'équipement à la mort » ; dans Continuer, « Renommer » devient « Modifier » et la change ensuite.
 
 #### Contacter l'ESCorp
-L'ordinateur de bord regroupe « Commercer », « Contrats ESCorp » et « Améliorations ESCorp » dans un nouveau sous-menu, « Contacter l'ESCorp ». Les améliorations, payées en charges bonus, viendront plus tard : pour l'instant l'écran montre tes charges bonus et qu'il n'y en a aucune. Le contrat spécial arrive maintenant en premier dans le panneau des contrats et, dans le tutoriel, le bouton à choisir est marqué en vert.
+L'ordinateur de bord regroupe « Commercer », « Contrats ESCorp » et « Améliorations ESCorp » dans un nouveau sous-menu, « Contacter l'ESCorp ». Les améliorations, payées en hexalite, viendront plus tard : pour l'instant l'écran montre ton hexalite et qu'il n'y en a aucune. Le contrat spécial arrive maintenant en premier dans le panneau des contrats et, dans le tutoriel, le bouton à choisir est marqué en vert.
 
 #### Tableaux
 Les 16 tableaux de CroqueMotel (Motion Twin) sont dans la palette créative. Ils s'accrochent au mur visé, tournés vers toi (ni au sol ni au plafond), et tombent si on enlève le mur. L'éditeur de Kubes a une nouvelle forme, « Tableau (au mur) », pour faire les tiens.
@@ -132,7 +132,7 @@ Dans une partie créative, les kubes que tu dessines dans l'éditeur de Kubes (o
 ### Aussi dans la v0.9
 - **Monter sur les dalles en marchant :** on monte sur une dalle sans sauter, et sur une dalle puis un bloc en deux pas (dans l'original, il fallait sauter).
 - **Conteneur ESCorp en glisser-déposer,** comme l'écran d'inventaire : clic droit, Maj ou Ctrl pour la moitié ou un, double clic pour rassembler, et aussi à la manette.
-- **Palette créative :** les trois cristaux verts de bonus et les autres blocs qui donnent des charges.
+- **Palette créative :** les trois cristaux verts d'hexalite et les autres blocs qui donnent des charges.
 - **Molette en boucle :** elle passe de la dernière case au laser de minage et inversement (se désactive dans Options > Contrôles).
 - **Version de chaque partie :** la liste des parties indique avec quelle version du jeu chacune a été créée et enregistrée.
 - **Nouveau générateur de planètes :** il suit les étapes de l'original, mais chaque étape et chaque structure a son propre hasard, donc ce qui sera ajouté plus tard (nouvelles anomalies) ne changera la planète qu'à sa place, et chaque planète retient la version de ta visite. Les planètes ne sont plus identiques à celles de la version Flash.

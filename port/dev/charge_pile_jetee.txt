@@ -12,7 +12,7 @@ wait 20
 tp 60.5 60.5 57.01 0 0
 waitfor ground
 wait 10
-# contadores rosa (max 20) y amarillo (max 99) vacios; pilas de 64 en las casillas 1-3
+# contadores rosa (max 10) y amarillo (max 99) vacios; pilas de 64 en las casillas 1-3
 charge CPink 0
 charge CYellow 0
 slot 1
@@ -37,13 +37,13 @@ print loose
 tp 65.9 60.5 57.01 0 0
 waitfor ground
 wait 120
-# esperado: BRockx64 en el inventario, CYellowx64 y CPinkx20 (el maximo); en el suelo solo BPinkChargex44
+# esperado: BRockx64 en el inventario, CYellowx64 y CPinkx10 (el maximo); en el suelo solo BPinkChargex54
 print inv
 print charges
 print loose
 # al recoger una parte, lo que queda sale despedido (la atraccion de Dummy.update del original, 0.2 / d^2, se pasa del jugador)
-# y ya no se acerca con el contador lleno. Gastadas las cargas rosas, se vuelve a el y se recogen 20 mas: CPinkx20 y
-# BPinkChargex24 en el suelo
+# y ya no se acerca con el contador lleno. Gastadas las cargas rosas, se vuelve a el y se recogen 10 mas: CPinkx10 y
+# BPinkChargex44 en el suelo
 charge CPink 0
 wait 30
 print loose
@@ -51,8 +51,8 @@ tploose BPinkCharge
 wait 60
 print charges
 print loose
-# con 4 cargas rosas gastadas (16/20) se recogen 4 mas: CPinkx20 y BPinkChargex20 en el suelo
-charge CPink 16
+# con 4 cargas rosas gastadas (6/10) se recogen 4 mas: CPinkx10 y BPinkChargex40 en el suelo
+charge CPink 6
 wait 30
 tploose BPinkCharge
 wait 60

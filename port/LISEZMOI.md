@@ -108,7 +108,7 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
   aussi les blocs sans prix qui donnent des charges (cristaux d'hexalite, plantes de citronox et d'etherium...).
 - Le menu de l'ordinateur de bord a son propre style, comme dans la version Flash (l'original était une page web).
   Commercer, Contrats ESCorp et Améliorations ESCorp sont dans son sous-menu « Contacter l'ESCorp » (ajout du port) ; les
-  améliorations, payées en charges d'hexalite, n'en ont encore aucune.
+  améliorations, payées en hexalite, n'en ont encore aucune.
 - La fenêtre du conteneur ESCorp montre aussi ton inventaire, se manie par glisser-déposer comme l'écran d'inventaire (I en
   aventure, ajout du port lui aussi), se ferme aussi avec Échap, B ou Fermer et se manie au clavier et à la manette (tant qu'elle est ouverte, les flèches déplacent sa sélection et pas le joueur). Son contenu est gardé dans
   la partie (dans l'original, sur le serveur) et tombe au sol quand on le casse.
@@ -182,7 +182,7 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
 - Une partie avec des blocs que cette version ne connaît pas (enregistrée par une plus récente) demande confirmation avant
   de se charger ; si on accepte, elle est copiée dans `saves/backups` et ces blocs sont supprimés.
 - Le stockage du vaisseau (ordinateur de bord > Stockage) est un ajout du port : 4 cases de blocs, comme un conteneur, et les
-  charges sans cases (jaunes jusqu'à 24, bleues 12, roses 5, d'hexalite sans limite). Celui de l'original était sur le serveur
+  charges sans cases (jaunes jusqu'à 24, bleues 12, roses 2, hexalite sans limite ; 10 charges roses au plus dans l'inventaire). Celui de l'original était sur le serveur
   et il est perdu.
 - À la mort ou avec Maj+K, ce que tu portes (blocs et charges, pas les crédits) reste dans un petit conteneur ESCorp là où tu
   étais, qui n'expire pas et est gardé dans la partie (dans l'original, le serveur le laissait, en butin qui expirait, et le

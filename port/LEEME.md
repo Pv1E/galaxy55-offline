@@ -99,7 +99,7 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
   paleta trae también los bloques sin precio que dan cargas (cristales de hexalita, plantas de citronox y de etherium...).
 - El menú del ordenador de a bordo tiene un aspecto propio, como en la versión Flash (el original era una página web).
   Comerciar, Contratos ESCorp y Mejoras ESCorp están en su submenú "Contactar con la ESCorp" (añadido del port); las mejoras,
-  a cambio de cargas de hexalita, todavía no tienen ninguna.
+  a cambio de hexalita, todavía no tienen ninguna.
 - La ventana de la cantina de ESCorp muestra también tu inventario, se maneja arrastrando y soltando como la pantalla de
   inventario (I en aventura, también añadido del port), se cierra además con Esc, B o Cerrar y se maneja con el teclado y el mando (mientras está abierta, las flechas mueven su marca y no al jugador). Lo que guarda va en la partida
   (en el original, en el servidor) y sale suelto si se rompe.
@@ -165,7 +165,7 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
 - Una partida con bloques que esta versión no conoce (guardada por una más nueva) pregunta antes de cargarse; si se acepta,
   se copia en `saves/backups` y se borran esos bloques.
 - El almacén de la nave (ordenador de a bordo > Almacén) es un añadido de este port: 4 casillas de bloques, como una cantina, y
-  las cargas sin casillas (amarillas hasta 24, azules 12, rosas 5, de hexalita sin límite). El del original estaba en el servidor
+  las cargas sin casillas (amarillas hasta 24, azules 12, rosas 2, hexalita sin límite; 10 cargas rosas como mucho en el inventario). El del original estaba en el servidor
   y se perdió.
 - Al morir o con Mayús+K, lo que llevas (bloques y cargas, no los créditos) queda en una cantina de ESCorp pequeña donde
   estabas, que no caduca y se guarda en la partida (en el original lo dejaba el servidor, en un botín que caducaba, y el modo

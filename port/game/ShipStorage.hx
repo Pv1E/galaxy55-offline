@@ -10,8 +10,8 @@ import StorageData.StorageInfo;
  * (tambien en creativo; no durante el tutorial) y, en la nave nodriza, desde el ordenador de tu nave aparcada. Dos zonas:
  *   - bloques: tantas casillas como un Conteneur ESCorp (BChest, BFContainer(4)), con las pilas del inventario; las gemas son
  *     bloques y van aqui
- *   - cargas: un contador por tipo, sin casillas (como en el inventario); amarillas, azules y rosas hasta la cuarta parte del
- *     maximo del inventario (24, 12 y 5), las de hexalita sin limite
+ *   - cargas: un contador por tipo, sin casillas (como en el inventario); amarillas, azules y rosas hasta 24, 12 y 2
+ *     (StorageData.chargeMax), la hexalita sin limite. Debajo de cada contador, el suyo: "/ 24", "/ ∞" (Theme.limit)
  * Uno por partida (solo hay una nave): no cambia al modificar la nave en el hangar. Se mueve con arrastrar y soltar (SlotGrid):
  * zona 0 = los bloques guardados, 1 = las cargas guardadas, 2 = el inventario, 3 = las cargas del inventario. Lo que sale va al
  * inventario: la barra y el Kubindex lo ven (Inv.display).
@@ -70,14 +70,13 @@ class ShipStorage extends h2d.Object {
 		// las casillas al final: la pila del cursor se dibuja encima de todo
 		grid = new SlotGrid(this, atlas);
 		var smax = StorageData.chargeMax(), imax = SlotZone.invChargeMax();
-		inline function below( max : Array<Int> ) return function(i : Int) return max[i] < 0 ? Lang.t("storage.nolimit") : "max " + max[i];
 		grid.addZone(SlotZone.ofBlocks(store.t, maxWeight, px + 24, py + 96));
 		var z = SlotZone.ofCharges(store.charges, smax, cx, py + 96);
-		z.below = below(smax);
+		z.showMax = true;
 		grid.addZone(z);
 		grid.addZone(SlotZone.ofBlocks(inv.inv.t, maxWeight, px + 24, py + 218));
 		z = SlotZone.ofCharges(inv.inv.charges, imax, cx, py + 218);
-		z.below = below(imax);
+		z.showMax = true;
 		grid.addZone(z);
 		grid.onChange = function() inv.display();
 		grid.onInfo = function(s) info.text = s;

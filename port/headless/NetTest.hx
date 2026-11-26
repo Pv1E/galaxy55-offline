@@ -794,7 +794,7 @@ class NetTest {
 		cheat.t[1] = { k : Block.get(BChest).index, n : 1 };
 		f.client.send(CStorage(7, cheat, ninv));
 		check("nave: el stockage no crea nada", until(() -> f.has(m -> m.match(SInventory(7, _)))) && fs.record.storage.t[1] == null);
-		// una partida creativa traida al servidor: 30 rosas en el inventario (maximo 20); el stockage sigue funcionando para lo
+		// una partida creativa traida al servidor: 30 rosas en el inventario (maximo 10); el stockage sigue funcionando para lo
 		// demas (antes se rechazaba todo) y las rosas no pueden subir
 		var pink = Type.enumIndex(Common.ChargeKind.CPink);
 		var ic = fs.record.inv.charges;
@@ -804,7 +804,7 @@ class NetTest {
 		for( i in 0...back.t.length ) if( back.t[i] == null ) { back.t[i] = { k : Block.get(BRock).index, n : 5 }; break; }
 		var empty : NetInv = { t : [for( s in fs.record.storage.t ) null], charges : [for( c in fs.record.storage.charges ) { c : c.c, n : c.n }] };
 		f.client.send(CStorage(8, empty, back));
-		check("nave: con 30 rosas (maximo 20) el stockage sigue funcionando", until(() -> f.has(m -> m.match(SInventory(8, _))))
+		check("nave: con 30 rosas (maximo 10) el stockage sigue funcionando", until(() -> f.has(m -> m.match(SInventory(8, _))))
 			&& fs.record.storage.t[0] == null && count(lastInv(f), Block.get(BRock).index) == 5);
 		// 2 rosas guardadas que vuelven al inventario: los totales cuadran, pero 32 pasaria de las 30 que ya tenia
 		fs.record.storage.charges = [{ c : pink, n : 2 }];

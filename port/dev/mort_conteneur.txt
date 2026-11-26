@@ -1,7 +1,7 @@
 # equipo dejado al morir y con Mayus+K (DeathDrops): todo el inventario (bloques, gemas y cargas) pasa a un Conteneur ESCorp
 # pequeno en el sitio y los creditos no se tocan; se guarda con la partida y se recupera pasando a su lado (lo que cabe: el resto
 # se queda dentro). El inventario de prueba (Inv.defaults) pasa de los maximos: 50 bauxitas (pila de 32) y 30 cargas rosas
-# (maximo 20): al recogerlo, las 18 bauxitas y las 10 cargas rosas que no caben se quedan en el contenedor
+# (maximo 10): al recogerlo, las 18 bauxitas y las 20 cargas rosas que no caben se quedan en el contenedor
 wait 3
 # un kube del editor (seccion 7: en la supervivencia de una partida creativa es un bloque mas)
 edkube clear
