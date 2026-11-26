@@ -1,4 +1,5 @@
 import Ui;
+import EscorpUpgrades;
 import MultiServers;
 import ChatBox;
 import Msg;
@@ -2353,7 +2354,7 @@ class GalaxyApp extends hxd.App {
 		s.add(back, x, y + 3 * 62 + 14);
 		trade.onActivate = function() if( !Tutorial.active(game.info) ) openShop();
 		contracts.onActivate = openContracts;
-		upgrades.onActivate = openUpgrades;
+		upgrades.onActivate = function() openUpgrades();
 		// tutorial: en el paso de los contratos se marcan los Contratos ESCorp (Comerciar esta desactivado: show les da el foco)
 		if( Tutorial.active(game.info) && game.info.tuto.step == Tutorial.CONTRACTS ) markTutoButton(s, contracts);
 		var leave = function() {
@@ -2365,57 +2366,83 @@ class GalaxyApp extends hxd.App {
 		return s;
 	}
 
-	/** Mejoras ESCorp: la pantalla se rehace cada vez (las cargas de hexalita que llevas y lo desbloqueado) */
-	function openUpgrades() {
+	/** Mejoras ESCorp: la pantalla se rehace cada vez (la hexalita que llevas y lo comprado); focus: la mejora que se queda con
+	    el foco (la que se acaba de comprar o de encender, para volver a comprar seguido) */
+	function openUpgrades( ?focus : String ) {
 		if( game == null || !Tutorial.upgradesAllowed(game.info) ) return;
 		var old = screens.get("upgrades");
 		if( old != null ) old.remove();
 		screens.remove("upgrades");
 		show("upgrades");
+		if( focus != null ) {
+			var b = upgradeButtons.get(focus);
+			if( b != null && b.enabled ) current.setFocus(current.widgets.indexOf(b));
+		}
+	}
+
+	/** botones de la pantalla de mejoras por id (openUpgrades les devuelve el foco) */
+	var upgradeButtons = new Map<String, Button>();
+
+	/** donde se miran las mejoras (EscorpUpgrades.UpgradeCtx): el modo de juego y, en multijugador, si eres gestionnaire */
+	function upgradeCtx() : EscorpUpgrades.UpgradeCtx {
+		return { creative : game != null && game.creative, manager : mp != null && mp.isPlaying() && mp.isManager() };
 	}
 
 	/**
-	 * Mejoras ESCorp (EscorpUpgrades, anadido del port): las cargas de hexalita que llevas y un boton por mejora con su precio
-	 * (desbloquear, con confirmacion); sin ninguna, el aviso. Se compone como las licencias (desde arriba y centrada en alto).
-	 * Volver o Esc vuelven al submenu Contactar con la ESCorp, con el foco en Mejoras ESCorp
+	 * Mejoras ESCorp (EscorpUpgrades, anadido del port): la hexalita que llevas y un boton por mejora (las que no sirven en esta
+	 * partida no salen), con su descripcion debajo. A la izquierda del boton, su nombre; a la derecha, segun su clase:
+	 *   - por niveles: "nivel 2/8 · 600 hexalita" (sin tope, "nivel 3 · 300 hexalita"), y al final "nivel maximo"
+	 *   - interruptor: su precio; comprado, "Activada" o "Desactivada" (el boton lo cambia, gratis y sin confirmacion)
+	 *   - contador: "Nombre: 4" y el precio de uno mas
+	 *   - de una vez: su precio, o "Desbloqueada"
+	 * Comprar pide confirmacion (askUpgrade). Una mejora bloqueada (EscorpUpgrades.blocked) sale desactivada con el motivo en
+	 * lugar de la descripcion. Se compone como las licencias (desde arriba y centrada en alto); con seis mejoras cabe en
+	 * 1280 x 720. Volver o Esc vuelven al submenu Contactar con la ESCorp, con el foco en Mejoras ESCorp
 	 */
 	function buildUpgrades() : Screen {
-		var PW = 860;
+		var PW = 1000;
 		var s = new Screen(ui);
 		var bg = new h2d.Graphics(s);
 		var title = Theme.text(s, Lang.t("upgrades.title"), 3.2, Theme.TEXT);
-		var px = (W - PW) * 0.5 + 40, y = 100.;
-		var info = Theme.text(s, Lang.t("upgrades.info"), 1.6, Theme.DIM, px, y);
+		var px = (W - PW) * 0.5 + 40, y = 90.;
+		var info = Theme.text(s, Lang.t("upgrades.info"), 1.5, Theme.DIM, px, y);
 		info.maxWidth = (PW - 80) / info.scaleX;
-		y += info.textHeight * info.scaleY + 18;
-		// las cargas de hexalita: el icono de la barra del inventario (InvBar) y cuantas llevas, en su verde
-		var have = EscorpUpgrades.hexalite(game.inv);
-		var icon = new h2d.Bitmap(EscorpUpgrades.icon(), s);
-		icon.setScale(2.5);
+		y += info.textHeight * info.scaleY + 10;
+		// la hexalita: el icono de la barra del inventario (InvBar) y cuanta llevas, en su verde
+		var inv = game.inv, gi = game.info, ctx = upgradeCtx();
+		var have = EscorpUpgrades.hexalite(inv);
+		var icon = new h2d.Bitmap(EscorpIcons.hexalite(), s);
+		icon.setScale(2);
 		icon.setPosition(px, y);
-		Theme.text(s, Lang.t("upgrades.balance").split("%n%").join("" + have), 2.0, EscorpUpgrades.COLOR, px + 54, y + 6);
-		y += 40 + 16;
+		Theme.text(s, Lang.t("upgrades.balance").split("%n%").join("" + have), 1.8, EscorpUpgrades.COLOR, px + 42, y + 3);
+		y += 32 + 8;
 		var sep = new h2d.Graphics(s);
 		Theme.rect(sep, px, y, PW - 80, 1, 0xFFFFFF, 0.12);
-		y += 22;
-		if( EscorpUpgrades.ALL.length == 0 ) {
+		y += 12;
+		var list = [for( u in EscorpUpgrades.ALL ) if( EscorpUpgrades.shown(gi, u, ctx) ) u];
+		if( list.length == 0 ) {
 			var none = Theme.text(s, Lang.t("upgrades.none"), 1.8, Theme.TEXT, px, y + 10);
 			none.maxWidth = (PW - 80) / none.scaleX;
 			none.textAlign = Center;
 			y += none.textHeight * none.scaleY + 34;
 		}
-		for( u in EscorpUpgrades.ALL ) {
-			var bought = EscorpUpgrades.has(game.info, u.id);
-			var price = bought ? Lang.t("upgrades.bought") : Lang.t("upgrades.cost").split("%n%").join("" + u.cost);
-			var b = new Button(s, Lang.t("upgrade." + u.id) + "  ·  " + price, PW - 80, 54);
-			b.enabled = EscorpUpgrades.canBuy(game.info, game.inv, u);
-			b.onActivate = function() askUpgrade(s, u);
+		upgradeButtons = new Map();
+		for( u in list ) {
+			var b = new InfoButton(s, upgradeLabel(gi, u), PW - 80, 44);
+			b.setValue(upgradeValue(gi, u));
+			var toggle = u.kind == KSwitch && EscorpUpgrades.has(gi, u.id);
+			b.enabled = toggle ? EscorpUpgrades.open(gi) : EscorpUpgrades.canBuy(gi, inv, u, ctx);
+			b.onActivate = function() if( toggle ) switchUpgrade(u) else askUpgrade(s, u);
 			s.add(b, px, y);
-			y += 62;
+			upgradeButtons.set(u.id, b);
+			var why = EscorpUpgrades.blocked(gi, u);
+			var d = Theme.text(s, Lang.t(why != null ? why : "upgrade." + u.id + ".desc"), 1.3, why != null ? Theme.ACCENT : Theme.DIM, px + 22, y + 46);
+			d.maxWidth = (PW - 80 - 22) / d.scaleX;
+			y += 46 + d.textHeight * d.scaleY + 10;
 		}
-		var back = new Button(s, Lang.t("back"));
-		s.add(back, (W - 460) * 0.5, y + 14);
-		var h = Std.int(y + 14 + 54 + 30);
+		var back = new Button(s, Lang.t("back"), 460, 50);
+		s.add(back, (W - 460) * 0.5, y + 8);
+		var h = Std.int(y + 8 + 50 + 22);
 		var top = (H - h) * 0.5;
 		for( c in s ) if( c != bg && c != title ) c.y += top;
 		drawPanel(bg, title, PW, h);
@@ -2428,16 +2455,63 @@ class GalaxyApp extends hxd.App {
 		return s;
 	}
 
-	/** desbloquear una mejora: con confirmacion (precio en cargas de hexalita); hecho, la pantalla se rehace */
-	function askUpgrade( parent : Screen, u : EscorpUpgrades.EscorpUpgrade ) {
+	/** nombre del boton de una mejora: el suyo; un contador, con lo que queda ("Bouees de sauvetage : 4") */
+	function upgradeLabel( info : SaveInfo, u : EscorpUpgrades.EscorpUpgrade ) : String {
 		var name = Lang.t("upgrade." + u.id);
-		askConfirm(parent, Lang.t("upgrades.ask").split("%name%").join(name), Lang.t("upgrades.ask.cost").split("%n%").join("" + u.cost), Theme.ACCENT, function() {
-			if( !EscorpUpgrades.buy(game.info, game.inv, u) ) {
-				showToast(Lang.t("upgrades.missing").split("%n%").join("" + u.cost), 4);
+		if( u.kind != KCounter ) return name;
+		return Lang.t("upgrades.count").split("%name%").join(name).split("%n%").join("" + EscorpUpgrades.level(info, u.id));
+	}
+
+	/** lo de la derecha del boton de una mejora: nivel y precio, estado del interruptor... (buildUpgrades) */
+	function upgradeValue( info : SaveInfo, u : EscorpUpgrades.EscorpUpgrade ) : String {
+		var p = EscorpUpgrades.price(info, u);
+		var cost = Lang.t("upgrades.cost").split("%n%").join("" + p);
+		return switch( u.kind ) {
+		case KLevels:
+			var n = EscorpUpgrades.level(info, u.id);
+			if( p < 0 ) Lang.t("upgrades.level.top");
+			else (u.max == null ? Lang.t("upgrades.level.open") : Lang.t("upgrades.level").split("%max%").join("" + u.max)).split("%n%").join("" + n) + "  ·  " + cost;
+		case KSwitch:
+			!EscorpUpgrades.has(info, u.id) ? cost : Lang.t(EscorpUpgrades.isOn(info, u.id) ? "upgrades.on" : "upgrades.off");
+		case KOnce:
+			p < 0 ? Lang.t("upgrades.bought") : cost;
+		case KCounter: cost;
+		}
+	}
+
+	/** comprar una mejora: con confirmacion (y su precio); hecha, la pantalla se rehace con el foco en ella */
+	function askUpgrade( parent : Screen, u : EscorpUpgrades.EscorpUpgrade ) {
+		var name = Lang.t("upgrade." + u.id), p = EscorpUpgrades.price(game.info, u);
+		var ask = switch( u.kind ) {
+		case KLevels: Lang.t("upgrades.ask.level").split("%n%").join("" + (EscorpUpgrades.level(game.info, u.id) + 1));
+		case KCounter: Lang.t("upgrade." + u.id + ".ask");
+		default: Lang.t("upgrades.ask");
+		}
+		askConfirm(parent, ask.split("%name%").join(name), Lang.t("upgrades.ask.cost").split("%n%").join("" + p), Theme.ACCENT, function() {
+			if( !upgradeAction(u, UBuy) ) {
+				showToast(Lang.t("upgrades.missing").split("%n%").join("" + p), 4);
 				return;
 			}
-			openUpgrades();
+			openUpgrades(u.id);
 		});
+	}
+
+	/** un interruptor comprado: se enciende o se apaga al momento, sin confirmacion */
+	function switchUpgrade( u : EscorpUpgrades.EscorpUpgrade ) {
+		if( upgradeAction(u, EscorpUpgrades.isOn(game.info, u.id) ? UOff : UOn) ) openUpgrades(u.id);
+	}
+
+	/** hace la accion en la partida (EscorpUpgrades.apply); en multijugador el servidor la repite (CEcon EUpgrade) */
+	function upgradeAction( u : EscorpUpgrades.EscorpUpgrade, action : EscorpUpgrades.UpgradeAction ) : Bool {
+		if( !EscorpUpgrades.apply(game.info, game.inv, u.id, action, upgradeCtx()) ) return false;
+		if( game.net != null ) game.net.sentEcon(EUpgrade, u.id, action);
+		onUpgradeChanged();
+		return true;
+	}
+
+	/** algo de las mejoras ha cambiado (compra, interruptor, SPatch del servidor): lo que dependa de ellas se pone al dia */
+	function onUpgradeChanged() {
+		if( invBar != null ) invBar.refresh();
 	}
 
 	static inline var TUTO_MARK = "tutoMark";
@@ -3979,8 +4053,10 @@ class GalaxyApp extends hxd.App {
 			info.contracts = v;
 		case "special":
 			info.special = v;
-		case "upgrades":
-			info.upgrades = v;
+		case "escorp":
+			// las mejoras de la ESCorp como las tiene el servidor (ServerEcon, tras EUpgrade, EMainPlanet o una muerte)
+			EscorpUpgrades.applyState(info, v);
+			if( game != null && game.info == info ) onUpgradeChanged();
 		case "ship":
 			// la nave del hangar no cuadra (ServerShip.saveShip): se queda la de antes (se vera al volver a cargar la nave)
 			if( Std.isOfType(v, String) || v == null ) {

@@ -90,7 +90,7 @@ import Msg;
  *                           por recuperado; print kub|kubdata|kuborder (orden de las fichas y las recetas)
  *   escorp [upgrades]       ordenador de a bordo > Contactar con la ESCorp (anadido del port) y, con upgrades, su pantalla de
  *                           Mejoras ESCorp (close lo cierra todo; print menu); escorp button pulsa Contactar con la ESCorp en el
- *                           ordenador abierto; escorp hexalite N deja N cargas de hexalita; print upgrades
+ *                           ordenador abierto; escorp hexalite N deja N de hexalita; print upgrades
  *   savegame                guardar la partida (como F5, sin aviso)
  *   genversion N            el planeta actual pasa a ser de la version N del generador (SaveInfo.genVersion; se nota al volver a
  *                           el); print gen: la del mundo cargado, la actual, la de la partida y las de los planetas visitados,
@@ -1392,10 +1392,11 @@ class Dev {
 				case "escorp":
 					// escorp [upgrades]: el submenu Contactar con la ESCorp abierto desde el ordenador de a bordo, como el jugador (y su
 					// pantalla de Mejoras ESCorp); el guion sigue, close lo cierra. escorp button: pulsa el boton Contactar con la ESCorp
-					// del ordenador abierto (su sitio cambia con Pilotar la nave). escorp hexalite N: deja N cargas de hexalita (CBonus)
+					// del ordenador abierto (su sitio cambia con Pilotar la nave). escorp hexalite N: deja N de hexalita (la carga CBonus)
 					if( a[1] == "hexalite" ) {
-						while( g.inv.useCharge(CBonus) ) {}
-						if( Std.parseInt(a[2]) > 0 ) g.inv.addCharge(CBonus, Std.parseInt(a[2]));
+						var k = Type.enumIndex(CBonus), cs = g.inv.inv.charges;
+						for( c in cs.copy() ) if( c.c == k ) cs.remove(c);
+						if( Std.parseInt(a[2]) > 0 ) g.inv.addCharge(CBonus, Std.parseInt(a[2])) else g.inv.display();
 					} else if( a[1] == "button" ) {
 						var b = @:privateAccess app.computerEscorp;
 						if( b != null && @:privateAccess app.current != null && @:privateAccess app.current.widgets.indexOf(b) >= 0 ) b.activate();
@@ -1930,11 +1931,18 @@ class Dev {
 		case "credits":
 			Sys.println("creditos: " + g.info.credits);
 		case "upgrades":
-			// Mejoras ESCorp: cargas de hexalita, cada mejora (precio, desbloqueada o se puede), las desbloqueadas y si se abren
-			Sys.println("mejoras: cargas de hexalita " + EscorpUpgrades.hexalite(g.inv) + " | lista " + (EscorpUpgrades.ALL.length == 0 ? "vacia"
-				: [for( u in EscorpUpgrades.ALL ) u.id + " " + u.cost + (EscorpUpgrades.has(g.info, u.id) ? " DESBLOQUEADA" : EscorpUpgrades.canBuy(g.info, g.inv, u) ? " se puede" : "")].join(", "))
-				+ " | desbloqueadas " + (g.info.upgrades == null ? "-" : g.info.upgrades.join(",")) + " | se abren " + Tutorial.upgradesAllowed(g.info)
-				+ " tuto=" + (g.info.tuto == null ? "-" : "" + g.info.tuto.step));
+			// Mejoras ESCorp: hexalita y cada mejora: oculta, nivel o reserva, comprada (encendida o apagada), precio de la siguiente
+			// compra (max = nada que comprar), si se puede comprar y el motivo si esta bloqueada; si se abren
+			var ctx = @:privateAccess app.upgradeCtx();
+			Sys.println("mejoras: hexalita " + EscorpUpgrades.hexalite(g.inv) + " | " + (EscorpUpgrades.ALL.length == 0 ? "ninguna"
+				: [for( u in EscorpUpgrades.ALL ) {
+					var p = EscorpUpgrades.price(g.info, u), why = EscorpUpgrades.blocked(g.info, u);
+					u.id + (!EscorpUpgrades.shown(g.info, u, ctx) ? " OCULTA" : "") + " n=" + EscorpUpgrades.level(g.info, u.id)
+						+ (EscorpUpgrades.has(g.info, u.id) ? (EscorpUpgrades.isOn(g.info, u.id) ? " ENCENDIDA" : " APAGADA") : "")
+						+ " precio=" + (p < 0 ? "max" : "" + p) + (EscorpUpgrades.canBuy(g.info, g.inv, u, ctx) ? " se puede" : "")
+						+ (why != null ? " bloqueada(" + why + ")" : "");
+				}].join(", "))
+				+ " | se abren " + Tutorial.upgradesAllowed(g.info) + " tuto=" + (g.info.tuto == null ? "-" : "" + g.info.tuto.step));
 		case "contracts":
 			// periodo, tablero (bloque, cantidad, recompensa, lo que llevas, entregado, abandonado, en curso u oculto por los
 			// contratos en curso), contratos en curso (bloque, dado / pedido, recompensa, periodo y linea de origen), tiempo hasta

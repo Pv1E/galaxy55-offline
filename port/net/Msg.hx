@@ -65,7 +65,7 @@ enum abstract EconOp(Int) to Int from Int {
 	var EAbandonContract = 4;
 	/** dar tierra roja al contrato especial */
 	var EGiveSpecial = 5;
-	/** comprar la mejora ESCorp a */
+	/** la mejora ESCorp a (su id): n = la accion (EscorpUpgrades.UpgradeAction: comprar, encender, apagar) */
 	var EUpgrade = 6;
 	/** planeta n como planeta principal */
 	var EMainPlanet = 7;
@@ -258,7 +258,7 @@ enum ServerMsg {
 	SHit( dmg : Float );
 	/** una bomba ha explotado en (x, y, z): efecto y temblor */
 	SBomb( x : Float, y : Float, z : Float );
-	/** un campo de la partida tal como lo tiene el servidor (credits, market, contracts, special, upgrades, licenses), en JSON */
+	/** un campo de la partida tal como lo tiene el servidor (credits, market, contracts, special, escorp, licenses...), en JSON */
 	SPatch( key : String, json : String );
 	/** su nave: celdas cambiadas por el servidor (clave de la nave, como SChanges) */
 	SShipCells( list : Array<NetChange> );
@@ -279,7 +279,7 @@ enum ServerMsg {
  */
 class Msg {
 
-	public static inline var PROTOCOL = 10;
+	public static inline var PROTOCOL = 11;
 	/** cambios de celdas en un mensaje, y bytes de un terreno descomprimido */
 	public static inline var CHANGES_MAX = 1 << 16;
 	public static inline var EDITS_MAX = 64 << 20;

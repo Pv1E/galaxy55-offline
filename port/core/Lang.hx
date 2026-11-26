@@ -378,10 +378,21 @@ class Lang {
 		// %n% = hexalita del inventario (la carga CBonus)
 		"upgrades.balance" => ["Tu hexalita: %n%", "Your hexalite: %n%", "Ton hexalite : %n%"],
 		"upgrades.none" => ["No hay ninguna mejora ESCorp disponible.", "No ESCorp upgrades available.", "Aucune amélioration ESCorp disponible."],
-		// boton de una mejora: su nombre (Lang "upgrade.<id>"), seguido del precio o de upgrades.bought
+		// boton de una mejora (GalaxyApp.buildUpgrades): su nombre a la izquierda (Lang "upgrade.<id>"; un contador, upgrades.count
+		// con lo que queda) y a la derecha su nivel y su precio (upgrades.level...), upgrades.bought o el estado de un interruptor
+		// (upgrades.on / off); debajo, su descripcion ("upgrade.<id>.desc")
 		"upgrades.cost" => ["%n% hexalita", "%n% hexalite", "%n% hexalite"],
 		"upgrades.bought" => ["Desbloqueada", "Unlocked", "Débloquée"],
+		"upgrades.level" => ["nivel %n%/%max%", "level %n%/%max%", "niveau %n%/%max%"],
+		"upgrades.level.open" => ["nivel %n%", "level %n%", "niveau %n%"],
+		"upgrades.level.top" => ["nivel máximo", "max level", "niveau max"],
+		"upgrades.on" => ["Activada", "On", "Activée"],
+		"upgrades.off" => ["Desactivada", "Off", "Désactivée"],
+		"upgrades.count" => ["%name%: %n%", "%name%: %n%", "%name% : %n%"],
+		// confirmacion de una compra: una de una vez o un interruptor; un nivel (%n% = el que se compra); un contador, la clave
+		// "upgrade.<id>.ask" de la mejora
 		"upgrades.ask" => ["¿Desbloquear %name%?", "Unlock %name%?", "Débloquer %name% ?"],
+		"upgrades.ask.level" => ["¿Comprar %name%, nivel %n%?", "Buy %name%, level %n%?", "Acheter %name%, niveau %n% ?"],
 		"upgrades.ask.cost" => ["Cuesta %n% hexalita.", "It costs %n% hexalite.", "Coût : %n% hexalite."],
 		"upgrades.missing" => ["Te falta hexalita: la mejora cuesta %n%.", "Not enough hexalite: the upgrade costs %n%.", "Pas assez d'hexalite : l'amélioration en coûte %n%."],
 		// cometas (Comets, añadido del port). %t% = 2:15

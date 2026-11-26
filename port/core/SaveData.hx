@@ -121,8 +121,13 @@ typedef SaveInfo = {
 	@:optional var contracts : Contracts.ContractsInfo;
 	/** contrato especial de la ESCorp (Contracts, anadido del port); null = sin empezar (y en las partidas antiguas) */
 	@:optional var special : Contracts.SpecialInfo;
-	/** mejoras de la ESCorp desbloqueadas (EscorpUpgrades, anadido del port): sus id; null = ninguna (y en las partidas de antes) */
+	/** mejoras de la ESCorp compradas (EscorpUpgrades, anadido del port): las de una vez y los interruptores, sus id; null =
+	    ninguna (y en las partidas de antes) */
 	@:optional var upgrades : Array<String>;
+	/** mejoras de la ESCorp por niveles y contadores (anadido del port): id -> nivel o reserva; null o sin el id = 0 */
+	@:optional var upgradeLevels : haxe.DynamicAccess<Int>;
+	/** interruptores de la ESCorp comprados y apagados (anadido del port): sus id; null o sin el id = encendido */
+	@:optional var upgradesOff : Array<String>;
 	/** nave editada en el hangar (zlib en base64); null = la de serie */
 	@:optional var shipData : String;
 	/** solo mientras se esta en el hangar (no se guarda) */
@@ -337,6 +342,15 @@ class SaveData {
 		return o == null ? null : [for( v in arr(o) ) Std.string(v)];
 	}
 
+	/** niveles de las mejoras (SaveInfo.upgradeLevels): un objeto id -> entero */
+	static function readLevels( o : Dynamic ) : haxe.DynamicAccess<Int> {
+		if( o == null ) return null;
+		if( !Reflect.isObject(o) || Std.isOfType(o, Array) || Std.isOfType(o, String) ) throw "objeto esperado";
+		var out = new haxe.DynamicAccess<Int>();
+		for( f in Reflect.fields(o) ) out.set(f, int(Reflect.field(o, f)));
+		return out;
+	}
+
 	static function readSlots( o : Dynamic ) : Protocol.BlockInventory {
 		return [for( s in arr(o) ) s == null ? null : { k : int(s.k), n : int(s.n) }];
 	}
@@ -438,6 +452,8 @@ class SaveData {
 			chests : field("chests", function() return readChests(o.chests)),
 			shipData : o.shipData != null ? Std.string(o.shipData) : null,
 			upgrades : field("upgrades", function() return strs(o.upgrades)),
+			upgradeLevels : field("upgradeLevels", function() return readLevels(o.upgradeLevels)),
+			upgradesOff : field("upgradesOff", function() return strs(o.upgradesOff)),
 			shipEdits : field("shipEdits", function() return o.shipEdits != null ? ints(o.shipEdits) : []),
 			edits : field("edits", function() return o.edits != null ? ints(o.edits) : []),
 			genVersion : genVersion(o.genVersion),
