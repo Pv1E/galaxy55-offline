@@ -82,7 +82,8 @@ wait 120
 vitals
 print deathdrops
 # 7) supervivencia de una partida creativa: como la aventura, tambien con un kube del editor (va aparte en el guardado,
-# EditorKubes: en deathDrops queda una casilla vacia) y al morir a bordo de la nave (en coordenadas de la nave)
+# EditorKubes: en deathDrops queda una casilla vacia). Morir a bordo de la nave no deja nada (cambio de regla): el inventario
+# se queda entero y no sale ningun contenedor
 creativegame
 reload
 waitfor planet 6000
@@ -109,6 +110,16 @@ wait 5
 print pos
 hurt 500
 wait 120
+vitals
+print deathdrops
+shot mort_a_bord
+# un contenedor de a bordo de una partida de antes ("s") se sigue guardando y recogiendo: puesto a los pies (donde se aparece
+# en la nave, 63.5 62.5) con el inventario lleno (no se recoge), se guarda y se carga con la nave; con sitio, vuelve al
+# inventario y sale de la partida
+contracts empty
+contracts full
+deathdrop oldship 0 0 BIron 7
+wait 30
 print deathdrops
 closewin
 reload
@@ -116,10 +127,16 @@ waitfor planet 6000
 wait 30
 print deathdrops
 mode survival
-tpl 60.5 63.5 3.01 0 0
+tpl 63.5 62.5 3.01 0 0
 wait 30
 print deathdrops
-# morir en el aire junto a la nave, fuera del casco: el contenedor cae y, por debajo de la nave, pasa a ser del planeta
+contracts empty
+wait 30
+print deathdrops
+print inv
+contracts empty
+# morir en el aire junto a la nave, fuera del casco (a la altura de la nave): tampoco deja nada
+give BGlass 3
 tpl 61.5 60.5 3.01 0 0
 wait 3
 hurt 500

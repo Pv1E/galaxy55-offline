@@ -24,6 +24,8 @@ import Msg;
  *   give Bloque [n]         meter n bloques (50) en el inventario
  *   charge CPink N          dejar N cargas de ese tipo (CYellow, CBlue, CPink, CBonus; 0 = ninguna)
  *   deathdrop on|off        opcion de la partida en curso: dejar el equipo en el suelo al morir y con Mayus+K (SaveInfo.dropOnDeath)
+ *   deathdrop oldship dx dy Bloque n   un contenedor de a bordo ("s") con n de Bloque a dx, dy del jugador, como en las
+ *                           partidas de antes (morir a bordo ya no deja nada)
  *   print deathdrops        equipo dejado al morir o con Mayus+K (DeathDrops): inventario y cargas, creditos, contenedores
  *                           guardados en la partida y los que hay en el mundo
  *   drop x y z Bloque [vida] soltar un bloque quieto (vida en segundos, 180)
@@ -937,7 +939,19 @@ class Dev {
 				case "give":
 					var b = bk(a[1]);
 					g.inv.addBlocks(b, a.length > 2 ? Std.parseInt(a[2]) : 50);
-				case "deathdrop": g.info.dropOnDeath = a[1] == "on"; // deathdrop on|off: la opcion de la partida en curso
+				case "deathdrop":
+					// deathdrop on|off: la opcion de la partida en curso. deathdrop oldship dx dy Bloque n: un contenedor de a bordo
+					// ("s") a dx, dy del jugador, como los de las partidas de antes (morir a bordo ya no los crea)
+					if( a[1] == "oldship" ) {
+						var l = DeathDrops.list(g.info), id = 1;
+						for( d in l ) if( d.id >= id ) id = d.id + 1;
+						var t : Protocol.BlockInventory = [for( i in 0...g.inv.inv.t.length ) null];
+						t[0] = { k : bk(a[4]).index, n : Std.parseInt(a[5]) };
+						var d : DeathDrops.DeathDropInfo = { id : id, key : "s", x : DeathDrops.wrap(g.px + f(a[2]) - w.shipDX, w.size),
+							y : DeathDrops.wrap(g.py + f(a[3]) - w.shipDY, w.size), z : g.pz + 0.5, t : t, charges : [] };
+						l.push(d);
+						DeathDropsPlay.spawn(g, d);
+					} else g.info.dropOnDeath = a[1] == "on";
 				case "charge":
 					// charge CPink N: deja N cargas de ese tipo (0 = ninguna)
 					var ck = Type.enumIndex(Type.createEnum(ChargeKind, a[1])), n = Std.parseInt(a[2]);

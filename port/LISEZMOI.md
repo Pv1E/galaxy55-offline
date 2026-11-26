@@ -187,7 +187,8 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
 - À la mort ou avec Maj+K, ce que tu portes (blocs et charges, pas les crédits) reste dans un petit conteneur ESCorp là où tu
   étais, qui n'expire pas et est gardé dans la partie (dans l'original, le serveur le laissait, en butin qui expirait, et le
   mode local ne retirait rien). C'est une option de la partie, activée sauf changement ; rien en créatif, dans le tutoriel,
-  dans le hangar ni dans le vaisseau-mère.
+  dans le hangar, dans le vaisseau-mère ni à bord du vaisseau (mourir à bord ne coûte rien, au-dessus de n'importe quelle
+  planète ou comète).
 - En marchant, on monte sur les dalles (demi-blocs) sans sauter : changement du port, dans l'original elles arrêtaient comme
   un mur.
 - Les 16 tableaux de CroqueMotel (Motion Twin, CC BY-NC-SA 4.0, dans `NOTICE`) sont un ajout du port : des plaques accrochées

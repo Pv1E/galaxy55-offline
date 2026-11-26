@@ -169,8 +169,8 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
   y se perdió.
 - Al morir o con Mayús+K, lo que llevas (bloques y cargas, no los créditos) queda en una cantina de ESCorp pequeña donde
   estabas, que no caduca y se guarda en la partida (en el original lo dejaba el servidor, en un botín que caducaba, y el modo
-  local no quitaba nada). Es una opción de la partida, activada si no se cambia; nada en creativo, en el tutorial, en el hangar
-  ni en la nave nodriza.
+  local no quitaba nada). Es una opción de la partida, activada si no se cambia; nada en creativo, en el tutorial, en el hangar,
+  en la nave nodriza ni a bordo de la nave (morir a bordo no cuesta nada, encima de cualquier planeta o cometa).
 - Andando se suben las planchas (medio bloque) sin saltar: cambio de este port, en el original paraban como un muro.
 - Los 16 cuadros de CroqueMotel (Motion Twin, CC BY-NC-SA 4.0, en `NOTICE`) son un añadido de este port: placas que se
   cuelgan en una pared, solo en la paleta creativa. En una partida creativa también se ponen los kubes del editor (los `.kube`

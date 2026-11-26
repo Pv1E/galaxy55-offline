@@ -5,7 +5,8 @@ import SaveData.SaveInfo;
 typedef DeathDropInfo = {
 	/** numero unico en la partida: las listas aparte del guardado (EditorKubes) lo usan como clave */
 	var id : Int;
-	/** "p<planeta>" en un planeta o una cometa (coordenadas del planeta); "s" a bordo de la nave (x, y de la nave, z del planeta) */
+	/** "p<planeta>" en un planeta o una cometa (coordenadas del planeta); "s" a bordo de la nave (x, y de la nave, z del planeta):
+	    ya no se crean (morir a bordo no deja nada), los que haya en las partidas se quedan y se recogen igual */
 	var key : String;
 	var x : Float;
 	var y : Float;
@@ -25,7 +26,9 @@ typedef DeathDropInfo = {
  *   - se lleva todos los bloques (gemas incluidas) y todas las cargas; los creditos no (son de la tienda)
  *   - no caduca (el original si, con un tiempo del servidor que se ha perdido): se guarda en la partida y solo desaparece al
  *     vaciarlo o con su planeta (abandonado: Licenses.abandon; cometa dejada: Comets.leave)
- *   - nada en creativo, en el tutorial, en el hangar ni en la nave nodriza; Mayus+K a bordo de la nave tampoco (morir a bordo si)
+ *   - nada en creativo, en el tutorial, en el hangar ni en la nave nodriza; a bordo de la nave tampoco, encima de cualquier
+ *     planeta o cometa: ni Mayus+K ni morir alli cuentan para el equipo (cambio del port: antes morir a bordo dejaba un
+ *     contenedor en la nave, clave "s"; los que quedan en las partidas se recogen como siempre)
  *   - es una opcion de la partida (SaveInfo.dropOnDeath, enabled), activada si no se cambia: sin ella, como en el modo local del
  *     original, no se pierde nada (los contenedores que ya hubiera se quedan y se pueden recoger)
  */

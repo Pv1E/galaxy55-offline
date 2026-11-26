@@ -344,11 +344,12 @@ class ServerItems {
 		worlds.markRecord(s);
 	}
 
-	/** muerte o Mayus+K: todo el equipo a un contenedor donde esta (DeathDrops.leave), si toca */
+	/** muerte o Mayus+K: todo el equipo a un contenedor donde esta (DeathDrops.leave), si toca; a bordo de la nave, nunca */
 	function death( s : Session, manual : Bool ) {
 		var inst = s.instance, p = s.pos;
 		var info = s.record;
 		if( inst == null || p == null || s.creative || !server.files.options.deathDrop || s.rights & RVisitor != 0 ) return;
+		if( p.z >= WorldData.SHIP_Z ) return;
 		if( info.tuto != null ) return;
 		var i = info.inv;
 		var t = [for( st in i.t ) st == null || st.n <= 0 ? null : { k : st.k, n : st.n }];

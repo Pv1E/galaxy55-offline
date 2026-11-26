@@ -173,8 +173,8 @@ A player got it running on Linux this way; we have not tested it.
   without slots (yellow up to 24, blue 12, pink 2, hexalite without limit; 10 pink charges at most in the inventory). The original's was on the server and is lost.
 - When you die or press Shift+K, what you carry (blocks and charges, not credits) stays in a small ESCorp canteen where you
   were, which never expires and is kept in the save (in the original the server left it, as loot that expired, and the local
-  mode took nothing). It is a game option, on unless changed; nothing happens in creative, in the tutorial, in the hangar or
-  in the mothership.
+  mode took nothing). It is a game option, on unless changed; nothing happens in creative, in the tutorial, in the hangar, in
+  the mothership or aboard the ship (dying aboard costs nothing, above any planet or comet).
 - Walking climbs plates (half blocks) without jumping: a change of this port, in the original they stopped you like a wall.
 - The 16 CroqueMotel paintings (Motion Twin, CC BY-NC-SA 4.0, in `NOTICE`) are an addition of this port: plates hung on a
   wall, in the creative palette only. In a creative game the kube editor kubes (the `.kube` files of the `kubes` folder) can
