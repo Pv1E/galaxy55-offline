@@ -9,14 +9,25 @@ import DeathDrops.DeathDropInfo;
 class DeathDropsPlay {
 
 	/**
+	 * Donde esta el jugador para DeathDrops.fate: a bordo (a la altura de la nave), exento (creativo, hangar, nave nodriza, sin
+	 * nave, visitante en multijugador) y el planeta propio en el que esta (en multijugador, null en el de otro jugador)
+	 */
+	public static function spot( g : GameView ) : DeathDrops.GearSpot {
+		var uni = g.info.uni;
+		return {
+			aboard : g.pz >= World.SHIP_Z,
+			exempt : g.creative || g.hangar != null || g.info.mothership == true || g.ship == null || (g.net != null && g.netVisitor),
+			planet : uni == null || ForeignMap.target(uni.planetId) != null ? null : uni.planetId,
+		};
+	}
+
+	/**
 	 * Al empezar el fundido de la muerte (manual = false) o de Mayus+K: todo el equipo pasa a un contenedor guardado en la
 	 * partida y el inventario queda vacio. El contenedor se ve al acabar el fundido (spawn): antes el jugador sigue al lado y lo
-	 * recogeria. null si no hay nada que dejar o no toca dejarlo (a bordo de la nave, nunca: DeathDrops).
+	 * recogeria. Solo cuando DeathDrops.fate lo dice (GDropped); null si no hay nada que dejar.
 	 */
 	public static function leave( g : GameView, manual : Bool ) : DeathDropInfo {
 		var info = g.info;
-		if( !DeathDrops.enabled(info) || g.creative || info.tuto != null || g.hangar != null || info.mothership == true || g.ship == null ) return null;
-		if( g.pz >= World.SHIP_Z ) return null;
 		var inv = g.inv.inv;
 		var t = [for( s in inv.t ) s == null || s.n <= 0 ? null : { k : s.k, n : s.n }];
 		var charges = [for( c in inv.charges ) if( c.n > 0 ) { c : c.c, n : c.n }];

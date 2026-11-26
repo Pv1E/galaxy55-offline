@@ -550,6 +550,12 @@ class GameServer {
 		case ADeathDrop:
 			files.options.deathDrop = arg == "1";
 			files.saveOptions();
+			// en la partida de cada uno, al momento: las mejoras que dependen de ella se ven o no (ServerWorlds.syncDropOption)
+			for( o in sessions )
+				if( o.state == SPlay && o.record != null ) {
+					worlds.syncDropOption(o);
+					o.send(SPatch("dropOnDeath", haxe.Json.stringify(files.options.deathDrop)));
+				}
 		}
 		// los gestionnaires ven las opciones como quedan (y el nombrado, que ahora lo es)
 		for( o in sessions ) if( o.state == SPlay && o.isManager() ) o.send(serverInfo());

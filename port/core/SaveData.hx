@@ -128,6 +128,8 @@ typedef SaveInfo = {
 	@:optional var upgradeLevels : haxe.DynamicAccess<Int>;
 	/** interruptores de la ESCorp comprados y apagados (anadido del port): sus id; null o sin el id = encendido */
 	@:optional var upgradesOff : Array<String>;
+	/** planeta principal para el que se compro la sauvegarde d'equipement del planeta principal (EscorpUpgrades.KEEP_MAIN) */
+	@:optional var keepMainPlanet : Null<Int>;
 	/** nave editada en el hangar (zlib en base64); null = la de serie */
 	@:optional var shipData : String;
 	/** solo mientras se esta en el hangar (no se guarda) */
@@ -408,8 +410,12 @@ class SaveData {
 		for( i in 0...t.length ) {
 			var v = t[i];
 			if( v == null || v.n <= 0 ) continue;
-			if( i < s.t.length ) s.t[i] = v else s.t.push(v);
+			// mas casillas que las de serie (EscorpUpgrades.STORAGE_SLOTS): cada pila en la suya, con los huecos de antes
+			while( s.t.length <= i ) s.t.push(null);
+			s.t[i] = v;
 		}
+		// y todas las que tenia, aunque las ultimas esten vacias
+		while( s.t.length < t.length ) s.t.push(null);
 		s.charges = [for( c in readCharges(o.charges) ) if( c.n > 0 ) c];
 		return s;
 	}
@@ -454,6 +460,7 @@ class SaveData {
 			upgrades : field("upgrades", function() return strs(o.upgrades)),
 			upgradeLevels : field("upgradeLevels", function() return readLevels(o.upgradeLevels)),
 			upgradesOff : field("upgradesOff", function() return strs(o.upgradesOff)),
+			keepMainPlanet : o.keepMainPlanet != null ? field("keepMainPlanet", function() return int(o.keepMainPlanet)) : null,
 			shipEdits : field("shipEdits", function() return o.shipEdits != null ? ints(o.shipEdits) : []),
 			edits : field("edits", function() return o.edits != null ? ints(o.edits) : []),
 			genVersion : genVersion(o.genVersion),

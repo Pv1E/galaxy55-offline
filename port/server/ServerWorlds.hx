@@ -58,6 +58,7 @@ class ServerWorlds {
 				return false;
 			}
 		}
+		syncDropOption(s);
 		sendRecord(s);
 		items.sendInv(s);
 		sendForeign(s);
@@ -111,6 +112,7 @@ class ServerWorlds {
 			info.editorKubes = null;
 		}
 		s.record = info;
+		syncDropOption(s);
 		saveRecord(s);
 		server.files.log(s.display + " brings their game " + save.name + " (" + save.id + ")");
 	}
@@ -138,6 +140,18 @@ class ServerWorlds {
 
 	/** la partida de s ha cambiado: se guarda en el siguiente commit */
 	public inline function markRecord( s : Session ) saveRecord(s);
+
+	/**
+	 * La opcion del servidor de perder el equipo (ServerOptions.deathDrop) pasa a la partida del jugador (SaveInfo.dropOnDeath):
+	 * el cliente la mira para las mejoras de la ESCorp que la necesitan (EscorpUpgrades.shown: sin ella no se ven ni se
+	 * venden) y para la barra (las bouees). Al entrar, al traer su partida y cuando un gestionnaire la cambia (GameServer.admin,
+	 * que manda tambien SPatch "dropOnDeath")
+	 */
+	public function syncDropOption( s : Session ) {
+		if( s.record == null || s.record.dropOnDeath == server.files.options.deathDrop ) return;
+		s.record.dropOnDeath = server.files.options.deathDrop;
+		saveRecord(s);
+	}
 
 	function saveRecord( s : Session ) {
 		if( s.record == null ) return;
@@ -214,7 +228,7 @@ class ServerWorlds {
 		var f = ExpData.ExpOffline.planet(d, pid);
 		if( f == null ) return null;
 		// licencias: el servidor cuenta los planetas que tiene (tambien los cedidos por otros); gestionnaires y creativo, sin limite
-		if( !s.isManager() && s.record.creative != true && ownedCount(s.uid) >= Licenses.MAX ) return null;
+		if( !s.isManager() && s.record.creative != true && ownedCount(s.uid) >= Licenses.max(s.record) ) return null;
 		row = { gkey : gkey, owner : s.uid, galaxy : s.uid, pid : pid, seed : f.p.seed, biome : f.p.biome, size : f.p.size,
 			gen : gen.Generator.VERSION, shipAt : "", access : "" };
 		// lo de una partida solo (la del anfitrion, al hospedarla): el planeta guardado pasa al servidor la primera vez
@@ -627,7 +641,7 @@ class ServerWorlds {
 			var t = server.sessionById(target);
 			if( row == null || t == null || t.uid == s.uid || t.record == null ) return;
 			// el que lo recibe necesita una licencia libre, salvo que sea gestionnaire o este en creativo
-			if( !t.isManager() && t.record.creative != true && ownedCount(t.uid) >= Licenses.MAX ) {
+			if( !t.isManager() && t.record.creative != true && ownedCount(t.uid) >= Licenses.max(t.record) ) {
 				s.send(SNotice("mp.transfer.full", [t.display]));
 				return;
 			}

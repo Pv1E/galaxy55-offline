@@ -112,6 +112,8 @@ class ServerEcon {
 			if( info.uni != null ) s.send(SPatch("licenses", haxe.Json.stringify({ licenses : info.uni.licenses, main : info.uni.main })));
 		case EMainPlanet:
 			if( info.uni != null ) s.send(SPatch("main", haxe.Json.stringify({ main : info.uni.main, mainTime : info.uni.mainTime, mainChanges : info.uni.mainChanges })));
+			// la sauvegarde d'equipement del planeta principal se pierde al cambiarlo (Licenses.setMain)
+			s.send(SPatch("escorp", haxe.Json.stringify(EscorpUpgrades.state(info))));
 		default:
 		}
 	}

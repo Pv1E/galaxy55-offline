@@ -2168,7 +2168,7 @@ class GalaxyApp extends hxd.App {
 		}
 		var count = Licenses.unlimited(info) ? Lang.t("licenses.unlimited")
 			: managerLicenses() ? Lang.t("licenses.unlimited.manager")
-			: Lang.t("licenses.count").split("%max%").join("" + Licenses.MAX);
+			: Lang.t("licenses.count").split("%max%").join("" + Licenses.max(info));
 		line(count.split("%n%").join("" + uni.licenses.length), 1.8, Theme.TEXT);
 		line(Lang.t("shop.credits") + " " + (info.credits == null ? Market.START_CREDITS : info.credits), 1.8, Theme.ACCENT);
 		if( Licenses.isMain(uni, here) )
@@ -2396,29 +2396,32 @@ class GalaxyApp extends hxd.App {
 	 *   - contador: "Nombre: 4" y el precio de uno mas
 	 *   - de una vez: su precio, o "Desbloqueada"
 	 * Comprar pide confirmacion (askUpgrade). Una mejora bloqueada (EscorpUpgrades.blocked) sale desactivada con el motivo en
-	 * lugar de la descripcion. Se compone como las licencias (desde arriba y centrada en alto); con seis mejoras cabe en
-	 * 1280 x 720. Volver o Esc vuelven al submenu Contactar con la ESCorp, con el foco en Mejoras ESCorp
+	 * lugar de la descripcion. Se compone como las licencias (desde arriba y centrada en alto); con las seis mejoras y una
+	 * descripcion en dos lineas cabe en 1280 x 720 sin pisar la barra del inventario (de ahi la hexalita en la linea de la
+	 * frase de arriba y los botones de 42). Volver o Esc vuelven al submenu Contactar con la ESCorp, con el foco en Mejoras ESCorp
 	 */
 	function buildUpgrades() : Screen {
 		var PW = 1000;
 		var s = new Screen(ui);
 		var bg = new h2d.Graphics(s);
 		var title = Theme.text(s, Lang.t("upgrades.title"), 3.2, Theme.TEXT);
-		var px = (W - PW) * 0.5 + 40, y = 90.;
-		var info = Theme.text(s, Lang.t("upgrades.info"), 1.5, Theme.DIM, px, y);
-		info.maxWidth = (PW - 80) / info.scaleX;
-		y += info.textHeight * info.scaleY + 10;
-		// la hexalita: el icono de la barra del inventario (InvBar) y cuanta llevas, en su verde
+		var px = (W - PW) * 0.5 + 40, y = 84.;
+		// la hexalita, a la derecha: el icono de la barra del inventario (InvBar) y cuanta llevas, en su verde
 		var inv = game.inv, gi = game.info, ctx = upgradeCtx();
 		var have = EscorpUpgrades.hexalite(inv);
+		var bal = Theme.text(s, Lang.t("upgrades.balance").split("%n%").join("" + have), 1.8, EscorpUpgrades.COLOR);
+		bal.x = Std.int(px + PW - 80 - bal.textWidth * bal.scaleX);
+		bal.y = y + 3;
 		var icon = new h2d.Bitmap(EscorpIcons.hexalite(), s);
 		icon.setScale(2);
-		icon.setPosition(px, y);
-		Theme.text(s, Lang.t("upgrades.balance").split("%n%").join("" + have), 1.8, EscorpUpgrades.COLOR, px + 42, y + 3);
-		y += 32 + 8;
+		icon.setPosition(bal.x - 42, y);
+		// la frase, a la izquierda, en lo que deje la hexalita
+		var info = Theme.text(s, Lang.t("upgrades.info"), 1.5, Theme.DIM, px, y + 7);
+		info.maxWidth = (icon.x - 24 - px) / info.scaleX;
+		y += Math.max(32, 7 + info.textHeight * info.scaleY) + 8;
 		var sep = new h2d.Graphics(s);
 		Theme.rect(sep, px, y, PW - 80, 1, 0xFFFFFF, 0.12);
-		y += 12;
+		y += 10;
 		var list = [for( u in EscorpUpgrades.ALL ) if( EscorpUpgrades.shown(gi, u, ctx) ) u];
 		if( list.length == 0 ) {
 			var none = Theme.text(s, Lang.t("upgrades.none"), 1.8, Theme.TEXT, px, y + 10);
@@ -2428,21 +2431,29 @@ class GalaxyApp extends hxd.App {
 		}
 		upgradeButtons = new Map();
 		for( u in list ) {
-			var b = new InfoButton(s, upgradeLabel(gi, u), PW - 80, 44);
+			var b = new InfoButton(s, upgradeLabel(gi, u), PW - 80, 42);
 			b.setValue(upgradeValue(gi, u));
 			var toggle = u.kind == KSwitch && EscorpUpgrades.has(gi, u.id);
 			b.enabled = toggle ? EscorpUpgrades.open(gi) : EscorpUpgrades.canBuy(gi, inv, u, ctx);
 			b.onActivate = function() if( toggle ) switchUpgrade(u) else askUpgrade(s, u);
 			s.add(b, px, y);
 			upgradeButtons.set(u.id, b);
+			// la bouee de Kube junto al nombre, como en la barra (InvBar)
+			if( u.id == EscorpUpgrades.BUOY ) {
+				var l = @:privateAccess b.label;
+				var ic = new h2d.Bitmap(EscorpIcons.buoy(), b);
+				ic.setScale(2);
+				ic.x = Std.int(l.x + l.textWidth * l.scaleX + 12);
+				ic.y = Std.int((b.h - 32) * 0.5);
+			}
 			var why = EscorpUpgrades.blocked(gi, u);
-			var d = Theme.text(s, Lang.t(why != null ? why : "upgrade." + u.id + ".desc"), 1.3, why != null ? Theme.ACCENT : Theme.DIM, px + 22, y + 46);
+			var d = Theme.text(s, Lang.t(why != null ? why : "upgrade." + u.id + ".desc"), 1.25, why != null ? Theme.ACCENT : Theme.DIM, px + 22, y + 44);
 			d.maxWidth = (PW - 80 - 22) / d.scaleX;
-			y += 46 + d.textHeight * d.scaleY + 10;
+			y += 44 + d.textHeight * d.scaleY + 8;
 		}
-		var back = new Button(s, Lang.t("back"), 460, 50);
-		s.add(back, (W - 460) * 0.5, y + 8);
-		var h = Std.int(y + 8 + 50 + 22);
+		var back = new Button(s, Lang.t("back"), 460, 48);
+		s.add(back, (W - 460) * 0.5, y + 6);
+		var h = Std.int(y + 6 + 48 + 20);
 		var top = (H - h) * 0.5;
 		for( c in s ) if( c != bg && c != title ) c.y += top;
 		drawPanel(bg, title, PW, h);
@@ -2565,6 +2576,8 @@ class GalaxyApp extends hxd.App {
 	function askMainPlanet( parent : Screen, id : Int, name : String ) {
 		var price = Licenses.mainPrice(universe());
 		var warn = price == 0 ? Lang.t("licenses.ask.free") : Lang.t("licenses.ask.paid").split("%n%").join("" + price);
+		// la sauvegarde d'equipement del planeta principal es la del de ahora: se pierde (EscorpUpgrades.mainChanged)
+		if( EscorpUpgrades.has(game.info, EscorpUpgrades.KEEP_MAIN) ) warn += "\n" + Lang.t("licenses.ask.keepmain");
 		askConfirm(parent, Lang.t("licenses.ask").split("%name%").join(name), warn, Theme.ACCENT, function() {
 			var err = Licenses.setMain(game.info, id);
 			if( err != null ) {
@@ -2572,6 +2585,7 @@ class GalaxyApp extends hxd.App {
 				return;
 			}
 			if( game.net != null ) game.net.sentEcon(EMainPlanet, "", id);
+			onUpgradeChanged();
 			openLicenses();
 		});
 	}
@@ -3419,6 +3433,7 @@ class GalaxyApp extends hxd.App {
 			game.netSwitch = mp.isManager();
 			game.netSetMode(mp.creative);
 			game.netOwner = mpRights & (ROwner : Int) != 0;
+			game.netVisitor = mpRights & (RVisitor : Int) != 0;
 			net.onToast = function(s) showToast(s);
 			net.onCloseChest = closeChest;
 			net.onOpenChest = function( box ) {
@@ -3470,6 +3485,9 @@ class GalaxyApp extends hxd.App {
 			return;
 		}
 		invBar = new InvBar(s2d, game.inv, atlas, W);
+		// las bouees de sauvetage, si quedan y la partida pierde el equipo (si no, no sirven)
+		invBar.buoys = function() return game != null && DeathDrops.enabled(game.info) ? EscorpUpgrades.buoys(game.info) : 0;
+		invBar.refresh();
 		// Base de datos ESCorp: los kubes de tu nave se conocen y el planeta o la cometa quedan explorados
 		Kubindex.shipKnown(game.info);
 		Kubindex.visit(game.info);
@@ -3481,6 +3499,16 @@ class GalaxyApp extends hxd.App {
 			closeInventory();
 			closeChest();
 			showToast(Lang.t("deathdrop.left"), 4);
+		};
+		game.onEquipmentKept = function( fate ) {
+			// una mejora de la ESCorp lo ha guardado: el aviso dice cual (con la bouee, cuantas quedan) y la barra las cuenta
+			var msg = switch( fate ) {
+			case GKeptComet: Lang.t("deathdrop.kept.comet");
+			case GKeptMain: Lang.t("deathdrop.kept.main");
+			default: Lang.t("deathdrop.kept.buoy").split("%n%").join("" + EscorpUpgrades.buoys(game.info));
+			}
+			showToast(msg, 4);
+			onUpgradeChanged();
 		};
 		game.onChest = openChest;
 		game.onChestBreak = function(t) if( chest != null && chest.box == t ) closeChest();
@@ -3811,7 +3839,7 @@ class GalaxyApp extends hxd.App {
 		// en el hangar no (su ordenador no se activa: WInShip): solo a bordo y en la nave nodriza
 		if( game == null || storage != null || game.hangar != null || Tutorial.active(game.info) ) return;
 		if( current != null ) resume();
-		storage = new ShipStorage(s2d, atlas, game.inv, StorageData.ensure(game.info));
+		storage = new ShipStorage(s2d, atlas, game.inv, StorageData.ensure(game.info), game.info);
 		storage.onClose = closeStorage;
 		// multijugador: el stockage es del servidor (ServerShip.storage); cada cambio se le manda con el inventario
 		if( game.net != null ) {
@@ -3989,7 +4017,10 @@ class GalaxyApp extends hxd.App {
 			EditorKubes.useServer(mp.kubes, n);
 		case SRights(r):
 			mpRights = r;
-			if( game != null && game.net != null ) game.netOwner = r & (ROwner : Int) != 0;
+			if( game != null && game.net != null ) {
+				game.netOwner = r & (ROwner : Int) != 0;
+				game.netVisitor = r & (RVisitor : Int) != 0;
+			}
 		case SAccess(pid, open, allV, serverV, vr, guests):
 			accessState = { pid : pid, open : open, allVisitors : allV, serverVisit : serverV, vr : vr, guests : guests };
 			reopenAccess();
@@ -4056,6 +4087,10 @@ class GalaxyApp extends hxd.App {
 		case "escorp":
 			// las mejoras de la ESCorp como las tiene el servidor (ServerEcon, tras EUpgrade, EMainPlanet o una muerte)
 			EscorpUpgrades.applyState(info, v);
+			if( game != null && game.info == info ) onUpgradeChanged();
+		case "dropOnDeath":
+			// un gestionnaire ha cambiado la opcion del servidor de perder el equipo (ServerWorlds.syncDropOption)
+			if( Std.isOfType(v, Bool) ) info.dropOnDeath = v;
 			if( game != null && game.info == info ) onUpgradeChanged();
 		case "ship":
 			// la nave del hangar no cuadra (ServerShip.saveShip): se queda la de antes (se vera al volver a cargar la nave)

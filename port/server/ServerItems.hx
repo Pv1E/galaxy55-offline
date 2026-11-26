@@ -2,6 +2,7 @@ import Common;
 import Msg;
 import Protocol;
 import GameServer.Session;
+import DeathDrops;
 
 /** Un bloque suelto del servidor (Drops.Drop sin el dibujo): la misma fisica (Dummy.updatePos) */
 class ServerDrop {
@@ -344,13 +345,37 @@ class ServerItems {
 		worlds.markRecord(s);
 	}
 
-	/** muerte o Mayus+K: todo el equipo a un contenedor donde esta (DeathDrops.leave), si toca; a bordo de la nave, nunca */
+	/**
+	 * Muerte o Mayus+K: la regla del juego (DeathDrops.fate) con la partida de verdad. A bordo de la nave, exento (creativo, la
+	 * opcion del servidor apagada, visitante), en el tutorial o sin nada encima: nada. Con una mejora de la ESCorp que lo guarde
+	 * (sauvegarde d'equipement de las cometas o de su planeta principal, bouee, que se gasta): se queda con todo. Si no, todo el
+	 * equipo a un contenedor donde esta (DeathDrops.leave). Despues, su inventario y sus mejoras (SPatch "escorp") tal como quedan
+	 */
 	function death( s : Session, manual : Bool ) {
 		var inst = s.instance, p = s.pos;
 		var info = s.record;
-		if( inst == null || p == null || s.creative || !server.files.options.deathDrop || s.rights & RVisitor != 0 ) return;
-		if( p.z >= WorldData.SHIP_Z ) return;
-		if( info.tuto != null ) return;
+		if( inst == null || p == null || info == null || info.inv == null ) return;
+		var spot : DeathDrops.GearSpot = {
+			aboard : p.z >= WorldData.SHIP_Z,
+			exempt : s.creative || !server.files.options.deathDrop || s.rights & RVisitor != 0,
+			// su planeta principal es de su galaxia: en el de otro jugador con el mismo numero no vale
+			planet : inst.row.galaxy == s.uid ? inst.row.pid : null,
+		};
+		var fate = DeathDrops.decide(info, info.inv, spot);
+		if( fate != GNothing ) {
+			if( fate != GDropped ) {
+				worlds.markRecord(s);
+				server.files.log(s.display + (manual ? " goes back to the ship" : " dies") + " and keeps their gear ("
+					+ (fate == GKeptComet ? "comet backup" : fate == GKeptMain ? "main planet backup" : "life buoy, " + EscorpUpgrades.buoys(info) + " left") + ")");
+			} else dropAll(s, inst, p, manual);
+		}
+		sendInv(s);
+		s.send(SPatch("escorp", haxe.Json.stringify(EscorpUpgrades.state(info))));
+	}
+
+	/** todo el equipo de s a un contenedor donde esta (death) */
+	function dropAll( s : Session, inst : PlanetInstance, p : NetState, manual : Bool ) {
+		var info = s.record;
 		var i = info.inv;
 		var t = [for( st in i.t ) st == null || st.n <= 0 ? null : { k : st.k, n : st.n }];
 		var charges = [for( c in i.charges ) if( c.n > 0 ) { c : c.c, n : c.n }];

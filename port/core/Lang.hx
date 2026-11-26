@@ -355,6 +355,8 @@ class Lang {
 		"licenses.ask" => ["¿Hacer de %name% tu planeta principal?", "Make %name% your main planet?", "Faire de %name% ta planète principale ?"],
 		"licenses.ask.free" => ["Es gratis. Próximo cambio posible dentro de 24 h.", "It is free. Next change possible in 24 h.", "C'est gratuit. Prochain changement possible dans 24 h."],
 		"licenses.ask.paid" => ["Cuesta %n% créditos. Próximo cambio posible dentro de 24 h.", "It costs %n% credits. Next change possible in 24 h.", "Coût : %n% crédits. Prochain changement possible dans 24 h."],
+		// con la salvaguarda del equipo del planeta principal comprada (EscorpUpgrades.KEEP_MAIN): va con el de ahora
+		"licenses.ask.keepmain" => ["Perderás tu salvaguarda del equipo del planeta principal.", "Your main planet equipment backup will be lost.", "Ta sauvegarde d'équipement de planète principale sera perdue."],
 		"licenses.nocredits" => ["Te faltan créditos: el cambio cuesta %n%.", "Not enough credits: the change costs %n%.", "Pas assez de crédits : le changement coûte %n%."],
 		"licenses.notyours" => ["Ese planeta no puede ser tu planeta principal.", "That planet cannot be your main planet.", "Cette planète ne peut pas devenir ta planète principale."],
 		// Licencias > Liberar una licencia (anadido del port): los planetas con licencia menos el principal y aquel en el que estas
@@ -393,6 +395,21 @@ class Lang {
 		// "upgrade.<id>.ask" de la mejora
 		"upgrades.ask" => ["¿Desbloquear %name%?", "Unlock %name%?", "Débloquer %name% ?"],
 		"upgrades.ask.level" => ["¿Comprar %name%, nivel %n%?", "Buy %name%, level %n%?", "Acheter %name%, niveau %n% ?"],
+		// las mejoras (EscorpUpgrades.ALL): nombre, descripcion debajo del boton y, para un contador, su confirmacion
+		"upgrade.storage_slots" => ["Ampliación del almacén", "Storage expansion", "Agrandissement du stockage"],
+		"upgrade.storage_slots.desc" => ["+2 casillas de bloques en el almacén de la nave por nivel, hasta 20 (dos filas).", "+2 block slots in the ship storage per level, up to 20 (two rows).", "+2 cases de blocs dans le stockage du vaisseau par niveau, jusqu'à 20 (deux lignes)."],
+		"upgrade.storage_charges" => ["Depósitos del almacén", "Storage tanks", "Réservoirs du stockage"],
+		"upgrade.storage_charges.desc" => ["Por nivel, +24 cargas amarillas, +12 azules y +2 rosas en el almacén de la nave.", "Per level, +24 yellow, +12 blue and +2 pink charges in the ship storage.", "Par niveau, +24 charges jaunes, +12 bleues et +2 roses dans le stockage du vaisseau."],
+		"upgrade.licenses" => ["Licencia de exploración adicional", "Extra exploration license", "Licence d'exploration supplémentaire"],
+		"upgrade.licenses.desc" => ["Una licencia de exploración más por nivel, hasta 10 además de tu planeta principal.", "One more exploration license per level, up to 10 besides your main planet.", "Une licence d'exploration de plus par niveau, jusqu'à 10 en plus de ta planète principale."],
+		"upgrade.keep_comet" => ["Salvaguarda del equipo: cometas", "Equipment backup: comets", "Sauvegarde d'équipement : comètes"],
+		"upgrade.keep_comet.desc" => ["En un cometa conservas todo tu inventario al morir o con Mayús+K. Vale para todos los cometas.", "On a comet, you keep your whole inventory when you die or press Shift+K. Works on every comet.", "Sur une comète, tu gardes tout ton inventaire à la mort ou avec Maj+K. Vaut pour toutes les comètes."],
+		"upgrade.keep_main" => ["Salvaguarda del equipo: planeta principal", "Equipment backup: main planet", "Sauvegarde d'équipement : planète principale"],
+		"upgrade.keep_main.desc" => ["En tu planeta principal conservas tu inventario al morir o con Mayús+K. Ligada a tu planeta principal actual: se pierde si lo cambias.", "On your main planet, you keep your inventory when you die or press Shift+K. Tied to your current main planet: lost if you change it.", "Sur ta planète principale, tu gardes ton inventaire à la mort ou avec Maj+K. Liée à ta planète principale actuelle : perdue si tu en changes."],
+		"upgrade.keep_main.nomain" => ["Antes necesitas un planeta principal.", "You need a main planet first.", "Il te faut d'abord une planète principale."],
+		"upgrade.buoy" => ["Salvavidas", "Life buoys", "Bouées de sauvetage"],
+		"upgrade.buoy.desc" => ["Al morir o con Mayús+K se gasta un salvavidas y conservas tu inventario, si nada más lo protege.", "When you die or press Shift+K, a buoy is used up and you keep your inventory, unless something else protects it.", "À la mort ou avec Maj+K, une bouée est consommée et tu gardes ton inventaire, si rien d'autre ne le protège."],
+		"upgrade.buoy.ask" => ["¿Comprar un salvavidas?", "Buy a life buoy?", "Acheter une bouée de sauvetage ?"],
 		"upgrades.ask.cost" => ["Cuesta %n% hexalita.", "It costs %n% hexalite.", "Coût : %n% hexalite."],
 		"upgrades.missing" => ["Te falta hexalita: la mejora cuesta %n%.", "Not enough hexalite: the upgrade costs %n%.", "Pas assez d'hexalite : l'amélioration en coûte %n%."],
 		// cometas (Comets, añadido del port). %t% = 2:15
@@ -403,6 +420,10 @@ class Lang {
 		"comet.timer" => ["Cometa: %t%", "Comet: %t%", "Comète : %t%"],
 		// el equipo se queda en el sitio al morir o con Mayus+K (DeathDrops)
 		"deathdrop.left" => ["El equipo ha caído al suelo.", "The equipment fell to the ground.", "L'équipement est tombé à terre."],
+		// una mejora de la ESCorp lo ha guardado (DeathDrops.fate); %n% = salvavidas que quedan
+		"deathdrop.kept.comet" => ["Equipo conservado (cometa)", "Equipment kept (comet)", "Équipement conservé (comète)"],
+		"deathdrop.kept.main" => ["Equipo conservado (planeta principal)", "Equipment kept (main planet)", "Équipement conservé (planète principale)"],
+		"deathdrop.kept.buoy" => ["Salvavidas usado: te quedan %n%", "Life buoy used: %n% left", "Bouée utilisée : il t'en reste %n%"],
 		"comet.over" => ["Se acabó el tiempo: el cometa se aleja, vuelta de emergencia automática a la nave.", "Time's up: the comet is drifting away, automatic emergency return to the ship.", "Temps écoulé : la comète s'éloigne, rapatriement d'urgence automatique au vaisseau."],
 		"comet.beamoff" => ["El cometa se aleja: el teletransportador no funciona", "The comet is drifting away: the teleporter does not work", "La comète s'éloigne : le téléporteur ne fonctionne pas"],
 		"abandon.ask" => ["¿Abandonar %name%?", "Abandon %name%?", "Abandonner %name% ?"],

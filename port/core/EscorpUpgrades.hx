@@ -52,15 +52,42 @@ typedef UpgradeCtx = { creative : Bool, manager : Bool };
  *   - upgrades: las de una vez y los interruptores comprados (sus id)
  *   - upgradeLevels: el nivel de cada mejora por niveles (id -> nivel; sin el id, 0)
  *   - upgradesOff: los interruptores comprados que estan apagados (sin el id, encendido)
- * Se paga con la hexalita del inventario, descontada de una vez (los precios llegan a varios miles).
+ *   - keepMainPlanet: el planeta principal para el que se compro KEEP_MAIN
+ * Se paga con la hexalita del inventario, descontada de una vez (los precios llegan a varios miles). Las mejoras:
+ *   - STORAGE_SLOTS (niveles, 200 x nivel, 8): +2 casillas de bloques en el stockage por nivel, de 4 a 20 (dos filas de 10,
+ *     como el inventario): StorageData.blockSlots
+ *   - STORAGE_CHARGES (niveles, 300, sin tope): +24 amarillas, +12 azules y +2 rosas en el stockage por nivel (la hexalita ya no
+ *     tiene limite): StorageData.chargeMax
+ *   - LICENSES (niveles, 500 x nivel, 7): una licencia de exploracion mas por nivel, de 3 a 10 (11 planetas con el principal):
+ *     Licenses.max. No sale con licencias sin limite (creativo, gestionnaires)
+ *   - KEEP_COMET (interruptor, 250): al morir o con Mayus+K en una cometa no se pierde el equipo (DeathDrops.fate)
+ *   - KEEP_MAIN (interruptor, 500): lo mismo en el planeta principal, pero solo el que lo era al comprarla (keepMainPlanet): al
+ *     cambiar de principal (Licenses.setMain) se pierde y hay que volver a comprarla. Sin principal no se puede comprar
+ *   - BUOY (contador, 50): cada muerte o Mayus+K que habria dejado el equipo gasta una bouee y el equipo se queda
+ * Las tres ultimas no salen (ni se venden) sin la opcion de perder el equipo (SaveInfo.dropOnDeath, ServerOptions.deathDrop) ni
+ * en creativo: no servirian de nada.
  */
 class EscorpUpgrades {
 
 	/** verde de la hexalita (KubDraw.chargeColor) */
 	public static inline var COLOR = 0x7CE85A;
 
+	public static inline var STORAGE_SLOTS = "storage_slots";
+	public static inline var STORAGE_CHARGES = "storage_charges";
+	public static inline var LICENSES = "licenses";
+	public static inline var KEEP_COMET = "keep_comet";
+	public static inline var KEEP_MAIN = "keep_main";
+	public static inline var BUOY = "buoy";
+
 	/** todas las mejoras, en el orden de la pantalla */
-	public static var ALL : Array<EscorpUpgrade> = [];
+	public static var ALL : Array<EscorpUpgrade> = [
+		{ id : STORAGE_SLOTS, kind : KLevels, cost : 200, rising : true, max : 8 },
+		{ id : STORAGE_CHARGES, kind : KLevels, cost : 300 },
+		{ id : LICENSES, kind : KLevels, cost : 500, rising : true, max : 7 },
+		{ id : KEEP_COMET, kind : KSwitch, cost : 250 },
+		{ id : KEEP_MAIN, kind : KSwitch, cost : 500 },
+		{ id : BUOY, kind : KCounter, cost : 50 },
+	];
 
 	public static function get( id : String ) : EscorpUpgrade {
 		for( u in ALL ) if( u.id == id ) return u;
@@ -93,8 +120,12 @@ class EscorpUpgrades {
 
 	// ---------------------------------------------------------------- estado
 
-	/** comprada (de una vez o interruptor) */
-	public static function has( info : SaveInfo, id : String ) : Bool return info.upgrades != null && info.upgrades.indexOf(id) >= 0;
+	/** comprada (de una vez o interruptor). KEEP_MAIN, solo para el planeta principal de ahora (keepMainPlanet) */
+	public static function has( info : SaveInfo, id : String ) : Bool {
+		if( info.upgrades == null || info.upgrades.indexOf(id) < 0 ) return false;
+		if( id == KEEP_MAIN ) return info.uni != null && info.uni.main != null && info.keepMainPlanet == info.uni.main;
+		return true;
+	}
 
 	/** interruptor comprado y encendido */
 	public static function isOn( info : SaveInfo, id : String ) : Bool {
@@ -115,15 +146,26 @@ class EscorpUpgrades {
 
 	// ---------------------------------------------------------------- compra
 
-	/** se ve en esta partida: las que no pueden servir no salen en la pantalla y el servidor no las vende */
+	/**
+	 * se ve en esta partida: las que no pueden servir no salen en la pantalla y el servidor no las vende. Las licencias, no con
+	 * licencias sin limite (partida creativa, gestionnaires); las de perder el equipo, no sin la opcion de la partida o del
+	 * servidor (DeathDrops.enabled) ni en creativo
+	 */
 	public static function shown( info : SaveInfo, u : EscorpUpgrade, ctx : UpgradeCtx ) : Bool {
-		return u != null;
+		if( u == null ) return false;
+		return switch( u.id ) {
+		case LICENSES: !Licenses.unlimited(info) && !ctx.manager;
+		case KEEP_COMET, KEEP_MAIN, BUOY: DeathDrops.enabled(info) && !ctx.creative;
+		default: true;
+		}
 	}
 
 	/**
 	 * Por que no se puede comprar aunque haya hexalita (clave de Lang, la pantalla la pone en lugar de la descripcion), o null.
+	 * KEEP_MAIN sin planeta principal
 	 */
 	public static function blocked( info : SaveInfo, u : EscorpUpgrade ) : String {
+		if( u.id == KEEP_MAIN && !has(info, KEEP_MAIN) && (info.uni == null || info.uni.main == null) ) return "upgrade.keep_main.nomain";
 		return null;
 	}
 
@@ -151,8 +193,10 @@ class EscorpUpgrades {
 		switch( u.kind ) {
 		case KOnce, KSwitch:
 			if( info.upgrades == null ) info.upgrades = [];
-			info.upgrades.push(u.id);
+			// la de un planeta principal de antes sigue en la lista: vale otra vez, para el de ahora
+			if( info.upgrades.indexOf(u.id) < 0 ) info.upgrades.push(u.id);
 			if( info.upgradesOff != null ) info.upgradesOff.remove(u.id);
+			if( u.id == KEEP_MAIN ) info.keepMainPlanet = info.uni.main;
 		case KLevels, KCounter:
 			setLevel(info, u.id, level(info, u.id) + 1);
 		}
@@ -182,11 +226,29 @@ class EscorpUpgrades {
 		}
 	}
 
+	// ---------------------------------------------------------------- efectos
+
+	/** bouees que quedan (BUOY) */
+	public static inline function buoys( info : SaveInfo ) : Int return level(info, BUOY);
+
+	/** una bouee gastada (DeathDrops.decide) */
+	public static function useBuoy( info : SaveInfo ) {
+		var n = buoys(info);
+		if( n > 0 ) setLevel(info, BUOY, n - 1);
+	}
+
+	/** el planeta principal ha cambiado (Licenses.setMain): KEEP_MAIN era la del anterior, se pierde */
+	public static function mainChanged( info : SaveInfo ) {
+		if( info.upgrades != null ) info.upgrades.remove(KEEP_MAIN);
+		if( info.upgradesOff != null ) info.upgradesOff.remove(KEEP_MAIN);
+		info.keepMainPlanet = null;
+	}
+
 	// ---------------------------------------------------------------- multijugador
 
-	/** lo que el servidor manda tras una mejora (SPatch "escorp") */
+	/** lo que el servidor manda tras una mejora, un cambio de principal o una muerte (SPatch "escorp") */
 	public static function state( info : SaveInfo ) : Dynamic {
-		return { upgrades : info.upgrades, levels : info.upgradeLevels, off : info.upgradesOff };
+		return { upgrades : info.upgrades, levels : info.upgradeLevels, off : info.upgradesOff, keepMain : info.keepMainPlanet };
 	}
 
 	/** SPatch "escorp": la partida queda como la tiene el servidor */
@@ -195,5 +257,6 @@ class EscorpUpgrades {
 		info.upgrades = v.upgrades;
 		info.upgradeLevels = v.levels;
 		info.upgradesOff = v.off;
+		info.keepMainPlanet = v.keepMain;
 	}
 }

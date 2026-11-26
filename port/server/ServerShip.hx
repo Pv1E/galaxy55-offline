@@ -290,7 +290,8 @@ class ServerShip {
 
 	// ---------------------------------------------------------------- stockage
 
-	/** CStorage: lo movido entre el stockage y el inventario; nada se crea ni se pierde y cada carga cabe en su contador */
+	/** CStorage: lo movido entre el stockage y el inventario; nada se crea ni se pierde y cada carga cabe en su contador. Las
+	    casillas y los contadores son los de este jugador (StorageData.ensure, chargeMax: sus mejoras de la ESCorp) */
 	public function storage( seq : Int, st : NetInv, ni : NetInv ) {
 		var info = s.record;
 		var cur = StorageData.ensure(info);
@@ -298,7 +299,7 @@ class ServerShip {
 		var ok = st.t.length == cur.t.length && ni.t.length == inv.t.length && ServerItems.validSlots(st.t, 0x7FFFFFFF)
 			&& ServerItems.validSlots(ni.t, inv.maxWeight, inv.t)
 			// cada carga en su contador; uno que ya pasaba del maximo (partida creativa traida al servidor) no impide lo demas
-			&& ServerItems.chargesFit(st.charges, cur.charges, StorageData.chargeMax())
+			&& ServerItems.chargesFit(st.charges, cur.charges, StorageData.chargeMax(info))
 			&& ServerItems.chargesFit(ni.charges, inv.charges, StorageData.invChargeMax());
 		if( ok ) ok = ServerItems.sameTotals(ServerItems.totals(cur.t, cur.charges, ServerItems.totals(inv.t, inv.charges)),
 			ServerItems.totals(st.t, st.charges, ServerItems.totals(ni.t, ni.charges)));
