@@ -108,11 +108,17 @@ class ServerDb {
 		return rs.hasNext() ? Std.string(rs.next().uid) : null;
 	}
 
-	/** todos los planetas guardados (para los accesos: pocos por jugador) */
+	/**
+	 * Todos los planetas guardados (para los accesos: pocos por jugador). Las claves se leen enteras antes de pedir cada fila: en HashLink cada request cierra la anterior de la
+	 * misma conexion (hashlink/libs/sqlite/sqlite.c, finalize_request), asi que un getPlanet dentro del bucle lo cortaba tras la
+	 * primera fila y solo se veia un planeta (ownedCount no llegaba nunca al limite de licencias; sendForeign, un solo planeta de
+	 * los demas)
+	 */
 	public function allPlanets() : Array<PlanetRow> {
 		var out = [];
-		for( o in cnx.request("SELECT gkey FROM planets") ) {
-			var p = getPlanet(Std.string(o.gkey));
+		var keys = [for( o in cnx.request("SELECT gkey FROM planets") ) Std.string(o.gkey)];
+		for( k in keys ) {
+			var p = getPlanet(k);
 			if( p != null ) out.push(p);
 		}
 		return out;

@@ -54,6 +54,7 @@ class NetTest {
 		tutoTest(Sys.args().length > 0 ? Sys.args()[0] + "_tuto" : "port/out/net_test_tuto");
 		kubeTest(Sys.args().length > 0 ? Sys.args()[0] + "_kubes" : "port/out/net_test_kubes");
 		kubeSlotsTest();
+		planetListTest(Sys.args().length > 0 ? Sys.args()[0] + "_planetes" : "port/out/net_test_planetes");
 		// endurance: 30 s por defecto; --soak=S para mas (port/headless: net_test.hl DIR --soak=600)
 		var soak = 30.;
 		for( a in Sys.args() ) if( StringTools.startsWith(a, "--soak=") ) soak = Std.parseFloat(a.substr(7));
@@ -1176,6 +1177,38 @@ class NetTest {
 	 * Los bloques de los kubes del servidor (KubeCore.blocksFor) tienen los mismos indices en el servidor y en cada juego: un bloque
 	 * de remplazo (SaveNames, una partida con bloques que esta version no conoce) va detras de los MAX kubes, que siguen seguidos
 	 */
+	/**
+	 * La lista de planetas de la base (ServerDb.allPlanets) los da todos (antes, uno solo: cada request de HashLink cierra la
+	 * anterior): con las 4 licencias de la aventura en planetas guardados, un jugador que no es gestionnaire no escanea otro.
+	 */
+	static function planetListTest( dir : String ) {
+		deleteDir(dir);
+		sys.FileSystem.createDirectory(dir);
+		server = new GameServer(dir);
+		server.listen("127.0.0.1", 55088);
+		clients = [];
+		// el primero es el propietario (gestionnaire: sin limite de licencias); la prueba va con el segundo
+		var own = add(new TestClient("Otto", secret(90)));
+		own.tcp(55088);
+		until(() -> own.welcome != null);
+		var l = add(new TestClient("Lia", secret(91)));
+		l.tcp(55088);
+		until(() -> l.welcome != null);
+		l.client.send(CNewGame(false));
+		until(() -> l.has(m -> m.match(SRecord(_))));
+		var ls = @:privateAccess server.sessionById(l.id);
+		server.db.begin();
+		for( k in 0...Licenses.MAX ) server.db.putPlanet({ gkey : ls.uid + ":" + (900000 + k), owner : ls.uid, galaxy : ls.uid, pid : 900000 + k,
+			seed : 1, biome : "BIMoon", size : 1, gen : gen.Generator.VERSION, shipAt : "", access : "" });
+		server.db.commit();
+		check("planetas: la base los da todos", server.db.allPlanets().length == Licenses.MAX, "" + server.db.allPlanets().length);
+		l.client.send(CLand("", TutoSetup.PLANET));
+		check("planetas: con las " + Licenses.MAX + " licencias usadas no se escanea otro", until(() -> l.has(m -> m.match(SPlanetLost("mp.land.denied"))))
+			&& ls.instance == null);
+		server.stop();
+		clients = [];
+	}
+
 	static function kubeSlotsTest() {
 		var first = KubeCore.blocksFor(0)[0].index;
 		var p = SaveNames.resolve("BNoSuchBlockFromANewerVersion");
