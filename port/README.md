@@ -103,8 +103,14 @@ A player got it running on Linux this way; we have not tested it.
 - Creative mode and its palette are an addition of this port. A creative game can switch to survival and back, and the palette
   also has the blocks without a price that give charges (hexalite crystals, citronox and etherium plants...).
 - The on-board computer menu has its own look, as in the Flash version (the original was a web page).
-  Trade, ESCorp contracts and ESCorp upgrades are in its "Contact ESCorp" sub-menu (port addition); upgrades, paid with hexalite,
-  have none yet.
+  Trade, ESCorp contracts and ESCorp upgrades are in its "Contact ESCorp" sub-menu (port addition).
+- The ESCorp upgrades are an addition of this port, paid with hexalite (the green charge, which the laser does not use): storage
+  expansion (+2 block slots per level, 200 x level, up to 20 slots in two rows), storage tanks (+24 yellow, +12 blue and +2 pink
+  charges in the storage per level, 300 each, no cap), extra exploration license (one more per level, 500 x level, up to 10
+  besides the main planet), equipment backup for comets (250) and for the main planet (500; tied to the current main planet and
+  lost when it changes), both switchable for free, and life buoys (50 each: a death or Shift+K that would leave the equipment
+  uses one and you keep everything). The backups and buoys are hidden when the game (or the multiplayer server) does not drop
+  the equipment; the license upgrade, when licenses are unlimited. In multiplayer the server replays every purchase.
 - The ESCorp canteen window also shows your inventory, works with drag and drop like the inventory screen (I in adventure,
   also a port addition), also closes with Esc, B or Close, and works with the keyboard and the gamepad (while it is open the arrow keys move its cursor, not the player). Its contents are kept in the save (the original
   kept them on the server) and fall to the ground when it is broken.
@@ -119,7 +125,7 @@ A player got it running on Linux this way; we have not tested it.
   and arrive at the end of the tutorial (before: 500 from the start).
 - Lava makes the ancient bomb explode (port change): the original broke and dropped it, as water still does.
 - ESCorp exploration licenses are an addition of this port (in the original the server handled them): in adventure you can
-  scan 4 planets (1 main and 3 exploration) and the ship can only be piloted over the main one.
+  scan 4 planets (1 main and 3 exploration, up to 10 with the ESCorp upgrade) and the ship can only be piloted over the main one.
 - Cascades and player-placed water get lower at each step, with a sloped surface: an addition of this port. The sea fills
   holes up to its level and, when the water that flows in adds up to the volume of one layer of the sea, the level goes down
   one block on the whole planet, like the original.
@@ -170,11 +176,13 @@ A player got it running on Linux this way; we have not tested it.
 - A save with blocks this version does not know (saved by a newer one) asks before loading; if accepted, it is copied to
   `saves/backups` and those blocks are deleted.
 - The ship storage (on-board computer > Storage) is an addition of this port: 4 block slots, like a canteen, and charges
-  without slots (yellow up to 24, blue 12, pink 2, hexalite without limit; 10 pink charges at most in the inventory). The original's was on the server and is lost.
+  without slots (yellow up to 24, blue 12, pink 2, hexalite without limit; 10 pink charges at most in the inventory), more with
+  the ESCorp upgrades. The original's was on the server and is lost.
 - When you die or press Shift+K, what you carry (blocks and charges, not credits) stays in a small ESCorp canteen where you
   were, which never expires and is kept in the save (in the original the server left it, as loot that expired, and the local
   mode took nothing). It is a game option, on unless changed; nothing happens in creative, in the tutorial, in the hangar, in
-  the mothership or aboard the ship (dying aboard costs nothing, above any planet or comet).
+  the mothership or aboard the ship (dying aboard costs nothing, above any planet or comet). The ESCorp equipment backups (on a
+  comet, on the main planet) and life buoys keep the equipment, in that order.
 - Walking climbs plates (half blocks) without jumping: a change of this port, in the original they stopped you like a wall.
 - The 16 CroqueMotel paintings (Motion Twin, CC BY-NC-SA 4.0, in `NOTICE`) are an addition of this port: plates hung on a
   wall, in the creative palette only. In a creative game the kube editor kubes (the `.kube` files of the `kubes` folder) can
