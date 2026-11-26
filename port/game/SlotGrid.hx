@@ -24,8 +24,8 @@ class SlotZone {
 	public var x : Float;
 	public var y : Float;
 	public var cols : Int;
-	/** texto pequeno debajo de la casilla i (null = ninguno) */
-	public var below : Int -> String;
+	/** cargas: el limite de cada contador debajo de su casilla, "/ 24" o "/ ∞" (Theme.limit), alineado a la derecha */
+	public var showMax = false;
 
 	function new() {}
 
@@ -50,7 +50,7 @@ class SlotZone {
 		return z;
 	}
 
-	/** los maximos de las cargas del inventario (DataGen.CHARGES: 99, 50, 20 y 99999) */
+	/** los maximos de las cargas del inventario (DataGen.CHARGES: 99, 50, 10 y 99999) */
 	public static function invChargeMax() : Array<Int> {
 		return [for( k in 0...CHARGE_KINDS ) Data.getCharge(Type.createEnumIndex(ChargeKind, k)).max];
 	}
@@ -260,11 +260,10 @@ class SlotGrid extends h2d.Object {
 					if( n <= 0 ) bm.alpha = 0.3;
 					count(c, n, n > 0 && n >= z.max(k), n <= 0, 5, CELL - 20);
 				}
-				var t = z.below == null ? null : z.below(i);
-				if( t != null ) {
-					var tf = Theme.text(c, t, 1.0, Theme.DIM);
-					tf.x = Std.int((CELL - tf.textWidth * tf.scaleX) * 0.5);
-					tf.y = CELL + 1;
+				if( z.showMax && z.isCharges() ) {
+					var lim = Theme.limit(c, z.limit(i), 1.0, Theme.DIM);
+					lim.x = Std.int(CELL - 2 - lim.width);
+					lim.y = CELL + 1;
 				}
 			}
 		}

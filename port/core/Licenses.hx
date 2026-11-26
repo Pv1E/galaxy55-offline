@@ -5,12 +5,14 @@ import ExpData;
 /**
  * Licencias de la ESCorp (anadido del port). En el original el servidor daba una licencia libre (ExploreInfos.freeLicense: sin
  * ella, "Pas de licence" al escanear) y los planetas se abandonaban desde la web (ADiscardPlanet); esa parte no se publico.
- * - Escanear un planeta gasta una licencia. En aventura hay MAX (1 principal y MAX - 1 de exploracion); en creativo no hay limite.
+ * - Escanear un planeta gasta una licencia. En aventura hay MAX (1 principal y MAX - 1 de exploracion), mas una por nivel de la
+ *   mejora EscorpUpgrades.LICENSES (max); en creativo no hay limite.
  * - El primer planeta escaneado pasa a ser el principal; con el tutorial, su planeta al acabarlo (Tutorial.finish). En aventura
  *   es el unico sobre el que se pilota la nave (GameView.pilotLicensed; en los demas el ordenador de a bordo no lo ofrece), y por
  *   tanto el unico en el que se elige donde aparece.
  * - Cambiar de principal: solo al planeta en el que estas, desde el ordenador de a bordo (Licencias de exploracion). Gratis la
- *   primera vez, luego MAIN_COST creditos; tras cada cambio hay que esperar MAIN_COOLDOWN segundos de hora real.
+ *   primera vez, luego MAIN_COST creditos; tras cada cambio hay que esperar MAIN_COOLDOWN segundos de hora real. La sauvegarde
+ *   d'equipement del planeta principal (EscorpUpgrades.KEEP_MAIN) era del anterior: se pierde.
  * - Abandonar un planeta con licencia (ventana del mapa, con la nave a su lado; nunca el principal) libera la licencia y borra
  *   sus cambios: ya no se puede ir a el. Un sistema con todos sus planetas abandonados desaparece y deja otro cerca (UniInfo.gone).
  *   Desde el ordenador de a bordo (Licencias > Liberar una licencia) se libera igual cualquiera menos el principal y aquel en el
@@ -53,8 +55,11 @@ class Licenses {
 	/** las licencias que se liberan desde el ordenador de a bordo: ni la del principal ni la del planeta en el que estas */
 	public static function releasable( uni : UniInfo ) : Array<Int> return [for( id in uni.licenses ) if( id != uni.main && id != uni.planetId ) id];
 
+	/** licencias de la partida: las de serie y las de la mejora de la ESCorp */
+	public static function max( info : SaveInfo ) : Int return MAX + EscorpUpgrades.level(info, EscorpUpgrades.LICENSES);
+
 	/** se puede escanear un planeta nuevo (queda una licencia libre) */
-	public static function canClaim( info : SaveInfo ) return unlimited(info) || info.uni.licenses.length < MAX;
+	public static function canClaim( info : SaveInfo ) return unlimited(info) || info.uni.licenses.length < max(info);
 
 	/** al aterrizar: el planeta gasta su licencia si aun no la tenia; el primero pasa a ser el principal (no en el tutorial) */
 	public static function claim( info : SaveInfo, id : Int ) {
@@ -90,6 +95,7 @@ class Licenses {
 		uni.main = id;
 		uni.mainTime = now();
 		uni.mainChanges = (uni.mainChanges == null ? 0 : uni.mainChanges) + 1;
+		EscorpUpgrades.mainChanged(info);
 		return null;
 	}
 

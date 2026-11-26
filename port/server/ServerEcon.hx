@@ -36,8 +36,8 @@ class ServerEcon {
 			n < act.length && Contracts.abandon(info, act[n]);
 		case EGiveSpecial: Contracts.giveSpecial(info, inv);
 		case EUpgrade:
-			// no hay mejoras ESCorp todavia (EscorpUpgrades.ALL esta vacia)
-			false;
+			// a = la mejora, n = la accion (EscorpUpgrades.UpgradeAction): las reglas del core sobre la partida de este jugador
+			EscorpUpgrades.apply(info, inv, a, n, { creative : s.creative, manager : s.isManager() });
 		case EMainPlanet: info.uni != null && Licenses.setMain(info, n) == null;
 		case EEndTutorial:
 			// el envio es el mismo que al empezar sin tutorial: acabarlo antes de tiempo no da nada de mas
@@ -107,11 +107,13 @@ class ServerEcon {
 		case EGiveSpecial:
 			s.send(SPatch("special", haxe.Json.stringify(info.special)));
 		case EUpgrade:
-			s.send(SPatch("upgrades", haxe.Json.stringify(info.upgrades)));
+			s.send(SPatch("escorp", haxe.Json.stringify(EscorpUpgrades.state(info))));
 		case EEndTutorial:
 			if( info.uni != null ) s.send(SPatch("licenses", haxe.Json.stringify({ licenses : info.uni.licenses, main : info.uni.main })));
 		case EMainPlanet:
 			if( info.uni != null ) s.send(SPatch("main", haxe.Json.stringify({ main : info.uni.main, mainTime : info.uni.mainTime, mainChanges : info.uni.mainChanges })));
+			// la sauvegarde d'equipement del planeta principal se pierde al cambiarlo (Licenses.setMain)
+			s.send(SPatch("escorp", haxe.Json.stringify(EscorpUpgrades.state(info))));
 		default:
 		}
 	}
@@ -124,7 +126,7 @@ class ServerEcon {
 		case EGive: "gives to the current contract";
 		case EAbandonContract: "abandons the current contract";
 		case EGiveSpecial: "gives to the special contract";
-		case EUpgrade: "buys the upgrade";
+		case EUpgrade: "upgrade (0 buy, 1 on, 2 off)";
 		case EMainPlanet: "changes their main planet to";
 		case EEndTutorial: "finishes the tutorial";
 		case ESkipTutorial: "skips the tutorial";

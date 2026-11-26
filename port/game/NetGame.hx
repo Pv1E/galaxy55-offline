@@ -172,9 +172,11 @@ class NetGame {
 		mp.client.send(CInvLayout(++seq, ServerItems.netInv(g.inv.inv)));
 	}
 
-	/** muerte o Mayus+K: el servidor deja el contenedor; aqui el inventario queda vacio */
-	public function sentDeath( manual : Bool ) {
+	/** muerte o Mayus+K: el servidor decide (DeathDrops.fate) y deja el contenedor; aqui, si se adelanta que cae (drop), el
+	    inventario queda vacio. Lo que diga el servidor llega despues (SInventory, SPatch "escorp") */
+	public function sentDeath( manual : Bool, drop : Bool ) {
 		mp.client.send(CDeath(manual));
+		if( !drop ) return;
 		var i = g.inv.inv;
 		for( k in 0...i.t.length ) i.t[k] = null;
 		i.charges.splice(0, i.charges.length);

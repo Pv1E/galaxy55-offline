@@ -2,12 +2,14 @@ import haxe.io.Bytes;
 import Msg;
 import NetClient.NetEvent;
 import Transport;
+import EscorpUpgrades;
 
 /**
  * Pruebas del multijugador sin ventana (anadido del port): mensajes (ida y vuelta de cada uno; mensajes rotos, cortos, al azar e
  * inflados que el lector rechaza sin reventar) y un servidor de verdad con varios clientes por TCP (127.0.0.1) y en memoria:
  * propietario, pseudos repetidos, chat (y su registro), ordenes de los gestionnaires, contrasena, version distinta, huella
- * cambiada, misma identidad dos veces, trama alterada, gestionnaires.txt editado a mano y descubrimiento en la red local.
+ * cambiada, misma identidad dos veces, trama alterada, gestionnaires.txt editado a mano y descubrimiento en la red local;
+ * mundo, objetos, progresion, nave, hangar, cometas, mejoras de la ESCorp (upgradesTest), tutorial, kubes y endurance.
  * Sale con 1 si algo falla. hl port/out/net_test.hl [carpeta de datos temporal]
  */
 class NetTest {
@@ -51,6 +53,7 @@ class NetTest {
 		shipTest(Sys.args().length > 0 ? Sys.args()[0] + "_nave" : "port/out/net_test_nave");
 		hangarTest(Sys.args().length > 0 ? Sys.args()[0] + "_hangar" : "port/out/net_test_hangar");
 		cometTest(Sys.args().length > 0 ? Sys.args()[0] + "_comete" : "port/out/net_test_comete");
+		upgradesTest(Sys.args().length > 0 ? Sys.args()[0] + "_ameliorations" : "port/out/net_test_ameliorations");
 		tutoTest(Sys.args().length > 0 ? Sys.args()[0] + "_tuto" : "port/out/net_test_tuto");
 		kubeTest(Sys.args().length > 0 ? Sys.args()[0] + "_kubes" : "port/out/net_test_kubes");
 		kubeSlotsTest();
@@ -794,7 +797,7 @@ class NetTest {
 		cheat.t[1] = { k : Block.get(BChest).index, n : 1 };
 		f.client.send(CStorage(7, cheat, ninv));
 		check("nave: el stockage no crea nada", until(() -> f.has(m -> m.match(SInventory(7, _)))) && fs.record.storage.t[1] == null);
-		// una partida creativa traida al servidor: 30 rosas en el inventario (maximo 20); el stockage sigue funcionando para lo
+		// una partida creativa traida al servidor: 30 rosas en el inventario (maximo 10); el stockage sigue funcionando para lo
 		// demas (antes se rechazaba todo) y las rosas no pueden subir
 		var pink = Type.enumIndex(Common.ChargeKind.CPink);
 		var ic = fs.record.inv.charges;
@@ -804,7 +807,7 @@ class NetTest {
 		for( i in 0...back.t.length ) if( back.t[i] == null ) { back.t[i] = { k : Block.get(BRock).index, n : 5 }; break; }
 		var empty : NetInv = { t : [for( s in fs.record.storage.t ) null], charges : [for( c in fs.record.storage.charges ) { c : c.c, n : c.n }] };
 		f.client.send(CStorage(8, empty, back));
-		check("nave: con 30 rosas (maximo 20) el stockage sigue funcionando", until(() -> f.has(m -> m.match(SInventory(8, _))))
+		check("nave: con 30 rosas (maximo 10) el stockage sigue funcionando", until(() -> f.has(m -> m.match(SInventory(8, _))))
 			&& fs.record.storage.t[0] == null && count(lastInv(f), Block.get(BRock).index) == 5);
 		// 2 rosas guardadas que vuelven al inventario: los totales cuadran, pero 32 pasaria de las 30 que ya tenia
 		fs.record.storage.charges = [{ c : pink, n : 2 }];
@@ -834,6 +837,203 @@ class NetTest {
 		check("nave: la puerta en Y sale de la casilla de la puerta", until(() -> result(f, 11) != null) && result(f, 11) == true
 			&& ship.world.block(x, y, z) == doorY && until(() -> count(lastInv(f), door.index) == 0));
 		server.stop();
+	}
+
+	/** cuantos SPatch de key ha recibido c */
+	static function patchCount( c : TestClient, key : String ) : Int {
+		return Lambda.count(c.msgs, m -> switch( m ) { case SPatch(k, _): k == key; default: false; });
+	}
+
+	/**
+	 * Mejoras de la ESCorp en el servidor (ServerEcon, EscorpUpgrades, DeathDrops.fate), con un jugador que no es gestionnaire:
+	 * comprar un nivel paga en hexalita; sin bastante o pasado el tope no se hace nada; un interruptor se enciende y se apaga; al
+	 * morir, una bouee se gasta y el equipo se queda, pero no cuando lo guarda una sauvegarde (cometa, planeta principal) ni a
+	 * bordo; sin nada, el contenedor; KEEP_MAIN se pierde al cambiar de principal; las licencias y el stockage son los de cada
+	 * jugador; sin la opcion del servidor de perder el equipo, ni bouees ni sauvegardes.
+	 */
+	static function upgradesTest( dir : String ) {
+		deleteDir(dir);
+		sys.FileSystem.createDirectory(dir);
+		server = new GameServer(dir);
+		server.genBudgetMs = 50;
+		server.listen("127.0.0.1", 55089);
+		clients = [];
+		// el primero es el propietario (gestionnaire: licencias sin limite); las pruebas van con el segundo
+		var own = add(new TestClient("Olga", secret(80)));
+		own.tcp(55089);
+		until(() -> own.welcome != null);
+		var u = add(new TestClient("Uma", secret(81)));
+		u.tcp(55089);
+		until(() -> u.welcome != null);
+		u.client.send(CNewGame(false));
+		until(() -> u.has(m -> m.match(SRecord(_))) && lastInv(u) != null);
+		var us = @:privateAccess server.sessionById(u.id);
+		var info = us.record;
+		var bonus = Type.enumIndex(Common.ChargeKind.CBonus), rock = Block.get(BRock).index;
+		function setHex( n : Int ) {
+			var cs = info.inv.charges;
+			for( c in cs.copy() ) if( c.c == bonus ) cs.remove(c);
+			if( n > 0 ) cs.push({ c : bonus, n : n });
+		}
+		function hex() : Int {
+			for( c in info.inv.charges ) if( c.c == bonus ) return c.n;
+			return 0;
+		}
+		var seq = 0;
+		// una accion sobre una mejora, como el boton de su pantalla; espera a que el servidor la haya hecho (su SInventory)
+		function act( id : String, a : EscorpUpgrades.UpgradeAction ) {
+			var q = ++seq;
+			u.client.send(CEcon(q, EUpgrade, id, a));
+			until(() -> u.has(m -> switch( m ) { case SInventory(ack, _): ack == q; default: false; }));
+		}
+		var lv = EscorpUpgrades.level.bind(info);
+		setHex(1000);
+		act(EscorpUpgrades.STORAGE_SLOTS, UBuy);
+		check("mejoras: comprar un nivel cobra su precio en hexalita", lv(EscorpUpgrades.STORAGE_SLOTS) == 1 && hex() == 800 && patched(u, "escorp") != null, hex() + "");
+		setHex(100);
+		act(EscorpUpgrades.STORAGE_SLOTS, UBuy);
+		check("mejoras: sin bastante hexalita no se compra", lv(EscorpUpgrades.STORAGE_SLOTS) == 1 && hex() == 100);
+		info.upgradeLevels.set(EscorpUpgrades.STORAGE_SLOTS, 8);
+		setHex(20000);
+		act(EscorpUpgrades.STORAGE_SLOTS, UBuy);
+		check("mejoras: pasado el tope no se compra", lv(EscorpUpgrades.STORAGE_SLOTS) == 8 && hex() == 20000);
+		act(EscorpUpgrades.KEEP_COMET, UBuy);
+		check("mejoras: un interruptor comprado queda encendido", EscorpUpgrades.isOn(info, EscorpUpgrades.KEEP_COMET) && hex() == 19750);
+		act(EscorpUpgrades.KEEP_COMET, UOff);
+		check("mejoras: apagarlo es gratis", EscorpUpgrades.has(info, EscorpUpgrades.KEEP_COMET) && !EscorpUpgrades.isOn(info, EscorpUpgrades.KEEP_COMET) && hex() == 19750);
+		act(EscorpUpgrades.KEEP_COMET, UOn);
+		check("mejoras: y volver a encenderlo", EscorpUpgrades.isOn(info, EscorpUpgrades.KEEP_COMET) && hex() == 19750);
+		act(EscorpUpgrades.KEEP_MAIN, UBuy);
+		check("mejoras: sin planeta principal no se compra KEEP_MAIN", !EscorpUpgrades.has(info, EscorpUpgrades.KEEP_MAIN) && hex() == 19750);
+		act(EscorpUpgrades.BUOY, UBuy);
+		check("mejoras: una bouee", EscorpUpgrades.buoys(info) == 1 && hex() == 19700);
+		// muertes: rocas en el inventario; cada CDeath termina con su SPatch "escorp"
+		function give() {
+			for( i in 0...info.inv.t.length ) info.inv.t[i] = null;
+			info.inv.t[0] = { k : rock, n : 5 };
+			server.worlds.items.sendInv(us);
+		}
+		function rocks() {
+			var n = 0;
+			for( s in info.inv.t ) if( s != null && s.k == rock ) n += s.n;
+			return n;
+		}
+		function die( at : { x : Float, y : Float, z : Float } ) {
+			u.client.send(CState({ id : 0, x : at.x, y : at.y, z : at.z, yaw : 0., pitch : 0., flags : 0, charge : -1, hx : 0., hy : 0., hz : 0. }));
+			var n = patchCount(u, "escorp");
+			u.client.send(CDeath(false));
+			until(() -> patchCount(u, "escorp") > n);
+		}
+		function containers() return us.instance == null ? 0 : Lambda.count(us.instance.items.drops, d -> d.loot != null);
+		// 1) en una cometa con KEEP_COMET: ni bouee ni contenedor; apagada, se gasta la bouee
+		var uni = info.uni;
+		var d = ExpData.ExpOffline.make(uni.seed, uni.start, null, null, null, uni.gone);
+		Comets.devForce = d.systems[0].id;
+		u.client.send(CLand("", Comets.idOf(d.systems[0].id)));
+		until(() -> us.instance != null && us.instance.ready(), 30);
+		var sp = us.instance.world.spawnPoint();
+		give();
+		die(sp);
+		check("mejoras: en una cometa con su sauvegarde, el equipo se queda sin gastar bouee", info.comet != null && rocks() == 5 && EscorpUpgrades.buoys(info) == 1 && containers() == 0);
+		act(EscorpUpgrades.KEEP_COMET, UOff);
+		die(sp);
+		check("mejoras: con la sauvegarde apagada, se gasta la bouee", rocks() == 5 && EscorpUpgrades.buoys(info) == 0 && containers() == 0);
+		u.client.send(CTakeoff);
+		until(() -> us.instance == null);
+		Comets.devForce = -1;
+		// 2) el planeta principal (el primero en el que se aterriza) con KEEP_MAIN: ni bouee ni contenedor
+		var pid = TutoSetup.PLANET;
+		u.client.send(CLand("", pid));
+		until(() -> us.instance != null && us.instance.ready(), 30);
+		var ground = dryPoint(us.instance.world);
+		check("mejoras: el primer planeta es el principal", uni.main == pid);
+		act(EscorpUpgrades.KEEP_MAIN, UBuy);
+		check("mejoras: KEEP_MAIN va con el principal", EscorpUpgrades.isOn(info, EscorpUpgrades.KEEP_MAIN) && info.keepMainPlanet == pid);
+		act(EscorpUpgrades.BUOY, UBuy);
+		give();
+		die(ground);
+		check("mejoras: en el principal con su sauvegarde, el equipo se queda sin gastar bouee", rocks() == 5 && EscorpUpgrades.buoys(info) == 1 && containers() == 0);
+		// 3) a bordo de la nave: nada, ni con KEEP_MAIN apagada
+		act(EscorpUpgrades.KEEP_MAIN, UOff);
+		die({ x : ground.x, y : ground.y, z : WorldData.SHIP_Z + 3.01 });
+		check("mejoras: morir a bordo no cuesta nada (ni bouee)", rocks() == 5 && EscorpUpgrades.buoys(info) == 1 && containers() == 0);
+		// 4) en el suelo sin sauvegarde: la bouee; sin bouees: el contenedor
+		die(ground);
+		check("mejoras: al morir se gasta una bouee y el equipo se queda", rocks() == 5 && EscorpUpgrades.buoys(info) == 0 && containers() == 0);
+		die(ground);
+		check("mejoras: sin bouees, el contenedor", rocks() == 0 && until(() -> containers() == 1));
+		// 5) cambiar de planeta principal: KEEP_MAIN se pierde
+		var pid2 = -1, pid3 = -1;
+		for( s in d.systems ) for( p in s.planets ) if( p.id != pid && !p.gas ) {
+			if( pid2 < 0 ) pid2 = p.id else if( pid3 < 0 ) pid3 = p.id;
+		}
+		u.client.send(CTakeoff);
+		until(() -> us.instance == null);
+		u.client.send(CLand("", pid2));
+		until(() -> us.instance != null && us.instance.row.pid == pid2);
+		var q = ++seq;
+		u.client.send(CEcon(q, EMainPlanet, "", pid2));
+		until(() -> u.has(m -> switch( m ) { case SInventory(ack, _): ack == q; default: false; }));
+		check("mejoras: al cambiar de principal se pierde KEEP_MAIN", uni.main == pid2 && info.upgrades.indexOf(EscorpUpgrades.KEEP_MAIN) < 0
+			&& info.keepMainPlanet == null && !EscorpUpgrades.has(info, EscorpUpgrades.KEEP_MAIN), uni.main + " " + info.upgrades);
+		// 6) licencias del jugador: con 4 planetas (2 de verdad y 2 apuntados aqui) no hay otro; con un nivel, si
+		server.db.begin();
+		for( k in 0...2 ) server.db.putPlanet({ gkey : us.uid + ":" + (900000 + k), owner : us.uid, galaxy : us.uid, pid : 900000 + k, seed : 1,
+			biome : "BIMoon", size : 1, gen : gen.Generator.VERSION, shipAt : "", access : "" });
+		server.db.commit();
+		u.client.send(CTakeoff);
+		until(() -> us.instance == null);
+		var lost = Lambda.count(u.msgs, m -> m.match(SPlanetLost(_)));
+		u.client.send(CLand("", pid3));
+		check("mejoras: sin licencia libre no se aterriza en otro planeta", until(() -> Lambda.count(u.msgs, m -> m.match(SPlanetLost(_))) > lost) && us.instance == null,
+			"propios " + @:privateAccess server.worlds.ownedCount(us.uid) + " instancia " + (us.instance == null ? "-" : us.instance.key));
+		// la hexalita se fue en el contenedor (es una carga): otra vez
+		setHex(20000);
+		act(EscorpUpgrades.LICENSES, UBuy);
+		u.client.send(CLand("", pid3));
+		check("mejoras: con una licencia mas, si", until(() -> us.instance != null && us.instance.row.pid == pid3) && Licenses.max(info) == Licenses.MAX + 1,
+			"nivel " + EscorpUpgrades.level(info, EscorpUpgrades.LICENSES) + " hexalita " + hex() + " max " + Licenses.max(info) + " licencias " + info.uni.licenses
+			+ " instancia " + (us.instance == null ? "-" : us.instance.key) + " perdidos " + Lambda.count(u.msgs, m -> m.match(SPlanetLost(_))));
+		// 7) stockage: 20 casillas para quien tiene los 8 niveles; 20 para otro, no
+		var st = StorageData.ensure(info);
+		give();
+		var nst : NetInv = { t : [for( s in st.t ) null], charges : [] };
+		nst.t[19] = { k : rock, n : 5 };
+		var ninv : NetInv = { t : [for( s in info.inv.t ) null], charges : [for( c in info.inv.charges ) { c : c.c, n : c.n }] };
+		q = ++seq;
+		u.client.send(CStorage(q, nst, ninv));
+		until(() -> u.has(m -> switch( m ) { case SInventory(ack, _): ack == q; default: false; }));
+		check("mejoras: stockage de 20 casillas con los 8 niveles", st.t.length == 20 && info.storage.t[19] != null && info.storage.t[19].n == 5 && rocks() == 0);
+		var v = add(new TestClient("Vera", secret(82)));
+		v.tcp(55089);
+		until(() -> v.welcome != null);
+		v.client.send(CNewGame(false));
+		until(() -> v.has(m -> m.match(SRecord(_))) && lastInv(v) != null);
+		var vs = @:privateAccess server.sessionById(v.id);
+		vs.record.inv.t[0] = { k : rock, n : 5 };
+		var vst : NetInv = { t : [for( k in 0...20 ) null], charges : [] };
+		vst.t[19] = { k : rock, n : 5 };
+		v.client.send(CStorage(1, vst, { t : [for( s in vs.record.inv.t ) null], charges : [] }));
+		until(() -> v.has(m -> switch( m ) { case SInventory(ack, _): ack == 1; default: false; }));
+		check("mejoras: 20 casillas sin los niveles: no", StorageData.ensure(vs.record).t.length == 4 && vs.record.inv.t[0] != null && vs.record.inv.t[0].n == 5);
+		// 8) sin la opcion del servidor: llega a la partida, no se venden bouees ni sauvegardes y morir no gasta nada
+		var dd = patchCount(u, "dropOnDeath");
+		own.client.send(CAdmin(ADeathDrop, 0, "0"));
+		check("mejoras: la opcion del servidor llega a cada jugador", until(() -> patchCount(u, "dropOnDeath") > dd) && info.dropOnDeath == false);
+		setHex(20000);
+		act(EscorpUpgrades.BUOY, UBuy);
+		act(EscorpUpgrades.KEEP_MAIN, UBuy);
+		check("mejoras: sin perder el equipo no se venden bouees ni sauvegardes", EscorpUpgrades.buoys(info) == 0 && !EscorpUpgrades.has(info, EscorpUpgrades.KEEP_MAIN)
+			&& hex() == 20000);
+		info.upgradeLevels.set(EscorpUpgrades.BUOY, 1);
+		give();
+		until(() -> us.instance.ready(), 30);
+		var ground3 = dryPoint(us.instance.world);
+		die(ground3);
+		check("mejoras: sin la opcion, morir no gasta la bouee ni deja nada", rocks() == 5 && EscorpUpgrades.buoys(info) == 1 && containers() == 0);
+		own.client.send(CAdmin(ADeathDrop, 0, "1"));
+		server.stop();
+		clients = [];
 	}
 
 	/** la nave del hangar como la guarda el juego (Hangar.shipBytes) a partir de las celdas del cobertizo (shedData) */

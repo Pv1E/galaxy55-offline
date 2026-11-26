@@ -98,8 +98,15 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
 - El modo creativo y su paleta son un añadido de este port. Una partida creativa puede pasar a supervivencia y volver, y la
   paleta trae también los bloques sin precio que dan cargas (cristales de hexalita, plantas de citronox y de etherium...).
 - El menú del ordenador de a bordo tiene un aspecto propio, como en la versión Flash (el original era una página web).
-  Comerciar, Contratos ESCorp y Mejoras ESCorp están en su submenú "Contactar con la ESCorp" (añadido del port); las mejoras,
-  a cambio de cargas de hexalita, todavía no tienen ninguna.
+  Comerciar, Contratos ESCorp y Mejoras ESCorp están en su submenú "Contactar con la ESCorp" (añadido del port).
+- Las mejoras de la ESCorp son un añadido de este port, a cambio de hexalita (la carga verde, que el láser no usa): ampliación
+  del almacén (+2 casillas de bloques por nivel, 200 x nivel, hasta 20 casillas en dos filas), depósitos del almacén (+24
+  cargas amarillas, +12 azules y +2 rosas en el almacén por nivel, 300 cada uno, sin tope), licencia de exploración adicional
+  (una más por nivel, 500 x nivel, hasta 10 además del planeta principal), salvaguarda del equipo en los cometas (250) y en el
+  planeta principal (500; ligada al principal de ahora, se pierde al cambiarlo), las dos se activan y desactivan gratis, y
+  salvavidas (50 cada uno: una muerte o un Mayús+K que dejaría el equipo gasta uno y lo conservas todo). Las salvaguardas y los
+  salvavidas no salen si la partida (o el servidor multijugador) no deja el equipo en el suelo; la licencia, con licencias sin
+  límite. En multijugador el servidor repite cada compra.
 - La ventana de la cantina de ESCorp muestra también tu inventario, se maneja arrastrando y soltando como la pantalla de
   inventario (I en aventura, también añadido del port), se cierra además con Esc, B o Cerrar y se maneja con el teclado y el mando (mientras está abierta, las flechas mueven su marca y no al jugador). Lo que guarda va en la partida
   (en el original, en el servidor) y sale suelto si se rompe.
@@ -114,7 +121,8 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
   acabar el tutorial (antes 500 desde el principio).
 - La lava hace explotar la bomba antigua (cambio del port): el original la rompía y la soltaba, como sigue haciendo el agua.
 - Las licencias de exploración de la ESCorp son un añadido de este port (en el original las llevaba el servidor): en aventura
-  se escanean 4 planetas (1 principal y 3 de exploración) y la nave solo se pilota sobre el principal.
+  se escanean 4 planetas (1 principal y 3 de exploración, hasta 10 con la mejora de la ESCorp) y la nave solo se pilota sobre
+  el principal.
 - La cascada y el agua que pone el jugador bajan de altura en cada paso, con la superficie inclinada: añadido de este port.
   El mar llena los huecos hasta su nivel y, cuando el agua que entra suma el volumen de una capa del mar, el nivel baja un
   bloque en todo el planeta, como el original.
@@ -165,12 +173,13 @@ El juego busca los gráficos del original en `res\` (paquete portátil) o, si no
 - Una partida con bloques que esta versión no conoce (guardada por una más nueva) pregunta antes de cargarse; si se acepta,
   se copia en `saves/backups` y se borran esos bloques.
 - El almacén de la nave (ordenador de a bordo > Almacén) es un añadido de este port: 4 casillas de bloques, como una cantina, y
-  las cargas sin casillas (amarillas hasta 24, azules 12, rosas 5, de hexalita sin límite). El del original estaba en el servidor
-  y se perdió.
+  las cargas sin casillas (amarillas hasta 24, azules 12, rosas 2, hexalita sin límite; 10 cargas rosas como mucho en el
+  inventario), más con las mejoras de la ESCorp. El del original estaba en el servidor y se perdió.
 - Al morir o con Mayús+K, lo que llevas (bloques y cargas, no los créditos) queda en una cantina de ESCorp pequeña donde
   estabas, que no caduca y se guarda en la partida (en el original lo dejaba el servidor, en un botín que caducaba, y el modo
-  local no quitaba nada). Es una opción de la partida, activada si no se cambia; nada en creativo, en el tutorial, en el hangar
-  ni en la nave nodriza.
+  local no quitaba nada). Es una opción de la partida, activada si no se cambia; nada en creativo, en el tutorial, en el hangar,
+  en la nave nodriza ni a bordo de la nave (morir a bordo no cuesta nada, encima de cualquier planeta o cometa). Las
+  salvaguardas del equipo de la ESCorp (en un cometa, en el planeta principal) y los salvavidas lo evitan, en ese orden.
 - Andando se suben las planchas (medio bloque) sin saltar: cambio de este port, en el original paraban como un muro.
 - Los 16 cuadros de CroqueMotel (Motion Twin, CC BY-NC-SA 4.0, en `NOTICE`) son un añadido de este port: placas que se
   cuelgan en una pared, solo en la paleta creativa. En una partida creativa también se ponen los kubes del editor (los `.kube`

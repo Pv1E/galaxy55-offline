@@ -1,5 +1,6 @@
 import Common;
 import Msg;
+import EscorpUpgrades;
 
 /**
  * Banco de pruebas (solo para desarrollo): ejecuta un guion de ordenes sobre una partida nueva, sin ventana a la vista ni teclado.
@@ -24,6 +25,8 @@ import Msg;
  *   give Bloque [n]         meter n bloques (50) en el inventario
  *   charge CPink N          dejar N cargas de ese tipo (CYellow, CBlue, CPink, CBonus; 0 = ninguna)
  *   deathdrop on|off        opcion de la partida en curso: dejar el equipo en el suelo al morir y con Mayus+K (SaveInfo.dropOnDeath)
+ *   deathdrop oldship dx dy Bloque n   un contenedor de a bordo ("s") con n de Bloque a dx, dy del jugador, como en las
+ *                           partidas de antes (morir a bordo ya no deja nada)
  *   print deathdrops        equipo dejado al morir o con Mayus+K (DeathDrops): inventario y cargas, creditos, contenedores
  *                           guardados en la partida y los que hay en el mundo
  *   drop x y z Bloque [vida] soltar un bloque quieto (vida en segundos, 180)
@@ -88,7 +91,11 @@ import Msg;
  *                           por recuperado; print kub|kubdata|kuborder (orden de las fichas y las recetas)
  *   escorp [upgrades]       ordenador de a bordo > Contactar con la ESCorp (anadido del port) y, con upgrades, su pantalla de
  *                           Mejoras ESCorp (close lo cierra todo; print menu); escorp button pulsa Contactar con la ESCorp en el
- *                           ordenador abierto; escorp hexalite N deja N cargas de hexalita; print upgrades
+ *                           ordenador abierto; escorp hexalite N deja N de hexalita; print upgrades
+ *   upgrade ID [N]          mejora de la ESCorp sin pagar (EscorpUpgrades): por niveles o contador, a N (1); interruptor o de
+ *                           una vez, comprada (N = 0: sin comprar; KEEP_MAIN, para el planeta principal de ahora)
+ *   upgrade buy|on|off ID   comprar (pagando), encender o apagar, como los botones de su pantalla (sin confirmacion)
+ *   buoys N                 deja N bouees de sauvetage (upgrade buoy N); print buoys: las de la partida y las de la barra
  *   savegame                guardar la partida (como F5, sin aviso)
  *   genversion N            el planeta actual pasa a ser de la version N del generador (SaveInfo.genVersion; se nota al volver a
  *                           el); print gen: la del mundo cargado, la actual, la de la partida y las de los planetas visitados,
@@ -645,6 +652,26 @@ class Dev {
 		if( n > 0 ) list.push({ c : k, n : n });
 	}
 
+	/** upgrade ID N: la mejora en ese estado, sin pagar (por niveles o contador: el nivel; las demas, comprada si N > 0) */
+	static function devUpgrade( info : SaveData.SaveInfo, id : String, n : Int ) {
+		var u = EscorpUpgrades.get(id);
+		if( u == null || info == null ) {
+			Sys.println("upgrade: mejora desconocida " + id);
+			return;
+		}
+		switch( u.kind ) {
+		case KLevels, KCounter:
+			if( info.upgradeLevels == null ) info.upgradeLevels = new haxe.DynamicAccess<Int>();
+			info.upgradeLevels.set(id, n);
+		case KOnce, KSwitch:
+			if( info.upgrades == null ) info.upgrades = [];
+			info.upgrades.remove(id);
+			if( info.upgradesOff != null ) info.upgradesOff.remove(id);
+			if( n > 0 ) info.upgrades.push(id);
+			if( id == EscorpUpgrades.KEEP_MAIN ) info.keepMainPlanet = n > 0 && info.uni != null ? info.uni.main : null;
+		}
+	}
+
 	/** storage ORDEN: stockage de la nave (ShipStorage), ver la cabecera */
 	function storage( app : GalaxyApp, a : Array<String> ) {
 		var info = app.curInfo();
@@ -937,7 +964,23 @@ class Dev {
 				case "give":
 					var b = bk(a[1]);
 					g.inv.addBlocks(b, a.length > 2 ? Std.parseInt(a[2]) : 50);
-				case "deathdrop": g.info.dropOnDeath = a[1] == "on"; // deathdrop on|off: la opcion de la partida en curso
+				case "deathdrop":
+					// deathdrop on|off: la opcion de la partida en curso. deathdrop oldship dx dy Bloque n: un contenedor de a bordo
+					// ("s") a dx, dy del jugador, como los de las partidas de antes (morir a bordo ya no los crea)
+					if( a[1] == "oldship" ) {
+						var l = DeathDrops.list(g.info), id = 1;
+						for( d in l ) if( d.id >= id ) id = d.id + 1;
+						var t : Protocol.BlockInventory = [for( i in 0...g.inv.inv.t.length ) null];
+						t[0] = { k : bk(a[4]).index, n : Std.parseInt(a[5]) };
+						var d : DeathDrops.DeathDropInfo = { id : id, key : "s", x : DeathDrops.wrap(g.px + f(a[2]) - w.shipDX, w.size),
+							y : DeathDrops.wrap(g.py + f(a[3]) - w.shipDY, w.size), z : g.pz + 0.5, t : t, charges : [] };
+						l.push(d);
+						DeathDropsPlay.spawn(g, d);
+					} else {
+						g.info.dropOnDeath = a[1] == "on";
+						// la barra ensena las bouees solo con la opcion
+						if( @:privateAccess app.invBar != null ) @:privateAccess app.invBar.refresh();
+					}
 				case "charge":
 					// charge CPink N: deja N cargas de ese tipo (0 = ninguna)
 					var ck = Type.enumIndex(Type.createEnum(ChargeKind, a[1])), n = Std.parseInt(a[2]);
@@ -1375,13 +1418,26 @@ class Dev {
 					// el menu del ordenador de a bordo, como al activarlo (el guion sigue; close lo cierra)
 					@:privateAccess app.openComputer();
 					inPause = true;
+				case "upgrade":
+					// upgrade ID [N] (sin pagar) | upgrade buy|on|off ID (como los botones de la pantalla)
+					var info = app.curInfo();
+					if( a[1] == "buy" || a[1] == "on" || a[1] == "off" ) {
+						var act : EscorpUpgrades.UpgradeAction = a[1] == "buy" ? UBuy : a[1] == "on" ? UOn : UOff;
+						var u = EscorpUpgrades.get(a[2]);
+						Sys.println("upgrade " + a[1] + " " + a[2] + ": " + (u != null && @:privateAccess app.upgradeAction(u, act)));
+					} else devUpgrade(info, a[1], a.length > 2 ? Std.parseInt(a[2]) : 1);
+					if( @:privateAccess app.invBar != null ) @:privateAccess app.invBar.refresh();
+				case "buoys":
+					devUpgrade(app.curInfo(), EscorpUpgrades.BUOY, Std.parseInt(a[1]));
+					if( @:privateAccess app.invBar != null ) @:privateAccess app.invBar.refresh();
 				case "escorp":
 					// escorp [upgrades]: el submenu Contactar con la ESCorp abierto desde el ordenador de a bordo, como el jugador (y su
 					// pantalla de Mejoras ESCorp); el guion sigue, close lo cierra. escorp button: pulsa el boton Contactar con la ESCorp
-					// del ordenador abierto (su sitio cambia con Pilotar la nave). escorp hexalite N: deja N cargas de hexalita (CBonus)
+					// del ordenador abierto (su sitio cambia con Pilotar la nave). escorp hexalite N: deja N de hexalita (la carga CBonus)
 					if( a[1] == "hexalite" ) {
-						while( g.inv.useCharge(CBonus) ) {}
-						if( Std.parseInt(a[2]) > 0 ) g.inv.addCharge(CBonus, Std.parseInt(a[2]));
+						var k = Type.enumIndex(CBonus), cs = g.inv.inv.charges;
+						for( c in cs.copy() ) if( c.c == k ) cs.remove(c);
+						if( Std.parseInt(a[2]) > 0 ) g.inv.addCharge(CBonus, Std.parseInt(a[2])) else g.inv.display();
 					} else if( a[1] == "button" ) {
 						var b = @:privateAccess app.computerEscorp;
 						if( b != null && @:privateAccess app.current != null && @:privateAccess app.current.widgets.indexOf(b) >= 0 ) b.activate();
@@ -1874,7 +1930,7 @@ class Dev {
 				Sys.println("licencias: sin universo");
 				return;
 			}
-			Sys.println("licencias: " + u.licenses + " principal " + u.main + " abandonados " + u.abandoned + " desaparecidos " + u.gone + " cambios " + u.mainChanges
+			Sys.println("licencias: " + u.licenses + " de " + (Licenses.unlimited(info) ? "sin limite" : "" + Licenses.max(info)) + " principal " + u.main + " abandonados " + u.abandoned + " desaparecidos " + u.gone + " cambios " + u.mainChanges
 				+ " precio " + Licenses.mainPrice(u) + " espera " + Std.int(Licenses.cooldown(u)) + " s creditos " + info.credits + " planeta " + u.planetId
 				+ " pilotar " + (g == null ? "-" : "" + g.pilotLicensed()) + " boton=" + (@:privateAccess app.computerLicenses == null ? "-" : "" + @:privateAccess app.computerLicenses.enabled) + (app.explorer != null ? " sistemas " + [for( s in app.explorer.infos.systems ) s.id + "@" + s.x + "," + s.y].join(" ") : ""));
 			return;
@@ -1915,12 +1971,24 @@ class Dev {
 			Sys.println("luz " + s + " huecos a oscuras " + dark);
 		case "credits":
 			Sys.println("creditos: " + g.info.credits);
+		case "buoys":
+			Sys.println("bouees: partida " + EscorpUpgrades.buoys(g.info) + " barra " + (@:privateAccess app.invBar == null ? "-" : "" + @:privateAccess app.invBar.devBuoys()));
 		case "upgrades":
-			// Mejoras ESCorp: cargas de hexalita, cada mejora (precio, desbloqueada o se puede), las desbloqueadas y si se abren
-			Sys.println("mejoras: cargas de hexalita " + EscorpUpgrades.hexalite(g.inv) + " | lista " + (EscorpUpgrades.ALL.length == 0 ? "vacia"
-				: [for( u in EscorpUpgrades.ALL ) u.id + " " + u.cost + (EscorpUpgrades.has(g.info, u.id) ? " DESBLOQUEADA" : EscorpUpgrades.canBuy(g.info, g.inv, u) ? " se puede" : "")].join(", "))
-				+ " | desbloqueadas " + (g.info.upgrades == null ? "-" : g.info.upgrades.join(",")) + " | se abren " + Tutorial.upgradesAllowed(g.info)
-				+ " tuto=" + (g.info.tuto == null ? "-" : "" + g.info.tuto.step));
+			// Mejoras ESCorp: hexalita y cada mejora: oculta, nivel o reserva, comprada (encendida o apagada), precio de la siguiente
+			// compra (max = nada que comprar), si se puede comprar y el motivo si esta bloqueada; si se abren
+			var ctx = @:privateAccess app.upgradeCtx();
+			Sys.println("mejoras: hexalita " + EscorpUpgrades.hexalite(g.inv) + " | " + (EscorpUpgrades.ALL.length == 0 ? "ninguna"
+				: [for( u in EscorpUpgrades.ALL ) {
+					var p = EscorpUpgrades.price(g.info, u), why = EscorpUpgrades.blocked(g.info, u);
+					u.id + (!EscorpUpgrades.shown(g.info, u, ctx) ? " OCULTA" : "") + " n=" + EscorpUpgrades.level(g.info, u.id)
+						+ (EscorpUpgrades.has(g.info, u.id) ? (EscorpUpgrades.isOn(g.info, u.id) ? " ENCENDIDA" : " APAGADA") : "")
+						+ " precio=" + (p < 0 ? "max" : "" + p) + (EscorpUpgrades.canBuy(g.info, g.inv, u, ctx) ? " se puede" : "")
+						+ (why != null ? " bloqueada(" + why + ")" : "");
+				}].join(", "))
+				+ " | se abren " + Tutorial.upgradesAllowed(g.info) + " tuto=" + (g.info.tuto == null ? "-" : "" + g.info.tuto.step)
+				+ " | keepMain " + g.info.keepMainPlanet + " principal " + (g.info.uni == null ? "-" : "" + g.info.uni.main)
+				+ " | stockage " + StorageData.blockSlots(g.info) + " casillas, cargas " + StorageData.chargeMax(g.info).join("/")
+				+ " | perder equipo " + DeathDrops.enabled(g.info));
 		case "contracts":
 			// periodo, tablero (bloque, cantidad, recompensa, lo que llevas, entregado, abandonado, en curso u oculto por los
 			// contratos en curso), contratos en curso (bloque, dado / pedido, recompensa, periodo y linea de origen), tiempo hasta

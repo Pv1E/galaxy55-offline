@@ -107,8 +107,16 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
 - Le mode créatif et sa palette sont un ajout du port. Une partie créative peut passer en survie et revenir, et la palette a
   aussi les blocs sans prix qui donnent des charges (cristaux d'hexalite, plantes de citronox et d'etherium...).
 - Le menu de l'ordinateur de bord a son propre style, comme dans la version Flash (l'original était une page web).
-  Commercer, Contrats ESCorp et Améliorations ESCorp sont dans son sous-menu « Contacter l'ESCorp » (ajout du port) ; les
-  améliorations, payées en charges d'hexalite, n'en ont encore aucune.
+  Commercer, Contrats ESCorp et Améliorations ESCorp sont dans son sous-menu « Contacter l'ESCorp » (ajout du port).
+- Les améliorations ESCorp sont un ajout du port, payées en hexalite (la charge verte, que le laser n'utilise pas) :
+  agrandissement du stockage (+2 cases de blocs par niveau, 200 x niveau, jusqu'à 20 cases sur deux lignes), réservoirs du
+  stockage (+24 charges jaunes, +12 bleues et +2 roses dans le stockage par niveau, 300 chacun, sans plafond), licence
+  d'exploration supplémentaire (une de plus par niveau, 500 x niveau, jusqu'à 10 en plus de la planète principale), sauvegarde
+  d'équipement sur les comètes (250) et sur la planète principale (500 ; liée à la principale actuelle, perdue si elle change),
+  activables et désactivables gratuitement, et bouées de sauvetage (50 l'unité : une mort ou un Maj+K qui laisserait
+  l'équipement en consomme une et tu gardes tout). Les sauvegardes et les bouées n'apparaissent pas si la partie (ou le serveur
+  multijoueur) ne laisse pas l'équipement au sol ; la licence, avec des licences illimitées. En multijoueur, le serveur rejoue
+  chaque achat.
 - La fenêtre du conteneur ESCorp montre aussi ton inventaire, se manie par glisser-déposer comme l'écran d'inventaire (I en
   aventure, ajout du port lui aussi), se ferme aussi avec Échap, B ou Fermer et se manie au clavier et à la manette (tant qu'elle est ouverte, les flèches déplacent sa sélection et pas le joueur). Son contenu est gardé dans
   la partie (dans l'original, sur le serveur) et tombe au sol quand on le casse.
@@ -123,7 +131,8 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
   fin du tutoriel (avant : 500 dès le début).
 - La lave fait exploser la bombe antique (changement du port) : l'original la cassait et la lâchait, comme l'eau le fait toujours.
 - Les licences d'exploration ESCorp sont un ajout du port (dans l'original, le serveur les gérait) : en aventure on scanne
-  4 planètes (1 principale et 3 d'exploration) et le vaisseau ne se pilote qu'au-dessus de la principale.
+  4 planètes (1 principale et 3 d'exploration, jusqu'à 10 avec l'amélioration ESCorp) et le vaisseau ne se pilote qu'au-dessus
+  de la principale.
 - Les cascades et l'eau posée par le joueur baissent à chaque pas, avec une surface inclinée : ajout du port. La mer remplit
   les trous jusqu'à son niveau et, quand l'eau qui entre atteint le volume d'une couche de la mer, le niveau baisse d'un bloc
   sur toute la planète, comme l'original.
@@ -182,12 +191,14 @@ dossier `res/` à côté et lance `hl`. Un joueur l'a fait fonctionner ainsi sou
 - Une partie avec des blocs que cette version ne connaît pas (enregistrée par une plus récente) demande confirmation avant
   de se charger ; si on accepte, elle est copiée dans `saves/backups` et ces blocs sont supprimés.
 - Le stockage du vaisseau (ordinateur de bord > Stockage) est un ajout du port : 4 cases de blocs, comme un conteneur, et les
-  charges sans cases (jaunes jusqu'à 24, bleues 12, roses 5, d'hexalite sans limite). Celui de l'original était sur le serveur
-  et il est perdu.
+  charges sans cases (jaunes jusqu'à 24, bleues 12, roses 2, hexalite sans limite ; 10 charges roses au plus dans
+  l'inventaire), davantage avec les améliorations ESCorp. Celui de l'original était sur le serveur et il est perdu.
 - À la mort ou avec Maj+K, ce que tu portes (blocs et charges, pas les crédits) reste dans un petit conteneur ESCorp là où tu
   étais, qui n'expire pas et est gardé dans la partie (dans l'original, le serveur le laissait, en butin qui expirait, et le
   mode local ne retirait rien). C'est une option de la partie, activée sauf changement ; rien en créatif, dans le tutoriel,
-  dans le hangar ni dans le vaisseau-mère.
+  dans le hangar, dans le vaisseau-mère ni à bord du vaisseau (mourir à bord ne coûte rien, au-dessus de n'importe quelle
+  planète ou comète). Les sauvegardes d'équipement ESCorp (sur une comète, sur la planète principale) et les bouées de
+  sauvetage l'évitent, dans cet ordre.
 - En marchant, on monte sur les dalles (demi-blocs) sans sauter : changement du port, dans l'original elles arrêtaient comme
   un mur.
 - Les 16 tableaux de CroqueMotel (Motion Twin, CC BY-NC-SA 4.0, dans `NOTICE`) sont un ajout du port : des plaques accrochées

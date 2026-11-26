@@ -151,7 +151,7 @@ class Tutorial {
 	/** se abren los Contratos ESCorp: el paso CONTRACTS esta hecho (abrir solo Contactar con la ESCorp no basta) */
 	public static function contractsOpened( info : SaveInfo ) if( active(info) && info.tuto.step == CONTRACTS ) info.tuto.step = COMPUTER;
 
-	/** las Mejoras ESCorp (EscorpUpgrades) no se abren durante el tutorial: el boton se ve, desactivado */
+	/** las Mejoras ESCorp (EscorpUpgrades.open) no se abren durante el tutorial: el boton se ve, desactivado */
 	public static function upgradesAllowed( info : SaveInfo ) return !active(info);
 
 	/** al salir del hangar con la nave guardada (valida y cambiada): se acaba en la siguiente actualizacion */

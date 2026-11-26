@@ -1,5 +1,6 @@
 import Common;
 import SaveData.SaveInfo;
+import DeathDrops;
 
 /** Bloque apuntado: (x,y,z) el bloque que se golpea, (tx,ty,tz) la celda libre delante de el, (hx,hy,hz) el punto de impacto. */
 typedef Select = {
@@ -725,15 +726,21 @@ class GameView {
 
 	/** Game.returnToShip (modo local): fundido sin controles, rojo al morir y blanco con Mayus+K; al acabar, de vuelta en la
 	    nave con la vida y el oxigeno llenos; los ojos bajan 0.8 al morir y suben 0.5 con Mayus+K. Sustituye a un fundido de
-	    golpe o de curacion. Como en el juego en linea (CReturnShip), el equipo se queda en el sitio (DeathDrops); lose = false
-	    para la vuelta de emergencia de la cometa */
+	    golpe o de curacion. Como en el juego en linea (CReturnShip), el equipo se queda en el sitio (DeathDrops), salvo que una
+	    mejora de la ESCorp lo guarde (DeathDrops.fate: sauvegarde d'equipement, bouee); lose = false para la vuelta de emergencia
+	    de la cometa */
 	public function returnToShip( manual : Bool, lose = true ) {
 		if( fadeFX != null && fadeFX.lock ) return; // hero.lock: ya se esta volviendo
-		// multijugador: en el planeta el contenedor lo deja el servidor (NetGame.sentDeath)
-		var netDeath = lose && net != null && pz < World.SHIP_Z;
-		if( netDeath && !creative && info.tuto == null ) net.sentDeath(manual);
-		var left = lose && !netDeath ? DeathDropsPlay.leave(this, manual) : null;
+		var fate = lose ? DeathDrops.decide(info, inv.inv, DeathDropsPlay.spot(this)) : GNothing;
+		var left = null;
+		// multijugador: en el planeta decide el servidor con su partida (la misma regla, ServerItems.death) y deja el contenedor;
+		// aqui se adelanta lo que dira (NetGame.sentDeath vacia el inventario si cae)
+		if( net != null ) {
+			if( lose && pz < World.SHIP_Z && !creative && info.tuto == null ) net.sentDeath(manual, fate == GDropped);
+		} else if( fate == GDropped )
+			left = DeathDropsPlay.leave(this, manual);
 		if( left != null ) onEquipmentLeft();
+		else if( fate == GKeptComet || fate == GKeptMain || fate == GKeptBuoy ) onEquipmentKept(fate);
 		fadeFX = { t : 0., col : manual ? 0xFFFFFF : 0xFF0000, speed : 2., alpha : null, lock : true, dz : manual ? -0.5 : 0.8, done : function() {
 			life = 100;
 			oxygen = 100;
@@ -745,6 +752,10 @@ class GameView {
 
 	/** el equipo se acaba de quedar en el sitio (DeathDrops.leave), al empezar el fundido */
 	public dynamic function onEquipmentLeft() {}
+
+	/** el equipo se ha quedado con el jugador gracias a una mejora de la ESCorp (DeathDrops.fate: cometa, planeta principal o
+	    bouee, ya gastada), al empezar el fundido */
+	public dynamic function onEquipmentKept( fate : DeathDrops.GearFate ) {}
 
 	// ---------------------------------------------------------------- cometa (Comets, añadido del port)
 
@@ -1268,6 +1279,8 @@ class GameView {
 
 	/** multijugador: solo el propietario del planeta pilota (mueve el punto de aterrizaje de todos) */
 	public var netOwner = true;
+	/** multijugador: visitante en este planeta (Rights.RVisitor): no pierde el equipo al morir aqui (DeathDropsPlay.spot) */
+	public var netVisitor = false;
 
 	/** multijugador: el propietario ha llevado su nave a (x, y) (SShipMove): la nuestra va alli, y con ella quien vaya dentro */
 	public function netShipMoved( x : Int, y : Int ) {

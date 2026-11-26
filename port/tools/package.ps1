@@ -28,7 +28,7 @@ New-Item -ItemType Directory -Force "$win\res", "$lin\res", "$mac\res" | Out-Nul
 
 # recursos: graficos del cliente, mapa de estrellas, nave nodriza, contratos de la ESCorp y sonidos
 $gfx = "src\G55\fla\client\gfx"
-$res = @("digger.png", "door.md", "hud.png", "hud_jetpack.png", "icons.png", "lazer.png", "lazer2.png", "lazer3.png", "lazer4.png", "ship_halo.png", "texture.png", "mothership.bin", "contracts.json", "kubindex.json", "cone.png")
+$res = @("digger.png", "door.md", "hud.png", "hud_jetpack.png", "icons.png", "lazer.png", "lazer2.png", "lazer3.png", "lazer4.png", "ship_halo.png", "texture.png", "mothership.bin", "contracts.json", "kubindex.json", "cone.png", "bouee.png")
 foreach ($d in $win, $lin, $mac) {
 	foreach ($r in $res) { Copy-Item "$gfx\$r" "$d\res\$r" }
 	Copy-Item "src\G55\fla\explore\gfx\tiles.png" "$d\res\explore_tiles.png"

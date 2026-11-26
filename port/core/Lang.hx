@@ -63,7 +63,6 @@ class Lang {
 		"storage.blocks" => ["Bloques guardados", "Stored blocks", "Blocs stockés"],
 		"storage.charges" => ["Cargas guardadas", "Stored charges", "Charges stockées"],
 		"storage.yourcharges" => ["Tus cargas", "Your charges", "Tes charges"],
-		"storage.nolimit" => ["sin límite", "no limit", "sans limite"],
 		"storage.hint" => ["Las cargas van siempre a las de su color", "Charges always go to their own color", "Les charges vont toujours dans leur couleur"],
 		// cargas (anadido del port): lo recogido en el tutorial junto a las cargas (InvBar, %n% = cuantas); la que falta para minar
 		// (KubNotify.missingCharge: titulo y nombre). Con el nombre de su bloque (Charges de Citronox, Charge d'etherium), no su color
@@ -73,13 +72,13 @@ class Lang {
 		"charges.got.CBlue" => ["+%n% cargas de eterium", "+%n% Etherium charges", "+%n% charges d'etherium"],
 		"charge.got.CPink" => ["+1 carga rosa", "+1 pink charge", "+1 charge rose"],
 		"charges.got.CPink" => ["+%n% cargas rosas", "+%n% pink charges", "+%n% charges roses"],
-		"charge.got.CBonus" => ["+1 carga de hexalita", "+1 hexalite charge", "+1 charge d'hexalite"],
-		"charges.got.CBonus" => ["+%n% cargas de hexalita", "+%n% hexalite charges", "+%n% charges d'hexalite"],
+		"charge.got.CBonus" => ["+1 hexalita", "+1 hexalite", "+1 hexalite"],
+		"charges.got.CBonus" => ["+%n% hexalita", "+%n% hexalite", "+%n% hexalite"],
 		"charge.missing" => ["Láser · Falta una carga", "Laser · Missing charge", "Laser · Charge manquante"],
 		"charge.name.CYellow" => ["Carga de citronox", "Citronox charge", "Charge de Citronox"],
 		"charge.name.CBlue" => ["Carga de eterium", "Etherium charge", "Charge d'etherium"],
 		"charge.name.CPink" => ["Carga rosa", "Pink charge", "Charge rose"],
-		"charge.name.CBonus" => ["Carga de hexalita", "Hexalite charge", "Charge d'hexalite"],
+		"charge.name.CBonus" => ["Hexalita", "Hexalite", "Hexalite"],
 		"contracts.title" => ["Contratos de la ESCorp", "ESCorp contracts", "Contrats ESCorp"],
 		// %t% = mm:ss hasta el siguiente tablero
 		"contracts.renew" => ["Nuevos contratos dentro de %t%", "New contracts in %t%", "Nouveaux contrats dans %t%"],
@@ -356,6 +355,8 @@ class Lang {
 		"licenses.ask" => ["¿Hacer de %name% tu planeta principal?", "Make %name% your main planet?", "Faire de %name% ta planète principale ?"],
 		"licenses.ask.free" => ["Es gratis. Próximo cambio posible dentro de 24 h.", "It is free. Next change possible in 24 h.", "C'est gratuit. Prochain changement possible dans 24 h."],
 		"licenses.ask.paid" => ["Cuesta %n% créditos. Próximo cambio posible dentro de 24 h.", "It costs %n% credits. Next change possible in 24 h.", "Coût : %n% crédits. Prochain changement possible dans 24 h."],
+		// con la salvaguarda del equipo del planeta principal comprada (EscorpUpgrades.KEEP_MAIN): va con el de ahora
+		"licenses.ask.keepmain" => ["Perderás tu salvaguarda del equipo del planeta principal.", "Your main planet equipment backup will be lost.", "Ta sauvegarde d'équipement de planète principale sera perdue."],
 		"licenses.nocredits" => ["Te faltan créditos: el cambio cuesta %n%.", "Not enough credits: the change costs %n%.", "Pas assez de crédits : le changement coûte %n%."],
 		"licenses.notyours" => ["Ese planeta no puede ser tu planeta principal.", "That planet cannot be your main planet.", "Cette planète ne peut pas devenir ta planète principale."],
 		// Licencias > Liberar una licencia (anadido del port): los planetas con licencia menos el principal y aquel en el que estas
@@ -375,16 +376,42 @@ class Lang {
 		"escorp.contracts" => ["Contratos ESCorp", "ESCorp contracts", "Contrats ESCorp"],
 		"escorp.upgrades" => ["Mejoras ESCorp", "ESCorp upgrades", "Améliorations ESCorp"],
 		"upgrades.title" => ["MEJORAS ESCORP", "ESCORP UPGRADES", "AMÉLIORATIONS ESCORP"],
-		"upgrades.info" => ["Mejoras para el juego, el personaje o el equipo, a cambio de cargas de hexalita.", "Upgrades for the game, your character or your equipment, in exchange for hexalite charges.", "Des améliorations pour le jeu, le personnage ou l'équipement, en échange de charges d'hexalite."],
-		// %n% = cargas de hexalita (CBonus) del inventario
-		"upgrades.balance" => ["Tus cargas de hexalita: %n%", "Your hexalite charges: %n%", "Tes charges d'hexalite : %n%"],
+		"upgrades.info" => ["Compra mejoras para tu exploración a cambio de hexalita.", "Buy upgrades for your exploration with hexalite.", "Achète des améliorations pour ton exploration contre de l'hexalite."],
+		// %n% = hexalita del inventario (la carga CBonus)
+		"upgrades.balance" => ["Tu hexalita: %n%", "Your hexalite: %n%", "Ton hexalite : %n%"],
 		"upgrades.none" => ["No hay ninguna mejora ESCorp disponible.", "No ESCorp upgrades available.", "Aucune amélioration ESCorp disponible."],
-		// boton de una mejora: su nombre (Lang "upgrade.<id>"), seguido del precio o de upgrades.bought
-		"upgrades.cost" => ["%n% cargas de hexalita", "%n% hexalite charges", "%n% charges d'hexalite"],
+		// boton de una mejora (GalaxyApp.buildUpgrades): su nombre a la izquierda (Lang "upgrade.<id>"; un contador, upgrades.count
+		// con lo que queda) y a la derecha su nivel y su precio (upgrades.level...), upgrades.bought o el estado de un interruptor
+		// (upgrades.on / off); debajo, su descripcion ("upgrade.<id>.desc")
+		"upgrades.cost" => ["%n% hexalita", "%n% hexalite", "%n% hexalite"],
 		"upgrades.bought" => ["Desbloqueada", "Unlocked", "Débloquée"],
+		"upgrades.level" => ["nivel %n%/%max%", "level %n%/%max%", "niveau %n%/%max%"],
+		"upgrades.level.open" => ["nivel %n%", "level %n%", "niveau %n%"],
+		"upgrades.level.top" => ["nivel máximo", "max level", "niveau max"],
+		"upgrades.on" => ["Activada", "On", "Activée"],
+		"upgrades.off" => ["Desactivada", "Off", "Désactivée"],
+		"upgrades.count" => ["%name%: %n%", "%name%: %n%", "%name% : %n%"],
+		// confirmacion de una compra: una de una vez o un interruptor; un nivel (%n% = el que se compra); un contador, la clave
+		// "upgrade.<id>.ask" de la mejora
 		"upgrades.ask" => ["¿Desbloquear %name%?", "Unlock %name%?", "Débloquer %name% ?"],
-		"upgrades.ask.cost" => ["Cuesta %n% cargas de hexalita.", "It costs %n% hexalite charges.", "Coût : %n% charges d'hexalite."],
-		"upgrades.missing" => ["Te faltan cargas de hexalita: la mejora cuesta %n%.", "Not enough hexalite charges: the upgrade costs %n%.", "Pas assez de charges d'hexalite : l'amélioration en coûte %n%."],
+		"upgrades.ask.level" => ["¿Comprar %name%, nivel %n%?", "Buy %name%, level %n%?", "Acheter %name%, niveau %n% ?"],
+		// las mejoras (EscorpUpgrades.ALL): nombre, descripcion debajo del boton y, para un contador, su confirmacion
+		"upgrade.storage_slots" => ["Ampliación del almacén", "Storage expansion", "Agrandissement du stockage"],
+		"upgrade.storage_slots.desc" => ["+2 casillas de bloques en el almacén de la nave por nivel, hasta 20 (dos filas).", "+2 block slots in the ship storage per level, up to 20 (two rows).", "+2 cases de blocs dans le stockage du vaisseau par niveau, jusqu'à 20 (deux lignes)."],
+		"upgrade.storage_charges" => ["Depósitos del almacén", "Storage tanks", "Réservoirs du stockage"],
+		"upgrade.storage_charges.desc" => ["Por nivel, +24 cargas amarillas, +12 azules y +2 rosas en el almacén de la nave.", "Per level, +24 yellow, +12 blue and +2 pink charges in the ship storage.", "Par niveau, +24 charges jaunes, +12 bleues et +2 roses dans le stockage du vaisseau."],
+		"upgrade.licenses" => ["Licencia de exploración adicional", "Extra exploration license", "Licence d'exploration supplémentaire"],
+		"upgrade.licenses.desc" => ["Una licencia de exploración más por nivel, hasta 10 además de tu planeta principal.", "One more exploration license per level, up to 10 besides your main planet.", "Une licence d'exploration de plus par niveau, jusqu'à 10 en plus de ta planète principale."],
+		"upgrade.keep_comet" => ["Salvaguarda del equipo: cometas", "Equipment backup: comets", "Sauvegarde d'équipement : comètes"],
+		"upgrade.keep_comet.desc" => ["En un cometa conservas todo tu inventario al morir o con Mayús+K. Vale para todos los cometas.", "On a comet, you keep your whole inventory when you die or press Shift+K. Works on every comet.", "Sur une comète, tu gardes tout ton inventaire à la mort ou avec Maj+K. Vaut pour toutes les comètes."],
+		"upgrade.keep_main" => ["Salvaguarda del equipo: planeta principal", "Equipment backup: main planet", "Sauvegarde d'équipement : planète principale"],
+		"upgrade.keep_main.desc" => ["En tu planeta principal conservas tu inventario al morir o con Mayús+K. Ligada a tu planeta principal actual: se pierde si lo cambias.", "On your main planet, you keep your inventory when you die or press Shift+K. Tied to your current main planet: lost if you change it.", "Sur ta planète principale, tu gardes ton inventaire à la mort ou avec Maj+K. Liée à ta planète principale actuelle : perdue si tu en changes."],
+		"upgrade.keep_main.nomain" => ["Antes necesitas un planeta principal.", "You need a main planet first.", "Il te faut d'abord une planète principale."],
+		"upgrade.buoy" => ["Salvavidas", "Life buoys", "Bouées de sauvetage"],
+		"upgrade.buoy.desc" => ["Al morir o con Mayús+K se gasta un salvavidas y conservas tu inventario, si nada más lo protege.", "When you die or press Shift+K, a buoy is used up and you keep your inventory, unless something else protects it.", "À la mort ou avec Maj+K, une bouée est consommée et tu gardes ton inventaire, si rien d'autre ne le protège."],
+		"upgrade.buoy.ask" => ["¿Comprar un salvavidas?", "Buy a life buoy?", "Acheter une bouée de sauvetage ?"],
+		"upgrades.ask.cost" => ["Cuesta %n% hexalita.", "It costs %n% hexalite.", "Coût : %n% hexalite."],
+		"upgrades.missing" => ["Te falta hexalita: la mejora cuesta %n%.", "Not enough hexalite: the upgrade costs %n%.", "Pas assez d'hexalite : l'amélioration en coûte %n%."],
 		// cometas (Comets, añadido del port). %t% = 2:15
 		"exp.comet" => ["Cometa", "Comet", "Comète"],
 		"exp.comet.scan" => ["Escanear", "Scan", "Scanner cette comète"],
@@ -393,6 +420,10 @@ class Lang {
 		"comet.timer" => ["Cometa: %t%", "Comet: %t%", "Comète : %t%"],
 		// el equipo se queda en el sitio al morir o con Mayus+K (DeathDrops)
 		"deathdrop.left" => ["El equipo ha caído al suelo.", "The equipment fell to the ground.", "L'équipement est tombé à terre."],
+		// una mejora de la ESCorp lo ha guardado (DeathDrops.fate); %n% = salvavidas que quedan
+		"deathdrop.kept.comet" => ["Equipo conservado (cometa)", "Equipment kept (comet)", "Équipement conservé (comète)"],
+		"deathdrop.kept.main" => ["Equipo conservado (planeta principal)", "Equipment kept (main planet)", "Équipement conservé (planète principale)"],
+		"deathdrop.kept.buoy" => ["Salvavidas usado: te quedan %n%", "Life buoy used: %n% left", "Bouée utilisée : il t'en reste %n%"],
 		"comet.over" => ["Se acabó el tiempo: el cometa se aleja, vuelta de emergencia automática a la nave.", "Time's up: the comet is drifting away, automatic emergency return to the ship.", "Temps écoulé : la comète s'éloigne, rapatriement d'urgence automatique au vaisseau."],
 		"comet.beamoff" => ["El cometa se aleja: el teletransportador no funciona", "The comet is drifting away: the teleporter does not work", "La comète s'éloigne : le téléporteur ne fonctionne pas"],
 		"abandon.ask" => ["¿Abandonar %name%?", "Abandon %name%?", "Abandonner %name% ?"],

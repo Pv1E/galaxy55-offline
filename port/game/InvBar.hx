@@ -8,6 +8,8 @@ import IconMesh.Icons;
  * La casilla elegida se resalta; las cargas van a la izquierda (16 px por fila).
  * Anadido del port, en el tutorial: la carga que se acaba de recoger late y se dice al lado ("+3 charges de Citronox"); con
  * iconos de 16 px el jugador no veia que las tenia. La carga que falta al minar va en los avisos (KubNotify.missingCharge).
+ * Anadido del port: las bouees de sauvetage (EscorpUpgrades.BUOY) a la derecha, en espejo de la carga amarilla de la izquierda:
+ * tras la ultima casilla, el icono y despues la cantidad, en la linea de la amarilla, en blanco grisaceo.
  */
 class InvBar extends h2d.Object {
 
@@ -33,6 +35,11 @@ class InvBar extends h2d.Object {
 	var chargeBms = new Map<Int, h2d.Bitmap>();
 	/** x del icono de las cargas: el aviso va a su izquierda, pasada la cantidad */
 	var chargesX = 0.;
+	/** bouees de sauvetage que se ensenan a la derecha (0 = nada); lo pone GalaxyApp, que sabe si sirven en la partida */
+	public var buoys : Void -> Int;
+	var buoyIcon : h2d.Tile;
+	/** color de la cantidad de bouees: blanco grisaceo, para que no se confunda con las cargas */
+	static inline var BUOY_COLOR = 0xD8D8D8;
 	/** halo detras de la carga que late */
 	var glow = new h2d.Graphics();
 	var flashCharge = -1;
@@ -52,6 +59,7 @@ class InvBar extends h2d.Object {
 		this.width = width;
 		digger = hxd.res.Any.fromBytes("digger.png", Res.bytes("digger.png")).toTile();
 		chargeIcons = hxd.res.Any.fromBytes("icons.png", Res.bytes("icons.png")).toTile();
+		buoyIcon = EscorpIcons.buoy();
 		inv.onChange = refresh;
 		refresh();
 	}
@@ -114,6 +122,18 @@ class InvBar extends h2d.Object {
 			tf.dropShadow = { dx : 1, dy : 1, color : 0, alpha : 1 };
 			tf.x = Std.int(20 - tf.textWidth * 0.5);
 			if( i == changed && !first ) showName(b, slot.x + 20);
+		}
+
+		// bouees a la derecha, en espejo de la carga amarilla: el icono a 4 px de la ultima casilla y la cantidad detras
+		var nb = buoys == null ? 0 : buoys();
+		if( nb > 0 ) {
+			var bm = new h2d.Bitmap(buoyIcon, this);
+			bm.x = x0 + (n - 1) * STEP + 40 + 4;
+			bm.y = 5;
+			var tf = Theme.text(this, "" + nb, 1.0, BUOY_COLOR);
+			tf.dropShadow = { dx : 1, dy : 1, color : 0, alpha : 1 };
+			tf.x = Std.int(bm.x + 16 + 3);
+			tf.y = 5 + 2;
 		}
 
 		// cargas a la izquierda
@@ -181,6 +201,9 @@ class InvBar extends h2d.Object {
 		var left = ic.x - 8 - tf.textWidth * tf.scaleX, top = Math.min(tf.y, ic.y), bottom = Math.max(tf.y + tf.textHeight * tf.scaleY, ic.y + 24);
 		Theme.rect(bg, left - 8, top - 3, ic.x + 24 + 6 - (left - 8), bottom - top + 6, 0x000000, 0.5);
 	}
+
+	/** bouees que se ven a la derecha, para las pruebas (Dev print buoys) */
+	public function devBuoys() : Int return buoys == null ? 0 : buoys();
 
 	/** lo que dice el aviso de las cargas, para las pruebas (Dev): null si no se ve */
 	public function devNotice() : String {

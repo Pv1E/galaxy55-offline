@@ -42,6 +42,11 @@ class Theme {
 		g.endFill();
 	}
 
+	/** limite de un contador: "/ 24", o "/ ∞" con max < 0 (LimitText) */
+	public static function limit( parent : h2d.Object, max : Int, scale : Float, color : Int ) : LimitText {
+		return new LimitText(parent, max, scale, color);
+	}
+
 	/*
 	 * Con LetterBox la zona W x H no llega a los bordes de una ventana mas ancha o mas alta que 16:9: quedan bandas a los lados o
 	 * arriba y abajo. Todo lo que deba tapar la ventana entera (velos, oscurecido detras de un menu, la tienda, la
@@ -71,6 +76,36 @@ class Theme {
 }
 
 /** Control con foco: se navega con teclado, mando o raton. */
+/**
+ * Limite de un contador (anadido del port): "/ 24" o, sin limite (max < 0), "/ ∞". La fuente (DefaultFont, Pixel Operator) no
+ * tiene el signo infinito: se dibuja en pixeles de la fuente (INFINITY, 9 x 5, a la altura del guion), del mismo color y a la
+ * misma escala, con el avance de una letra. Su ancho (con la escala) en `width`, para alinearlo a la derecha.
+ */
+class LimitText extends h2d.Object {
+
+	static var INFINITY = [".##...##.", "#..#.#..#", "#...#...#", "#..#.#..#", ".##...##."];
+	static inline var INFINITY_CODE = 0x221E;
+
+	public var width(default, null) : Float;
+
+	public function new( parent : h2d.Object, max : Int, scale : Float, color : Int ) {
+		super(parent);
+		// si un dia la fuente tiene el signo, va como texto
+		var drawn = max < 0 && !Theme.font.hasChar(INFINITY_CODE);
+		var t = Theme.text(this, max >= 0 ? "/ " + max : drawn ? "/ " : "/ " + String.fromCharCode(INFINITY_CODE), scale, color);
+		width = t.textWidth * scale;
+		if( !drawn ) return;
+		var g = new h2d.Graphics(this);
+		g.x = width;
+		g.beginFill(color);
+		for( row in 0...INFINITY.length )
+			for( col in 0...INFINITY[row].length )
+				if( INFINITY[row].charAt(col) == "#" ) g.drawRect((1 + col) * scale, (6 + row) * scale, scale, scale);
+		g.endFill();
+		width += (INFINITY[0].length + 2) * scale;
+	}
+}
+
 class Widget extends h2d.Object {
 	public var w(default, null) : Int;
 	public var h(default, null) : Int;

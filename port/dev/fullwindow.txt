@@ -7,6 +7,8 @@ planet
 wait 30
 creative
 set 64 64 120 BChest
+# el stockage con sus 20 casillas (dos filas: EscorpUpgrades.STORAGE_SLOTS al maximo)
+upgrade storage_slots 8
 winsize 1600 600
 wait 10
 screen pause
