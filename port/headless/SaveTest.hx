@@ -13,6 +13,8 @@ import SaveArchive.SaveError;
  * - migracion de los .json de antes con las dos tablas (fixtures/), a .g55 con copia en saves/backups, y otra vez con la otra tabla;
  *   campo que falta (su valor de siempre) y campo mal formado (error con su nombre, ilegible en la lista)
  * - recuperacion tras un fallo al guardar: cada combinacion de .g55, .tmp y .bak (que falta, entero o cortado)
+ * - mejoras de la ESCorp (EscorpUpgrades): niveles, interruptores, bouees y el planeta de KEEP_MAIN por JSON y por el .g55; una
+ *   partida de antes sin ellos, con lo de serie; el stockage de 20 casillas con sus huecos; 20 rosas (maximo 10) se quedan
  * La poda de los cambios (World.prune) necesita el mundo: la prueba "print prune" de devrun (port/dev/poda.txt).
  * Solo corre con GALAXY55_DATA: sin ella escribiria en las partidas de verdad (%APPDATA%). Sale con 1 si algo falla.
  */
@@ -38,7 +40,7 @@ class SaveTest {
 		hxd.System.allowTimeout = false;
 		var t0 = haxe.Timer.stamp(), times = [];
 		for( f in [{ n : "tablas", f : tables }, { n : "ida y vuelta", f : roundTrip }, { n : "desconocidos", f : unknownNames },
-			{ n : "migracion", f : migration }, { n : "recuperacion", f : recovery }] ) {
+			{ n : "migracion", f : migration }, { n : "recuperacion", f : recovery }, { n : "mejoras", f : upgrades }] ) {
 			var t = haxe.Timer.stamp();
 			try f.f() catch( e : Dynamic ) check(f.n + ": sin excepciones", false, Std.string(e) + haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
 			times.push(f.n + " " + Std.int((haxe.Timer.stamp() - t) * 1000));
@@ -369,6 +371,59 @@ class SaveTest {
 		check("mal formada: no se abre", SaveData.read(id) == null && SaveData.lastError.indexOf("inv") >= 0, SaveData.lastError);
 		check("mal formada: no se toca", exists(SaveData.jsonPath(id)) && !exists(SaveData.archivePath(id)));
 		SaveData.delete(id);
+	}
+
+	// ---------------------------------------------------------------- mejoras de la ESCorp
+
+	static function upgrades() {
+		var info = rich("Mejoras");
+		info.upgrades = [EscorpUpgrades.KEEP_COMET, EscorpUpgrades.KEEP_MAIN];
+		info.upgradesOff = [EscorpUpgrades.KEEP_COMET];
+		info.keepMainPlanet = info.uni.main;
+		info.upgradeLevels = new haxe.DynamicAccess<Int>();
+		info.upgradeLevels.set(EscorpUpgrades.STORAGE_SLOTS, 8);
+		info.upgradeLevels.set(EscorpUpgrades.STORAGE_CHARGES, 2);
+		info.upgradeLevels.set(EscorpUpgrades.BUOY, 4);
+		info.upgradeLevels.set(EscorpUpgrades.LICENSES, 3);
+		var st = StorageData.ensure(info);
+		check("stockage con los 8 niveles: 20 casillas", st.t.length == 20, "" + st.t.length);
+		st.t[17] = { k : idx(BWood), n : 5 };
+		// 20 rosas en el inventario: una partida de antes del maximo de 10
+		var pink = Type.enumIndex(CPink);
+		info.inv.charges = [for( c in info.inv.charges ) if( c.c != pink ) c];
+		info.inv.charges.push({ c : pink, n : 20 });
+		var j = SaveData.fromObject(haxe.Json.parse(haxe.Json.stringify(info)), info.id);
+		same("mejoras: ida y vuelta por JSON (servidor)", norm(j), norm(info));
+		var back = SaveArchive.decode(SaveArchive.encode(info, THUMB), info.id);
+		same("mejoras: ida y vuelta por el .g55", norm(back), norm(info));
+		check("mejoras: niveles, bouees e interruptores tras el .g55", EscorpUpgrades.level(back, EscorpUpgrades.STORAGE_SLOTS) == 8
+			&& EscorpUpgrades.buoys(back) == 4 && EscorpUpgrades.has(back, EscorpUpgrades.KEEP_MAIN) && EscorpUpgrades.isOn(back, EscorpUpgrades.KEEP_MAIN)
+			&& EscorpUpgrades.has(back, EscorpUpgrades.KEEP_COMET) && !EscorpUpgrades.isOn(back, EscorpUpgrades.KEEP_COMET)
+			&& Licenses.max(back) == Licenses.MAX + 3);
+		check("stockage de 20: cada pila en su casilla", back.storage.t.length == 20 && back.storage.t[17] != null && back.storage.t[17].n == 5
+			&& back.storage.t[16] == null && back.storage.t[0] != null);
+		check("stockage: los contadores de 2 niveles", StorageData.chargeMax(back).join(",") == "72,36,6,-1", StorageData.chargeMax(back).join(","));
+		check("20 rosas en el inventario (maximo 10): se quedan", Lambda.exists(back.inv.charges, c -> c.c == pink && c.n == 20));
+		// partida de antes: sin los campos de las mejoras, todo a 0 y lo de serie
+		var o : Dynamic = haxe.Json.parse(haxe.Json.stringify(info));
+		for( f in ["upgrades", "upgradeLevels", "upgradesOff", "keepMainPlanet"] ) Reflect.deleteField(o, f);
+		o.storage = { t : [null, { k : idx(BWood), n : 3 }, null, null], charges : [] };
+		var old = SaveData.fromObject(o, "antes");
+		check("partida de antes: sin mejoras", EscorpUpgrades.level(old, EscorpUpgrades.STORAGE_SLOTS) == 0 && EscorpUpgrades.buoys(old) == 0
+			&& !EscorpUpgrades.has(old, EscorpUpgrades.KEEP_MAIN) && old.keepMainPlanet == null && old.upgradesOff == null);
+		check("partida de antes: stockage, contadores y licencias de serie", StorageData.blockSlots(old) == 4
+			&& StorageData.chargeMax(old).join(",") == "24,12,2,-1" && Licenses.max(old) == Licenses.MAX);
+		check("partida de antes: su stockage igual", old.storage.t.length == 4 && old.storage.t[1] != null && old.storage.t[1].n == 3);
+		// mal formado: error con el nombre del campo
+		o.upgradeLevels = [1, 2];
+		var err = try {
+			SaveData.fromObject(o, "mal");
+			null;
+		} catch( e : SaveError ) e.msg;
+		check("upgradeLevels mal formado: error con el campo", err != null && err.indexOf("upgradeLevels") >= 0, err);
+		// KEEP_MAIN va con su planeta: con otro principal ya no vale (Licenses.setMain la quita; aqui, una partida tocada a mano)
+		back.uni.main = 2;
+		check("KEEP_MAIN de otro planeta principal: no vale", !EscorpUpgrades.has(back, EscorpUpgrades.KEEP_MAIN));
 	}
 
 	// ---------------------------------------------------------------- recuperacion

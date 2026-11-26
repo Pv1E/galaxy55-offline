@@ -1,9 +1,11 @@
 # Contactar con la ESCorp (anadido del port): en el ordenador de a bordo, el boton "Contacter l'ESCorp" va encima de la Base de
 # donnees ESCorp (sin "Commercer" ni "Contrats") y abre un submenu como el del ordenador (Commercer, Contrats ESCorp,
 # Ameliorations ESCorp, Retour). Commercer abre la tienda del robot; Contrats ESCorp, el panel de siempre; Ameliorations ESCorp,
-# su pantalla: titulo, la hexalita que llevas (12, en verde) y "Aucune amelioration ESCorp disponible.". Esc vuelve de las
-# mejoras al submenu (foco en Ameliorations ESCorp) y del submenu al ordenador (foco en Contacter l'ESCorp); Retour hace lo
-# mismo. Sin tutorial no hay ningun boton VERDE.
+# su pantalla: titulo, la hexalita que llevas (12, en verde) y las seis mejoras, desactivadas (12 no llega a ningun precio; la
+# sauvegarde del planeta principal, ademas, bloqueada: esta partida no tiene planeta principal, el motivo en naranja en lugar de
+# su descripcion; ameliorations_escorp.txt prueba las compras). Esc vuelve de las mejoras al submenu (foco en Ameliorations
+# ESCorp) y del submenu al ordenador (foco en Contacter l'ESCorp); Retour (el septimo boton) hace lo mismo. Sin tutorial no hay
+# ningun boton VERDE.
 # Despues, el tutorial: en el paso de la Base de datos (13) Contacter l'ESCorp sale desactivado, el submenu no se abre y la Base
 # de donnees esta marcada (VERDE, con el foco); en el de los contratos (14) se marca Contacter l'ESCorp y, en el submenu, Contrats
 # ESCorp, con Commercer y las mejoras desactivados (la orden tampoco abre las mejoras); abrir los contratos desde el submenu pasa
@@ -42,7 +44,7 @@ print menu
 escorp upgrades
 wait 5
 print menu
-button 0
+button 6
 wait 5
 print menu
 button 3

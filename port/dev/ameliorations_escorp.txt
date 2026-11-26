@@ -1,0 +1,215 @@
+# Mejoras de la ESCorp (EscorpUpgrades, anadido del port). Aventura sin tutorial, semilla 4242 (sistema 0: planetas 0 y 1,
+# cometa forzada 9). Con -Extra "--lang=fr" -Timeout 900. "print upgrades" = cada mejora (oculta, nivel, comprada, encendida,
+# precio, se puede, bloqueada), keepMain, stockage y la opcion de perder el equipo; "print menu" = los botones de la pantalla.
+# 1) el planeta 0 es el principal. Pantalla sin hexalita: los seis botones desactivados (solo Retour)
+# 2) con hexalita: comprar el nivel 1 del stockage (confirmacion; Oui) deja el foco en su boton; una bouee dos veces seguidas
+#    con el teclado (Intro, abajo = Oui, Intro); interruptor: se compra encendido, se apaga y se enciende sin confirmacion ni pago
+# 3) cada estado en la pantalla: niveles con tope (2/8), al maximo (licencias 7/7), sin tope (nivel 3), interruptores encendido y
+#    apagado, contador (4 bouees, con su icono)
+# 4) stockage de 20 casillas (dos filas) y contadores con 3 niveles: "/ 96", "/ 48", "/ 8" y "/ ∞"; la barra con 4 bouees a la
+#    derecha (icono y cantidad en la linea de la carga amarilla)
+# 5) muertes: en el principal con KEEP_MAIN el equipo se queda sin gastar bouee; apagada, se gasta una ("Bouee utilisee"); sin
+#    bouees, el contenedor; a bordo, nada (ni bouee); en el planeta 1 (no principal) con KEEP_MAIN encendida, se gasta una bouee;
+#    en una cometa con KEEP_COMET, se queda sin gastar bouee
+# 6) cambiar de principal (planeta 1): la confirmacion avisa de que KEEP_MAIN se pierde, y se pierde
+# 7) sin la opcion de perder el equipo: las bouees y las sauvegardes no salen en la pantalla ni la barra las ensena
+wait 3
+tuto notuto 4242
+waitfor map
+waitfor system
+expplanet 0
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+print licenses
+ship
+wait 10
+contracts empty
+# 1) sin hexalita
+escorp hexalite 0
+escorp upgrades
+wait 5
+print menu
+print upgrades
+shot amelio_sans_hexalite
+close
+wait 3
+# 2) comprar: un nivel (con confirmacion), dos bouees seguidas con el teclado, el interruptor
+escorp hexalite 20000
+escorp upgrades
+wait 5
+shot amelio_prix
+button 0
+wait 3
+shot amelio_confirmation
+button 1
+wait 5
+print menu
+print upgrades
+button 5
+wait 3
+button 1
+wait 5
+print menu
+tap enter
+wait 3
+tap down
+wait 2
+tap enter
+wait 5
+print menu
+print upgrades
+print buoys
+button 3
+wait 3
+button 1
+wait 5
+print upgrades
+button 3
+wait 3
+print upgrades
+shot amelio_interrupteur_off
+button 3
+wait 3
+print upgrades
+close
+wait 3
+# 3) cada estado
+upgrade storage_slots 2
+upgrade storage_charges 3
+upgrade licenses 7
+upgrade keep_main 1
+upgrade off keep_main
+buoys 4
+escorp upgrades
+wait 5
+print menu
+print upgrades
+shot amelio_etats
+close
+wait 3
+upgrade on keep_main
+# 4) stockage de 20 casillas y la barra
+upgrade storage_slots 8
+give BWood 40
+give BGlass 10
+storage put BIron 70
+storage invcharge hexalite 0
+storage open
+wait 5
+slots drag 2:0 0:19
+print storage
+print slots
+slots move 1:3
+wait 2
+shot amelio_stockage_20
+storage close
+wait 3
+print buoys
+shot amelio_barre
+# 5) muertes en el principal (planeta 0)
+contracts empty
+planet
+wait 30
+give BWood 10
+hurt 500
+wait 20
+print toast
+wait 100
+print deathdrops
+print buoys
+shot amelio_mort_principale
+upgrade off keep_main
+planet
+wait 30
+hurt 500
+wait 20
+print toast
+shot amelio_bouee_utilisee
+wait 100
+print deathdrops
+print buoys
+buoys 0
+planet
+wait 30
+hurt 500
+wait 120
+print deathdrops
+print buoys
+shot amelio_sans_bouee
+# a bordo: nada, ni bouee
+contracts empty
+buoys 2
+give BIron 5
+tpl 60.5 63.5 3.01 0 0
+wait 5
+hurt 500
+wait 120
+print deathdrops
+print buoys
+shot amelio_mort_a_bord
+# 5b) planeta 1 (no principal) con KEEP_MAIN encendida: se gasta una bouee
+upgrade on keep_main
+explore
+waitfor map 6000
+waitfor system
+expplanet 1
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+print licenses
+planet
+wait 30
+hurt 500
+wait 120
+print deathdrops
+print buoys
+# 6) hacer principal el planeta 1: la confirmacion avisa de KEEP_MAIN; despues ya no la tiene
+ship
+wait 10
+licenses open
+wait 5
+print menu
+button 0
+wait 3
+shot amelio_changer_principale
+button 1
+wait 5
+print licenses
+print upgrades
+close
+wait 3
+# 5c) cometa con KEEP_COMET: se queda sin gastar bouee
+explore
+waitfor map 6000
+waitfor system
+comet force 0
+wait 60
+expplanet 9
+waitfor window
+expbutton
+waitfor planet 6000
+wait 30
+planet
+wait 30
+print comet
+hurt 500
+wait 20
+print toast
+wait 100
+print deathdrops
+print buoys
+shot amelio_mort_comete
+# 7) sin la opcion de perder el equipo
+deathdrop off
+escorp upgrades
+wait 5
+print menu
+print upgrades
+shot amelio_sans_option
+close
+wait 3
+print buoys
+quit
