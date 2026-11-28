@@ -29,3 +29,26 @@
 5 BIShed 3 1 E1BE6430 -
 1 BICometCinder 1 1 82E465F3 -
 777 BICometCinder 1 1 81C8742F -
+# Version 2 (cada cadena de lo que se propaga corre desde su fuente: Generator.chainOrder; las cascadas de las grutas y de la
+# superficie ya no se quedan colgadas tras su primer bloque): los mismos casos. Cambian los que tienen cascadas.
+1234 BIAutumn 2 2 7C40384B cavegarden,cavelava
+5 BIAutumn 1 2 861CBEE4 -
+808 BIAutumn 3 2 9934773A cavegarden,cavecascade,cavecascade,cavegarden,cavecascade,largepit,crater,invisible,invisible
+7 BIMoon 2 2 8A7EBC0B fence
+321 BIMoon 1 2 C9709F42 burned
+9001 BIMoon 3 2 E77C4620 artifact,invisible
+99 BIMars 2 2 93C4AD4E cavelava,cavecascade,ice
+4040 BIMars 1 2 8D273E8C capsule
+2077 BIMars 3 2 546351D5 caveveins,cavegarden,burned,largepit
+4242 BIWinterPeaks 2 2 03A50D43 cavecascade,cavelava,crater
+15 BIWinterPeaks 1 2 053C543A meadow
+2026 BIWinterPeaks 3 2 748432D4 cavelava,cavecascade,cavegarden,cavelava,cavelava,cavegarden,artifact,tree,meadow
+31 BIAcidForest 2 2 220F13D1 -
+600 BIAcidForest 1 2 EC1F694C -
+123 BIAcidForest 3 2 6AA49A23 ruins,invisible
+1234 BIDeadCity 1 2 77D4A417 -
+77 BIDeadCity 2 2 97336BAF crater
+2048 BIDeadCity 3 2 DA780A6E meadow,meadow
+5 BIShed 3 2 E1BE6430 -
+1 BICometCinder 1 2 82E465F3 -
+777 BICometCinder 1 2 81C8742F -

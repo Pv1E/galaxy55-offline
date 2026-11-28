@@ -1,4 +1,5 @@
 import Common;
+import gen.Generator.MIN_VERSION as MIN_GEN_VERSION;
 
 /**
  * Datos de un mundo (planeta, cometa o nave) sin nada de dibujo (anadido del port para el multijugador): celdas, generacion,
@@ -114,9 +115,9 @@ class WorldData {
 	function newGenerator() : gen.DetailsGenerator {
 		var a = genArgs;
 		var g = a.comet ? new CometGenerator(size, a.seed) : new gen.DetailsGenerator(size, a.seed);
-		// la version 0 (el generador del original) ya no existe: un planeta de antes se genera con la 1 y la partida guarda su 0
-		// (SaveData: "Ancienne partie")
-		if( a.version != null ) g.version = a.version < 1 ? 1 : a.version;
+		// la version 0 (el generador del original) ya no existe: un planeta de antes se genera con la mas antigua que sigue
+		// (MIN_VERSION) y la partida guarda su 0 (SaveData: "Ancienne partie"); uno de la 1 o posterior, con la suya
+		if( a.version != null ) g.version = a.version < MIN_GEN_VERSION ? MIN_GEN_VERSION : a.version;
 		g.events = a.events;
 		g.reserveBlocks(a.biome);
 		return g;
