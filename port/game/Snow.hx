@@ -79,6 +79,17 @@ class Snow {
 	}
 
 	/**
+	 * Lo que tapa un copo: lo macizo (collidePoint) y el agua, que no choca. Por el agua, en la burbuja de una braise solidificada
+	 * bajo el mar nevaba y se veian los copos de encima del mar a traves de ella.
+	 */
+	static function stops( world : World, x : Float, y : Float, z : Float ) : Bool {
+		if( world.collidePoint(x, y, z) ) return true;
+		if( z < 0 || z >= World.HEIGHT ) return false;
+		var b = world.block(Math.floor(x), Math.floor(y), Std.int(z));
+		return b != null && b.hasProp(PLiquid);
+	}
+
+	/**
 		cam: camara 3D ya colocada; world: para ocultar copos tapados por el terreno.
 		offX/offY/visW/visH: rectangulo de la ventana en coordenadas de la escena 2D.
 	**/
@@ -130,7 +141,7 @@ class Snow {
 				e.visible = false;
 				continue;
 			}
-			// no nieva bajo techo: si hay algo macizo encima del copo en su columna, se oculta
+			// no nieva bajo techo: si hay algo macizo encima del copo en su columna, se oculta. Tampoco bajo el agua (stops)
 			var fx0 = Math.floor(wx), fy0 = Math.floor(wy);
 			var key = fx0 * 8192 + fy0;
 			var top = roof.get(key);
@@ -138,7 +149,7 @@ class Snow {
 				top = -1;
 				var zz = World.HEIGHT - 1;
 				while( zz >= 0 ) {
-					if( world.collidePoint(fx0 + 0.5, fy0 + 0.5, zz + 0.5) ) {
+					if( stops(world, fx0 + 0.5, fy0 + 0.5, zz + 0.5) ) {
 						top = zz;
 						break;
 					}
@@ -150,12 +161,12 @@ class Snow {
 				e.visible = false;
 				continue;
 			}
-			// oculto si hay terreno entre la camara y el copo
-			var hidden = world.collidePoint(wx, wy, wz);
+			// oculto si hay terreno (o agua) entre la camara y el copo
+			var hidden = stops(world, wx, wy, wz);
 			if( !hidden ) {
 				var k = 0.12;
 				while( k < 1 ) {
-					if( world.collidePoint(cx + dx * k, cy + dy * k, cz + dz * k) ) {
+					if( stops(world, cx + dx * k, cy + dy * k, cz + dz * k) ) {
 						hidden = true;
 						break;
 					}

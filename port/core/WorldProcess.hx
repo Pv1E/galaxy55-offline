@@ -14,7 +14,9 @@ import Block;
  * - congelador (BFreezer): el agua cercana pasa a hielo y la lava a roca; BFTransform cambia el bloque al quitarlo;
  * - bloques con BFTrack (PTrack: el turbo minero): con el jugador dentro de su radio, la potencia de excavacion pasa a 3;
  * - cada bloque del agua del bioma que se pone aqui cuenta para bajar el nivel del mar (api.processBlock de Process.set, que
- *   en el cliente original hace net/Local.hx); la bajada (World.reduceWater) se hace en la siguiente actualizacion.
+ *   en el cliente original hace net/Local.hx); la bajada (World.reduceWater) se hace en la siguiente actualizacion;
+ * - braise solidificada (BHeater, anadido del port): el agua de la misma esfera que el congelador desaparece y no vuelve a
+ *   entrar mientras siga puesta; el agua de encima se queda donde esta. Al quitarla, el agua de alrededor vuelve a fluir.
  * En el hangar (EditShip) no hay transformaciones (allowTransforms) y los liquidos no se mueven (allowFlow).
  * No se porta lo del servidor: camara compartida.
  */
@@ -69,6 +71,7 @@ class WorldProcess {
 			n++;
 			frame++;
 			if( frame % 4 == 0 ) updateFlood();
+			if( frame % 10 == 0 ) checkHeaters();
 			updateCover();
 			updatePropagate();
 			updateTrack(hx, hy, hz);
@@ -116,6 +119,8 @@ class WorldProcess {
 
 	function flood( x : Int, y : Int, z : Int, b : Block ) {
 		if( z < 1 || z >= WorldData.HEIGHT - 1 ) return false;
+		// la esfera de una braise solidificada: como una pared (el mar no la llena ni baja por llenarla)
+		if( heated(x, y, z) ) return false;
 		var b2 = get(x, y, z);
 		if( b2 == b ) {
 			// agua puesta junto al mar: el mar la llena
@@ -168,9 +173,9 @@ class WorldProcess {
 				return;
 			}
 		}
-		// cae: la fuente suelta el paso 1, los pasos caen iguales
+		// cae: la fuente suelta el paso 1, los pasos caen iguales (la esfera de una braise para el agua como una pared)
 		var under = get(x, y, z - 1);
-		if( z > 1 && canPropagate(b, under) && !isWater(under) ) {
+		if( z > 1 && canPropagate(b, under) && !isWater(under) && !heated(x, y, z - 1) ) {
 			setWater(x, y, z - 1, b, st == 0 ? 1 : st);
 			return;
 		}
@@ -181,7 +186,7 @@ class WorldProcess {
 		for( d in DIRS ) {
 			var tx = x + d[0], ty = y + d[1];
 			var t = get(tx, ty, z);
-			if( !isWater(t) && canPropagate(b, t) )
+			if( !isWater(t) && canPropagate(b, t) && !heated(tx, ty, z) )
 				setWater(tx, ty, z, b, next);
 			else if( t == b ) {
 				var ts = placedStep(tx, ty, z, b);
@@ -232,6 +237,8 @@ class WorldProcess {
 		if( z >= WorldData.SHIP_Z ) return;
 		if( (old != null && old.hasProp(PTrack)) || (b != null && b.hasProp(PTrack)) )
 			checkTrack(x, y, z);
+		// braise quitada o cambiada por otro bloque: su esfera deja de estar seca y el agua de alrededor vuelve a fluir
+		if( old != null && old.k == BHeater && (b == null || b.k != BHeater) ) removeHeater(x, y, z);
 		var over = get(x, y, z + 1);
 		var under = get(x, y, z - 1);
 
@@ -263,6 +270,12 @@ class WorldProcess {
 					breakFn(real(x + d[0]), real(y + d[1]), z, p);
 			}
 		} else {
+			// agua puesta en la esfera de una braise sin pasar por el flujo (que no entra) ni por GameView.place (que no la pone):
+			// desaparece al momento, como la que habia al poner la braise
+			if( repelled(b) && heated(x, y, z) ) {
+				dry(x, y, z, b);
+				return;
+			}
 			// cubrir si se pone bajo un hueco o algo transparente
 			if( b.covered != null && (over == null || over.isTransparent()) )
 				cover.push({ x : x, y : y, z : z });
@@ -277,6 +290,8 @@ class WorldProcess {
 			switch( b.k ) {
 			case BFreezer:
 				if( allowTransforms ) freeze(x, y, z);
+			case BHeater:
+				addHeater(x, y, z);
 			default:
 			}
 		}
@@ -307,6 +322,140 @@ class WorldProcess {
 					else if( b.hasProp(PLiquid) )
 						set(x, y, z, b, ice);
 				}
+	}
+
+	// ---------------------------------------------------------------- braise solidificada (BHeater, anadido del port)
+
+	/** radio de la braise: el del congelador (freeze), celdas a dx^2 + dy^2 + dz^2 < HEAT_RADIUS^2 (3 de cada lado) */
+	public static inline var HEAT_RADIUS = 4;
+	static var NO_HEATERS : Array<HeaterCell> = [];
+	/** braises del planeta; null hasta que el terreno este generado (heaterList: el servidor crea el proceso antes) */
+	var heaters : Array<HeaterCell>;
+
+	/**
+	 * El agua que la braise quita de su esfera y no deja entrar: la de cada planeta (el mar o la puesta por el jugador) y la de
+	 * la cascada. Ni la lava ni la arena movediza (BFLiquid tambien) ni el hielo del mar de Marte.
+	 */
+	public static function repelled( b : Block ) : Bool {
+		if( b == null ) return false;
+		return switch( b.k ) {
+		case BCascadeSource, BCascadeFall, BCascadeFall2, BCascadeFall3, BCascadeFall4: true;
+		default: b.type == BTWater;
+		}
+	}
+
+	/**
+	 * Hay una braise a menos de HEAT_RADIUS de la celda, mirando los bloques (GameView.place y canPlace: el cliente de un
+	 * multijugador no lleva el proceso del mundo, y las braises de otros jugadores no pasan por su onSet)
+	 */
+	public static function heatNear( world : WorldData, x : Int, y : Int, z : Int ) : Bool {
+		var s = world.size, d = HEAT_RADIUS - 1;
+		for( dz in -d...d + 1 ) {
+			var zz = z + dz;
+			if( zz < 1 || zz >= WorldData.SHIP_Z ) continue;
+			for( dx in -d...d + 1 )
+				for( dy in -d...d + 1 ) {
+					if( dx * dx + dy * dy + dz * dz >= HEAT_RADIUS * HEAT_RADIUS ) continue;
+					var xx = (x + dx) % s, yy = (y + dy) % s;
+					if( xx < 0 ) xx += s;
+					if( yy < 0 ) yy += s;
+					var b = world.block(xx, yy, zz);
+					if( b != null && b.k == BHeater ) return true;
+				}
+		}
+		return false;
+	}
+
+	/** las braises puestas (World.editMap: el generador no pone ninguna), la primera vez que hacen falta con el terreno listo */
+	function heaterList() : Array<HeaterCell> {
+		if( heaters != null ) return heaters;
+		if( !world.isGenerated() ) return NO_HEATERS;
+		heaters = [];
+		var size = world.size, hi = Block.get(BHeater).index;
+		for( key in world.editMap.keys() ) {
+			if( (world.editMap.get(key) & 0xFFFF) != hi ) continue;
+			var c = key >> WorldData.ZBITS;
+			heaters.push({ x : c % size, y : Std.int(c / size), z : key & (WorldData.HEIGHT - 1) });
+		}
+		return heaters;
+	}
+
+	/** la celda esta en la esfera de una braise: el agua no entra (flood, updatePlaced, updatePropagate) */
+	public function heated( x : Int, y : Int, z : Int ) : Bool {
+		var l = heaterList();
+		if( l.length == 0 ) return false;
+		var s = world.size, h2 = s >> 1;
+		x = real(x);
+		y = real(y);
+		for( h in l ) {
+			var dx = x - h.x, dy = y - h.y, dz = z - h.z;
+			if( dx > h2 ) dx -= s else if( dx < -h2 ) dx += s;
+			if( dy > h2 ) dy -= s else if( dy < -h2 ) dy += s;
+			if( dx * dx + dy * dy + dz * dz < HEAT_RADIUS * HEAT_RADIUS ) return true;
+		}
+		return false;
+	}
+
+	/** braise puesta: se apunta y el agua de su esfera desaparece (en el hangar no: allowTransforms, como el congelador) */
+	function addHeater( x : Int, y : Int, z : Int ) {
+		x = real(x);
+		y = real(y);
+		var l = heaterList();
+		if( l == NO_HEATERS ) return;
+		var known = false;
+		for( h in l ) if( h.x == x && h.y == y && h.z == z ) known = true;
+		if( !known ) l.push({ x : x, y : y, z : z });
+		if( !allowTransforms ) return;
+		var d = HEAT_RADIUS;
+		for( dx in -d...d + 1 )
+			for( dy in -d...d + 1 )
+				for( dz in -d...d + 1 ) {
+					if( dx * dx + dy * dy + dz * dz >= d * d ) continue;
+					var cz = z + dz;
+					if( cz < 1 || cz >= WorldData.SHIP_Z ) continue;
+					var cx = real(x + dx), cy = real(y + dy);
+					var b = get(cx, cy, cz);
+					if( repelled(b) ) dry(cx, cy, cz, b);
+				}
+	}
+
+	/**
+	 * Quita el agua de una celda de la esfera. La fuente de cascada (se apunta y se recoge) se suelta como al romperla: no se
+	 * pierde ni se duplica. Una celda del mar descuenta lo que contara al volver a llenarse (addFlood): el nivel no baja.
+	 */
+	function dry( x : Int, y : Int, z : Int, b : Block ) {
+		if( b.hasProp(PCanPick) ) {
+			// breakFn la quita y suelta lo suyo; en el juego tambien llama a onSet, en el servidor no: se llama aqui (dos veces no
+			// cambia nada, como en flood)
+			breakFn(x, y, z, b);
+			onSet(x, y, z, b, null);
+			return;
+		}
+		if( b == world.seaBlock && world.waterLevelAt(x, y, z) == 0 ) world.removeFlood();
+		set(x, y, z, b, null);
+	}
+
+	/** braise quitada: deja de contar y el agua de alrededor de su esfera (radio + 1) vuelve a fluir, salvo donde haya otra */
+	function removeHeater( x : Int, y : Int, z : Int ) {
+		x = real(x);
+		y = real(y);
+		var l = heaterList();
+		for( h in l.copy() ) if( h.x == x && h.y == y && h.z == z ) l.remove(h);
+		var d = HEAT_RADIUS + 1;
+		for( dx in -d...d + 1 )
+			for( dy in -d...d + 1 )
+				for( dz in -d...d + 1 )
+					if( dx * dx + dy * dy + dz * dz < d * d && z + dz >= 1 && z + dz < WorldData.SHIP_Z )
+						checkBroken(x + dx, y + dy, z + dz);
+	}
+
+	/** braises que ya no estan sin haber pasado por onSet (orden set de Dev, que no avisa al proceso) */
+	function checkHeaters() {
+		if( heaters == null || heaters.length == 0 ) return;
+		for( h in heaters.copy() ) {
+			var b = get(h.x, h.y, h.z);
+			if( b == null || b.k != BHeater ) removeHeater(h.x, h.y, h.z);
+		}
 	}
 
 	function checkBroken( x : Int, y : Int, z : Int ) {
@@ -346,9 +495,10 @@ class WorldProcess {
 				set(x, y, z, b, null);
 				continue;
 			}
-			// cae
+			// cae (el agua de la cascada no entra en la esfera de una braise: la toma por una pared)
 			var under = get(x, y, z - 1);
-			if( z > 1 && canPropagate(b, under) ) {
+			var wet = repelled(b);
+			if( z > 1 && canPropagate(b, under) && !(wet && heated(x, y, z - 1)) ) {
 				var tb = b.hasFlag(BFFallCopy) ? b : b.propagate;
 				if( under != null ) flowBreak(b, x, y, z - 1, under);
 				set(x, y, z - 1, null, tb);
@@ -360,6 +510,7 @@ class WorldProcess {
 			for( d in DIRS ) {
 				var tx = real(x + d[0]), ty = real(y + d[1]), tz = z;
 				var t = get(tx, ty, tz);
+				if( wet && heated(tx, ty, tz) ) continue;
 				if( canPropagate(b, t) ) {
 					if( t != null ) flowBreak(b, tx, ty, tz, t);
 					set(tx, ty, tz, null, b.propagate);
@@ -469,3 +620,4 @@ class WorldProcess {
 }
 
 private typedef TrackBlock = { x : Int, y : Int, z : Int, b : Block, dist : Int, on : Bool };
+private typedef HeaterCell = { x : Int, y : Int, z : Int };

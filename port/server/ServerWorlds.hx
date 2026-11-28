@@ -737,6 +737,13 @@ class ServerWorlds {
 				s.send(SSetResult(seq, false, inside ? w.valueAt(key) : 0));
 				return;
 			}
+			// el agua no se pone en la esfera de una braise solidificada (el cliente ya no la manda): no se gasta, y el inventario
+			// del jugador vuelve a ser el del servidor
+			if( WorldProcess.repelled(b) && inst.process.heated(x, y, z) ) {
+				s.send(SSetResult(seq, false, w.valueAt(key)));
+				items.sendInv(s);
+				return;
+			}
 			// el bloque sale de su inventario (lo lleva el servidor): si no lo tiene, no se pone
 			if( !items.consumeForPlace(s, slot, gi) ) {
 				s.send(SSetResult(seq, false, w.valueAt(key)));

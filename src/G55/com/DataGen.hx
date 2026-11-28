@@ -374,7 +374,8 @@ class DataGen {
 		{ id : BKubePortraitWomanTurn2, type : BTModel, texture : [15,43], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.3, weight : null, flags : [BFOnWall(2),BFSize(0.09375,0.0,0.125,0.90625,0.0625,0.90625),BFMagnet(None)], matter : null, name : "-", basePrice : null },
 		{ id : BKubePortraitWomanTurn3, type : BTModel, texture : [15,43], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.3, weight : null, flags : [BFOnWall(3),BFSize(0.9375,0.09375,0.125,1.0,0.90625,0.90625),BFMagnet(None)], matter : null, name : "-", basePrice : null },
 		{ id : BChristmasLeaves, type : BTFull, texture : [0,44], texUp : [1,44], texDown : [2,44], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFCoverable,BFLight(12.0,3.0)], matter : BGreenLeaves, name : "Feuille de Noël", basePrice : 100 },
-		{ id : BChristmasLeavesCover, type : BTFull, texture : [3,44], texUp : [41,1], texDown : [2,44], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFLight(12.0,3.0)], matter : BGreenLeaves, name : "-", basePrice : null }
+		{ id : BChristmasLeavesCover, type : BTFull, texture : [3,44], texUp : [41,1], texDown : [2,44], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFLight(12.0,3.0)], matter : BGreenLeaves, name : "-", basePrice : null },
+		{ id : BHeater, type : BTFull, texture : [0,46], texUp : [1,46], texDown : [18,4], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.5, weight : null, flags : [], matter : BShipHull, name : "Braise solidifiée", basePrice : 100 }
 	];
 
 	public static var BIOMES : Array<BiomeData> = [
@@ -471,7 +472,9 @@ class DataGen {
 		{ id : 71, schema : [CSSingle(BShipGlass),CSSingle(BKubeRubis)], out : BShipGlassRed, count : null },
 		{ id : 72, schema : [CSSingle(BShipGlass),CSSingle(BKubeSaphir)], out : BShipGlassBlue, count : null },
 		{ id : 73, schema : [CSSingle(BShipGlass),CSSingle(BKubeEmeraude)], out : BShipGlassGreen, count : null },
-		{ id : 74, schema : [CSSingle(BShipGlass),CSSingle(BKubeAmethyste)], out : BShipGlassPink, count : null }
+		{ id : 74, schema : [CSSingle(BShipGlass),CSSingle(BKubeAmethyste)], out : BShipGlassPink, count : null },
+		{ id : 90, schema : [CSBase(BLavaRock,2),CSBase(BLavaRock,2)], out : BHeater, count : 2 },
+		{ id : 91, schema : [CSSingle(BIron),CSSingle(BLava)], out : BHeater, count : 2 }
 	];
 
 }

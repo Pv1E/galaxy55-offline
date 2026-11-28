@@ -281,6 +281,18 @@ class NetTest {
 		var src = Block.get(BCascadeSource);
 		w.client.send(CPlace(5, bx, by, bz + 2, src.index, 0, 1));
 		check("mundo: la cascada corre en el servidor", until(() -> w.has(m -> switch( m ) { case SChanges(l): Lambda.exists(l, c -> c.key != key && (c.v & 0xFFFF) != 0 && (c.v & 0xFFFF) != src.index && (c.v & 0xFFFF) != rock.index); default: false; }), 8));
+		// braise solidificada encima de la fuente (WorldProcess.addHeater): la cascada de su esfera se va y no se vuelve a poner agua
+		// en ella (ServerWorlds: no se gasta); quitada, se puede
+		var heat = Block.get(BHeater);
+		w.client.send(CPlace(6, bx, by, bz + 3, heat.index, 0, 1));
+		check("mundo: braise: la cascada de su esfera se va", until(() -> w.has(m -> m.match(SSetResult(6, true, _)))
+			&& inst.world.block(bx, by, bz + 3) == heat && inst.world.block(bx, by, bz + 2) == null && inst.world.block(bx, by, bz + 1) == null));
+		w.client.send(CPlace(7, bx, by, bz + 2, src.index, 0, 1));
+		check("mundo: braise: no se pone agua en su esfera", until(() -> w.has(m -> m.match(SSetResult(7, false, _)))) && inst.world.block(bx, by, bz + 2) == null);
+		w.client.send(CBreak(8, bx, by, bz + 3, heat.index));
+		check("mundo: braise quitada", until(() -> w.has(m -> m.match(SSetResult(8, true, _)))) && inst.world.block(bx, by, bz + 3) == null);
+		w.client.send(CPlace(9, bx, by, bz + 2, src.index, 0, 1));
+		check("mundo: braise quitada: el agua se vuelve a poner", until(() -> w.has(m -> m.match(SSetResult(9, true, _)))) && inst.world.block(bx, by, bz + 2) == src);
 		server.worlds.commit();
 		var saved = server.db.loadEdits(inst.key);
 		var found = false;
