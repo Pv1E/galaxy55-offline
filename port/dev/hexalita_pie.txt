@@ -1,0 +1,57 @@
+# pie del cristal de hexalita (BBonusMediumRemain) y BWinterHidden: lo que deja un bloque al quitarlo (BFTransform) no queda
+# flotando cuando el bloque se rompe porque se excava el de debajo. Antes del arreglo, en 1) y 4) quedaba el pie del cristal y
+# la planta amarilla en el aire. Lo que debe decir cada "print block":
+#   1) cristal mediano, se excava la roca de debajo        -> nada
+#   2) cristal mediano excavado a mano (control)           -> el pie (BBonusMediumRemain)
+#   3) pie de un cristal ya excavado, se excava la roca    -> nada
+#   4) BWinterHidden, se excava la roca de debajo          -> nada
+#   5) BWinterHidden excavado a mano (control)             -> la planta amarilla (BYellowPlant)
+#   6) cristal pequeno, se excava la roca (control)        -> nada
+wait 3
+planet
+wait 20
+# plataforma en el aire (z=99), para que nada del terreno se rompa en cadena; cada prueba es una roca (z=100) con algo encima
+filla 58 58 72 72 99 99 BRock
+filla 58 58 72 72 100 106 none
+tp 65.5 67.5 100 0 0
+wait 20
+setp 62 62 100 BRock
+setp 62 62 101 BBonusMedium
+setp 64 62 100 BRock
+setp 64 62 101 BBonusMedium
+setp 66 62 100 BRock
+setp 66 62 101 BBonusMedium
+setp 68 62 100 BRock
+setp 68 62 101 BWinterHidden
+setp 70 62 100 BRock
+setp 70 62 101 BWinterHidden
+setp 60 62 100 BRock
+setp 60 62 101 BBonusSmall
+# testigo: un cristal mediano intacto sobre su roca
+setp 66 60 100 BRock
+setp 66 60 101 BBonusMedium
+lookat 65.5 62.5 101.2
+wait 20
+shot hexalita_pie_antes
+# 1) cristal mediano: se excava la roca de debajo
+breakp 62 62 100
+print block 62 62 101
+# 2) control: el cristal mediano excavado a mano deja su pie
+breakp 64 62 101
+print block 64 62 101
+# 3) el pie que queda se rompe al excavar la roca de debajo (BFDetail)
+breakp 66 62 101
+breakp 66 62 100
+print block 66 62 101
+# 4) BWinterHidden: se excava la roca de debajo
+breakp 68 62 100
+print block 68 62 101
+# 5) control: BWinterHidden excavado a mano deja la planta amarilla
+breakp 70 62 101
+print block 70 62 101
+# 6) control: cristal pequeno (sin BFTransform)
+breakp 60 62 100
+print block 60 62 101
+wait 30
+shot hexalita_pie_despues
+quit
