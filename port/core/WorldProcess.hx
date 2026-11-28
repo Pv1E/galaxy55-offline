@@ -11,7 +11,8 @@ import Block;
  *   desaparecen (updatePropagate, cada 0,1 s con un retraso de 2 a 4 pasos);
  * - la hierba se cubre al quedar al aire (covered) y se descubre al taparla (uncover);
  * - al quitar un bloque se rompen los detalles de encima, lo anclado arriba o abajo y los tableaux colgados de el (anadido del port);
- * - congelador (BFreezer): el agua cercana pasa a hielo y la lava a roca; BFTransform cambia el bloque al quitarlo;
+ * - congelador (BFreezer): el agua cercana pasa a hielo y la lava a roca; BFTransform cambia el bloque al quitarlo (cambio
+ *   del port: no si lo que deja se queda sin apoyo, supported);
  * - bloques con BFTrack (PTrack: el turbo minero): con el jugador dentro de su radio, la potencia de excavacion pasa a 3;
  * - cada bloque del agua del bioma que se pone aqui cuenta para bajar el nivel del mar (api.processBlock de Process.set, que
  *   en el cliente original hace net/Local.hx); la bajada (World.reduceWater) se hace en la siguiente actualizacion.
@@ -284,10 +285,22 @@ class WorldProcess {
 			for( f in old.flags )
 				switch( f ) {
 				case BFTransform(t, p):
-					if( allowTransforms && (p == null || GameRng.float() < p) )
+					if( allowTransforms && (p == null || GameRng.float() < p) && supported(x, y, z, Block.get(t)) )
 						set(x, y, z, b, Block.get(t));
 				default:
 				}
+	}
+
+	/**
+	 * Cambio del port: lo que deja un bloque al quitarlo (BFTransform) solo se pone si tiene el apoyo que onSet le pide: algo
+	 * debajo si es un detalle o va anclado abajo, algo encima si va anclado arriba. El original lo ponia siempre: al excavar la
+	 * roca de debajo de un cristal de hexalita mediano, el cristal se rompia (BFAnchor(Down)) y su pie (BBonusMediumRemain)
+	 * quedaba flotando; lo mismo la planta amarilla de BWinterHidden.
+	 */
+	function supported( x : Int, y : Int, z : Int, t : Block ) : Bool {
+		if( (t.hasFlag(BFDetail) || t.hasAnchor(Down)) && get(x, y, z - 1) == null ) return false;
+		if( t.hasAnchor(Up) && get(x, y, z + 1) == null ) return false;
+		return true;
 	}
 
 	/** congelador: esfera de radio 4, el liquido pasa a hielo y la lava a roca */
