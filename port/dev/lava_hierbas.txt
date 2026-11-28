@@ -1,0 +1,55 @@
+# la lava y el agua que caen o se extienden rompen las hierbas al pasar (WorldProcess.canPropagate), tambien al generar el planeta
+# (generador version 2: Generator.flowBreaks). -Extra "--lang=fr --bgbiome=BIMars --seed=40 --size=2" -Timeout 300
+# 1) generacion: falda de un volcan de Marte (semilla 40, tamano 2). Con la version 1 la lava se queda encima de las hierbas, como
+#    paredes (121 146 82, 120 147 82 y 121 149 82 = BMarsHerb1 / BMarsHerb2); con la 2 ha caido en sus celdas (BLava5, BLava3, BLava4).
+# 2) en el juego (las dos versiones igual): lava puesta al lado (A) o encima (B) de hierbas, lava parada como la del generador que
+#    despierta al quitar la roca que la separa de una hierba (C), cascada puesta al lado de hierbas de invierno (D) y agua puesta (E):
+#    en todas, las celdas de las hierbas acaban con el liquido.
+wait 30
+print gen
+print block 121 146 83
+print block 121 146 82
+print block 120 147 82
+print block 121 149 82
+helptext 0
+tp 125.5 150.5 82.01
+lookat 121.5 147.5 82.3
+wait 20
+shot lava_hierbas_volcan
+# 2) una losa de roca en el aire (z 110), las hierbas encima (z 111); un caso cada 7 o mas celdas en y (la lava llega a 4)
+filla 54 50 70 96 109 118 none
+filla 54 50 70 96 110 110 BRock
+set 60 56 111 BMarsHerb1
+set 61 56 111 BMarsHerb2
+set 62 56 111 BHighHerb1
+set 60 63 111 BMarsHerb1
+set 59 70 111 BLava
+set 60 70 111 BRock
+set 61 70 111 BMarsHerb1
+set 60 79 111 BWinterHerb1
+set 61 79 111 BWinterHerb2
+set 60 88 111 BMarsHerb2
+tp 67.5 73.5 113.01
+lookat 60.5 70.5 111.3
+wait 10
+# A: lava al lado; B: lava encima; D: cascada al lado; E: agua puesta al lado
+setp 59 56 111 BLava
+setp 60 63 112 BLava
+setp 59 79 111 BCascadeSource
+setp 59 88 111 BWater
+# C: la lava de 59 70 111 (puesta con set, sin avisar a WorldProcess, como la del generador) sigue quieta hasta quitar la roca
+wait 40
+print block 60 70 111
+breakp 60 70 111
+wait 120
+print block 60 56 111
+print block 61 56 111
+print block 62 56 111
+print block 60 63 111
+print block 60 70 111
+print block 61 70 111
+print block 60 79 111
+print block 61 79 111
+print block 60 88 111
+shot lava_hierbas_juego
+quit
