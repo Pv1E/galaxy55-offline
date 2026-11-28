@@ -406,7 +406,14 @@
    "out": [
     "BGlass",
     "BLight",
-    "BBlackLight"
+    "BBlackLight",
+    "BGlassBoxHighHerb1",
+    "BGlassBoxHighHerb3",
+    "BGlassBoxHighHerb5",
+    "BGlassBoxAcidHerb1",
+    "BGlassBoxAcidHerbCeil",
+    "BGlassBoxHealPlant",
+    "BGlassBoxCavePlantCeil"
    ]
   },
   {
@@ -430,6 +437,7 @@
     "BMiningGenerator",
     "BJumper",
     "BHealBox",
+    "BAcidHerbBox",
     "BCircuit",
     "BCamera",
     "BChest"

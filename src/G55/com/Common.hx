@@ -411,6 +411,14 @@ enum BlockKind {
 	BKubePortraitWomanTurn3;
 	BChristmasLeaves;
 	BChristmasLeavesCover;
+	BAcidHerbBox;
+	BGlassBoxHighHerb1;
+	BGlassBoxHighHerb3;
+	BGlassBoxHighHerb5;
+	BGlassBoxAcidHerb1;
+	BGlassBoxAcidHerbCeil;
+	BGlassBoxHealPlant;
+	BGlassBoxCavePlantCeil;
 }
 
 enum BlockModel {
@@ -486,6 +494,9 @@ enum BlockFlag {
 	BFTrack( t : TriggerEffect, dist : Int );
 	BFNoOptimize;
 	BFContainer( size : Int );
+	// anadido del port: cubo de cristal con esa planta dentro (BTAlpha): World y IconMesh dibujan el modelo de la planta, con su
+	// textura, dentro del cristal; no cura ni hace dano
+	BFInBox( plant : BlockKind );
 	// anadido del port: la textura corre por su casilla, como el agua y la lava de Kube (pixeles de la casilla por segundo, ver World.TileScroll)
 	BFScroll( speed : Float );
 	// anadido del port: tableau colgado de una pared (Painting). Son 4 bloques seguidos, uno por pared; turn = cuartos de vuelta

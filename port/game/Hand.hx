@@ -53,7 +53,10 @@ class Hand {
 			var clear = b != null && IconMesh.seeThrough(b);
 			// un tableau: de frente y con su placa en el centro (Painting.inHand), no por detras en el borde de la celda
 			var shown = b == null ? null : Painting.inHand(b);
-			var poly = shown == null ? null : IconMesh.polygon(shown, true, 1.0, clear);
+			// un cubo de cristal con una planta (BFInBox): sin profundidad (depth Always) se pinta por orden, las caras de atras,
+			// la planta y las de delante
+			var boxed = shown != null && shown.inBox != null;
+			var poly = shown == null ? null : IconMesh.polygon(shown, true, 1.0, clear || boxed);
 			if( poly != null ) {
 				mesh = new h3d.scene.Mesh(poly, mat, turn);
 				// de frente, un tableau entero tapaba la esquina de la pantalla: mas pequeno que un cubo
@@ -62,7 +65,7 @@ class Hand {
 				mesh.setScale(s);
 				mesh.setPosition(-c.x * s, -c.y * s, -c.z * s + (shown.wall >= 0 ? PAINTING_RISE : 0));
 				// los cubos son convexos: sin profundidad basta con no dibujar las caras de atras
-				mat.mainPass.culling = clear || b.type == BTModel || b.type == BTModel2Side || b.type == BTSprite ? None : Back;
+				mat.mainPass.culling = clear || boxed || b.type == BTModel || b.type == BTModel2Side || b.type == BTSprite ? None : Back;
 				// en la misma pasada (additive, delante de todo): mainPass.setBlendMode no la cambia, Material.blendMode si
 				mat.mainPass.setBlendMode(clear ? Alpha : None);
 				mat.mainPass.depthWrite = !clear;

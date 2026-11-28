@@ -108,6 +108,15 @@ class BlockNames {
 		"BKubePaintingMoonlight" => "Moonlight Painting", "BKubePortraitMan" => "Portrait of a Man",
 		"BKubePaintingTree" => "Tree Painting", "BKubePortraitWoman" => "Portrait of a Woman",
 		"BChristmasLeaves" => "Christmas Leaves",
+		// cajas de plantas (anadido del port): la dryade urticante en caja de hierro y las plantas en cubo de cristal (BFInBox)
+		"BAcidHerbBox" => "Boxed Stinging Dryad",
+		"BGlassBoxHighHerb1" => "Tall Grass in Glass",
+		"BGlassBoxHighHerb3" => "Mauve Sbeleleb in Glass",
+		"BGlassBoxHighHerb5" => "Blue Sbeleleb in Glass",
+		"BGlassBoxAcidHerb1" => "Stinging Dryad in Glass",
+		"BGlassBoxAcidHerbCeil" => "Underground Dryad in Glass",
+		"BGlassBoxHealPlant" => "Wild Calendula in Glass",
+		"BGlassBoxCavePlantCeil" => "Hangvine in Glass"
 	];
 
 	/** espanol: lo que falta en NamesGen.ES (bloques anadidos despues) y alguna correccion */
@@ -164,6 +173,15 @@ class BlockNames {
 		"BKubePortraitMan" => "Retrato de hombre", "BKubePaintingTree" => "Cuadro del árbol",
 		"BKubePortraitWoman" => "Retrato de mujer",
 		"BChristmasLeaves" => "Hojas de Navidad",
+		// cajas de plantas (anadido del port): la dryade urticante en caja de hierro y las plantas en cubo de cristal (BFInBox)
+		"BAcidHerbBox" => "Dryadia urticante enjaulada",
+		"BGlassBoxHighHerb1" => "Hierba alta en urna",
+		"BGlassBoxHighHerb3" => "Sbeleleb púrpura en urna",
+		"BGlassBoxHighHerb5" => "Sbeleleb azul en urna",
+		"BGlassBoxAcidHerb1" => "Dryadia urticante en urna",
+		"BGlassBoxAcidHerbCeil" => "Driadia subterránea en urna",
+		"BGlassBoxHealPlant" => "Caléndula salvaje en urna",
+		"BGlassBoxCavePlantCeil" => "Colgantina en urna"
 	];
 
 	/** frances: los bloques anadidos despues y algun cambio (BChest: en DataGen "Cantine de l'EScorp") */

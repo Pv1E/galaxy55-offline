@@ -1,0 +1,152 @@
+# Cajas de plantas (anadido del port): las recetas del sintetizador, los nombres, los precios y la Base de datos ESCorp.
+# - receta 82: hierro abajo y dryade urticante encima -> dryade urticante en caja (como la 54 de la calendula en caja);
+# - recetas 100-106: vidrio basico abajo y la planta encima -> la planta en cubo de cristal (BFInBox);
+# - no son recetas: vidrio con la dryade juvenil ni con una planta sin cubo de cristal (nouille des marais).
+# Cada receta: print drops (lo que suelta el ordenador) y print inv (lo recogido: las 8 cajas caben en el inventario). Luego
+# print names (es | en | fr), print wares (precios, solo-compra) y la Base de datos: print kuborder y capturas de las recetas.
+# Uso: powershell -File port/dev/devrun.ps1 -Script port/dev/boites_plantes_craft.txt -Timeout 600 -Extra "--lang=fr"
+wait 3
+ship
+wait 10
+tpl 62.5 63.5 3.0 3.14 -0.45
+wait 5
+# la partida de prueba empieza con el inventario casi lleno: se vacia para recoger lo fabricado
+contracts empty
+print inv
+# 82: hierro y dryade urticante
+setl 59 62 3 BIron
+setl 59 62 4 BAcidHerb1
+wait 5
+shot boites_synthe_fer
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# 100: vidrio y BHighHerb1
+setl 59 62 3 BGlass
+setl 59 62 4 BHighHerb1
+wait 5
+shot boites_synthe_verre
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# 101: vidrio y BHighHerb3
+setl 59 62 3 BGlass
+setl 59 62 4 BHighHerb3
+wait 5
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# 102: vidrio y BHighHerb5
+setl 59 62 3 BGlass
+setl 59 62 4 BHighHerb5
+wait 5
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# 103: vidrio y BAcidHerb1
+setl 59 62 3 BGlass
+setl 59 62 4 BAcidHerb1
+wait 5
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# 104: vidrio y BAcidHerbCeil
+setl 59 62 3 BGlass
+setl 59 62 4 BAcidHerbCeil
+wait 5
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# 105: vidrio y BHealPlant
+setl 59 62 3 BGlass
+setl 59 62 4 BHealPlant
+wait 5
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# 106: vidrio y BCavePlantCeil
+setl 59 62 3 BGlass
+setl 59 62 4 BCavePlantCeil
+wait 5
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# no es receta: vidrio y dryade urticante juvenil. El ordenador no fabrica nada: ni sueltos ni nada nuevo en el inventario
+setl 59 62 3 BGlass
+setl 59 62 4 BAcidHerb2
+wait 5
+activatel 61 62 4
+wait 40
+print drops
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# no es receta: vidrio y nouille des marais (sin cubo de cristal). El ordenador no fabrica nada: ni sueltos ni nada nuevo en el inventario
+setl 59 62 3 BGlass
+setl 59 62 4 BAcidMush
+wait 5
+activatel 61 62 4
+wait 40
+print drops
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+print names BAcidHerbBox BGlassBoxHighHerb1 BGlassBoxHighHerb3 BGlassBoxHighHerb5 BGlassBoxAcidHerb1 BGlassBoxAcidHerbCeil BGlassBoxHealPlant BGlassBoxCavePlantCeil
+print wares
+kub all
+print kuborder
+kub
+wait 10
+kub tab 2
+wait 10
+shot boites_kub_recettes
+kub pick BAcidHerbBox
+wait 10
+shot boites_kub_dryade
+kub pick BGlassBoxHealPlant
+wait 10
+shot boites_kub_verre
+kub close
+quit

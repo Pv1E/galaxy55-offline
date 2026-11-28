@@ -58,6 +58,8 @@ class Block {
 	public var activable : Where;
 	public var quickBreaks : Array<{ c : ChargeKind, v : Float }>;
 	public var matter : Block;
+	/** anadido del port: la planta que se ve dentro de este cubo de cristal (BFInBox), o null */
+	public var inBox : Block;
 
 	public var size : { x1 : Float, y1 : Float, z1 : Float, x2 : Float, y2 : Float, z2 : Float };
 
@@ -335,6 +337,8 @@ class Block {
 					if( b.propagate == null ) b.propagate = b;
 				case BFIsLava:
 					b.props.set(PLava);
+				case BFInBox(k):
+					b.inBox = blocks[Type.enumIndex(k)];
 				case BFTrack(_):
 					b.props.set(PTrack);
 				case BFContainer(_):

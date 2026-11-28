@@ -374,7 +374,15 @@ class DataGen {
 		{ id : BKubePortraitWomanTurn2, type : BTModel, texture : [15,43], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.3, weight : null, flags : [BFOnWall(2),BFSize(0.09375,0.0,0.125,0.90625,0.0625,0.90625),BFMagnet(None)], matter : null, name : "-", basePrice : null },
 		{ id : BKubePortraitWomanTurn3, type : BTModel, texture : [15,43], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : 0.3, weight : null, flags : [BFOnWall(3),BFSize(0.9375,0.09375,0.125,1.0,0.90625,0.90625),BFMagnet(None)], matter : null, name : "-", basePrice : null },
 		{ id : BChristmasLeaves, type : BTFull, texture : [0,44], texUp : [1,44], texDown : [2,44], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFCoverable,BFLight(12.0,3.0)], matter : BGreenLeaves, name : "Feuille de Noël", basePrice : 100 },
-		{ id : BChristmasLeavesCover, type : BTFull, texture : [3,44], texUp : [41,1], texDown : [2,44], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFLight(12.0,3.0)], matter : BGreenLeaves, name : "-", basePrice : null }
+		{ id : BChristmasLeavesCover, type : BTFull, texture : [3,44], texUp : [41,1], texDown : [2,44], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFLight(12.0,3.0)], matter : BGreenLeaves, name : "-", basePrice : null },
+		{ id : BAcidHerbBox, type : BTFull, texture : [0,45], texUp : [], texDown : [], shadeX : null, shadeY : null, shadeUp : null, shadeDown : null, power : null, weight : null, flags : [BFDamage(2.0)], matter : BIron, name : "Dryade urticante en boîte", basePrice : 100 },
+		{ id : BGlassBoxHighHerb1, type : BTAlpha, texture : [15,1], texUp : [], texDown : [], shadeX : 2.0, shadeY : 2.0, shadeUp : 2.0, shadeDown : 2.0, power : 0.5, weight : null, flags : [BFInBox(BHighHerb1)], matter : BGlass, name : "Herbe haute sous verre", basePrice : 100 },
+		{ id : BGlassBoxHighHerb3, type : BTAlpha, texture : [15,1], texUp : [], texDown : [], shadeX : 2.0, shadeY : 2.0, shadeUp : 2.0, shadeDown : 2.0, power : 0.5, weight : null, flags : [BFInBox(BHighHerb3)], matter : BGlass, name : "Sbeleleb mauve sous verre", basePrice : 100 },
+		{ id : BGlassBoxHighHerb5, type : BTAlpha, texture : [15,1], texUp : [], texDown : [], shadeX : 2.0, shadeY : 2.0, shadeUp : 2.0, shadeDown : 2.0, power : 0.5, weight : null, flags : [BFInBox(BHighHerb5)], matter : BGlass, name : "Sbeleleb bleue sous verre", basePrice : 100 },
+		{ id : BGlassBoxAcidHerb1, type : BTAlpha, texture : [15,1], texUp : [], texDown : [], shadeX : 2.0, shadeY : 2.0, shadeUp : 2.0, shadeDown : 2.0, power : 0.5, weight : null, flags : [BFInBox(BAcidHerb1)], matter : BGlass, name : "Dryade urticante sous verre", basePrice : 100 },
+		{ id : BGlassBoxAcidHerbCeil, type : BTAlpha, texture : [15,1], texUp : [], texDown : [], shadeX : 2.0, shadeY : 2.0, shadeUp : 2.0, shadeDown : 2.0, power : 0.5, weight : null, flags : [BFInBox(BAcidHerbCeil)], matter : BGlass, name : "Dryade souterraine sous verre", basePrice : 100 },
+		{ id : BGlassBoxHealPlant, type : BTAlpha, texture : [15,1], texUp : [], texDown : [], shadeX : 2.0, shadeY : 2.0, shadeUp : 2.0, shadeDown : 2.0, power : 0.5, weight : null, flags : [BFInBox(BHealPlant),BFLight(15.0,2.0)], matter : BGlass, name : "Calendula sauvage sous verre", basePrice : 100 },
+		{ id : BGlassBoxCavePlantCeil, type : BTAlpha, texture : [15,1], texUp : [], texDown : [], shadeX : 2.0, shadeY : 2.0, shadeUp : 2.0, shadeDown : 2.0, power : 0.5, weight : null, flags : [BFInBox(BCavePlantCeil)], matter : BGlass, name : "Tombeline sous verre", basePrice : 100 }
 	];
 
 	public static var BIOMES : Array<BiomeData> = [
@@ -471,7 +479,15 @@ class DataGen {
 		{ id : 71, schema : [CSSingle(BShipGlass),CSSingle(BKubeRubis)], out : BShipGlassRed, count : null },
 		{ id : 72, schema : [CSSingle(BShipGlass),CSSingle(BKubeSaphir)], out : BShipGlassBlue, count : null },
 		{ id : 73, schema : [CSSingle(BShipGlass),CSSingle(BKubeEmeraude)], out : BShipGlassGreen, count : null },
-		{ id : 74, schema : [CSSingle(BShipGlass),CSSingle(BKubeAmethyste)], out : BShipGlassPink, count : null }
+		{ id : 74, schema : [CSSingle(BShipGlass),CSSingle(BKubeAmethyste)], out : BShipGlassPink, count : null },
+		{ id : 82, schema : [CSSingle(BIron),CSSingle(BAcidHerb1)], out : BAcidHerbBox, count : null },
+		{ id : 100, schema : [CSSingle(BGlass),CSSingle(BHighHerb1)], out : BGlassBoxHighHerb1, count : null },
+		{ id : 101, schema : [CSSingle(BGlass),CSSingle(BHighHerb3)], out : BGlassBoxHighHerb3, count : null },
+		{ id : 102, schema : [CSSingle(BGlass),CSSingle(BHighHerb5)], out : BGlassBoxHighHerb5, count : null },
+		{ id : 103, schema : [CSSingle(BGlass),CSSingle(BAcidHerb1)], out : BGlassBoxAcidHerb1, count : null },
+		{ id : 104, schema : [CSSingle(BGlass),CSSingle(BAcidHerbCeil)], out : BGlassBoxAcidHerbCeil, count : null },
+		{ id : 105, schema : [CSSingle(BGlass),CSSingle(BHealPlant)], out : BGlassBoxHealPlant, count : null },
+		{ id : 106, schema : [CSSingle(BGlass),CSSingle(BCavePlantCeil)], out : BGlassBoxCavePlantCeil, count : null }
 	];
 
 }

@@ -66,6 +66,11 @@ class Palette extends h2d.Object {
 		var at = all.indexOf(Block.get(BBlueCrystalDense)) + 1;
 		for( k in [BBonusSmall, BBonusMedium, BBonusLarge, BYellowPlant, BYellowCeil, BMarsCactusFlower, BBluePlant, BMarsBlueRock, BPinkCharge] )
 			if( all.indexOf(Block.get(k)) < 0 ) all.insert(at++, Block.get(k));
+		// cajas de plantas (anadido del port): justo despues de la calendula en caja, la dryade urticante en caja y las plantas en
+		// cubo de cristal (BFInBox), que como bloques nuevos iban al final
+		at = all.indexOf(Block.get(BHealBox)) + 1;
+		for( b in Block.all )
+			if( (b.k == BAcidHerbBox || b.inBox != null) && all.remove(b) ) all.insert(at++, b);
 		// el agua de cada planeta no se vendia; en creativo se puede poner (fluye como en Minecraft). El agua acida si tiene precio en
 		// los datos y ya esta en la lista: no se repite
 		for( k in [BWater, BDarkWater, BAcidWater, BWinterWater] )

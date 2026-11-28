@@ -1,0 +1,104 @@
+# Cajas de plantas (anadido del port): la dryade urticante en caja (BAcidHerbBox, caja de hierro con su propia casilla [0,45])
+# y las 7 plantas en cubo de cristal (BFInBox: el cristal basico con el modelo y la textura de la planta dentro, World.buildChunk).
+# Capturas port/out/boites_rendu_*.png: la fila de cajas (detras, las plantas solas), de cerca, una pared de 3 x 3 cubos de
+# cristal (las caras entre dos cubos no se dibujan: las plantas de dentro se ven a traves), la paleta creativa (busqueda
+# "verre": justo despues de la calendula en caja), los iconos de la barra, la mano y los sueltos.
+# Uso: powershell -File port/dev/devrun.ps1 -Script port/dev/boites_plantes_rendu.txt -Extra "--lang=fr"
+# (con -Data y un Galaxy55/settings.json {"selectBox":false} no sale el recuadro naranja del bloque apuntado)
+wait 3
+helptext 0
+planet
+wait 30
+filla 50 54 80 80 57 90 none
+filla 50 54 80 80 56 56 BRock
+set 59 66 57 BHealBox
+set 60 66 57 BAcidHerbBox
+set 63 66 57 BGlassBoxHighHerb1
+set 64 66 57 BGlassBoxHighHerb3
+set 65 66 57 BGlassBoxHighHerb5
+set 66 66 57 BGlassBoxAcidHerb1
+set 67 66 57 BGlassBoxAcidHerbCeil
+set 68 66 57 BGlassBoxHealPlant
+set 69 66 57 BGlassBoxCavePlantCeil
+# las plantas solas detras (las de techo cuelgan de una roca)
+set 59 69 57 BHealPlant
+set 60 69 57 BAcidHerb1
+set 63 69 57 BHighHerb1
+set 64 69 57 BHighHerb3
+set 65 69 57 BHighHerb5
+set 66 69 57 BAcidHerb1
+set 67 69 58 BRock
+set 67 69 57 BAcidHerbCeil
+set 68 69 57 BHealPlant
+set 69 69 58 BRock
+set 69 69 57 BCavePlantCeil
+# pared de 3 x 3 cubos de cristal
+set 70 72 57 BGlassBoxHighHerb1
+set 71 72 57 BGlassBoxHealPlant
+set 72 72 57 BGlassBoxHighHerb3
+set 70 72 58 BGlassBoxHighHerb5
+set 71 72 58 BGlassBoxAcidHerb1
+set 72 72 58 BGlassBoxAcidHerb1
+set 70 72 59 BGlassBoxCavePlantCeil
+set 71 72 59 BGlassBoxHealPlant
+set 72 72 59 BGlassBoxAcidHerbCeil
+set 70 73 58 BGlassBoxAcidHerb1
+set 71 73 58 BGlassBoxHighHerb5
+wait 20
+tp 64.5 60.5 58.2 1.5708 -0.25
+wait 20
+shot boites_rendu_rangee
+tp 62.0 63.6 57.01 1.5708 -0.45
+wait 20
+shot boites_rendu_gauche
+tp 67.0 63.6 57.01 1.5708 -0.45
+wait 20
+shot boites_rendu_droite
+tp 71.5 68.3 58.0 1.5708 -0.1
+wait 20
+shot boites_rendu_mur
+# sueltos (lejos del jugador, que los atraeria a menos de 1.5)
+drop 61.5 63.0 57.05 BGlassBoxHealPlant
+drop 62.5 63.0 57.05 BGlassBoxHighHerb3
+drop 63.5 63.0 57.05 BAcidHerbBox
+drop 64.5 63.0 57.05 BGlassBoxAcidHerbCeil
+tp 63.0 60.5 57.01 1.5708 -0.5
+wait 30
+print drops
+shot boites_rendu_sueltos
+# barra del inventario y mano
+give BAcidHerbBox 5
+give BGlassBoxAcidHerbCeil 5
+give BGlassBoxHealPlant 5
+give BGlassBoxHighHerb5 5
+give BGlassBoxCavePlantCeil 5
+slot 1
+hand BGlassBoxHighHerb3
+wait 10
+shot boites_rendu_main_verre
+hand BAcidHerbBox
+wait 10
+shot boites_rendu_main_fer
+# paleta creativa: busqueda "boite" (las dos cajas de hierro) y "verre" (las 7 plantas en cristal, tras el vidrio basico)
+creative
+palette
+wait 5
+tap tab
+wait 2
+type boite
+wait 3
+print palnames
+shot boites_rendu_palette_boite
+tap esc
+wait 2
+tap tab
+wait 2
+type verre
+wait 3
+print palnames
+shot boites_rendu_palette_verre
+tap esc
+wait 2
+tap esc
+wait 2
+quit

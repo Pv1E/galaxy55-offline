@@ -45,8 +45,12 @@ class IconMesh {
 		m.idx.push(b); m.idx.push(b + 2); m.idx.push(b + 3);
 	}
 
-	/** caja con una textura por cara; all=false solo dibuja las 3 caras que ve la camara isometrica (+x, -y, +z) */
-	static function box( m : MeshBuf, b : Block, x1 : Float, y1 : Float, z1 : Float, x2 : Float, y2 : Float, z2 : Float, all : Bool, red = false ) {
+	/**
+	 * caja con una textura por cara; all=false solo dibuja las 3 caras que ve la camara isometrica (+x, -y, +z). inner: la planta de
+	 * un cubo de cristal (BFInBox), entre las caras de atras y las de delante
+	 */
+	static function box( m : MeshBuf, b : Block, x1 : Float, y1 : Float, z1 : Float, x2 : Float, y2 : Float, z2 : Float, all : Bool, red = false,
+			inner : Block = null ) {
 		var su = Math.sqrt(b.shadeUp), sd = Math.sqrt(b.shadeDown), sx = Math.sqrt(b.shadeX), sy = Math.sqrt(b.shadeY);
 		var tu = b.tu, td = b.td, tlr = b.tlr;
 		if( b.type == BTExtended ) {
@@ -67,6 +71,7 @@ class IconMesh {
 			quad(m, [x2, y2, z1, x1, y2, z1, x1, y2, z2, x2, y2, z2], tlr, sy, 5);
 		};
 		if( all && backFirst ) back();
+		if( inner != null ) model(m, inner);
 		quad(m, [x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2], tu, su, 0);
 		quad(m, [x2, y1, z1, x2, y2, z1, x2, y2, z2, x2, y1, z2], tlr, sx, 3);
 		quad(m, [x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2], tlr, sy, 4);
@@ -128,7 +133,7 @@ class IconMesh {
 		case BTInvisible:
 			return null;
 		default:
-			box(m, b, 0, 0, 0, 1, 1, 1, all);
+			box(m, b, 0, 0, 0, 1, 1, 1, all, false, b.inBox);
 		}
 		backFirst = false;
 		if( m.pts.length == 0 ) return null;
