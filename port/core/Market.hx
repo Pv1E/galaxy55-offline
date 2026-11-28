@@ -80,10 +80,8 @@ class Market {
 		set(25, "BStainEmpty BStainPurple BStainRed BStainWhite BStainOrange BStainGreen BWoodScrew");
 		set(50, "BIron BAluminium BIronFence BJumper BCascadeSource BFreezer");
 		// plantas en cubo de cristal (BFInBox): el precio de la planta y 10 (vidrio y montaje)
-		set(16, "BGlassBoxMush BGlassBoxHighHerb1 BGlassBoxHighHerb3 BGlassBoxHighHerb5 BGlassBoxAcidHerb1 BGlassBoxAcidHerbCeil BGlassBoxCavePlantCeil");
-		set(22, "BGlassBoxVineColumn");
-		set(25, "BGlassBoxPinkFlower BGlassBoxAcidMush BGlassBoxFreezerPlant BGlassBoxHealPlant");
-		set(35, "BGlassBoxStainEmpty BGlassBoxStainPurple BGlassBoxStainRed BGlassBoxStainWhite BGlassBoxStainOrange BGlassBoxStainGreen");
+		set(16, "BGlassBoxHighHerb1 BGlassBoxHighHerb3 BGlassBoxHighHerb5 BGlassBoxAcidHerb1 BGlassBoxAcidHerbCeil BGlassBoxCavePlantCeil");
+		set(25, "BGlassBoxAcidMush BGlassBoxHealPlant");
 		// nave y aparatos
 		set(80, "BShipPlate BShipWire BShipTubes BShipGlass2 BShipGlassBlack BShipLight");
 		set(100, "BShipHull BShipGlass BShipGlassRed BShipGlassBlue BShipGlassGreen BShipGlassPink");
@@ -142,10 +140,8 @@ class Market {
 		"BShipGlassRed", "BShipGlassBlue", "BShipGlassGreen", "BShipGlassPink",
 		"BCircuit", "BCamera", "BHealBox", "BMiningGenerator", "BArtiBomb", "BAlienTreasure",
 		// cajas de plantas: se fabrican con lo que se encuentra (la dryade en caja, como la calendula en caja)
-		"BAcidHerbBox", "BGlassBoxPinkFlower", "BGlassBoxVineColumn", "BGlassBoxStainEmpty", "BGlassBoxStainPurple",
-		"BGlassBoxStainRed", "BGlassBoxStainWhite", "BGlassBoxStainOrange", "BGlassBoxStainGreen", "BGlassBoxAcidMush",
-		"BGlassBoxMush", "BGlassBoxHighHerb1", "BGlassBoxHighHerb3", "BGlassBoxHighHerb5", "BGlassBoxFreezerPlant",
-		"BGlassBoxAcidHerb1", "BGlassBoxAcidHerbCeil", "BGlassBoxHealPlant", "BGlassBoxCavePlantCeil",
+		"BAcidHerbBox", "BGlassBoxAcidMush", "BGlassBoxHighHerb1", "BGlassBoxHighHerb3", "BGlassBoxHighHerb5", "BGlassBoxAcidHerb1",
+		"BGlassBoxAcidHerbCeil", "BGlassBoxHealPlant", "BGlassBoxCavePlantCeil",
 		// evento de Navidad (CalendarEvents): solo sale en el Sapin de Noel
 		"BChristmasLeaves",
 	];

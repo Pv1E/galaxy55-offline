@@ -1,5 +1,5 @@
 # Cajas de plantas (anadido del port): la dryade urticante en caja (BAcidHerbBox, caja de hierro con su propia casilla [0,45])
-# y las 18 plantas en cubo de cristal (BFInBox: el cristal basico con el modelo y la textura de la planta dentro, World.buildChunk).
+# y las 8 plantas en cubo de cristal (BFInBox: el cristal basico con el modelo y la textura de la planta dentro, World.buildChunk).
 # Capturas port/out/boites_rendu_*.png: la fila de cajas (detras, las plantas solas), de cerca, una pared de 3 x 3 cubos de
 # cristal (las caras entre dos cubos no se dibujan: las plantas de dentro se ven a traves), la paleta creativa (busqueda
 # "verre": justo despues de la calendula en caja), los iconos de la barra, la mano y los sueltos.
@@ -11,70 +11,49 @@ planet
 wait 30
 filla 50 54 80 80 57 90 none
 filla 50 54 80 80 56 56 BRock
-set 54 66 57 BHealBox
-set 55 66 57 BAcidHerbBox
-set 57 66 57 BGlassBoxPinkFlower
-set 58 66 57 BGlassBoxVineColumn
-set 59 66 57 BGlassBoxStainEmpty
-set 60 66 57 BGlassBoxStainPurple
-set 61 66 57 BGlassBoxStainRed
-set 62 66 57 BGlassBoxStainWhite
-set 63 66 57 BGlassBoxStainOrange
-set 64 66 57 BGlassBoxStainGreen
-set 65 66 57 BGlassBoxAcidMush
-set 66 66 57 BGlassBoxMush
-set 67 66 57 BGlassBoxHighHerb1
-set 68 66 57 BGlassBoxHighHerb3
-set 69 66 57 BGlassBoxHighHerb5
-set 70 66 57 BGlassBoxFreezerPlant
-set 71 66 57 BGlassBoxAcidHerb1
-set 72 66 57 BGlassBoxAcidHerbCeil
-set 73 66 57 BGlassBoxHealPlant
-set 74 66 57 BGlassBoxCavePlantCeil
-# las plantas solas detras (las de techo cuelgan de una losa)
-set 54 69 57 BHealPlant
-set 55 69 57 BAcidHerb1
-set 57 69 57 BPinkFlower
-set 58 69 58 BRock
-set 58 69 57 BVineColumn
-set 59 69 57 BStainEmpty
-set 60 69 57 BStainPurple
-set 61 69 57 BStainRed
-set 62 69 57 BStainWhite
-set 63 69 57 BStainOrange
-set 64 69 57 BStainGreen
-set 65 69 57 BAcidMush
-set 66 69 57 BMush
-set 67 69 57 BHighHerb1
-set 68 69 57 BHighHerb3
-set 69 69 57 BHighHerb5
-set 70 69 57 BFreezerPlant
-set 71 69 57 BAcidHerb1
-set 72 69 58 BRock
-set 72 69 57 BAcidHerbCeil
-set 73 69 57 BHealPlant
-set 74 69 58 BRock
-set 74 69 57 BCavePlantCeil
+set 59 66 57 BHealBox
+set 60 66 57 BAcidHerbBox
+set 62 66 57 BGlassBoxAcidMush
+set 63 66 57 BGlassBoxHighHerb1
+set 64 66 57 BGlassBoxHighHerb3
+set 65 66 57 BGlassBoxHighHerb5
+set 66 66 57 BGlassBoxAcidHerb1
+set 67 66 57 BGlassBoxAcidHerbCeil
+set 68 66 57 BGlassBoxHealPlant
+set 69 66 57 BGlassBoxCavePlantCeil
+# las plantas solas detras (las de techo cuelgan de una roca)
+set 59 69 57 BHealPlant
+set 60 69 57 BAcidHerb1
+set 62 69 57 BAcidMush
+set 63 69 57 BHighHerb1
+set 64 69 57 BHighHerb3
+set 65 69 57 BHighHerb5
+set 66 69 57 BAcidHerb1
+set 67 69 58 BRock
+set 67 69 57 BAcidHerbCeil
+set 68 69 57 BHealPlant
+set 69 69 58 BRock
+set 69 69 57 BCavePlantCeil
 # pared de 3 x 3 cubos de cristal
-set 70 72 57 BGlassBoxStainPurple
+set 70 72 57 BGlassBoxHighHerb1
 set 71 72 57 BGlassBoxHealPlant
-set 72 72 57 BGlassBoxStainOrange
+set 72 72 57 BGlassBoxHighHerb3
 set 70 72 58 BGlassBoxHighHerb5
 set 71 72 58 BGlassBoxAcidMush
-set 72 72 58 BGlassBoxPinkFlower
+set 72 72 58 BGlassBoxAcidHerb1
 set 70 72 59 BGlassBoxCavePlantCeil
-set 71 72 59 BGlassBoxFreezerPlant
+set 71 72 59 BGlassBoxHealPlant
 set 72 72 59 BGlassBoxAcidHerbCeil
-set 70 73 58 BGlassBoxStainGreen
-set 71 73 58 BGlassBoxMush
+set 70 73 58 BGlassBoxAcidHerb1
+set 71 73 58 BGlassBoxHighHerb5
 wait 20
-tp 65.0 59.5 58.2 1.5708 -0.25
+tp 64.5 60.5 58.2 1.5708 -0.25
 wait 20
 shot boites_rendu_rangee
-tp 58.5 63.6 57.01 1.5708 -0.45
+tp 62.0 63.6 57.01 1.5708 -0.45
 wait 20
 shot boites_rendu_gauche
-tp 66.5 63.6 57.01 1.5708 -0.45
+tp 67.0 63.6 57.01 1.5708 -0.45
 wait 20
 shot boites_rendu_droite
 tp 71.5 68.3 58.0 1.5708 -0.1
@@ -82,7 +61,7 @@ wait 20
 shot boites_rendu_mur
 # sueltos (lejos del jugador, que los atraeria a menos de 1.5)
 drop 61.5 63.0 57.05 BGlassBoxHealPlant
-drop 62.5 63.0 57.05 BGlassBoxStainRed
+drop 62.5 63.0 57.05 BGlassBoxHighHerb3
 drop 63.5 63.0 57.05 BAcidHerbBox
 drop 64.5 63.0 57.05 BGlassBoxAcidHerbCeil
 tp 63.0 60.5 57.01 1.5708 -0.5
@@ -91,9 +70,9 @@ print drops
 shot boites_rendu_sueltos
 # barra del inventario y mano
 give BAcidHerbBox 5
-give BGlassBoxPinkFlower 5
+give BGlassBoxAcidMush 5
 give BGlassBoxHealPlant 5
-give BGlassBoxStainPurple 5
+give BGlassBoxHighHerb5 5
 give BGlassBoxCavePlantCeil 5
 slot 1
 hand BGlassBoxHighHerb3
@@ -102,7 +81,7 @@ shot boites_rendu_main_verre
 hand BAcidHerbBox
 wait 10
 shot boites_rendu_main_fer
-# paleta creativa: busqueda "boite" (las dos cajas de hierro) y "verre" (las 18 plantas en cristal, tras el vidrio basico)
+# paleta creativa: busqueda "boite" (las dos cajas de hierro) y "verre" (las 8 plantas en cristal, tras el vidrio basico)
 creative
 palette
 wait 5
