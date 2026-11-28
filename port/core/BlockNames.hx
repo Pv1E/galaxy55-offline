@@ -108,6 +108,7 @@ class BlockNames {
 		"BKubePaintingMoonlight" => "Moonlight Painting", "BKubePortraitMan" => "Portrait of a Man",
 		"BKubePaintingTree" => "Tree Painting", "BKubePortraitWoman" => "Portrait of a Woman",
 		"BChristmasLeaves" => "Christmas Leaves",
+		"BHeater" => "Solid Ember",
 	];
 
 	/** espanol: lo que falta en NamesGen.ES (bloques anadidos despues) y alguna correccion */
@@ -164,6 +165,7 @@ class BlockNames {
 		"BKubePortraitMan" => "Retrato de hombre", "BKubePaintingTree" => "Cuadro del árbol",
 		"BKubePortraitWoman" => "Retrato de mujer",
 		"BChristmasLeaves" => "Hojas de Navidad",
+		"BHeater" => "Brasa solidificada",
 	];
 
 	/** frances: los bloques anadidos despues y algun cambio (BChest: en DataGen "Cantine de l'EScorp") */

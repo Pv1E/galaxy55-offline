@@ -1,0 +1,80 @@
+# Braise solidifiee (BHeater) bajo el mar, en BIWinterPeaks (mar en z = 32):
+#   powershell -File port/dev/devrun.ps1 -Script port/dev/braise_mer.txt -Extra "--bgbiome=BIWinterPeaks --lang=fr" -Timeout 300
+# Un estanque de agua del mar (nivel 0) de 15x15x15 (z 18..32) junto a la orilla de find shore 100 105, con una vitre en y = fy-8 y
+# una zanja delante para mirarlo. La braise va en el agua a 4 de la vitre (fx+11, fy-4, 25): su esfera (251 celdas, la del
+# congelador) toca la vitre y deja 4 capas de agua encima (z 29..32) y 4 debajo (z 18..21).
+# Se espera: 3375 bloques de agua; con la braise 3375 - 251 = 3124 y siguen asi 20 s (no entra nada); las filas por el centro
+# muestran el hueco y el agua de encima y de debajo en su sitio; el contador del mar baja 250 (las celdas secadas, no la de la
+# braise, que la quita setp). Despues de guardar y cargar sigue igual; un bloque puesto y quitado encima de la esfera se llena (+1)
+# sin que entre nada en ella. Al quitar la braise vuelven a ser 3375 y el contador sube 251: queda en +2, la celda de la braise y la
+# del bloque, como al quitar cualquier bloque puesto en el mar. El nivel del mar no cambia (32).
+wait 3
+planet
+wait 30
+waves 0
+find shore 100 105
+filla fx+3 fy-8 fx+19 fy+8 17 32 BWinterRock
+filla fx+3 fy-14 fx+19 fy+8 33 70 none
+filla fx+4 fy-7 fx+18 fy+7 18 32 BWinterWater
+filla fx+4 fy-8 fx+18 fy-8 18 32 BGlass
+filla fx+3 fy-14 fx+19 fy-9 18 32 none
+filla fx+3 fy-14 fx+19 fy-9 17 17 BWinterRock
+wait 30
+print sea
+count BWinterWater fx+4 fy-7 fx+18 fy+7
+tp fx+11.5 fy-13.5 18.01
+lookat fx+11.5 fy-4.5 25
+wait 20
+shot braise_mer1
+# la braise en el agua (como al ponerla jugando, Process.onSet)
+setp fx+11 fy-4 25 BHeater
+wait 10
+count BWinterWater fx+4 fy-7 fx+18 fy+7
+print sea
+wait 1200
+count BWinterWater fx+4 fy-7 fx+18 fy+7
+print sea
+row fx+4 fx+18 fy-4 30
+row fx+4 fx+18 fy-4 28
+row fx+4 fx+18 fy-4 25
+row fx+4 fx+18 fy-4 22
+row fx+4 fx+18 fy-4 21
+print block fx+11 fy-4 29
+print block fx+11 fy-4 28
+print block fx+11 fy-4 22
+print block fx+11 fy-4 21
+tp fx+11.5 fy-13.5 18.01
+lookat fx+11.5 fy-4.5 25
+wait 20
+shot braise_mer2
+# desde dentro de la burbuja, mirando el agua de encima
+tp fx+9.5 fy-4.5 23.5
+lookat fx+12.5 fy-2.5 30
+wait 1
+shot braise_mer3
+# guardar y volver a cargar: la braise sigue (WorldProcess.heaterList la toma de los cambios guardados). Se despierta el agua del
+# borde de la esfera con un bloque puesto encima de ella y quitado: el mar llena esa celda (contador +1) y no entra en la esfera
+closewin
+reload
+wait 600
+count BWinterWater fx+4 fy-7 fx+18 fy+7
+print sea
+setp fx+11 fy-4 29 BWinterRock
+breakp fx+11 fy-4 29
+wait 600
+count BWinterWater fx+4 fy-7 fx+18 fy+7
+print sea
+print block fx+11 fy-4 29
+print block fx+11 fy-4 28
+# se quita la braise: el mar vuelve a llenar la esfera
+tp fx+11.5 fy-13.5 18.01
+lookat fx+11.5 fy-4.5 25
+breakp fx+11 fy-4 25
+wait 600
+count BWinterWater fx+4 fy-7 fx+18 fy+7
+print sea
+row fx+4 fx+18 fy-4 25
+print block fx+11 fy-4 25
+wait 20
+shot braise_mer4
+quit

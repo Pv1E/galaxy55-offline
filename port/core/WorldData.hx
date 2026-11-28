@@ -640,6 +640,14 @@ class WorldData {
 		if( !floodFlag && waterTotal > 0 && waterFlood >= waterTotal / seaLevel ) floodFlag = true;
 	}
 
+	/**
+	 * Cambio del port: la braise solidificada (WorldProcess.dry) ha quitado un bloque del mar. Al quitarla el mar vuelve a llenar
+	 * su esfera y cada bloque cuenta (addFlood): aqui se descuenta antes, asi el nivel del mar no baja por poner y quitar braises.
+	 */
+	public function removeFlood() {
+		waterFlood--;
+	}
+
 	/** bloques de agua que faltan para la siguiente bajada (pruebas) */
 	public function floodThreshold() : Int {
 		return seaLevel <= 0 ? 0 : Math.ceil(waterTotal / seaLevel);

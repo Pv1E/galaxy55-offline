@@ -78,7 +78,7 @@ class Market {
 		set(15, "BShiningWoodPlank");
 		set(22, "BIronLight");
 		set(25, "BStainEmpty BStainPurple BStainRed BStainWhite BStainOrange BStainGreen BWoodScrew");
-		set(50, "BIron BAluminium BIronFence BJumper BCascadeSource BFreezer");
+		set(50, "BIron BAluminium BIronFence BJumper BCascadeSource BFreezer BHeater");
 		// nave y aparatos
 		set(80, "BShipPlate BShipWire BShipTubes BShipGlass2 BShipGlassBlack BShipLight");
 		set(100, "BShipHull BShipGlass BShipGlassRed BShipGlassBlue BShipGlassGreen BShipGlassPink");
@@ -127,6 +127,8 @@ class Market {
 		// construccion
 		"BWoodPlate", "BWoodWindow", "BWoodColumn", "BRockColumn", "BHardRockColumn", "BMoonRockColumn", "BMoonLightColumn",
 		"BVineColumn", "BStainEmpty", "BStainRed", "BGlass", "BIronFence", "BLight", "BIronLight", "BJumper", "BCascadeSource",
+		// la braise solidificada se fabrica (basalto, o hierro y lava): el robot la compra, no la vende
+		"BHeater",
 		// muros y zocalos: se fabrican con la roca (el contrato de muros de rouge'rosh, ademas, paga las cargas azules que
 		// cuesta picarla: comprados hechos, daba dinero)
 		"BRockWall", "BHardRockWall", "BMarsWall", "BWinterWall", "BAcidWall",

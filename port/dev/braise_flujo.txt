@@ -1,0 +1,103 @@
+# Braise solidifiee (BHeater) y el agua que fluye, en un llano de roca (z 56) del planeta de prueba:
+#   powershell -File port/dev/devrun.ps1 -Script port/dev/braise_flujo.txt -Extra "--lang=fr" -Timeout 300
+# A) agua puesta (fuente p en 62,60,57: pasos 1..4 hasta x = 58 y x = 66). Con la braise en 68,60,57 (su esfera llega a x = 65 a
+#    esa altura) los pasos 3 y 4 de x = 65 y 66 se van y no vuelven; al quitarla vuelven.
+# B) cascada que cae desde 80,80,66 sobre una braise en el suelo (80,80,57): se para encima de la esfera (z 61) y no baja; al
+#    quitar la braise llega al suelo.
+# C) una fuente de cascada en la esfera al poner la braise se suelta como al romperla (print drops); su agua desaparece.
+# D) con una braise en 70,70,57 el jugador no puede poner ni la fuente de cascada ni agua en su esfera: aviso en rojo, nada
+#    puesto, la mano igual (70,67 y 70,68: a 3 y 2 de la braise; 70,66 ya esta fuera); quitada la braise, si.
+wait 3
+planet
+wait 30
+filla 50 50 90 90 57 80 none
+filla 50 50 90 90 56 56 BRock
+tp 60.5 52.5 57.01
+wait 10
+# A) agua puesta
+setp 62 60 57 BWater
+wait 300
+row 56 72 60 57
+setp 68 60 57 BHeater
+wait 10
+row 56 72 60 57
+wait 300
+row 56 72 60 57
+breakp 68 60 57
+wait 300
+row 56 72 60 57
+# B) cascada sobre la braise
+setp 80 80 57 BHeater
+setp 80 80 66 BCascadeSource
+wait 400
+print block 80 80 62
+print block 80 80 61
+print block 80 80 60
+print block 80 80 58
+count BCascadeFall 74 74 86 86
+tp 80.5 70.5 57.01
+lookat 80.5 80.5 60
+wait 20
+shot braise_cascada1
+breakp 80 80 57
+wait 400
+print block 80 80 60
+print block 80 80 57
+wait 20
+shot braise_cascada2
+breakp 80 80 66
+wait 400
+# C) fuente de cascada en la esfera
+setp 86 60 57 BCascadeSource
+wait 200
+count BCascadeFall 80 54 90 66
+print drops
+setp 86 62 57 BHeater
+wait 10
+print block 86 60 57
+print drops
+wait 300
+count BCascadeFall 80 54 90 66
+breakp 86 62 57
+wait 10
+# D) no se pone agua en la esfera
+setp 70 70 57 BHeater
+tp 70.5 64.5 57.01
+wait 10
+hand BCascadeSource
+print inv
+lookat 70.5 67.5 56.95
+wait 5
+print select
+key place
+wait 8
+unkey
+wait 2
+print msg
+print block 70 67 57
+print inv
+hand BWater
+lookat 70.5 68.5 56.95
+wait 5
+key place
+wait 8
+unkey
+wait 2
+print msg
+print block 70 68 57
+print inv
+wait 5
+shot braise_refus
+# quitada la braise, se pone
+breakp 70 70 57
+wait 200
+hand BCascadeSource
+lookat 70.5 67.5 56.95
+wait 5
+key place
+wait 8
+unkey
+wait 2
+print block 70 67 57
+print inv
+quit

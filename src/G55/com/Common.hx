@@ -411,6 +411,7 @@ enum BlockKind {
 	BKubePortraitWomanTurn3;
 	BChristmasLeaves;
 	BChristmasLeavesCover;
+	BHeater;
 }
 
 enum BlockModel {

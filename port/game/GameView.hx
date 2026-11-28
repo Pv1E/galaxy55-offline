@@ -2001,6 +2001,7 @@ class GameView {
 		var here = world.block(x, y, z);
 		if( here != null && !overridable(here) ) return false;
 		if( inShip ) return true; // select.ignoreMagnets del original
+		if( heatRefused(x, y, z, put) ) return false;
 		var tmp : Block;
 		if( put.wall >= 0 ) return (tmp = world.block(s.x, s.y, s.z)) != null && tmp.hasMagnet(LeftRight);
 		if( hand.canPut(Up) && (tmp = world.block(x, y, z + 1)) != null && tmp.hasMagnet(Down) ) return true;
@@ -2012,6 +2013,11 @@ class GameView {
 			if( (tmp = world.block(x, y + 1, z)) != null && tmp.hasMagnet(LeftRight) ) return true;
 		}
 		return false;
+	}
+
+	/** agua o fuente de cascada en la esfera de una braise solidificada (WorldProcess.repelled): no se pone (en el hangar no hay braise que valga) */
+	function heatRefused( x : Int, y : Int, z : Int, b : Block ) : Bool {
+		return hangar == null && z < World.SHIP_Z && WorldProcess.repelled(b) && WorldProcess.heatNear(world, x, y, z);
 	}
 
 	/**
@@ -2033,6 +2039,8 @@ class GameView {
 		var why = refused != null ? Lang.t("hangar." + refused) : (hangar != null && hangarRule != null ? hangarRule(true, s.tx, s.ty, s.tz, hand) : null);
 		// tutorial: en la zona del sintetizador, solo la bauxita y el aluminio (Tutorial.synthRule)
 		if( why == null && hangar == null && s.tz >= World.SHIP_Z && ship.inCraft(s.tx, s.ty, s.tz) ) why = Tutorial.synthRule(info, hand);
+		// el agua (y la fuente de cascada) no se pone en la esfera de una braise solidificada: se queda en la mano
+		if( why == null && heatRefused(s.tx, s.ty, s.tz, hand) ) why = Lang.t("place.heat_water");
 		if( why != null ) {
 			if( !placedHold ) {
 				hangarRefused = why;

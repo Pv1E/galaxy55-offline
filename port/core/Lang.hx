@@ -135,6 +135,7 @@ class Lang {
 		"hangar.need_engines" => ["Demasiados bloques para tus motores: añade motores o quita bloques.", "Too many blocks for your engines: add engines or remove blocks.", "Trop de kubes pour tes moteurs : ajoute des moteurs ou retire des kubes."],
 		"hangar.separate_part" => ["Hay partes separadas: todos los bloques deben estar unidos.", "There are separate parts: all blocks must be connected.", "Il y a des parties séparées : tous les kubes doivent être reliés."],
 		"hangar.no_liquid" => ["Los líquidos no están permitidos a bordo de la nave.", "Liquids are not allowed on board the ship.", "Les liquides ne sont pas autorisés à bord du vaisseau."],
+		"place.heat_water" => ["El calor de la Brasa solidificada no deja entrar el agua aquí.", "The Solid Ember's heat keeps water out of here.", "La chaleur de la Braise solidifiée empêche l'eau d'entrer ici."],
 		"hangar.no_bomb" => ["La bomba exótica no está permitida a bordo de la nave.", "The Ancient Bomb is not allowed on board the ship.", "La bombe antique n'est pas autorisée à bord du vaisseau."],
 		"hangar.no_editor_kube" => ["Los kubes del editor de kubes no se ponen en la nave.", "Kube editor kubes can't be placed on the ship.", "Les kubes de l'Éditeur de Kubes ne se posent pas dans le vaisseau."],
 		"hangar.exit_ship_no_save" => ["La nave no es válida: los cambios no se guardarán. ¿Salir?", "The ship is not valid: changes will not be saved. Leave?", "Le vaisseau n'est pas valide : les modifications ne seront pas sauvegardées. Quitter ?"],

@@ -1966,6 +1966,13 @@ class Dev {
 			Sys.println("fichas: " + [for( e in d.sortEntries(d.entries.copy()) ) e.getName()].join(", "));
 			Sys.println("fabricados: " + [for( e in d.sortEntries([for( e in d.entries ) if( d.has(e, CCraft) ) e], true) ) e.getName()].join(", "));
 			Sys.println("recetas: " + [for( r in d.sortRecipes(Data.CRAFT.copy()) ) Block.get(r.out).getName()].join(", "));
+		case "kubmakes":
+			// kubmakes Bloque: las recetas que lo fabrican (id, esquema, cuantos da) en el orden de su ficha y en el de la pestana Recetas
+			var d = KubData.get(), e = d.entryOf(bk(a[2]));
+			var made = d.recipesMaking(e);
+			inline function txt( l : Array<CraftRule> ) return [for( r in l ) r.id + " " + r.schema + " x" + r.count].join(" | ");
+			Sys.println("ficha " + e.getName() + ": " + txt(made));
+			Sys.println("pestana recetas: " + txt([for( r in d.sortRecipes(Data.CRAFT.copy()) ) if( made.indexOf(r) >= 0 ) r]));
 		case "paldup":
 			// paleta creativa: cuantos bloques tiene, los que salen mas de una vez y donde estan las aguas
 			Sys.println("paleta: " + (app.palette == null ? "cerrada" : app.palette.devRepeated()));
