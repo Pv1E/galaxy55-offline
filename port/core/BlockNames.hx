@@ -108,6 +108,26 @@ class BlockNames {
 		"BKubePaintingMoonlight" => "Moonlight Painting", "BKubePortraitMan" => "Portrait of a Man",
 		"BKubePaintingTree" => "Tree Painting", "BKubePortraitWoman" => "Portrait of a Woman",
 		"BChristmasLeaves" => "Christmas Leaves",
+		// cajas de plantas (anadido del port): la dryade urticante en caja de hierro y las plantas en cubo de cristal (BFInBox)
+		"BAcidHerbBox" => "Boxed Stinging Dryad",
+		"BGlassBoxPinkFlower" => "Wood Rose in Glass",
+		"BGlassBoxVineColumn" => "Vine Column in Glass",
+		"BGlassBoxStainEmpty" => "Dead Stainshroom in Glass",
+		"BGlassBoxStainPurple" => "Purple Stainshroom in Glass",
+		"BGlassBoxStainRed" => "Red Stainshroom in Glass",
+		"BGlassBoxStainWhite" => "Icy Stainshroom in Glass",
+		"BGlassBoxStainOrange" => "Orange Stainshroom in Glass",
+		"BGlassBoxStainGreen" => "Green Stainshroom in Glass",
+		"BGlassBoxAcidMush" => "Swamp Noodle in Glass",
+		"BGlassBoxMush" => "Mushroom in Glass",
+		"BGlassBoxHighHerb1" => "Tall Grass in Glass",
+		"BGlassBoxHighHerb3" => "Mauve Sbeleleb in Glass",
+		"BGlassBoxHighHerb5" => "Blue Sbeleleb in Glass",
+		"BGlassBoxFreezerPlant" => "Nitrogen Pellets in Glass",
+		"BGlassBoxAcidHerb1" => "Stinging Dryad in Glass",
+		"BGlassBoxAcidHerbCeil" => "Underground Dryad in Glass",
+		"BGlassBoxHealPlant" => "Wild Calendula in Glass",
+		"BGlassBoxCavePlantCeil" => "Hangvine in Glass"
 	];
 
 	/** espanol: lo que falta en NamesGen.ES (bloques anadidos despues) y alguna correccion */
@@ -164,6 +184,26 @@ class BlockNames {
 		"BKubePortraitMan" => "Retrato de hombre", "BKubePaintingTree" => "Cuadro del árbol",
 		"BKubePortraitWoman" => "Retrato de mujer",
 		"BChristmasLeaves" => "Hojas de Navidad",
+		// cajas de plantas (anadido del port): la dryade urticante en caja de hierro y las plantas en cubo de cristal (BFInBox)
+		"BAcidHerbBox" => "Dryadia urticante enjaulada",
+		"BGlassBoxPinkFlower" => "Florosa en urna",
+		"BGlassBoxVineColumn" => "Bara trenzada en urna",
+		"BGlassBoxStainEmpty" => "Tinte muerto en urna",
+		"BGlassBoxStainPurple" => "Tinte púrpura en urna",
+		"BGlassBoxStainRed" => "Tinte rojo en urna",
+		"BGlassBoxStainWhite" => "Setium glacial en urna",
+		"BGlassBoxStainOrange" => "Setium naranja en urna",
+		"BGlassBoxStainGreen" => "Setium verde en urna",
+		"BGlassBoxAcidMush" => "Hongo de pantano en urna",
+		"BGlassBoxMush" => "Seta en urna",
+		"BGlassBoxHighHerb1" => "Hierba alta en urna",
+		"BGlassBoxHighHerb3" => "Sbeleleb púrpura en urna",
+		"BGlassBoxHighHerb5" => "Sbeleleb azul en urna",
+		"BGlassBoxFreezerPlant" => "Bolas de nitrógeno en urna",
+		"BGlassBoxAcidHerb1" => "Dryadia urticante en urna",
+		"BGlassBoxAcidHerbCeil" => "Driadia subterránea en urna",
+		"BGlassBoxHealPlant" => "Caléndula salvaje en urna",
+		"BGlassBoxCavePlantCeil" => "Colgantina en urna"
 	];
 
 	/** frances: los bloques anadidos despues y algun cambio (BChest: en DataGen "Cantine de l'EScorp") */

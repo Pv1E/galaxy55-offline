@@ -1,0 +1,295 @@
+# Cajas de plantas (anadido del port): las recetas del sintetizador, los nombres, los precios y la Base de datos ESCorp.
+# - receta 82: hierro abajo y dryade urticante encima -> dryade urticante en caja (como la 54 de la calendula en caja);
+# - recetas 100-117: vidrio basico abajo y la planta encima -> la planta en cubo de cristal (BFInBox);
+# - la dryade juvenil con vidrio no es receta (sin juveniles ni hierbas de decoracion).
+# Cada receta: print drops (lo que suelta el ordenador) y print inv (lo recogido): las 10 primeras van al inventario y las 9
+# ultimas se quedan en el suelo (inventario lleno). Luego print names
+# (es | en | fr), print wares (precios, solo-compra) y la Base de datos: print kuborder y capturas de las recetas.
+# Uso: powershell -File port/dev/devrun.ps1 -Script port/dev/boites_plantes_craft.txt -Timeout 900 -Extra "--lang=fr"
+wait 3
+ship
+wait 10
+tpl 62.5 63.5 3.0 3.14 -0.45
+wait 5
+# la partida de prueba empieza con el inventario casi lleno: se vacia para recoger lo fabricado
+contracts empty
+print inv
+# 82: hierro y dryade urticante
+setl 59 62 3 BIron
+setl 59 62 4 BAcidHerb1
+wait 5
+print msg
+shot boites_synthe_fer
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# 100: vidrio y BPinkFlower
+setl 59 62 3 BGlass
+setl 59 62 4 BPinkFlower
+wait 5
+print msg
+shot boites_synthe_verre
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# 101: vidrio y BVineColumn
+setl 59 62 3 BGlass
+setl 59 62 4 BVineColumn
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# 102: vidrio y BStainEmpty
+setl 59 62 3 BGlass
+setl 59 62 4 BStainEmpty
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# 103: vidrio y BStainPurple
+setl 59 62 3 BGlass
+setl 59 62 4 BStainPurple
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# 104: vidrio y BStainRed
+setl 59 62 3 BGlass
+setl 59 62 4 BStainRed
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# 105: vidrio y BStainWhite
+setl 59 62 3 BGlass
+setl 59 62 4 BStainWhite
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# 106: vidrio y BStainOrange
+setl 59 62 3 BGlass
+setl 59 62 4 BStainOrange
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# 107: vidrio y BStainGreen
+setl 59 62 3 BGlass
+setl 59 62 4 BStainGreen
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# 108: vidrio y BAcidMush
+setl 59 62 3 BGlass
+setl 59 62 4 BAcidMush
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# 109: vidrio y BMush
+setl 59 62 3 BGlass
+setl 59 62 4 BMush
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# 110: vidrio y BHighHerb1
+setl 59 62 3 BGlass
+setl 59 62 4 BHighHerb1
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# 111: vidrio y BHighHerb3
+setl 59 62 3 BGlass
+setl 59 62 4 BHighHerb3
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# 112: vidrio y BHighHerb5
+setl 59 62 3 BGlass
+setl 59 62 4 BHighHerb5
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# 113: vidrio y BFreezerPlant
+setl 59 62 3 BGlass
+setl 59 62 4 BFreezerPlant
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# 114: vidrio y BAcidHerb1
+setl 59 62 3 BGlass
+setl 59 62 4 BAcidHerb1
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# 115: vidrio y BAcidHerbCeil
+setl 59 62 3 BGlass
+setl 59 62 4 BAcidHerbCeil
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# 116: vidrio y BHealPlant
+setl 59 62 3 BGlass
+setl 59 62 4 BHealPlant
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# 117: vidrio y BCavePlantCeil
+setl 59 62 3 BGlass
+setl 59 62 4 BCavePlantCeil
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print drops
+wait 120
+print inv
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+# no es receta: vidrio y dryade urticante juvenil. El ordenador no fabrica nada: siguen los 9 sueltos de antes (con el inventario
+# lleno, las ultimas 9 cajas se quedan en el suelo)
+setl 59 62 3 BGlass
+setl 59 62 4 BAcidHerb2
+wait 5
+print msg
+activatel 61 62 4
+wait 40
+print msg
+print drops
+setl 59 62 3 none
+setl 59 62 4 none
+wait 5
+print names BAcidHerbBox BGlassBoxPinkFlower BGlassBoxVineColumn BGlassBoxStainEmpty BGlassBoxStainPurple BGlassBoxStainRed BGlassBoxStainWhite BGlassBoxStainOrange BGlassBoxStainGreen BGlassBoxAcidMush BGlassBoxMush BGlassBoxHighHerb1 BGlassBoxHighHerb3 BGlassBoxHighHerb5 BGlassBoxFreezerPlant BGlassBoxAcidHerb1 BGlassBoxAcidHerbCeil BGlassBoxHealPlant BGlassBoxCavePlantCeil
+print wares
+kub all
+print kuborder
+kub
+wait 10
+kub tab 2
+wait 10
+shot boites_kub_recettes
+kub pick BAcidHerbBox
+wait 10
+shot boites_kub_dryade
+kub pick BGlassBoxHealPlant
+wait 10
+shot boites_kub_verre
+kub close
+quit

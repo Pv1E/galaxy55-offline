@@ -48,6 +48,17 @@ class PortRules {
 		return placeOverIdx.exists(b.index);
 	}
 
+	/**
+	 * Cajas de plantas: curan (calendula en caja, BFHeal) o hacen dano (dryade urticante en caja, BFDamage) al pisarlas, como en el
+	 * original, y tambien al tocarlas de lado (GameView.updateLife). Cambio del port: en el original solo al pisarlas.
+	 */
+	static var SIDE_CONTACT = [BHealBox, BAcidHerbBox];
+	static var sideContactIdx = new Map<Int, Bool>();
+
+	public static inline function sideContact( b : Block ) : Bool {
+		return sideContactIdx.exists(b.index);
+	}
+
 	/** radio del turbo minero (BFTrack): cambio del port, 5 en el original */
 	static inline var TURBO_RADIUS = 15;
 
@@ -94,6 +105,7 @@ class PortRules {
 			if( r.chance < 100 ) b.flags.push(BFDropChance(r.chance));
 		}
 		for( k in PLACE_OVER ) placeOverIdx.set(Block.get(k).index, true);
+		for( k in SIDE_CONTACT ) sideContactIdx.set(Block.get(k).index, true);
 		for( r in BREAKABLE ) {
 			var b = Block.get(r.k);
 			b.props.set(PCanPick);

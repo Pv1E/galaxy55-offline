@@ -827,15 +827,16 @@ class GameView {
 			fadeFX = { t : 0., col : 0x00C5E8, speed : 10., alpha : t -> Math.sin(t * 3.14) * 0.35, lock : false, dz : 0., done : function() {} };
 	}
 
-	/** Hero.update: bloques que hacen dano (lava, agua acida, carbon ardiente, hierbas acidas) o que curan (planta y caja de
-	    curacion), y ahogarse sin oxigeno */
+	/** Hero.update: bloques que hacen dano (lava, agua acida, carbon ardiente, hierbas acidas, dryade en caja) o que curan (planta
+	    y caja de curacion), y ahogarse sin oxigeno. Cambio del port: las cajas de plantas tambien de lado (touched) */
 	function updateLife( dt : Float ) {
 		inline function at( z : Float ) return world.block(Math.floor(px), Math.floor(py), Std.int(z));
+		var side = damageRecover > 0 && healRecover > 0 ? [] : touched();
 		if( damageRecover > 0 )
 			damageRecover -= dt;
 		else {
 			var maxHit = 0.;
-			for( b in [standingBlock, at(pz + 0.1), at(pz + viewZ + 0.15)] ) {
+			for( b in [standingBlock, at(pz + 0.1), at(pz + viewZ + 0.15)].concat(side) ) {
 				if( b == null ) continue;
 				for( f in b.flags )
 					switch( f ) {
@@ -855,7 +856,7 @@ class GameView {
 		if( healRecover > 0 )
 			healRecover -= dt;
 		else
-			for( b in [standingBlock, at(pz + 0.1)] ) {
+			for( b in [standingBlock, at(pz + 0.1)].concat(side) ) {
 				if( b == null ) continue;
 				for( f in b.flags )
 					switch( f ) {
@@ -865,6 +866,27 @@ class GameView {
 					default:
 					}
 			}
+	}
+
+	/** distancia del centro del jugador a la que una caja de plantas se toca de lado: doMove lo deja a 0.45 de una pared (sus
+	    sondas), y de pie en el centro de la celda de al lado (a 0.5) no se toca */
+	static inline var TOUCH = 0.47;
+
+	/**
+	 * Cambio del port: las cajas de plantas (PortRules.sideContact) pegadas al jugador por un lado, en 8 direcciones, a la altura
+	 * de los pies y de la cabeza (las sondas de doMove llegan a 1.3). En el original solo se notaban al pisarlas.
+	 */
+	function touched() : Array<Block> {
+		var out = [];
+		for( k in 0...8 ) {
+			var a = k * Math.PI / 4;
+			var x = Math.floor(px + Math.cos(a) * TOUCH), y = Math.floor(py + Math.sin(a) * TOUCH);
+			for( dz in [0.1, 1.3] ) {
+				var b = world.block(x, y, Std.int(pz + dz));
+				if( b != null && PortRules.sideContact(b) && out.indexOf(b) < 0 ) out.push(b);
+			}
+		}
+		return out;
 	}
 
 	/** Hero.updateAngleView: los ojos van hacia 1.5 - t * dz del fundido (bajan al morir o con un golpe, suben con Mayus+K) o,

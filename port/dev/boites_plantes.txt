@@ -1,0 +1,86 @@
+# Cajas de plantas (anadido del port): la dryade urticante en caja (BAcidHerbBox, de hierro) hace 2 de dano y la calendula en
+# caja (BHealBox) cura 1, al pisarlas (como en el original) y tambien al tocarlas de lado (PortRules.sideContact,
+# GameView.touched); de pie en el centro de la celda de al lado no se tocan. Las plantas en cubo de cristal (BFInBox) ni curan ni
+# hacen dano. Zona de pruebas: suelo de roca en z=56. Capturas port/out/boites_*.png
+# Uso: powershell -File port/dev/devrun.ps1 -Script port/dev/boites_plantes.txt -Extra "--lang=fr"
+# Esperado (lineas "vida"): 1) 98 y luego menos (2 cada 10 tmod); 2) 100; 3) y 4) menos de 100 (pos x 63.55); 5) 100 y 100;
+# 6) 51 y luego mas (1 cada 20 tmod); 7) 50 y 50
+wait 3
+helptext 0
+planet
+wait 30
+filla 54 54 76 76 57 90 none
+filla 54 54 76 76 56 56 BRock
+set 64 64 57 BAcidHerbBox
+set 64 70 58 BAcidHerbBox
+set 64 66 57 BGlassBoxAcidHerb1
+set 64 62 57 BHealBox
+set 64 60 57 BGlassBoxHealPlant
+wait 10
+# 1) dryade en caja, encima: 2 de dano enseguida y otros 2 a los 10 tmod
+life 100
+tp 64.5 64.5 58.01 0 0
+wait 3
+vitals
+wait 15
+vitals
+# 2) al lado, de pie en el centro de la celda de al lado (a 0.5 de la caja): no la toca
+tp 58.5 58.5 57.01 0 0
+wait 30
+life 100
+tp 63.5 64.5 57.01 0 0
+wait 30
+vitals
+# 3) andando contra su cara -x: la toca (el centro queda a 0.45)
+walk 1
+wait 20
+vitals
+print pos
+shot boites_contact_dryade
+walk 0
+# 4) una caja a la altura de la cabeza (en z=58, sobre el aire): andando contra ella tambien
+tp 58.5 58.5 57.01 0 0
+wait 30
+life 100
+tp 62.5 70.5 57.01 0 0
+walk 1
+wait 30
+vitals
+walk 0
+# 5) dryade urticante en cubo de cristal: ni encima ni de lado
+tp 58.5 58.5 57.01 0 0
+wait 30
+life 100
+tp 64.5 66.5 58.01 0 0
+wait 30
+vitals
+tp 62.5 66.5 57.01 0 0
+walk 1
+wait 30
+vitals
+print pos
+walk 0
+# 6) calendula en caja: de lado cura 1 (y otra vez a los 20 tmod)
+tp 58.5 58.5 57.01 0 0
+wait 40
+life 50
+tp 62.5 62.5 57.01 0 0
+walk 1
+wait 15
+vitals
+wait 25
+vitals
+walk 0
+# 7) calendula sauvage en cubo de cristal: ni encima ni de lado
+tp 58.5 58.5 57.01 0 0
+wait 40
+life 50
+tp 64.5 60.5 58.01 0 0
+wait 30
+vitals
+tp 62.5 60.5 57.01 0 0
+walk 1
+wait 30
+vitals
+walk 0
+quit

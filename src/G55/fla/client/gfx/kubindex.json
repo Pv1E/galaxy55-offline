@@ -406,7 +406,25 @@
    "out": [
     "BGlass",
     "BLight",
-    "BBlackLight"
+    "BBlackLight",
+    "BGlassBoxPinkFlower",
+    "BGlassBoxVineColumn",
+    "BGlassBoxStainEmpty",
+    "BGlassBoxStainPurple",
+    "BGlassBoxStainRed",
+    "BGlassBoxStainWhite",
+    "BGlassBoxStainOrange",
+    "BGlassBoxStainGreen",
+    "BGlassBoxAcidMush",
+    "BGlassBoxMush",
+    "BGlassBoxHighHerb1",
+    "BGlassBoxHighHerb3",
+    "BGlassBoxHighHerb5",
+    "BGlassBoxFreezerPlant",
+    "BGlassBoxAcidHerb1",
+    "BGlassBoxAcidHerbCeil",
+    "BGlassBoxHealPlant",
+    "BGlassBoxCavePlantCeil"
    ]
   },
   {
@@ -430,6 +448,7 @@
     "BMiningGenerator",
     "BJumper",
     "BHealBox",
+    "BAcidHerbBox",
     "BCircuit",
     "BCamera",
     "BChest"

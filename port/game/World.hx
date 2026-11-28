@@ -1963,6 +1963,9 @@ class World extends WorldData {
 						var oE = al ? openAlphaNear(x + 1, y, z) : open(x + 1, y, z);
 						var oS = al ? openAlphaNear(x, y - 1, z) : open(x, y - 1, z);
 						var oN = al ? openAlphaNear(x, y + 1, z) : open(x, y + 1, z);
+						// anadido del port: la planta de un cubo de cristal (BFInBox), con su modelo y su textura. Tambien sin caras de
+						// cristal: rodeado de otros cubos de cristal se ve a traves de ellos
+						if( b.inBox != null ) addModel(alphaBuf, b.inBox, fx, fy, fz);
 						if( !(oU || oD || oW || oE || oS || oN) ) continue;
 						// la vitre teintee y la glace noire tambien marcan donde dejan ver los Kubes invisibles (emitInvisible)
 						var reps = role == INV_REVEAL ? 2 : 1;
