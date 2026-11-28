@@ -224,6 +224,9 @@ class SaveTest {
 		check("con un planeta de la version 0: antigua", SaveData.isOldGeneration(info) && l[0].oldGeneration == true);
 		var fresh = SaveData.create("Nueva", 1, "BIAutumn", 1);
 		check("partida nueva: no es antigua", !SaveData.isOldGeneration(fresh) && SaveArchive.meta(fresh).oldGeneration == false);
+		fresh.genVersion = gen.Generator.MIN_VERSION;
+		check("planeta de la version mas antigua que sigue: no es antigua", gen.Generator.MIN_VERSION < gen.Generator.VERSION
+			&& !SaveData.isOldGeneration(fresh) && SaveArchive.meta(fresh).oldGeneration == false);
 		// guardado automatico (sin miniatura): deja la que habia; el anterior pasa a .bak
 		var before = info.playSeconds;
 		info.playSeconds += 10;

@@ -28,10 +28,12 @@ import Common;
 	  hl port/out/gen.hl --fuzz N [--limit S]           todos los biomas (hangar y cometas incluidos) y tamanos con N semillas al
 	                                                    azar: cada planeta acaba en S segundos (60)
 	  hl port/out/gen.hl --registry                     tipos de las estructuras (Structures) frente a las anomalias de kubindex.json
+	  hl port/out/gen.hl --liquidos [CASOS]             lava y cascadas paradas junto a algo que romperian al pasar (hierbas...):
+	                                                    cuantas por planeta y bloque (sale con codigo 1 si hay alguna)
 	CASOS: --seeds A-B (o una sola), --biomes B1,B2 (todos menos BITest y BIShed; las cometas miden COMET_SIZE con cualquier
 	tamano), --sizes 1,2,3 (en trozos), --version N (Generator.VERSION), --events E1,E2 (eventos del calendario activos,
 	CalendarEvents: ninguno por defecto). Por defecto: --profile 1-5 de tamano 3, --steps 1-100
-	de tamano 1, --census 1-50 de tamano 2.
+	de tamano 1, --census 1-50 de tamano 2, --liquidos 1-20 de tamano 2.
 **/
 typedef GenCase = { seed : Int, biome : String, size : Int, ?version : Null<Int> };
 
@@ -699,6 +701,70 @@ class GenMain {
 		out(missing.length == 0 ? "REGISTRY OK" : "REGISTRY FALLA: " + missing.join(", "));
 		Sys.exit(missing.length == 0 ? 0 : 1);
 	}
+
+	/**
+	 * --liquidos [CASOS]: los liquidos que se propagan (lava y cascada: Block.propagate) que el generador ha dejado parados junto
+	 * a algo que en el juego romperian al pasar (Generator.flowBreaks, como WorldProcess.canPropagate: hierbas, plantas...):
+	 * encima (caerian en su celda) o al lado, sin poder caer (se extenderian). Cuantos por planeta y por bloque roto, y el mas
+	 * alto de cada planeta (x y z). Tambien cuantos se han quedado sobre el aire (aire=: el primero y lo que tiene encima).
+	 * Por defecto 1-20 de tamano 2. Sale con codigo 1 si hay alguno parado junto a algo que romperian.
+	 */
+	static function liquids( args : Array<String> ) {
+		var cases = parseCases(args, "1-20", "2");
+		var total = 0, bad = 0, kinds = new Map<String, Int>();
+		for( c in cases ) {
+			var g = try generate(c) catch( e : Dynamic ) {
+				out("ERROR " + caseName(c) + ": " + Std.string(e));
+				bad++;
+				continue;
+			}
+			var w = worldBytes(g), size = g.size;
+			inline function at( x : Int, y : Int, z : Int ) : Block {
+				x = x < 0 ? x + size : (x >= size ? x - size : x);
+				y = y < 0 ? y + size : (y >= size ? y - size : y);
+				var v = w.get(((x + y * size) << Const.ZBITS) | z) & 127;
+				return v == 0 ? null : g.blocks[v];
+			}
+			var n = 0, first = null, top = -1, air = 0, firstAir = null;
+			inline function stuck( x : Int, y : Int, z : Int, l : Block, t : Block ) {
+				n++;
+				var k = Type.enumConstructor(l.k) + ">" + Type.enumConstructor(t.k);
+				kinds.set(k, (kinds.exists(k) ? kinds.get(k) : 0) + 1);
+				if( z > top ) {
+					top = z;
+					first = x + " " + y + " " + z + " " + k;
+				}
+			}
+			for( y in 0...size )
+				for( x in 0...size )
+					for( z in 2...Const.ZSIZE - 1 ) {
+						var l = at(x, y, z);
+						if( l == null || l.propagate == null ) continue;
+						var u = at(x, y, z - 1);
+						if( u != null && gen.Generator.flowBreaks(l, u) ) {
+							stuck(x, y, z, l, u);
+							continue;
+						}
+						if( u == null && air++ == 0 ) {
+							var o = at(x, y, z + 1);
+							firstAir = x + " " + y + " " + z + " " + Type.enumConstructor(l.k) + " bajo " + (o == null ? "aire" : Type.enumConstructor(o.k));
+						}
+						if( u == null || u == l || u == l.propagate || l.propagate == l ) continue;
+						for( d in [[-1, 0], [1, 0], [0, -1], [0, 1]] ) {
+							var t = at(x + d[0], y + d[1], z);
+							if( t != null && gen.Generator.flowBreaks(l, t) ) stuck(x, y, z, l, t);
+						}
+					}
+			total += n;
+			if( n > 0 ) bad++;
+			out((n == 0 ? "OK     " : "PARADO ") + caseName(c) + (n == 0 ? "" : ": " + n + " (el mas alto: " + first + ")") + (air > 0 ? " aire=" + air + " (" + firstAir + ")" : ""));
+		}
+		var ks = [for( k in kinds.keys() ) k];
+		ks.sort(Reflect.compare);
+		for( k in ks ) out("  " + pad(k, 32) + lpad("" + kinds.get(k), 6));
+		out(bad == 0 ? 'LIQUIDOS OK (${cases.length} casos)' : 'LIQUIDOS PARADOS ($total en $bad de ${cases.length} casos)');
+		Sys.exit(bad == 0 ? 0 : 1);
+	}
 	#end
 
 	#if sys
@@ -771,6 +837,7 @@ class GenMain {
 			case "--allstructures": allStructures(args);
 			case "--fuzz": fuzz(args);
 			case "--registry": registry();
+			case "--liquidos": liquids(args);
 			default:
 				if( args.length >= 3 )
 					runAll([{ seed : Std.parseInt(args[0]), biome : args[1], size : Std.parseInt(args[2]), version : args.length >= 4 ? Std.parseInt(args[3]) : null }]);

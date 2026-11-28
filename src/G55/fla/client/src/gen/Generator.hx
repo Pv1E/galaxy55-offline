@@ -57,10 +57,18 @@ class Generator {
 	 *   partida sale como "Ancienne partie" (World, GalaxyApp).
 	 * - 1: azar por nombre (Rng, Generator.stream), estructuras en un registro (Structures) puestas por regiones, etapas en un
 	 *   orden fijo. Anadir una estructura (Structures: since) solo cambia el planeta dentro de su caja.
+	 * - 2: la lava y la cascada caen y se extienden tambien por lo que rompen al pasar en el juego (flowBreaks: hierbas, plantas,
+	 *   cristales de hexalita...). Antes solo por el aire: se quedaban paradas encima o al lado de una hierba (addPropagate).
 	 * Reglas: lo que cambie lo que genera el generador sube VERSION y solo se aplica con version >= la nueva (Structures: since /
 	 * until); port/headless/gen_ref.txt: las lineas de las versiones que ya han salido no cambian nunca.
 	 */
-	public static inline var VERSION = 1;
+	public static inline var VERSION = 2;
+
+	/**
+	 * Anadido del port: la version mas antigua que se sigue generando tal cual. Un planeta de una anterior (la 0) se genera con
+	 * esta y la partida sale como "Ancienne partie" (SaveData.isOldGeneration); uno de esta o de una posterior, con la suya
+	 */
+	public static inline var MIN_VERSION = 1;
 
 	public var size(default,null) : Int;
 	/** anadido del port: version con la que se genera este planeta (VERSION si no se dice otra) */
@@ -545,7 +553,22 @@ class Generator {
 		gcFree(false);
 	}
 	
+	/**
+	 * Anadido del port: lo que un liquido que cae o se extiende (lava, cascada) rompe al pasar en el juego (WorldProcess.canPropagate):
+	 * hierbas y plantas (BTModel2Side), modelos y bloques reducidos y, para la lava, lo que no choca. Nunca otro liquido
+	 */
+	public static function flowBreaks( liquid : Block, t : Block ) : Bool {
+		if( t.type == BTWater || t.propagate != null || t.hasProp(PLiquid) || t.hasProp(PLava) ) return false;
+		return switch( t.type ) {
+		case BTModel, BTModel2Side, BTReduced: true;
+		default: !t.collide && !liquid.hasProp(PLiquid);
+		}
+	}
+
 	function addPropagate( bid : Int, bid2 : Int, fallId : Int ) {
+		// version 2: las celdas de lo que este liquido rompe al pasar (flowBreaks) cuentan como aire
+		var brk = new haxe.ds.Vector<Bool>(256);
+		for( t in 0...256 ) brk[t] = t == EMPTY || (version >= 2 && t < blocks.length && flowBreaks(blocks[bid], blocks[t]));
 		perlin.select();
 		var addr = 0;
 		gcFree(true);
@@ -555,18 +578,18 @@ class Generator {
 				for( z in 0...HEIGHT ) {
 					var b = fget(--addr);
 					if( b == bid ) {
-						if( z < HEIGHT - 1 && (fget(addr - 1) == 0 || fget(addr-1) == fallId) )
+						if( z < HEIGHT - 1 && (brk[fget(addr - 1)] || fget(addr-1) == fallId) )
 							fset(addr - 1, fallId);
 						else if( bid2 != bid ) {
-							if( fget(addr + HEIGHT * minusOne(x)) == 0 )
+							if( brk[fget(addr + HEIGHT * minusOne(x))] )
 								fset(addr + HEIGHT * minusOne(x), bid2);
-							if( fget(addr + HEIGHT * plusOne(x)) == 0 )
+							if( brk[fget(addr + HEIGHT * plusOne(x))] )
 								fset(addr + HEIGHT * plusOne(x), bid2);
-							if( fget(addr + HEIGHT * minusOne(x)) == 0 )
+							if( brk[fget(addr + HEIGHT * minusOne(x))] )
 								fset(addr + HEIGHT * minusOne(x), bid2);
-							if( fget(addr + HEIGHT * size * plusOne(y)) == 0 )
+							if( brk[fget(addr + HEIGHT * size * plusOne(y))] )
 								fset(addr + HEIGHT * size * plusOne(y), bid2);
-							if( fget(addr + HEIGHT * size * minusOne(y)) == 0 )
+							if( brk[fget(addr + HEIGHT * size * minusOne(y))] )
 								fset(addr + HEIGHT * size * minusOne(y), bid2);
 						}
 					}
