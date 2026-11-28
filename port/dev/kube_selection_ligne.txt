@@ -1,0 +1,229 @@
+# Editor de kubes: herramientas Linea (L, 5) y Seleccion (R, 6) con copiar / cortar / pegar (Ctrl+C / X / V), Supr, Ctrl+A,
+# bloque flotante (Entrada o clic fuera: ponerlo; Esc o Ctrl+Z: anularlo) y portapapeles que pasa de una cara y de un kube a
+# otro. El pixel X, Y del lienzo esta en 440 + 14 X + 7, 104 + 14 Y + 7. print kube: herramienta, seleccion, flotante,
+# portapapeles, linea y pasos de deshacer; kube px X Y N: pixeles de la cara (sin el bloque flotante). Capturas port/out/kubesel_*.png
+wait 3
+setlang fr
+menu
+waitfor menu
+tap down
+tap down
+tap down
+tap enter
+wait 30
+kube view
+# un motivo en los lados: cuadrado rojo de 8 x 8 en 2,2 con un hueco de 2 x 2 (pixeles vacios) en 4,4
+kube face side
+kube paint 2 2 9 9 FFAC3232
+kube paint 4 4 5 5 0
+# Seleccion (R): arrastrar de 2,2 a 9,9
+tap r
+wait 2
+shot kubesel_herramienta
+mouse 475 139 down
+mouse 524 188
+mouse 573 237
+mouse 573 237 up
+wait 2
+print kube
+shot kubesel_seleccion
+# Ctrl+C, a la cara de arriba y Ctrl+V: flota en 2,2 como en la cara de la copia
+press ctrl
+tap c
+release ctrl
+wait 2
+kube face up
+press ctrl
+tap v
+release ctrl
+wait 2
+print kube
+shot kubesel_pegado
+# se arrastra cogido por su pixel 3,3 (el 5,5 del lienzo) hasta el 15,12: queda en 12,9; la cara aun no cambia
+mouse 517 181 down
+mouse 587 223
+mouse 657 279
+mouse 657 279 up
+wait 2
+print kube
+kube px 12 9 8
+shot kubesel_movido
+# Entrada lo pone: rojo, y el hueco deja ver el gris de debajo (14,11 y 15,11)
+tap enter
+wait 2
+print kube
+kube px 12 9 8
+kube px 12 11 8
+shot kubesel_puesto
+# Ctrl+Z lo quita (gris) y Ctrl+Y lo vuelve a poner
+press ctrl
+tap z
+release ctrl
+wait 2
+kube px 12 9 4
+press ctrl
+tap y
+release ctrl
+wait 2
+kube px 12 9 4
+# arrastrar dentro de la seleccion (12,9 8x8) levanta sus pixeles: deja un hueco y se mueven; Esc los devuelve a su sitio
+mouse 657 279 down
+mouse 657 391
+mouse 657 391 up
+wait 2
+print kube
+kube px 12 9 4
+shot kubesel_levantado
+tap esc
+wait 2
+print kube
+kube px 12 9 4
+# Ctrl + arrastrar: una copia, la cara no cambia hasta ponerla; un clic fuera la pone (y quita la seleccion)
+press ctrl
+mouse 657 279 down
+wait 2
+release ctrl
+mouse 657 391
+mouse 657 391 up
+wait 2
+print kube
+shot kubesel_copia
+mouse 790 500 click
+wait 2
+print kube
+kube px 12 9 4
+kube px 12 17 4
+shot kubesel_copia_puesta
+# Ctrl+A y Supr vacian la cara de arriba; Ctrl+Z la devuelve
+press ctrl
+tap a
+release ctrl
+tap delete
+wait 2
+kube px 12 9 4
+shot kubesel_suprimido
+press ctrl
+tap z
+release ctrl
+wait 2
+kube px 12 9 4
+# Esc quita la seleccion sin cerrar el editor (print kube lo sigue viendo)
+tap esc
+wait 2
+print kube
+# otro kube: el portapapeles se queda y Ctrl+V lo pega en la madera
+kube load BWood
+kube view
+wait 5
+press ctrl
+tap v
+release ctrl
+wait 2
+print kube
+shot kubesel_otro_kube
+tap enter
+wait 2
+kube px 2 2 8
+kube px 2 4 8
+# Ctrl+X corta la seleccion que queda (2,2 8x8): copia y vacia
+press ctrl
+tap x
+release ctrl
+wait 2
+print kube
+kube px 2 2 8
+shot kubesel_cortado
+press ctrl
+tap z
+release ctrl
+# Linea (L): arrastrar de 1,20 a 25,28; a medio arrastre ya se ve en el lienzo y en la vista previa, sin estar en la cara
+tap l
+wait 2
+mouse 461 391 down
+mouse 580 440
+mouse 797 503
+wait 2
+print kube
+kube px 1 20 4
+shot kubesel_linea_arrastre
+mouse 797 503 up
+wait 2
+print kube
+kube px 1 20 4
+shot kubesel_linea
+# Mayus: de 2,30 hacia 28,27 se queda horizontal (y = 30); de 20,2 hacia 29,10 sale a 45 grados hasta 29,11
+press shift
+mouse 475 531 down
+mouse 839 489
+mouse 839 489 up
+mouse 727 139 down
+mouse 853 251
+mouse 853 251 up
+release shift
+wait 2
+print kube
+kube px 2 30 27
+kube px 29 11 1
+kube px 25 7 1
+shot kubesel_linea_mayus
+# Esc a medio arrastre anula la linea
+mouse 475 300 down
+mouse 700 300
+tap esc
+wait 2
+mouse 700 300 up
+wait 2
+print kube
+kube px 2 14 4
+# los botones de la seleccion y la ayuda de cada estado, en los tres idiomas (el portapapeles sigue: Coller activo)
+tap r
+mouse 475 139 down
+mouse 573 237
+mouse 573 237 up
+wait 2
+shot kubesel_botones_fr
+setlang es
+menu
+waitfor menu
+tap down
+tap down
+tap down
+tap enter
+wait 30
+tap r
+press ctrl
+tap v
+release ctrl
+wait 2
+shot kubesel_botones_es
+setlang en
+menu
+waitfor menu
+tap down
+tap down
+tap down
+tap enter
+wait 30
+tap l
+wait 2
+shot kubesel_botones_en
+# ventanas mas anchas y mas altas que 16:9 (Theme): el editor tapa toda la ventana y el lienzo sigue en su sitio
+tap r
+press ctrl
+tap v
+release ctrl
+winsize 1600 600
+wait 10
+cover kubes_ancha
+shot kubesel_ancha
+mouse 517 181 down
+mouse 587 223
+mouse 657 279
+mouse 657 279 up
+wait 2
+print kube
+winsize 800 900
+wait 10
+cover kubes_alta
+shot kubesel_alta
+quit

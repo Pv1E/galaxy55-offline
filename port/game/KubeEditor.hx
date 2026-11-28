@@ -114,6 +114,27 @@ private class KChoice extends h2d.Object {
 	}
 }
 
+/** rectangulo de pixeles de una cara: la seleccion (sin px), el bloque flotante y el portapapeles (px: sus pixeles, fila a fila) */
+private class PixBlock {
+	public var x : Int;
+	public var y : Int;
+	public var w : Int;
+	public var h : Int;
+	public var px : haxe.ds.Vector<Int>;
+
+	public function new( x : Int, y : Int, w : Int, h : Int, ?px : haxe.ds.Vector<Int> ) {
+		this.x = x;
+		this.y = y;
+		this.w = w;
+		this.h = h;
+		this.px = px;
+	}
+
+	public inline function contains( cx : Int, cy : Int ) return cx >= x && cy >= y && cx < x + w && cy < y + h;
+
+	public function toString() return x + "," + y + " " + w + "x" + h;
+}
+
 /**
  * Editor de kubes (anadido del port, Menu principal > Editor de Kubes): dibujar pixel a pixel las caras de un bloque con una
  * de las formas del juego y verlo en 3D tal como lo pinta el mundo (IconMesh, la misma geometria que World). Carga cualquier
@@ -146,6 +167,8 @@ class KubeEditor extends Screen {
 	static inline var ERASER = 1;
 	static inline var FILL = 2;
 	static inline var PICKER = 3;
+	static inline var LINE = 4;
+	static inline var SELECT = 5;
 	static inline var HISTORY = 200;
 	/** pasos del zoom de la vista previa (rueda): 1 = el kube o el mosaico entero en la vista */
 	static var ZOOMS = [0.5, 0.67, 0.8, 1., 1.25, 1.5, 2., 2.5, 3., 4., 5., 6.];
@@ -202,6 +225,38 @@ class KubeEditor extends Screen {
 	var toolButtons = new Array<KButton>();
 	var mirrorButton : KButton;
 	var gridButton : KButton;
+	/** ayuda bajo las herramientas: cambia con la herramienta (y con la seleccion, bajo sus botones) */
+	var toolHint : h2d.Text;
+	var hintY = 0;
+
+	// seleccion y linea
+	/** portapapeles: se queda mientras el juego esta abierto, de una cara a otra y de un kube a otro */
+	static var clip : PixBlock;
+	/** rectangulo elegido con la herramienta Seleccion, dentro de la cara (null = nada) */
+	var sel : PixBlock;
+	/**
+	 * Bloque flotante (pegado, o levantado de la cara al arrastrar la seleccion): aun no esta en la cara, se pinta encima en la
+	 * tira (lienzo y vista previa) hasta que se pone (Entrada, un clic fuera de el...) o se anula (Esc, Ctrl+Z).
+	 */
+	var floating : PixBlock;
+	/** el bloque se levanto de la cara: su hueco ya esta hecho y la cara de antes guardada para deshacer */
+	var floatSnap = false;
+	/** seleccion que vuelve si se anula el bloque flotante */
+	var floatOrigin : PixBlock;
+	/** arrastre de una seleccion nueva: la esquina de partida, y si el raton ha pasado a otro pixel (un clic solo la quita) */
+	var selAnchor : Array<Int>;
+	var selMoved = false;
+	/** arrastre del bloque flotante: el pixel del bloque que se cogio */
+	var grab : Array<Int>;
+	var lineFrom : Array<Int>;
+	var lineTo : Array<Int>;
+	var lineButton = 0;
+	/** pixeles de la linea que se esta trazando (indices de la cara, con los del espejo) */
+	var linePts : Array<Int>;
+	var selG : h2d.Graphics;
+	var ants = 0.;
+	var selRoot : h2d.Object;
+	var selButtons = new Array<KButton>();
 
 	// color
 	var swatch : h2d.Graphics;
@@ -374,8 +429,8 @@ class KubeEditor extends Screen {
 			y += 34;
 			return b;
 		}
-		for( i in 0...4 ) {
-			var b = add(["kube.tool.pencil", "kube.tool.eraser", "kube.tool.fill", "kube.tool.picker"][i]);
+		for( i in 0...6 ) {
+			var b = add(["kube.tool.pencil", "kube.tool.eraser", "kube.tool.fill", "kube.tool.picker", "kube.tool.line", "kube.tool.select"][i]);
 			b.onClick = function() setTool(i);
 			toolButtons.push(b);
 		}
@@ -390,8 +445,24 @@ class KubeEditor extends Screen {
 		add("kube.tool.rotate").onClick = function() transformFace(function(x, y) return y + (S - 1 - x) * S);
 		add("kube.tool.clear").onClick = clearFace;
 		add("kube.tool.copyall").onClick = copyToAll;
-		var hint = Theme.text(this, Lang.t("kube.tool.hint"), 1.1, Theme.DIM, TX, y + 12);
-		hint.maxWidth = TW / hint.scaleX;
+		// con la herramienta Seleccion, copiar, cortar, pegar y borrar (2 x 2) en el sitio de la ayuda, que baja
+		selRoot = new h2d.Object(this);
+		selRoot.setPosition(TX, y + 10);
+		var acts : Array<{ key : String, fn : Void -> Void }> = [
+			{ key : "kube.sel.copy", fn : function() { copySel(false); } },
+			{ key : "kube.sel.cut", fn : function() { copySel(true); } },
+			{ key : "kube.sel.paste", fn : paste },
+			{ key : "kube.sel.delete", fn : eraseSel },
+		];
+		for( i in 0...acts.length ) {
+			var b = new KButton(selRoot, Lang.t(acts[i].key), 56, 24, 1.2);
+			b.setPosition((i % 2) * 60, Std.int(i / 2) * 28);
+			b.onClick = acts[i].fn;
+			selButtons.push(b);
+		}
+		hintY = y + 12;
+		toolHint = Theme.text(this, "", 1.1, Theme.DIM, TX, hintY);
+		toolHint.maxWidth = TW / toolHint.scaleX;
 	}
 
 	function buildCanvas() {
@@ -419,6 +490,8 @@ class KubeEditor extends Screen {
 		}
 		hoverG = new h2d.Graphics(this);
 		hoverG.setPosition(CX, CY);
+		selG = new h2d.Graphics(this);
+		selG.setPosition(CX, CY);
 		posText = Theme.text(this, "", 1.2, Theme.DIM, CX, CY + S * PX + 4);
 		var it = new h2d.Interactive(S * PX, S * PX, this);
 		it.setPosition(CX, CY);
@@ -483,6 +556,8 @@ class KubeEditor extends Screen {
 		shapeChoice = new KChoice(this, Lang.t("kube.shape"), [for( s in KubeData.SHAPES ) Lang.t("kube.shape." + s.id)], RW);
 		shapeChoice.setPosition(RX, 102);
 		shapeChoice.onChange = function(i) {
+			// el bloque flotante se pone en su cara antes de que la forma la cambie
+			commitFloat();
 			var s = KubeData.SHAPES[i];
 			if( s.id == "door" && kube.shape.id != "door" ) kube.box = KubeData.BOXES.get("door").copy();
 			// la caja de un tableau va en pixeles de la imagen vista de frente: al entrar o salir se pone una de ejemplo
@@ -641,6 +716,14 @@ class KubeEditor extends Screen {
 	 * como en las casillas del atlas (un bloque del juego o un .kube): las que el bloque ensena al reves se dan la vuelta.
 	 */
 	public function setKube( k : KubeData, fromFile : Bool, atlas : Bool ) {
+		// lo que flotaba o se trazaba era del kube de antes; el portapapeles se queda
+		floating = null;
+		floatSnap = false;
+		sel = null;
+		selAnchor = null;
+		grab = null;
+		lineFrom = null;
+		linePts = null;
 		kube = k;
 		if( !fromFile ) kube.file = null;
 		computeCover();
@@ -757,7 +840,10 @@ class KubeEditor extends Screen {
 		return Lang.t("kube.face." + key);
 	}
 
+	/** la seleccion se queda (el mismo rectangulo en la otra cara); el bloque flotante se pone en la cara que se deja */
 	function selectFace( f : Int ) {
+		commitFloat();
+		if( lineFrom != null ) endLine(false);
 		face = f;
 		for( i in 0...faceButtons.length ) faceButtons[i].selected = kube.shape.faces[i] == f;
 		// la puerta abierta se dibuja en la vista previa al pintar su cara
@@ -769,9 +855,31 @@ class KubeEditor extends Screen {
 		refreshCanvas();
 	}
 
+	/** pasar a otra herramienta que la Seleccion pone el bloque flotante en la cara y quita la seleccion (las demas pintan en toda la cara) */
 	function setTool( t : Int ) {
+		if( t != SELECT ) {
+			commitFloat();
+			sel = null;
+			selAnchor = null;
+		}
+		if( t != LINE && lineFrom != null ) endLine(false);
 		tool = t;
 		for( i in 0...toolButtons.length ) toolButtons[i].selected = i == t;
+		refreshSelUi();
+	}
+
+	/** botones de la seleccion (solo con su herramienta) y la ayuda de la herramienta, que dice que hacer en cada momento */
+	function refreshSelUi() {
+		var on = tool == SELECT;
+		selRoot.visible = on;
+		var states = [sel != null || floating != null, sel != null || floating != null, clip != null, sel != null || floating != null];
+		for( i in 0...selButtons.length ) if( selButtons[i].enabled != states[i] ) selButtons[i].enabled = states[i];
+		toolHint.text = Lang.t(switch( tool ) {
+			case LINE: "kube.hint.line";
+			case SELECT: floating != null ? "kube.hint.float" : sel != null ? "kube.hint.sel" : "kube.hint.select";
+			default: "kube.tool.hint";
+		});
+		toolHint.y = on ? hintY + 56 : hintY;
 	}
 
 	function drawBox() {
@@ -791,7 +899,7 @@ class KubeEditor extends Screen {
 
 	/** la cara f en la tira, como en el atlas (dada la vuelta si el bloque la ensena al reves) */
 	function refreshStripFace( f : Int ) {
-		var px = kube.faces[f], flip = flipView[f];
+		var px = shownPixels(f), flip = flipView[f];
 		for( y in 0...S ) for( x in 0...S ) stripPix.setPixel(f * S + x, y, px[y * S + (flip ? S - 1 - x : x)]);
 		stripDirty = true;
 	}
@@ -1062,6 +1170,17 @@ class KubeEditor extends Screen {
 			if( tool == PICKER ) setTool(PENCIL);
 			return;
 		}
+		if( tool == SELECT ) {
+			if( button == 0 ) selectPush(x, y);
+			return;
+		}
+		if( tool == LINE ) {
+			lineFrom = [x, y];
+			lineButton = button;
+			lineTo = null;
+			setLineEnd(x, y, K.isDown(K.SHIFT));
+			return;
+		}
 		snapshot([face]);
 		if( tool == FILL && button == 0 ) {
 			floodFill(x, y, color);
@@ -1086,16 +1205,306 @@ class KubeEditor extends Screen {
 	}
 
 	/** linea de pixeles entre dos puntos (Bresenham): el raton salta varios pixeles entre dos imagenes */
-	function line( x0 : Int, y0 : Int, x1 : Int, y1 : Int ) {
+	function line( x0 : Int, y0 : Int, x1 : Int, y1 : Int ) bresenham(x0, y0, x1, y1, plot);
+
+	static function bresenham( x0 : Int, y0 : Int, x1 : Int, y1 : Int, f : Int -> Int -> Void ) {
 		var dx = Std.int(Math.abs(x1 - x0)), dy = -Std.int(Math.abs(y1 - y0));
 		var sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, err = dx + dy;
 		while( true ) {
-			plot(x0, y0);
+			f(x0, y0);
 			if( x0 == x1 && y0 == y1 ) break;
 			var e2 = 2 * err;
 			if( e2 >= dy ) { err += dy; x0 += sx; }
 			if( e2 <= dx ) { err += dx; y0 += sy; }
 		}
+	}
+
+	// ---------------------------------------------------------------- herramienta Linea
+
+	function lineColor() : Int return lineButton != 0 ? 0 : color;
+
+	/**
+	 * Extremo de la linea que se esta trazando (se ve en el lienzo y en la vista previa, aun sin estar en la cara). constrain
+	 * (Mayus): horizontal, vertical o a 45 grados, la que este mas cerca, sin salir del lienzo.
+	 */
+	function setLineEnd( x : Int, y : Int, constrain : Bool ) {
+		var x0 = lineFrom[0], y0 = lineFrom[1];
+		if( constrain ) {
+			var dx = x - x0, dy = y - y0, ax = Std.int(Math.abs(dx)), ay = Std.int(Math.abs(dy));
+			// tan(22.5) = 0.41: por debajo, la recta; si no, la diagonal
+			if( ay * 5 < ax * 2 ) y = y0;
+			else if( ax * 5 < ay * 2 ) x = x0;
+			else {
+				var sx = dx < 0 ? -1 : 1, sy = dy < 0 ? -1 : 1;
+				var d = Std.int((ax + ay + 1) / 2);
+				d = Std.int(Math.min(d, Math.min(sx > 0 ? S - 1 - x0 : x0, sy > 0 ? S - 1 - y0 : y0)));
+				x = x0 + sx * d;
+				y = y0 + sy * d;
+			}
+		}
+		if( linePts != null && lineTo != null && lineTo[0] == x && lineTo[1] == y ) return;
+		lineTo = [x, y];
+		var pts = [];
+		bresenham(x0, y0, x, y, function(px, py) {
+			pts.push(py * S + px);
+			if( mirror ) pts.push(py * S + S - 1 - px);
+		});
+		linePts = pts;
+		refreshStripFace(face);
+	}
+
+	/** al soltar el boton la linea pasa a la cara (un paso de deshacer); apply = false la quita (Esc, otra cara...) */
+	function endLine( apply : Bool ) {
+		var pts = linePts, c = lineColor();
+		lineFrom = null;
+		lineTo = null;
+		linePts = null;
+		if( apply && pts != null ) {
+			snapshot([face]);
+			var px = kube.faces[face];
+			for( i in pts ) px[i] = c;
+			refreshStripFace(face);
+			endStroke();
+		} else
+			refreshStripFace(face);
+	}
+
+	// ---------------------------------------------------------------- herramienta Seleccion
+
+	/** la cara f como se ve en el lienzo: con la linea que se esta trazando o el bloque flotante encima */
+	function shownPixels( f : Int ) : haxe.ds.Vector<Int> {
+		var px = kube.faces[f];
+		if( f != face || (floating == null && linePts == null) ) return px;
+		px = px.copy();
+		if( floating != null ) stamp(floating, px);
+		if( linePts != null ) {
+			var c = lineColor();
+			for( i in linePts ) px[i] = c;
+		}
+		return px;
+	}
+
+	/** pone el bloque b en px: sus pixeles vacios dejan ver lo de debajo (un motivo sobre un fondo), lo que sale de la cara se pierde */
+	static function stamp( b : PixBlock, px : haxe.ds.Vector<Int> ) {
+		for( y in 0...b.h ) for( x in 0...b.w ) {
+			var fx = b.x + x, fy = b.y + y, c = b.px[y * b.w + x];
+			if( c >>> 24 != 0 && fx >= 0 && fy >= 0 && fx < S && fy < S ) px[fy * S + fx] = c;
+		}
+	}
+
+	/** pixeles del rectangulo b de la cara actual */
+	function grabPixels( b : PixBlock ) : haxe.ds.Vector<Int> {
+		var src = kube.faces[face], out = new haxe.ds.Vector<Int>(b.w * b.h);
+		for( y in 0...b.h ) for( x in 0...b.w ) out[y * b.w + x] = src[(b.y + y) * S + b.x + x];
+		return out;
+	}
+
+	/** la parte del bloque b que cae dentro de la cara (null si nada) */
+	static function inFace( b : PixBlock ) : PixBlock {
+		var x0 = Std.int(Math.max(0, b.x)), y0 = Std.int(Math.max(0, b.y));
+		var x1 = Std.int(Math.min(S, b.x + b.w)), y1 = Std.int(Math.min(S, b.y + b.h));
+		return x1 > x0 && y1 > y0 ? new PixBlock(x0, y0, x1 - x0, y1 - y0) : null;
+	}
+
+	static function rectOf( x0 : Int, y0 : Int, x1 : Int, y1 : Int ) : PixBlock {
+		var x = Std.int(Math.min(x0, x1)), y = Std.int(Math.min(y0, y1));
+		return new PixBlock(x, y, Std.int(Math.abs(x1 - x0)) + 1, Std.int(Math.abs(y1 - y0)) + 1);
+	}
+
+	/**
+	 * Clic con la Seleccion: dentro del bloque flotante se coge para moverlo; fuera, se pone y empieza otra seleccion. Dentro de
+	 * la seleccion se levantan sus pixeles para moverlos (con Ctrl, una copia: la cara no cambia); fuera, otra seleccion.
+	 */
+	function selectPush( x : Int, y : Int ) {
+		if( floating != null && !floating.contains(x, y) ) commitFloat();
+		if( floating == null && sel != null && sel.contains(x, y) ) lift(hxd.Key.isDown(hxd.Key.CTRL));
+		if( floating != null ) {
+			grab = [x - floating.x, y - floating.y];
+			return;
+		}
+		selAnchor = [x, y];
+		selMoved = false;
+		sel = new PixBlock(x, y, 1, 1);
+		refreshSelUi();
+	}
+
+	function lift( copy : Bool ) {
+		floatOrigin = sel;
+		floating = new PixBlock(sel.x, sel.y, sel.w, sel.h, grabPixels(sel));
+		floatSnap = !copy;
+		if( !copy ) {
+			snapshot([face]);
+			var px = kube.faces[face];
+			for( y in sel.y...sel.y + sel.h ) for( x in sel.x...sel.x + sel.w ) px[y * S + x] = 0;
+		}
+		refreshStripFace(face);
+		refreshSelUi();
+	}
+
+	/** el bloque flotante pasa a la cara: un paso de deshacer (el de levantarlo, si se levanto de ella) */
+	function commitFloat() {
+		if( floating == null ) return;
+		var b = floating;
+		if( !floatSnap ) snapshot([face]);
+		floating = null;
+		floatSnap = false;
+		grab = null;
+		stamp(b, kube.faces[face]);
+		sel = inFace(b);
+		refreshStripFace(face);
+		endStroke();
+		refreshSelUi();
+	}
+
+	/** Esc o Ctrl+Z: el bloque pegado se quita; el levantado vuelve a su sitio (la cara de antes de levantarlo) */
+	function cancelFloat() : Bool {
+		if( floating == null ) return false;
+		if( floatSnap ) {
+			var e = undoStack.pop();
+			for( s in e ) kube.faces[s.f] = s.px;
+		}
+		floating = null;
+		floatSnap = false;
+		grab = null;
+		sel = floatOrigin;
+		refreshStripFace(face);
+		refreshSelUi();
+		return true;
+	}
+
+	/** Ctrl+C / Ctrl+X: copia la seleccion (o el bloque flotante); cut la vacia despues */
+	function copySel( cut : Bool ) {
+		var b = floating != null ? floating : sel;
+		if( b == null ) {
+			message(Lang.t("kube.sel.none"), true);
+			return;
+		}
+		clip = new PixBlock(b.x, b.y, b.w, b.h, floating != null ? floating.px.copy() : grabPixels(b));
+		message(StringTools.replace(StringTools.replace(Lang.t(cut ? "kube.sel.cutdone" : "kube.sel.copied"), "%w%", "" + b.w), "%h%", "" + b.h));
+		if( cut ) eraseSel() else refreshSelUi();
+	}
+
+	/** Ctrl+V: el portapapeles flota donde se copio (asi casa de una cara a otra) y se mueve con la Seleccion */
+	function paste() {
+		if( clip == null ) {
+			message(Lang.t("kube.sel.empty"), true);
+			return;
+		}
+		commitFloat();
+		if( lineFrom != null ) endLine(false);
+		if( tool != SELECT ) setTool(SELECT);
+		floatOrigin = sel;
+		floating = new PixBlock(clip.x, clip.y, clip.w, clip.h, clip.px.copy());
+		floatSnap = false;
+		refreshStripFace(face);
+		refreshSelUi();
+	}
+
+	/** Supr: vacia la seleccion; un bloque flotante se tira (si se levanto de la cara, su hueco se queda) */
+	function eraseSel() {
+		if( floating != null ) {
+			var lifted = floatSnap, b = floating;
+			floating = null;
+			floatSnap = false;
+			grab = null;
+			sel = inFace(b);
+			refreshStripFace(face);
+			if( lifted ) endStroke();
+		} else if( sel != null ) {
+			snapshot([face]);
+			var px = kube.faces[face];
+			for( y in sel.y...sel.y + sel.h ) for( x in sel.x...sel.x + sel.w ) px[y * S + x] = 0;
+			refreshStripFace(face);
+			endStroke();
+		} else
+			message(Lang.t("kube.sel.none"), true);
+		refreshSelUi();
+	}
+
+	/** Ctrl+A: toda la cara */
+	function selectAll() {
+		commitFloat();
+		if( tool != SELECT ) setTool(SELECT);
+		sel = new PixBlock(0, 0, S, S);
+		refreshSelUi();
+	}
+
+	/** Esc: quita la linea, el bloque flotante o la seleccion, por ese orden; false si no habia nada (Esc cierra el editor) */
+	function escape() : Bool {
+		if( lineFrom != null ) {
+			endLine(false);
+			return true;
+		}
+		if( cancelFloat() ) return true;
+		if( sel != null ) {
+			sel = null;
+			selAnchor = null;
+			refreshSelUi();
+			return true;
+		}
+		return false;
+	}
+
+	/** arrastres de la Seleccion y de la Linea con el raton en el pixel x, y (puede estar fuera del lienzo) */
+	function updateDrags( x : Int, y : Int ) {
+		var K = hxd.Key;
+		inline function clamp( v : Int ) return v < 0 ? 0 : v >= S ? S - 1 : v;
+		if( lineFrom != null ) {
+			setLineEnd(clamp(x), clamp(y), K.isDown(K.SHIFT));
+			if( !K.isDown(lineButton == 0 ? K.MOUSE_LEFT : K.MOUSE_RIGHT) ) endLine(true);
+		}
+		if( selAnchor != null ) {
+			var cx = clamp(x), cy = clamp(y);
+			if( cx != selAnchor[0] || cy != selAnchor[1] ) selMoved = true;
+			sel = rectOf(selAnchor[0], selAnchor[1], cx, cy);
+			if( !K.isDown(K.MOUSE_LEFT) ) {
+				// un clic sin arrastrar quita la seleccion
+				if( !selMoved ) sel = null;
+				selAnchor = null;
+				refreshSelUi();
+			}
+		}
+		if( grab != null && floating != null ) {
+			// el bloque puede salir en parte del lienzo, nunca entero
+			var nx = Std.int(Math.max(1 - floating.w, Math.min(S - 1, x - grab[0])));
+			var ny = Std.int(Math.max(1 - floating.h, Math.min(S - 1, y - grab[1])));
+			if( nx != floating.x || ny != floating.y ) {
+				floating.x = nx;
+				floating.y = ny;
+				refreshStripFace(face);
+			}
+			if( !K.isDown(K.MOUSE_LEFT) ) grab = null;
+		}
+	}
+
+	/** borde de la seleccion (blanco) o del bloque flotante (naranja): trazos que avanzan sobre una linea oscura */
+	function drawSelection( dt : Float ) {
+		selG.clear();
+		var b = floating != null ? floating : sel;
+		if( b == null ) return;
+		ants = (ants + dt * 16) % 8;
+		var lim = S * PX, c = floating != null ? Theme.ACCENT : 0xFFFFFF;
+		inline function cl( v : Float ) return Math.max(0, Math.min(lim, v));
+		var x0 = b.x * PX, y0 = b.y * PX, x1 = (b.x + b.w) * PX, y1 = (b.y + b.h) * PX;
+		// un borde de 2 px por dentro del rectangulo; el que cae fuera del lienzo no se ve
+		function edge( horiz : Bool, at : Float, from : Float, to : Float ) {
+			if( at < 0 || at > lim - 2 ) return;
+			var a = cl(from), e = cl(to);
+			if( e <= a ) return;
+			if( horiz ) Theme.rect(selG, a, at, e - a, 2, 0x05070D, 0.85) else Theme.rect(selG, at, a, 2, e - a, 0x05070D, 0.85);
+			var t = from - 8 + ants;
+			while( t < to ) {
+				var s = cl(Math.max(t, from)), z = cl(Math.min(t + 4, to));
+				if( z > s ) {
+					if( horiz ) Theme.rect(selG, s, at, z - s, 2, c) else Theme.rect(selG, at, s, 2, z - s, c);
+				}
+				t += 8;
+			}
+		}
+		edge(true, y0, x0, x1);
+		edge(true, y1 - 2, x0, x1);
+		edge(false, x0, y0, y1);
+		edge(false, x1 - 2, y0, y1);
 	}
 
 	static inline function same( a : Int, b : Int ) return a == b || (a >>> 24 == 0 && b >>> 24 == 0);
@@ -1145,12 +1554,20 @@ class KubeEditor extends Screen {
 		refreshShapeInfo();
 	}
 
-	function undo() restore(undoStack, redoStack);
+	/** con un bloque flotante o una linea a medias, Ctrl+Z solo los anula */
+	function undo() {
+		if( lineFrom != null ) endLine(false);
+		else if( !cancelFloat() ) restore(undoStack, redoStack);
+	}
 
-	function redo() restore(redoStack, undoStack);
+	function redo() {
+		commitFloat();
+		restore(redoStack, undoStack);
+	}
 
 	/** voltear o girar la cara: dst(x, y) da donde va el pixel x, y */
 	function transformFace( dst : Int -> Int -> Int ) {
+		commitFloat();
 		snapshot([face]);
 		var src = kube.faces[face].copy(), px = kube.faces[face];
 		for( y in 0...S ) for( x in 0...S ) px[dst(x, y)] = src[y * S + x];
@@ -1159,6 +1576,7 @@ class KubeEditor extends Screen {
 	}
 
 	function clearFace() {
+		commitFloat();
 		snapshot([face]);
 		var px = kube.faces[face];
 		for( i in 0...S * S ) px[i] = 0;
@@ -1167,6 +1585,7 @@ class KubeEditor extends Screen {
 	}
 
 	function copyToAll() {
+		commitFloat();
 		var others = [for( f in kube.shape.faces ) if( f != face ) f];
 		if( others.length == 0 ) return;
 		snapshot(others);
@@ -1395,6 +1814,8 @@ class KubeEditor extends Screen {
 
 	/** accion que pierde los cambios sin guardar: con cambios, hace falta repetirla antes de 3 s */
 	function confirmLoss( key : String, action : Void -> Void ) {
+		// un bloque flotante cuenta como un cambio: se pone antes, y se pide confirmar si no esta guardado
+		commitFloat();
 		if( dirty && (pendingKey != key || pendingTime <= 0) ) {
 			pendingKey = key;
 			pendingTime = 3;
@@ -1406,6 +1827,7 @@ class KubeEditor extends Screen {
 	}
 
 	public function saveKube() {
+		commitFloat();
 		if( StringTools.trim(kube.name) == "" ) {
 			kube.name = Lang.t("kube.newname");
 			nameInput.text = kube.name;
@@ -1450,6 +1872,8 @@ class KubeEditor extends Screen {
 
 	function close() {
 		if( typing ) nameInput.blur();
+		if( lineFrom != null ) endLine(false);
+		commitFloat();
 		if( onClose != null ) onClose();
 	}
 
@@ -1492,26 +1916,44 @@ class KubeEditor extends Screen {
 				lastY = y;
 			}
 		}
+		updateDrags(hx, hy);
 		hoverG.clear();
 		if( inside ) {
 			hoverG.lineStyle(1, 0xFFFFFF, 0.9);
 			hoverG.drawRect(hx * PX, hy * PX, PX, PX);
-			if( mirror ) hoverG.drawRect((S - 1 - hx) * PX, hy * PX, PX, PX);
+			// el espejo no cuenta para la seleccion
+			if( mirror && tool != SELECT ) hoverG.drawRect((S - 1 - hx) * PX, hy * PX, PX, PX);
 			var c = kube.faces[face][hy * S + hx];
 			posText.text = hx + ", " + hy + "   " + (c >>> 24 == 0 ? Lang.t("kube.empty") : "#" + StringTools.hex(c & 0xFFFFFF, 6));
 		} else
 			posText.text = Lang.t("kube.unused");
+		// la linea que se traza (de donde a donde) o el tamano de la seleccion
+		if( lineFrom != null && lineTo != null )
+			posText.text = lineFrom[0] + ", " + lineFrom[1] + "  ->  " + lineTo[0] + ", " + lineTo[1];
+		else {
+			var b = floating != null ? floating : sel;
+			if( b != null && tool == SELECT ) posText.text = (inside ? posText.text + "      " : "") + Lang.t("kube.tool.select") + " " + b.w + "×" + b.h;
+		}
+		drawSelection(dt);
 
 		if( !typing ) {
 			var ctrl = K.isDown(K.CTRL);
 			if( ctrl && K.isPressed(K.Z) ) K.isDown(K.SHIFT) ? redo() : undo();
 			else if( ctrl && K.isPressed(K.Y) ) redo();
 			else if( ctrl && K.isPressed(K.S) ) saveKube();
+			else if( ctrl && K.isPressed(K.C) ) copySel(false);
+			else if( ctrl && K.isPressed(K.X) ) copySel(true);
+			else if( ctrl && K.isPressed(K.V) ) paste();
+			else if( ctrl && K.isPressed(K.A) ) selectAll();
 			else if( !ctrl ) {
 				if( K.isPressed(K.B) || K.isPressed(K.NUMBER_1) ) setTool(PENCIL);
 				if( K.isPressed(K.E) || K.isPressed(K.NUMBER_2) ) setTool(ERASER);
 				if( K.isPressed(K.G) || K.isPressed(K.NUMBER_3) ) setTool(FILL);
 				if( K.isPressed(K.I) || K.isPressed(K.NUMBER_4) ) setTool(PICKER);
+				if( K.isPressed(K.L) || K.isPressed(K.NUMBER_5) ) setTool(LINE);
+				if( K.isPressed(K.R) || K.isPressed(K.NUMBER_6) ) setTool(SELECT);
+				if( K.isPressed(K.DELETE) || K.isPressed(K.BACKSPACE) ) if( sel != null || floating != null ) eraseSel();
+				if( K.isPressed(K.ENTER) || K.isPressed(K.NUMPAD_ENTER) ) commitFloat();
 				if( K.isPressed(K.M) ) mirrorButton.onClick();
 				if( K.isPressed(K.NUMPAD_ADD) || K.isPressed(K.QWERTY_EQUALS) ) zoomBy(1);
 				if( K.isPressed(K.NUMPAD_SUB) || K.isPressed(K.QWERTY_MINUS) ) zoomBy(-1);
@@ -1519,7 +1961,8 @@ class KubeEditor extends Screen {
 				if( K.isPressed(K.LEFT) || K.isPressed(K.PGUP) ) selectFace(fs[(fi + fs.length - 1) % fs.length]);
 				if( K.isPressed(K.RIGHT) || K.isPressed(K.PGDOWN) || K.isPressed(K.TAB) ) selectFace(fs[(fi + 1) % fs.length]);
 			}
-			if( K.isPressed(K.ESCAPE) || (pad != null && pad.isPressed(pad.config.B)) ) close();
+			// Esc quita primero la linea, el bloque flotante o la seleccion
+			if( K.isPressed(K.ESCAPE) || (pad != null && pad.isPressed(pad.config.B)) ) if( !escape() ) close();
 		} else if( K.isPressed(K.ESCAPE) || K.isPressed(K.ENTER) || K.isPressed(K.NUMPAD_ENTER) )
 			nameInput.blur();
 
@@ -1546,7 +1989,14 @@ class KubeEditor extends Screen {
 			+ kube.light + " traversable " + kube.noCollide + " cara " + KubeData.FACES[face] + " caras " + [for( f in kube.shape.faces ) KubeData.FACES[f]].join("/")
 			+ " pixeles visibles " + used + " cambios " + dirty + " deshacer " + undoStack.length + " archivo " + (kube.file == null ? "-" : new haxe.io.Path(kube.file).file)
 			+ " lista " + (tab == 0 ? gameBlocks.length + " bloques" : mine.length + " kubes") + " mosaico " + tiles + " zoom " + ZOOMS[zoomIndex]
-			+ " foco " + [lookAt.x, lookAt.y, lookAt.z].map(v -> Math.round(v * 100) / 100).join(",") + " caras vista " + previewFaces();
+			+ " foco " + [lookAt.x, lookAt.y, lookAt.z].map(v -> Math.round(v * 100) / 100).join(",") + " caras vista " + previewFaces()
+			+ " herramienta " + tool + " seleccion " + (sel == null ? "-" : sel.toString()) + " flotante " + (floating == null ? "-" : floating.toString() + (floatSnap ? " levantado" : " pegado"))
+			+ " portapapeles " + (clip == null ? "-" : clip.toString()) + " linea " + (lineTo == null ? "-" : lineFrom.join(",") + "->" + lineTo.join(","));
+	}
+
+	/** dev: pixeles de la cara (los que estan en ella, sin el bloque flotante) en x, y y los que siguen hacia la derecha */
+	public function devPixels( x : Int, y : Int, n : Int ) : String {
+		return [for( i in 0...n ) x + i < S ? StringTools.hex(kube.faces[face][y * S + x + i], 8) : "-"].join(" ");
 	}
 
 	/** caras de la malla de la vista previa (el mosaico sin las caras de dentro) */
