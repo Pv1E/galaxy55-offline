@@ -1,5 +1,5 @@
 # Cajas de plantas (anadido del port): la dryade urticante en caja (BAcidHerbBox, caja de hierro con su propia casilla [0,45])
-# y las 8 plantas en cubo de cristal (BFInBox: el cristal basico con el modelo y la textura de la planta dentro, World.buildChunk).
+# y las 7 plantas en cubo de cristal (BFInBox: el cristal basico con el modelo y la textura de la planta dentro, World.buildChunk).
 # Capturas port/out/boites_rendu_*.png: la fila de cajas (detras, las plantas solas), de cerca, una pared de 3 x 3 cubos de
 # cristal (las caras entre dos cubos no se dibujan: las plantas de dentro se ven a traves), la paleta creativa (busqueda
 # "verre": justo despues de la calendula en caja), los iconos de la barra, la mano y los sueltos.
@@ -13,7 +13,6 @@ filla 50 54 80 80 57 90 none
 filla 50 54 80 80 56 56 BRock
 set 59 66 57 BHealBox
 set 60 66 57 BAcidHerbBox
-set 62 66 57 BGlassBoxAcidMush
 set 63 66 57 BGlassBoxHighHerb1
 set 64 66 57 BGlassBoxHighHerb3
 set 65 66 57 BGlassBoxHighHerb5
@@ -24,7 +23,6 @@ set 69 66 57 BGlassBoxCavePlantCeil
 # las plantas solas detras (las de techo cuelgan de una roca)
 set 59 69 57 BHealPlant
 set 60 69 57 BAcidHerb1
-set 62 69 57 BAcidMush
 set 63 69 57 BHighHerb1
 set 64 69 57 BHighHerb3
 set 65 69 57 BHighHerb5
@@ -39,7 +37,7 @@ set 70 72 57 BGlassBoxHighHerb1
 set 71 72 57 BGlassBoxHealPlant
 set 72 72 57 BGlassBoxHighHerb3
 set 70 72 58 BGlassBoxHighHerb5
-set 71 72 58 BGlassBoxAcidMush
+set 71 72 58 BGlassBoxAcidHerb1
 set 72 72 58 BGlassBoxAcidHerb1
 set 70 72 59 BGlassBoxCavePlantCeil
 set 71 72 59 BGlassBoxHealPlant
@@ -70,7 +68,7 @@ print drops
 shot boites_rendu_sueltos
 # barra del inventario y mano
 give BAcidHerbBox 5
-give BGlassBoxAcidMush 5
+give BGlassBoxAcidHerbCeil 5
 give BGlassBoxHealPlant 5
 give BGlassBoxHighHerb5 5
 give BGlassBoxCavePlantCeil 5
@@ -81,7 +79,7 @@ shot boites_rendu_main_verre
 hand BAcidHerbBox
 wait 10
 shot boites_rendu_main_fer
-# paleta creativa: busqueda "boite" (las dos cajas de hierro) y "verre" (las 8 plantas en cristal, tras el vidrio basico)
+# paleta creativa: busqueda "boite" (las dos cajas de hierro) y "verre" (las 7 plantas en cristal, tras el vidrio basico)
 creative
 palette
 wait 5

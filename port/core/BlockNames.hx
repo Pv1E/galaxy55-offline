@@ -110,7 +110,6 @@ class BlockNames {
 		"BChristmasLeaves" => "Christmas Leaves",
 		// cajas de plantas (anadido del port): la dryade urticante en caja de hierro y las plantas en cubo de cristal (BFInBox)
 		"BAcidHerbBox" => "Boxed Stinging Dryad",
-		"BGlassBoxAcidMush" => "Swamp Noodle in Glass",
 		"BGlassBoxHighHerb1" => "Tall Grass in Glass",
 		"BGlassBoxHighHerb3" => "Mauve Sbeleleb in Glass",
 		"BGlassBoxHighHerb5" => "Blue Sbeleleb in Glass",
@@ -176,7 +175,6 @@ class BlockNames {
 		"BChristmasLeaves" => "Hojas de Navidad",
 		// cajas de plantas (anadido del port): la dryade urticante en caja de hierro y las plantas en cubo de cristal (BFInBox)
 		"BAcidHerbBox" => "Dryadia urticante enjaulada",
-		"BGlassBoxAcidMush" => "Hongo de pantano en urna",
 		"BGlassBoxHighHerb1" => "Hierba alta en urna",
 		"BGlassBoxHighHerb3" => "Sbeleleb púrpura en urna",
 		"BGlassBoxHighHerb5" => "Sbeleleb azul en urna",

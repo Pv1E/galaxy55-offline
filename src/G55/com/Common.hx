@@ -412,7 +412,6 @@ enum BlockKind {
 	BChristmasLeaves;
 	BChristmasLeavesCover;
 	BAcidHerbBox;
-	BGlassBoxAcidMush;
 	BGlassBoxHighHerb1;
 	BGlassBoxHighHerb3;
 	BGlassBoxHighHerb5;

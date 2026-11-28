@@ -1,8 +1,8 @@
 # Cajas de plantas (anadido del port): las recetas del sintetizador, los nombres, los precios y la Base de datos ESCorp.
 # - receta 82: hierro abajo y dryade urticante encima -> dryade urticante en caja (como la 54 de la calendula en caja);
-# - recetas 100-107: vidrio basico abajo y la planta encima -> la planta en cubo de cristal (BFInBox);
-# - no son recetas: vidrio con la dryade juvenil ni con una planta sin cubo de cristal (rosade des bois).
-# Cada receta: print drops (lo que suelta el ordenador) y print inv (lo recogido: las 9 cajas caben en el inventario). Luego
+# - recetas 100-106: vidrio basico abajo y la planta encima -> la planta en cubo de cristal (BFInBox);
+# - no son recetas: vidrio con la dryade juvenil ni con una planta sin cubo de cristal (nouille des marais).
+# Cada receta: print drops (lo que suelta el ordenador) y print inv (lo recogido: las 8 cajas caben en el inventario). Luego
 # print names (es | en | fr), print wares (precios, solo-compra) y la Base de datos: print kuborder y capturas de las recetas.
 # Uso: powershell -File port/dev/devrun.ps1 -Script port/dev/boites_plantes_craft.txt -Timeout 600 -Extra "--lang=fr"
 wait 3
@@ -26,9 +26,9 @@ print inv
 setl 59 62 3 none
 setl 59 62 4 none
 wait 5
-# 100: vidrio y BAcidMush
+# 100: vidrio y BHighHerb1
 setl 59 62 3 BGlass
-setl 59 62 4 BAcidMush
+setl 59 62 4 BHighHerb1
 wait 5
 shot boites_synthe_verre
 activatel 61 62 4
@@ -39,19 +39,7 @@ print inv
 setl 59 62 3 none
 setl 59 62 4 none
 wait 5
-# 101: vidrio y BHighHerb1
-setl 59 62 3 BGlass
-setl 59 62 4 BHighHerb1
-wait 5
-activatel 61 62 4
-wait 40
-print drops
-wait 120
-print inv
-setl 59 62 3 none
-setl 59 62 4 none
-wait 5
-# 102: vidrio y BHighHerb3
+# 101: vidrio y BHighHerb3
 setl 59 62 3 BGlass
 setl 59 62 4 BHighHerb3
 wait 5
@@ -63,7 +51,7 @@ print inv
 setl 59 62 3 none
 setl 59 62 4 none
 wait 5
-# 103: vidrio y BHighHerb5
+# 102: vidrio y BHighHerb5
 setl 59 62 3 BGlass
 setl 59 62 4 BHighHerb5
 wait 5
@@ -75,7 +63,7 @@ print inv
 setl 59 62 3 none
 setl 59 62 4 none
 wait 5
-# 104: vidrio y BAcidHerb1
+# 103: vidrio y BAcidHerb1
 setl 59 62 3 BGlass
 setl 59 62 4 BAcidHerb1
 wait 5
@@ -87,7 +75,7 @@ print inv
 setl 59 62 3 none
 setl 59 62 4 none
 wait 5
-# 105: vidrio y BAcidHerbCeil
+# 104: vidrio y BAcidHerbCeil
 setl 59 62 3 BGlass
 setl 59 62 4 BAcidHerbCeil
 wait 5
@@ -99,7 +87,7 @@ print inv
 setl 59 62 3 none
 setl 59 62 4 none
 wait 5
-# 106: vidrio y BHealPlant
+# 105: vidrio y BHealPlant
 setl 59 62 3 BGlass
 setl 59 62 4 BHealPlant
 wait 5
@@ -111,7 +99,7 @@ print inv
 setl 59 62 3 none
 setl 59 62 4 none
 wait 5
-# 107: vidrio y BCavePlantCeil
+# 106: vidrio y BCavePlantCeil
 setl 59 62 3 BGlass
 setl 59 62 4 BCavePlantCeil
 wait 5
@@ -134,9 +122,9 @@ print inv
 setl 59 62 3 none
 setl 59 62 4 none
 wait 5
-# no es receta: vidrio y rosade des bois (sin cubo de cristal). El ordenador no fabrica nada: ni sueltos ni nada nuevo en el inventario
+# no es receta: vidrio y nouille des marais (sin cubo de cristal). El ordenador no fabrica nada: ni sueltos ni nada nuevo en el inventario
 setl 59 62 3 BGlass
-setl 59 62 4 BPinkFlower
+setl 59 62 4 BAcidMush
 wait 5
 activatel 61 62 4
 wait 40
@@ -145,7 +133,7 @@ print inv
 setl 59 62 3 none
 setl 59 62 4 none
 wait 5
-print names BAcidHerbBox BGlassBoxAcidMush BGlassBoxHighHerb1 BGlassBoxHighHerb3 BGlassBoxHighHerb5 BGlassBoxAcidHerb1 BGlassBoxAcidHerbCeil BGlassBoxHealPlant BGlassBoxCavePlantCeil
+print names BAcidHerbBox BGlassBoxHighHerb1 BGlassBoxHighHerb3 BGlassBoxHighHerb5 BGlassBoxAcidHerb1 BGlassBoxAcidHerbCeil BGlassBoxHealPlant BGlassBoxCavePlantCeil
 print wares
 kub all
 print kuborder

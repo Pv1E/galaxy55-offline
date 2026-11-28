@@ -81,7 +81,7 @@ class Market {
 		set(50, "BIron BAluminium BIronFence BJumper BCascadeSource BFreezer");
 		// plantas en cubo de cristal (BFInBox): el precio de la planta y 10 (vidrio y montaje)
 		set(16, "BGlassBoxHighHerb1 BGlassBoxHighHerb3 BGlassBoxHighHerb5 BGlassBoxAcidHerb1 BGlassBoxAcidHerbCeil BGlassBoxCavePlantCeil");
-		set(25, "BGlassBoxAcidMush BGlassBoxHealPlant");
+		set(25, "BGlassBoxHealPlant");
 		// nave y aparatos
 		set(80, "BShipPlate BShipWire BShipTubes BShipGlass2 BShipGlassBlack BShipLight");
 		set(100, "BShipHull BShipGlass BShipGlassRed BShipGlassBlue BShipGlassGreen BShipGlassPink");
@@ -140,7 +140,7 @@ class Market {
 		"BShipGlassRed", "BShipGlassBlue", "BShipGlassGreen", "BShipGlassPink",
 		"BCircuit", "BCamera", "BHealBox", "BMiningGenerator", "BArtiBomb", "BAlienTreasure",
 		// cajas de plantas: se fabrican con lo que se encuentra (la dryade en caja, como la calendula en caja)
-		"BAcidHerbBox", "BGlassBoxAcidMush", "BGlassBoxHighHerb1", "BGlassBoxHighHerb3", "BGlassBoxHighHerb5", "BGlassBoxAcidHerb1",
+		"BAcidHerbBox", "BGlassBoxHighHerb1", "BGlassBoxHighHerb3", "BGlassBoxHighHerb5", "BGlassBoxAcidHerb1",
 		"BGlassBoxAcidHerbCeil", "BGlassBoxHealPlant", "BGlassBoxCavePlantCeil",
 		// evento de Navidad (CalendarEvents): solo sale en el Sapin de Noel
 		"BChristmasLeaves",
