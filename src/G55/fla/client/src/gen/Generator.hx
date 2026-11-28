@@ -57,10 +57,18 @@ class Generator {
 	 *   partida sale como "Ancienne partie" (World, GalaxyApp).
 	 * - 1: azar por nombre (Rng, Generator.stream), estructuras en un registro (Structures) puestas por regiones, etapas en un
 	 *   orden fijo. Anadir una estructura (Structures: since) solo cambia el planeta dentro de su caja.
+	 * - 2: cada cadena de lo que se propaga corre desde su fuente (coverAll, chainOrder). Por orden de nombre, BCascadeFall* iban
+	 *   antes que BCascadeSource: el agua que soltaba la fuente se quedaba colgada, sin caer ni extenderse (cascadas de las grutas).
 	 * Reglas: lo que cambie lo que genera el generador sube VERSION y solo se aplica con version >= la nueva (Structures: since /
 	 * until); port/headless/gen_ref.txt: las lineas de las versiones que ya han salido no cambian nunca.
 	 */
-	public static inline var VERSION = 1;
+	public static inline var VERSION = 2;
+
+	/**
+	 * Anadido del port: la version mas antigua que se sigue generando tal cual. Un planeta de una anterior (la 0) se genera con
+	 * esta y la partida sale como "Ancienne partie" (SaveData.isOldGeneration); uno de esta o de una posterior, con la suya
+	 */
+	public static inline var MIN_VERSION = 1;
 
 	public var size(default,null) : Int;
 	/** anadido del port: version con la que se genera este planeta (VERSION si no se dice otra) */
@@ -514,6 +522,7 @@ class Generator {
 		}
 		var ids = [for( id in 0...blocks.length ) if( blocks[id].covered != null || blocks[id].propagate != null ) id];
 		ids.sort(function(a, b) return Reflect.compare(Type.enumConstructor(blocks[a].k), Type.enumConstructor(blocks[b].k)));
+		if( version >= 2 ) ids = chainOrder(ids);
 		for( id in ids ) {
 			var b = blocks[id];
 			if( b.covered != null ) addCover(id, alloc(b.covered.k));
@@ -522,6 +531,35 @@ class Generator {
 				addPropagate(id, tid, b.hasFlag(BFFallCopy) ? id : tid);
 			}
 		}
+	}
+
+	/**
+	 * Version 2: las pasadas de coverAll con cada cadena de lo que se propaga en su orden, desde la fuente (el que no sale de
+	 * ningun otro) hasta el ultimo eslabon: cada pasada mueve lo que han dejado las de antes. Las cadenas y lo que cubre van por
+	 * el nombre de su fuente, como antes. Solo cambia la cascada: BCascadeSource iba despues de BCascadeFall..BCascadeFall4, y lo
+	 * que soltaba (su BCascadeFall) ya no caia ni se extendia; la lava (BLava, BLava2...) ya estaba en orden
+	 */
+	function chainOrder( ids : Array<Int> ) : Array<Int> {
+		function from( id : Int ) : Int {
+			for( p in ids ) if( p != id && blocks[p].propagate == blocks[id] ) return p;
+			return -1;
+		}
+		var root = [for( id in 0...blocks.length ) ""], depth = [for( id in 0...blocks.length ) 0];
+		for( id in ids ) {
+			var r = id, d = 0, p;
+			while( d < 20 && (p = from(r)) >= 0 ) {
+				r = p;
+				d++;
+			}
+			root[id] = Type.enumConstructor(blocks[r].k);
+			depth[id] = d;
+		}
+		var out = ids.copy();
+		out.sort(function(a, b) {
+			var c = Reflect.compare(root[a], root[b]);
+			return c != 0 ? c : depth[a] - depth[b];
+		});
+		return out;
 	}
 
 	function addCover( bid : Int, bid2 : Int ) {

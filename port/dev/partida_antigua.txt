@@ -1,4 +1,4 @@
-# Partida de un generador anterior (SaveData.isOldGeneration: genVersion < gen.Generator.VERSION, anadido del port): la lista la
+# Partida de un generador anterior (SaveData.isOldGeneration: genVersion < gen.Generator.MIN_VERSION, anadido del port): la lista la
 # marca "Ancienne partie" (a la derecha, encima de las versiones) y cada vez que se abre avisa de que el terreno de alrededor de lo
 # construido puede haber cambiado, con Volver (el foco) y Continuar. Una partida de antes (.json, version 0):
 # port/headless/fixtures/legacy_mixta.json. Mira los antigua_*.png

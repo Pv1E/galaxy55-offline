@@ -1,0 +1,16 @@
+# cascadas generadas: lo que suelta una fuente de cascada (BCascadeSource) cae y se extiende (generador version 2:
+# Generator.chainOrder). -Extra "--lang=fr --bgbiome=BIWinterPeaks --seed=16 --size=1"
+# Gruta de las cumbres nevadas (semilla 16, tamano 1): fuente en el techo en 92 59 33. Con la version 1 su primer bloque de agua
+# (92 59 32, BCascadeFall) se queda colgado: debajo (92 59 31 y 92 59 29) no hay nada. Con la 2 el agua cae (BCascadeFall).
+wait 30
+print gen
+print block 92 59 33
+print block 92 59 32
+print block 92 59 31
+print block 92 59 29
+helptext 0
+tp 90.5 60.5 29.01
+lookat 92.5 59.5 31
+wait 20
+shot cascada_fuente
+quit
