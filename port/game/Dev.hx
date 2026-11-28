@@ -147,7 +147,9 @@ import Msg;
  *   kube ORDEN              editor de kubes abierto (screen kubes): load BLOQUE (copiar un bloque del juego), shape ID, face NOMBRE,
  *                           paint x0 y0 x1 y1 AARRGGBB (rectangulo de la cara, 0 = borrar), name TEXTO, tab 0|1, file N (cargar el
  *                           .kube N de Mis kubes), save, tile N (mosaico N x N x N de la vista previa), zoom Z (el paso de zoom
- *                           mas cercano), view (vista fija de los iconos, sin girar); print kube
+ *                           mas cercano), view (vista fija de los iconos, sin girar), px X Y [N] (escribe N pixeles de la cara desde
+ *                           X, Y hacia la derecha, sin el bloque flotante); print kube (tambien herramienta, seleccion, bloque
+ *                           flotante, portapapeles y linea). Seleccion, linea y portapapeles se prueban con mouse, press y tap
  *   edkube ORDEN            kubes del editor puestos en una partida creativa (EditorKubes; solo con GALAXY55_DATA): import RUTA
  *                           [ARCHIVO] copia un .kube a la carpeta kubes, make ARCHIVO FORMA opaque|cutout|blend AARRGGBB NOMBRE
  *                           crea uno de ese color con el borde oscuro, fill N crea N cubos lot-1..N, delete ARCHIVO, clear vacia
@@ -1280,6 +1282,7 @@ class Dev {
 						case "tile": k.devTiles(Std.parseInt(a[2]));
 						case "zoom": k.devZoom(f(a[2]));
 						case "view": k.devView();
+						case "px": Sys.println("kube px " + a[2] + "," + a[3] + ": " + k.devPixels(Std.parseInt(a[2]), Std.parseInt(a[3]), a.length > 4 ? Std.parseInt(a[4]) : 1));
 						default: Sys.println("kube: orden desconocida " + a[1]);
 					}
 				case "edkube":
